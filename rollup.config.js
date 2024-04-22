@@ -26,19 +26,19 @@ const DIST = isProduction ? 'dist' : 'dist';
 
 function input(pattern) {
   return glob.sync(pattern, {
-    ignore: ['src/**/*.d.ts'],
+    ignore: ['**/*.d.ts'],
     cwd: __dirname,
     absolute: false,
   }).reduce((accu, filename) => {
     accu[relative(
-      'src',
+      '',
       filename.slice(0, filename.length - extname(filename).length),
     )] = filename;
     return accu;
   }, {});
 }
 
-const mainInput = input(['src/**/*.{ts,js}']);
+const mainInput = input(['cmd/**/*.{ts,js}']);
 
 export default (env) => {
   return defineConfig([

@@ -4,7 +4,11 @@
   "description": "Impl act runner using typescript",
   "type": "module",
   "main": "index.js",
+  "bin": {
+    "test_runner": "cmd/index.js"
+  },
   "scripts": {
+    "dev": "rollup -cw --environment NODE_ENV:development",
     "build": "rollup -c --environment NODE_ENV:production",
     "eslint:fix": "eslint src --fix",
     "test": "echo \"husky test scripts\"",
@@ -24,6 +28,7 @@
   "author": "sobird",
   "license": "MIT",
   "dependencies": {
+    "commander": "^12.0.0",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0"
   },
