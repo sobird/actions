@@ -1,0 +1,50 @@
+{
+  "name": "@sobird/npm-template",
+  "version": "1.1.0",
+  "description": "npm template",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "build": "rollup -c --environment NODE_ENV:production",
+    "eslint:fix": "eslint src --fix",
+    "test": "echo \"husky test scripts\"",
+    "lint:eslint": "eslint src --ext ts,js --report-unused-disable-directives --max-warnings 10",
+    "preversion": "yarn lint:eslint",
+    "version": "git add -A .",
+    "postversion": "git push && git push --tags",
+    "postinstall": "echo \"postinstall\"",
+    "prepare": "husky"
+  },
+  "keywords": [
+    "npm",
+    "npm-template"
+  ],
+  "author": "sobird",
+  "license": "MIT",
+  "dependencies": {
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.2.2",
+    "@commitlint/config-conventional": "^19.2.2",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@types/node": "^20.12.7",
+    "esbuild": "^0.20.2",
+    "eslint-config-sobird": "^0.2.13",
+    "glob": "^10.3.10",
+    "husky": "^9.0.11",
+    "release-please": "^16.10.2",
+    "rollup": "^4.14.2",
+    "rollup-plugin-clear": "^2.0.7",
+    "rollup-plugin-copy": "^3.5.0",
+    "rollup-plugin-esbuild": "^6.1.1",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "typescript": "^5.4.5"
+  },
+  "resolutions": {
+    "strip-ansi": "6.0.0"
+  }
+}
