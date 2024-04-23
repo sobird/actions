@@ -11,7 +11,7 @@
     "dev": "rollup -cw --environment NODE_ENV:development",
     "build": "rollup -c --environment NODE_ENV:production",
     "eslint:fix": "eslint src --fix",
-    "test": "echo \"husky test scripts\"",
+    "test": "node cmd/index.ts",
     "lint:eslint": "eslint src --ext ts,js --report-unused-disable-directives --max-warnings 10",
     "preversion": "yarn lint:eslint",
     "version": "git add -A .",

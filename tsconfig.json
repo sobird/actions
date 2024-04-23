@@ -108,4 +108,14 @@
   },
   "include": ["**/*", ".eslintrc.cjs", "rollup.config.js"],
   "exclude": ["node_modules", "dist"],
+  "ts-node": { 
+    "esm": true,
+    "experimentalSpecifierResolution": "node",
+    "transpileOnly": true,
+    "require": ["tsconfig-paths/register"],
+    "compilerOptions": {
+      "sourceMap": false,
+      // "module": "commonjs"
+    }
+  }
 }
