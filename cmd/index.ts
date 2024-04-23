@@ -29,4 +29,4 @@ program.command('test')
   });
 
 program.addCommand(registerCommand);
-program.parse();
+program.parse(process.argv);
