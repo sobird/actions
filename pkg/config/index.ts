@@ -1,9 +1,14 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable max-classes-per-file */
 import os from 'node:os';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
 import dotenv, { DotenvParseOutput } from 'dotenv';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class Log {
   constructor(public level: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal' = 'info') {}
@@ -75,7 +80,7 @@ class Config {
   static loadDefault(file: string) {
     let config = new Config();
     if (file && fs.existsSync(file)) {
-      config = yaml.load(fs.readFileSync(file, 'utf8'), { schema: yaml.JSON_SCHEMA }) as any;
+      config = yaml.load(fs.readFileSync(file, 'utf8'), { schema: yaml.DEFAULT_SCHEMA }) as any;
     }
 
     // 兼容旧环境变量
@@ -84,6 +89,10 @@ class Config {
     // 设置默认值
 
     return config;
+  }
+
+  static example() {
+    return fs.readFileSync(path.resolve(__dirname, 'config.example.yaml'), 'utf-8');
   }
 }
 
