@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "rollup -cw --environment NODE_ENV:development",
+    "build:buf": "buf generate https://gitea.com/gitea/actions-proto-def.git",
     "build": "rollup -c --environment NODE_ENV:production",
     "eslint:fix": "eslint src --fix",
     "test": "node cmd/index.ts",

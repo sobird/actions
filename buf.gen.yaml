@@ -1,0 +1,14 @@
+version: v1
+managed:
+  enabled: true
+plugins:
+  # This will invoke protoc-gen-es and write output to pkg/client
+  - plugin: es
+    out: pkg/client
+    opt: target=ts
+  # This will invoke protoc-gen-connect-es
+  - plugin: connect-es
+    out: pkg/client
+    opt:
+      # Add more plugin options here
+      - target=ts
