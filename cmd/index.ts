@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { registerCommand } from './register';
-
 import pkg from '../package.json' assert { type: 'json' };
+import { registerCommand } from './register';
 
 const program = new Command();
 
@@ -18,15 +17,6 @@ program
 //   // 这里可以添加事件名处理逻辑
 //   console.log(`Event name: ${eventName}, Config file: ${configFile}`);
 // });
-
-program.command('test')
-  .description('test cmd')
-  .option('-n, --name <string>', 'name')
-  .option('-k, --key <string>', 'key')
-  .option('-s, --secret <string>', 'secret')
-  .action(async (options) => {
-    console.log('options', options);
-  });
 
 program.addCommand(registerCommand);
 program.parse(process.argv);
