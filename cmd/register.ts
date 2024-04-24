@@ -1,4 +1,7 @@
 import { Command } from 'commander';
+import { prompt } from '@/utils';
+
+console.log('prompt', prompt);
 
 // 定义 RegisterOptions 接口，用于描述注册命令的参数
 interface RegisterOptions {
