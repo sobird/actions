@@ -10,7 +10,7 @@ program
   .name('act_runner')
   .description('Run GitHub actions locally by specifying the event name (e.g. `push`) or an action name directly.')
   .version(pkg.version)
-  .arguments('[eventName]')
+  // .arguments('[eventName]')
   .option('-c, --config <path>', 'Config file path');
 // .action((eventName: string, options: { config: string }) => {
 //   const configFile = options.config;

@@ -1,5 +1,7 @@
 /**
  * 标签解析
+ * @todo
+ * 自动处理labels
  *
  * sobird<i@sobird.me> at 2024/04/24 18:59:14 created.
  */
@@ -14,7 +16,16 @@ interface Label {
 }
 
 class Labels {
-  constructor(public labels: Label[] = []) {}
+  labels: Label[] = [];
+
+  constructor(labels: (Label | string)[] = []) {
+    labels.forEach((label) => {
+      const result = Labels.parse(label);
+      if (result) {
+        this.labels.push(result);
+      }
+    });
+  }
 
   requireDocker() {
     return this.labels.some((label) => { return label.schema === SCHEME_DOCKER; });
@@ -75,7 +86,10 @@ class Labels {
     });
   }
 
-  static parse(str: string) {
+  static parse(str: string | Label) {
+    if (typeof str === 'object') {
+      return str;
+    }
     const [name, schema = SCHEME_DOCKER, arg = ''] = str.split(':');
     const label: Label = {
       name,
@@ -83,7 +97,7 @@ class Labels {
       arg,
     };
     if (label.schema !== SCHEME_HOST && label.schema !== SCHEME_DOCKER) {
-      throw Error('unsupported schema');
+      return false;
     }
     return label;
   }

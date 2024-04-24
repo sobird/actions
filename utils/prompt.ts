@@ -1,3 +1,4 @@
+// 直接用 npm i prompts
 import readline from 'node:readline';
 
 export default function prompt(query: string): Promise<string> {

@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
 import dotenv, { DotenvParseOutput } from 'dotenv';
+import { Registration } from './registration';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -68,6 +69,8 @@ class Host {
 }
 
 class Config {
+  static Registration = Registration;
+
   constructor(
     public log: Log = new Log(),
     public runner: Runner = new Runner(),
@@ -77,7 +80,7 @@ class Config {
   ) {}
 
   // 加载默认配置
-  static loadDefault(file: string) {
+  static loadDefault(file?: string) {
     let config = new Config();
     if (file && fs.existsSync(file)) {
       config = yaml.load(fs.readFileSync(file, 'utf8'), { schema: yaml.DEFAULT_SCHEMA }) as any;

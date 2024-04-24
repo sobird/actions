@@ -1,5 +1,5 @@
 import { URL } from 'node:url';
-import { createPromiseClient } from '@connectrpc/connect';
+import { createPromiseClient, PromiseClient } from '@connectrpc/connect';
 import { createConnectTransport, ConnectTransportOptions } from '@connectrpc/connect-node';
 import { PingService } from './ping/v1/services_connect';
 import { RunnerService } from './runner/v1/services_connect';
@@ -11,51 +11,47 @@ const TokenHeader = 'x-runner-token';
  */
 const VersionHeader = 'x-runner-version';
 
-function client(
-  endpoint: string,
-  insecure: boolean,
-  uuid: string,
-  token: string,
-  version: string,
-  options?: ConnectTransportOptions,
-) {
-  const baseUrl = new URL('/api/actions', endpoint).toString();
+class Client {
+  PingServiceClient: PromiseClient<typeof PingService>;
 
-  // A transport for clients using the Connect protocol with Node.js `http` module
-  const transport = createConnectTransport({
-    baseUrl,
-    httpVersion: '1.1',
-    interceptors: [
-      (next) => {
-        return async (req) => {
-          if (uuid) {
-            req.header.set(UUIDHeader, uuid);
-          }
-          if (token) {
-            req.header.set(TokenHeader, token);
-          }
-          if (version) {
-            req.header.set(VersionHeader, version);
-          }
-          return next(req);
-        };
-      },
-    ],
-    ...options,
-  });
+  RunnerServiceClient: PromiseClient<typeof RunnerService>;
 
-  const PingServiceClient = createPromiseClient(PingService, transport);
-  const RunnerServiceClient = createPromiseClient(RunnerService, transport);
+  constructor(
+    public endpoint: string,
+    public token: string,
+    public insecure: boolean,
+    public uuid: string,
+    public version?: string,
+    public options?: ConnectTransportOptions,
+  ) {
+    const baseUrl = new URL('/api/actions', endpoint).toString();
 
-  return {
-    // 合并两个服务的方法
-    ...PingServiceClient,
-    ...RunnerServiceClient,
-    PingServiceClient,
-    RunnerServiceClient,
-    endpoint,
-    insecure,
-  };
+    // A transport for clients using the Connect protocol with Node.js `http` module
+    const transport = createConnectTransport({
+      baseUrl,
+      httpVersion: '1.1',
+      interceptors: [
+        (next) => {
+          return async (req) => {
+            if (uuid) {
+              req.header.set(UUIDHeader, uuid);
+            }
+            if (token) {
+              req.header.set(TokenHeader, token);
+            }
+            if (version) {
+              req.header.set(VersionHeader, version);
+            }
+            return next(req);
+          };
+        },
+      ],
+      ...options,
+    });
+
+    this.PingServiceClient = createPromiseClient(PingService, transport);
+    this.RunnerServiceClient = createPromiseClient(RunnerService, transport);
+  }
 }
 
-export default client;
+export default Client;
