@@ -12,11 +12,11 @@ const SCHEME_DOCKER = 'docker';
 interface Label {
   name: string;
   schema: string;
-  arg: string;
+  rest: string;
 }
 
 class Labels {
-  labels: Label[] = [];
+  private labels: Label[] = [];
 
   constructor(labels: (Label | string)[] = []) {
     labels.forEach((label) => {
@@ -36,7 +36,7 @@ class Labels {
     this.labels.forEach((label) => {
       switch (label.schema) {
         case SCHEME_DOCKER:
-          platforms.set(label.name, label.arg.startsWith('//') ? label.arg.slice(2) : label.arg);
+          platforms.set(label.name, label.rest.startsWith('//') ? label.rest.slice(2) : label.rest);
           break;
         case SCHEME_HOST:
           platforms.set(label.name, '-self-hosted');
@@ -78,8 +78,8 @@ class Labels {
       let str = label.name;
       if (label.schema) {
         str += `:${label.schema}`;
-        if (label.arg) {
-          str += `:${label.arg}`;
+        if (label.rest) {
+          str += `:${label.rest}`;
         }
       }
       return str;
@@ -90,11 +90,11 @@ class Labels {
     if (typeof str === 'object') {
       return str;
     }
-    const [name, schema = SCHEME_DOCKER, arg = ''] = str.split(':');
+    const [name, schema = SCHEME_DOCKER, ...rest] = str.split(':');
     const label: Label = {
       name,
       schema,
-      arg,
+      rest: rest.join(':'),
     };
     if (label.schema !== SCHEME_HOST && label.schema !== SCHEME_DOCKER) {
       return false;

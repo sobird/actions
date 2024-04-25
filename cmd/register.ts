@@ -27,7 +27,7 @@ async function doRegister(options: RegisterOptions) {
   const config = Config.loadDefault(options.config);
   const { PingServiceClient, RunnerServiceClient } = new Client(
     instance,
-    token,
+    '',
     config.runner.insecure,
     '',
     version,

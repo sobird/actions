@@ -29,11 +29,7 @@ export class Registration {
     if (!fs.existsSync(file)) {
       return null;
     }
-    try {
-      const reg = JSON.parse(fs.readFileSync(file, 'utf8'));
-      return new Registration(reg.id, reg.uuid, reg.name, reg.token, reg.address, reg.labels);
-    } catch (err) {
-      return null;
-    }
+    const reg = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return new Registration(reg.id, reg.uuid, reg.name, reg.token, reg.address, reg.labels);
   }
 }
