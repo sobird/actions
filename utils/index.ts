@@ -1,1 +1,2 @@
-export { default as prompt } from './prompt';
+export { prompt } from './prompt';
+export { Replacer } from './replacer';

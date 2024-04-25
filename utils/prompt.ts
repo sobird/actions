@@ -1,7 +1,7 @@
 // 直接用 npm i prompts
 import readline from 'node:readline';
 
-export default function prompt(query: string): Promise<string> {
+export function prompt(query: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const rl = readline.createInterface({
       input: process.stdin,
