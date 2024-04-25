@@ -1,7 +1,11 @@
 import os from 'node:os';
 import { Command } from 'commander';
 import prompts, { PromptObject } from 'prompts';
+import log4js from 'log4js';
 import { Config, Labels, Client } from '@/pkg';
+
+const logger = log4js.getLogger();
+logger.level = 'info';
 
 // 定义 RegisterOptions 接口，用于描述注册命令的参数
 interface RegisterArgs {
@@ -33,24 +37,21 @@ async function doRegister(options: RegisterOptions) {
     let timer: NodeJS.Timeout;
     const ping = async () => {
       try {
-        // 尝试 ping Gitea 实例服务器
         const res = await PingServiceClient.ping({
           data: name,
         });
-        console.log('Successfully pinged the Gitea instance server');
+        logger.info('Successfully pinged the Gitea instance server');
         clearTimeout(timer);
         resolve(res);
         // logger.debug('Successfully pinged the Gitea instance server');
       } catch (err: any) {
-        console.log('Cannot ping the Gitea instance server', err.message);
+        logger.fatal('Cannot ping the Gitea instance server:', err.message);
         timer = setTimeout(ping, 1000);
-
-        // logger.error('Cannot ping the Gitea instance server', err);
       }
     };
     ping();
   });
-  console.log('pingResponse', pingResponse);
+  logger.debug(pingResponse);
 
   try {
     const { runner } = await RunnerServiceClient.register({
@@ -68,11 +69,10 @@ async function doRegister(options: RegisterOptions) {
       instance,
       options.labels,
     );
-    console.log('registration', registration);
     registration.save(config.runner.file);
-    console.log('Runner registered successfully.');
-  } catch (err) {
-    console.log('err', err);
+    logger.info('Runner registered successfully.');
+  } catch (err: any) {
+    logger.fatal('Failed to register runner:', err.message);
   }
 }
 
@@ -82,8 +82,6 @@ const registerAction = async (options: Omit<RegisterOptions, 'config'>, program:
   const {
     instance, token, name, labels,
   } = opts;
-
-  console.log('opts', opts);
 
   const questions: PromptObject[] = [];
 
@@ -120,7 +118,6 @@ const registerAction = async (options: Omit<RegisterOptions, 'config'>, program:
       validate: (value) => { const values = value.split(',') || []; return values.every((item: string) => { return Labels.parse(item); }); },
     });
   }
-
   await doRegister({ ...opts, ...await prompts(questions) } as RegisterOptions);
 };
 
