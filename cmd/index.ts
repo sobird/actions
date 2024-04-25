@@ -3,6 +3,7 @@
 import { Command } from 'commander';
 import pkg from '../package.json' assert { type: 'json' };
 import { registerCommand } from './register';
+import { generateConfigCommand } from './generate-config';
 
 const program = new Command();
 
@@ -19,4 +20,5 @@ program
 // });
 
 program.addCommand(registerCommand);
+program.addCommand(generateConfigCommand);
 program.parse(process.argv);
