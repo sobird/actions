@@ -3,19 +3,20 @@
  *
  * sobird<i@sobird.me> at 2024/04/26 0:19:33 created.
  */
+import util from 'node:util';
 import { Timestamp } from '@bufbuild/protobuf';
 import retry from 'retry';
-import log4js from 'log4js';
+import log4js, { LoggingEvent } from 'log4js';
 import type { Client } from '@/pkg';
 import {
-  Task, TaskState, StepState, Result, UpdateTaskRequest, UpdateLogRequest,
+  LogRow, Task, TaskState, StepState, Result, UpdateTaskRequest, UpdateLogRequest,
 } from '@/pkg/client/runner/v1/messages_pb';
 import { Replacer } from '@/utils';
 
 const logger = log4js.getLogger();
 logger.level = 'info';
 
-const stringToResult = {
+const stringToResult: any = {
   success: Result.SUCCESS,
   failure: Result.FAILURE,
   skipped: Result.SKIPPED,
@@ -29,15 +30,15 @@ class Reporter {
 
   private outputs = new Map<string, string>();
 
-  private debugOutputEnabled: boolean;
+  private debugOutputEnabled = false;
 
-  private stopCommandEndToken: string;
+  private stopCommandEndToken = '';
 
-  private logOffset: bigint;
+  private logOffset = BigInt(0);
 
-  private logRows: LogRow[];
+  private logRows = <LogRow[]>[];
 
-  private closed: boolean;
+  private closed = false;
 
   constructor(public client: typeof Client.prototype.RunnerServiceClient, public task: Task, public cancel: () => void) {
     ['token', 'gitea_runtime_token'].forEach((key) => {
@@ -85,64 +86,137 @@ class Reporter {
   }
 
   /**
-   * 处理日志条目并更新任务状态的逻辑
+   * 用于在日志条目被创建时执行额外的操作。
+   * 该方法更新了任务状态，处理了日志行，并在必要时更新了步骤信息
    * @param entry
    */
-  fire(entry: any) {
+  fire(entry: LoggingEvent) {
     try {
-      // 检查是否在步骤执行期间
-      if (!this.duringSteps()) {
+      // 使用提供的日志条目
+      logger.trace(entry.data);
+
+      const timestamp = Timestamp.fromDate(entry.startTime);
+      if (!this.state.startedAt) {
+        this.state.startedAt = timestamp;
+      }
+
+      // 更新任务状态
+      const { stage } = entry.context;
+      if (stage === 'Main') {
+        // 处理作业结果
+        const jobResult = Reporter.parseResult(entry.context.jobResult);
+        if (jobResult !== undefined) {
+          this.state.result = jobResult;
+          this.state.stoppedAt = timestamp;
+          this.state.steps.map((item) => {
+            const step = item;
+            if (step.result === Result.UNSPECIFIED) {
+              step.result = Result.UNSPECIFIED;
+              if (jobResult === Result.SKIPPED) {
+                step.result = Result.SKIPPED;
+              }
+            }
+            return step;
+          });
+        }
+
+        // 检查是否在步骤执行期间
+        if (!this.duringSteps()) {
         // 如果不是，将日志行添加到日志行列表中
+          const logRow = this.parseLogRow(entry);
+          if (logRow) {
+            this.logRows.push(logRow);
+          }
+        }
+        return;
+      }
+
+      // 处理步骤信息
+      let step: StepState | undefined;
+      const { stepNumber } = entry.context;
+      if (stepNumber !== undefined && this.state.steps[stepNumber] > stepNumber) {
+        step = this.state.steps[stepNumber];
+      }
+
+      if (!step) {
+        if (!this.duringSteps()) {
+          // 如果不是，将日志行添加到日志行列表中
+          const logRow = this.parseLogRow(entry);
+          if (logRow) {
+            this.logRows.push(logRow);
+          }
+        }
+        return;
+      }
+
+      if (!step.startedAt) {
+        step.startedAt = timestamp;
+      }
+
+      const rawOutput = entry.context.raw_output;
+      if (rawOutput) {
+        const logRow = this.parseLogRow(entry);
+        if (logRow) {
+          if (step.logLength === BigInt(0)) {
+            step.logIndex = this.logOffset + BigInt(this.logRows.length);
+          }
+          step.logLength += BigInt(1);
+          this.logRows.push(logRow);
+        }
+      } else if (!this.duringSteps()) {
         const logRow = this.parseLogRow(entry);
         if (logRow) {
           this.logRows.push(logRow);
         }
       }
 
-      // 更新任务状态
-      const { stage } = entry.data;
-
-      if (stage === 'Main') {
-        // 如果是主阶段，检查是否有步骤结果，并更新步骤状态
-        const { stepNumber } = entry.data;
-        if (stepNumber !== undefined) {
-          const step = this.findStepByNumber(stepNumber);
-          if (step) {
-            const stepResult = this.parseResult(entry.data.stepResult);
-            if (stepResult) {
-              step.result = stepResult;
-              step.stoppedAt = Timestamp.fromDate(new Date());
-            }
-          }
+      // 检查步骤结果
+      const stepResult = Reporter.parseResult(entry.context.stepResult);
+      if (stepResult !== undefined && step) {
+        if (step.logLength === BigInt(0)) {
+          step.logIndex = this.logOffset + BigInt(this.logRows.length);
         }
-      }
-
-      // 如果是作业结果，更新任务结果
-      const { jobResult } = entry.data;
-      if (jobResult !== undefined) {
-        const result = this.parseResult(jobResult);
-        if (result) {
-          this.state.result = result;
-          this.state.stoppedAt = Timestamp.fromDate(new Date());
-          // 更新所有未指定结果的步骤的状态为取消
-          this.state.steps.forEach((step) => {
-            if (step.result === 'UNSPECIFIED') {
-              step.result = 'CANCELLED';
-            }
-          });
-        }
+        step.result = stepResult;
+        step.stoppedAt = timestamp;
       }
     } finally {
       // 解锁
     }
   }
 
-  runDaemon(): void {
-    // 定期报告日志和状态的逻辑
+  async runDaemon() {
+    if (this.closed) {
+      return;
+    }
+    // 检查上下文是否已取消
+    // if (this.context.isCancelled()) {
+    //   return;
+    // }
+
+    try {
+      // 报告日志，但不标记为完成
+      await this.reportLog(false);
+      // 报告任务状态
+      await this.reportState();
+    } catch (error) {
+      logger.error('Error running daemon:', error);
+    }
+
+    // 使用 setTimeout 来实现延迟执行
+    setTimeout(() => { return this.runDaemon(); }, 1000);
   }
 
-  logf(format: string, a: any): void {
-    // 记录日志的逻辑
+  /**
+   * 记录日志
+   *
+   * @param format
+   * @param a
+   */
+  log(format: string, ...a: any): void {
+    this.logRows.push(new LogRow({
+      time: Timestamp.fromDate(new Date()),
+      content: util.format(format, ...a),
+    }));
   }
 
   setOutputs(outputs: Map<string, string>): void {
@@ -179,18 +253,20 @@ class Reporter {
           lastWords = 'Early termination';
         }
         // 更新所有未指定结果的步骤为已取消
-        this.state.steps.forEach((step) => {
+        this.state.steps.map((item) => {
+          const step = item;
           if (step.result === Result.UNSPECIFIED) {
             step.result = Result.CANCELLED;
           }
+          return step;
         });
         this.state.result = Result.FAILURE;
 
         // 添加最终日志行
-        this.logRows.push({
+        this.logRows.push(new LogRow({
           time: Timestamp.fromDate(new Date()),
           content: lastWords,
-        });
+        }));
         this.state.startedAt = Timestamp.fromDate(new Date());
       } else if (lastWords) {
         // 添加额外的日志行
@@ -207,7 +283,7 @@ class Reporter {
     try {
       await this.retryReportLog();
     } catch (error) {
-      console.error('Failed to report logs and state:', error);
+      logger.error('Failed to report logs and state:', error);
     }
   }
 
@@ -220,7 +296,8 @@ class Reporter {
       if (operation.retry(logError as any)) {
         return;
       }
-      throw operation.mainError();
+
+      operation.mainError();
     });
   }
 
@@ -324,7 +401,7 @@ class Reporter {
     return true;
   }
 
-  parseResult(result: any) {
+  static parseResult(result: any): Result {
     // 解析结果字符串的逻辑
     let str = '';
     if (typeof result === 'string') {
@@ -382,9 +459,9 @@ class Reporter {
    * log.Entry
    * @param entry
    */
-  parseLogRow(entry: any): any { // 需要具体的 LogRow 类型
+  parseLogRow(entry: LoggingEvent) {
     const cmdRegex = /^::([^ :]+)( .*)?::(.*)$/;
-    let content = entry.Message.replace(/\r|\n$/g, '');
+    let content = entry.data.join().replace(/\r|\n$/g, '');
 
     const matches = cmdRegex.exec(content);
     if (matches) {
@@ -399,13 +476,10 @@ class Reporter {
 
     content = this.logReplacer.replace(content);
 
-    // 假设 entry.Time 是一个时间字符串，我们将其转换为 Date 对象
-    const time = new Date(entry.Time);
-
-    return {
-      Time: time,
-      Content: content,
-    };
+    return new LogRow({
+      time: Timestamp.fromDate(entry.startTime),
+      content,
+    });
   }
 
   /**
@@ -417,6 +491,8 @@ class Reporter {
   }
 }
 
+export default Reporter;
+
 // 使用示例
-const reporter = new Reporter(cancel, client, task);
-reporter.logf('Hello, %s!', 'world');
+// const reporter = new Reporter(cancel, client, task);
+// reporter.log('Hello, %s!', 'world');
