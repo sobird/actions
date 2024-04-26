@@ -5,6 +5,9 @@ export default {
   // 预设配置
   preset: 'ts-jest',
   testEnvironment: 'node',
+  moduleNameMapper: {
+    '@/(.*)$': '<rootDir>/$1',
+  },
   moduleFileExtensions: [
     'ts',
     'js',

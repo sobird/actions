@@ -30,7 +30,7 @@ class Reporter {
 
   private outputs = new Map<string, string>();
 
-  private debugOutputEnabled = false;
+  public debugOutputEnabled = false;
 
   private stopCommandEndToken = '';
 
@@ -40,7 +40,7 @@ class Reporter {
 
   private closed = false;
 
-  constructor(public client: typeof Client.prototype.RunnerServiceClient, public task: Task, public cancel: () => void) {
+  constructor(public client: typeof Client.prototype.RunnerServiceClient, public task: Task = new Task(), public cancel = () => {}) {
     ['token', 'gitea_runtime_token'].forEach((key) => {
       const value = task.context?.fields[key].toJsonString();
       if (value) {
@@ -420,7 +420,7 @@ class Reporter {
    * @param parameters
    * @param value
    */
-  handleCommand(originalContent: string, command: string, parameters: string, value: string): string | null {
+  handleCommand(originalContent: string, command: string, parameters: string, value: string) {
     if (this.stopCommandEndToken !== '' && command !== this.stopCommandEndToken) {
       return originalContent;
     }
@@ -437,10 +437,15 @@ class Reporter {
       // The following cases are placeholders for future implementation
       // and currently just return the original content.
       case 'notice':
+        return originalContent;
       case 'warning':
+        return originalContent;
       case 'error':
+        return originalContent;
       case 'group':
+        return originalContent;
       case 'endgroup':
+        return originalContent;
       case 'stop-commands':
         this.stopCommandEndToken = value;
         return null;
@@ -470,7 +475,7 @@ class Reporter {
       if (output) {
         content = output;
       } else {
-        return null;
+        return;
       }
     }
 
@@ -494,5 +499,10 @@ class Reporter {
 export default Reporter;
 
 // 使用示例
-// const reporter = new Reporter(cancel, client, task);
-// reporter.log('Hello, %s!', 'world');
+// const reporter = new Reporter({} as any);
+// const result = reporter.parseLogRow({
+//   data: ["::notice file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
+//   startTime: new Date(),
+// } as LoggingEvent);
+
+// console.log('parseLogRow', result);
