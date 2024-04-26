@@ -7,7 +7,7 @@
 type Entries = [string, string][];
 
 export class Replacer {
-  constructor(public entries: Entries = []) {}
+  constructor(private entries: Entries = []) {}
 
   add(original: string, replacement: string) {
     this.entries.push([original, replacement]);

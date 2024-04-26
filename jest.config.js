@@ -29,7 +29,7 @@ export default {
    * % Funcs 函数覆盖率（function coverage）
    * % Lines 行覆盖率（line coverage）
    */
-  collectCoverage: true,
+  collectCoverage: false,
   collectCoverageFrom: [
     './**',
   ],
