@@ -38,6 +38,7 @@
     "js-yaml": "^4.1.0",
     "log4js": "^6.9.1",
     "prompts": "^2.4.2",
+    "retry": "^0.13.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0"
   },
@@ -54,6 +55,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.12.7",
     "@types/prompts": "^2.4.9",
+    "@types/retry": "^0.12.5",
     "esbuild": "^0.20.2",
     "eslint-config-sobird": "^0.2.13",
     "glob": "^10.3.10",
