@@ -6,21 +6,19 @@ import { RunnerService } from './runner/v1/services_connect';
 
 const UUIDHeader = 'x-runner-uuid';
 const TokenHeader = 'x-runner-token';
-/**
- * @deprecated could be removed after Gitea 1.20 released
- */
+/**  @deprecated could be removed after Gitea 1.20 released */
 const VersionHeader = 'x-runner-version';
 
-class Client {
+export default class Client {
   PingServiceClient: PromiseClient<typeof PingService>;
 
   RunnerServiceClient: PromiseClient<typeof RunnerService>;
 
   constructor(
     public endpoint: string,
-    public token: string,
+    private token: string,
     public insecure: boolean,
-    public uuid: string,
+    public uuid?: string,
     public version?: string,
     public options?: ConnectTransportOptions,
   ) {
@@ -53,5 +51,3 @@ class Client {
     this.RunnerServiceClient = createPromiseClient(RunnerService, transport);
   }
 }
-
-export default Client;

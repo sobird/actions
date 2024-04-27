@@ -2,13 +2,13 @@ import log4js from 'log4js';
 
 describe('log4js', () => {
 // 断言模拟函数被调用
-  it('logger.log', () => {
-    // myFunction();
+  it('logger.info', () => {
+    const logger = log4js.getLogger();
+    const mockLoggerInfo = jest.spyOn(logger, 'info');
 
-    const rest = (log4js as any)('This is a test log message');
-    console.log('getLoggingEvent', rest);
+    logger.info('This is a test log message');
 
-    // expect(mockLogger).toHaveBeenCalled();
+    expect(mockLoggerInfo).toHaveBeenCalled();
 
     // expect(() => {
     //   throw Error('eee');

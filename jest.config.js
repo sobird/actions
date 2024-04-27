@@ -5,6 +5,7 @@ export default {
   // 预设配置
   preset: 'ts-jest',
   testEnvironment: 'node',
+  // automock: true,
   moduleNameMapper: {
     '@/(.*)$': '<rootDir>/$1',
   },

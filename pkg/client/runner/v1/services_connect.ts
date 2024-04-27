@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { DeclareRequest, DeclareResponse, FetchTaskRequest, FetchTaskResponse, RegisterRequest, RegisterResponse, UpdateLogRequest, UpdateLogResponse, UpdateTaskRequest, UpdateTaskResponse } from "./messages_pb.js";
+import { DeclareRequest, DeclareResponse, FetchTaskRequest, FetchTaskResponse, RegisterRequest, RegisterResponse, UpdateLogRequest, UpdateLogResponse, UpdateTaskRequest, UpdateTaskResponse } from "./messages_pb";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**

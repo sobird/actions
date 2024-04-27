@@ -3,14 +3,18 @@ import SoundPlayerConsumer from './sound-player-consumer';
 
 jest.mock('./sound-player'); // SoundPlayer is now a mock constructor
 
+console.log('SoundPlayer', SoundPlayer);
+
 beforeEach(() => {
   // Clear all instances and calls to constructor and all methods:
-  // SoundPlayer.mockClear();
+  (SoundPlayer as jest.Mock).mockClear();
   // mockPlaySoundFile.mockClear();
 });
 
 it('We can check if the consumer called the class constructor', () => {
   const soundPlayer = new SoundPlayer();
+  console.log('soundPlayer', soundPlayer);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const soundPlayerConsumer = new SoundPlayerConsumer();
   console.log('soundPlayer', soundPlayer.playSoundFile('dddd'));
   expect(SoundPlayer).toHaveBeenCalledTimes(2);
