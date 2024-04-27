@@ -14,6 +14,7 @@ import {
 import { Replacer } from '@/utils';
 
 const logger = log4js.getLogger();
+
 logger.level = 'info';
 
 const stringToResult: any = {
@@ -427,6 +428,10 @@ class Reporter {
 
     switch (command) {
       case 'add-mask':
+        /**
+         * @todo
+         * 此处逻辑可能有问题，这将会mask添加到实例全局
+         */
         this.addMask(value);
         return null;
       case 'debug':
