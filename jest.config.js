@@ -38,6 +38,10 @@ export default {
     './**',
   ],
   notify: true,
+  modulePathIgnorePatterns: [
+    // '<rootDir>/test',
+    '.*__mocks__.*',
+  ],
 };
 
 // "jest": {
