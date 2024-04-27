@@ -179,11 +179,45 @@ describe('Reporter', () => {
     });
   });
 
+  describe('setOutputs', () => {
+    it('outputs: key > 255', () => {
+      const outputs = new Map();
+      const key = Array(64).fill('test').join('');
+      outputs.set(key, 'value1');
+      reporter.setOutputs(outputs);
+      expect((reporter as any).outputs.size).toBe(0);
+    });
+
+    it('outputs: value > 1024 * 1024', () => {
+      const outputs = new Map();
+      const value = Array(1024 * 1024 + 1).fill('1').join('');
+      outputs.set('key', value);
+      reporter.setOutputs(outputs);
+      expect((reporter as any).outputs.size).toBe(0);
+    });
+
+    it('outputs: normal', () => {
+      const outputs = new Map();
+      outputs.set('key', 'value');
+      outputs.set('key1', 'value2');
+      reporter.setOutputs(outputs);
+      expect((reporter as any).outputs.size).toBe(2);
+    });
+  });
+
   it(('test reportLog'), async () => {
     await expect(reporter.reportLog(true)).rejects.toThrow('not all logs are submitted');
     await expect(reporter.reportLog(false)).resolves.not.toThrow();
-    // expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
+    expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
+  });
 
-    console.log('reporter', (reporter as any).logOffset);
+  it(('test reportState'), async () => {
+    await expect(reporter.reportState()).resolves.not.toThrow();
+    expect(RunnerServiceClient.updateTask).toHaveBeenCalled();
+  });
+
+  it(('test runDaemon'), async () => {
+    await expect(reporter.runDaemon()).resolves.not.toThrow();
+    expect(RunnerServiceClient.updateTask).toHaveBeenCalled();
   });
 });

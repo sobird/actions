@@ -199,8 +199,8 @@ class Reporter {
       await this.reportLog(false);
       // 报告任务状态
       await this.reportState();
-    } catch (error) {
-      logger.error('Error running daemon:', error);
+    } catch (error: any) {
+      logger.error('Error running daemon:', error.message);
     }
 
     // 使用 setTimeout 来实现延迟执行
@@ -221,7 +221,7 @@ class Reporter {
   }
 
   setOutputs(outputs: Map<string, string>): void {
-    outputs.forEach(([key, value]) => {
+    outputs.forEach((value, key) => {
       if (key.length > 255) {
         logger.warn('ignore output because the key is too long', key);
         return;
@@ -341,39 +341,35 @@ class Reporter {
    * 报告状态
    */
   async reportState() {
-    try {
-      const state = this.state.clone();
+    const state = this.state.clone();
 
-      const outputs = Array.from(this.outputs).reduce((accu, [key, val]) => {
-        accu[key] = val;
-        return accu;
-      }, {} as { [key: string]: string });
+    const outputs = Array.from(this.outputs).reduce((accu, [key, val]) => {
+      accu[key] = val;
+      return accu;
+    }, {} as { [key: string]: string });
 
-      const updateTaskResponse = await this.client.updateTask(new UpdateTaskRequest({ state, outputs }));
-      if (!updateTaskResponse) {
-        return;
+    const updateTaskResponse = await this.client.updateTask(new UpdateTaskRequest({ state, outputs }));
+    if (!updateTaskResponse) {
+      return;
+    }
+
+    updateTaskResponse.sentOutputs.forEach((outputKey) => {
+      this.outputs.set(outputKey, '');
+    });
+
+    if (updateTaskResponse.state && updateTaskResponse.state.result === Result.CANCELLED) {
+      this.cancel();
+    }
+
+    const notSent: string[] = [];
+    this.outputs.forEach((value, key) => {
+      if (!updateTaskResponse.sentOutputs.includes(key)) {
+        notSent.push(key);
       }
+    });
 
-      updateTaskResponse.sentOutputs.forEach((outputKey) => {
-        this.outputs.set(outputKey, '');
-      });
-
-      if (updateTaskResponse.state && updateTaskResponse.state.result === Result.CANCELLED) {
-        this.cancel();
-      }
-
-      const notSent: string[] = [];
-      this.outputs.forEach((value, key) => {
-        if (!updateTaskResponse.sentOutputs.includes(key)) {
-          notSent.push(key);
-        }
-      });
-
-      if (notSent.length > 0) {
-        throw Error(`there are still outputs that have not been sent: ${notSent}`);
-      }
-    } finally {
-      // todo
+    if (notSent.length > 0) {
+      throw Error(`there are still outputs that have not been sent: ${notSent}`);
     }
   }
 
@@ -504,10 +500,12 @@ class Reporter {
 export default Reporter;
 
 // 使用示例
-// const reporter = new Reporter({} as any);
+const reporter = new Reporter({} as any);
 // const result = reporter.parseLogRow({
 //   data: ["::notice file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
 //   startTime: new Date(),
 // } as LoggingEvent);
 
 // console.log('parseLogRow', result);
+
+reporter.runDaemon();
