@@ -103,7 +103,7 @@ class Reporter {
 
       // 更新任务状态
       const { stage } = entry.context;
-      if (stage === 'Main') {
+      if (stage !== 'Main') {
         // 处理作业结果
         const jobResult = Reporter.parseResult(entry.context.jobResult);
         if (jobResult !== undefined) {
@@ -135,7 +135,7 @@ class Reporter {
       // 处理步骤信息
       let step: StepState | undefined;
       const { stepNumber } = entry.context;
-      if (stepNumber !== undefined && this.state.steps[stepNumber] > stepNumber) {
+      if (Number.isInteger(parseInt(stepNumber, 10)) && this.state.steps.length > stepNumber) {
         step = this.state.steps[stepNumber];
       }
 

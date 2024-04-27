@@ -39,8 +39,8 @@ export default {
   ],
   notify: true,
   modulePathIgnorePatterns: [
-    // '<rootDir>/test',
-    '.*__mocks__.*',
+    '<rootDir>/node_modules',
+    // '.*__mocks__.*',
   ],
 };
 

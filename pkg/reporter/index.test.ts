@@ -4,10 +4,15 @@
  * sobird<i@sobird.me> at 2024/04/26 18:18:27 created.
  */
 import log4js from 'log4js';
+import Client from '../client';
 import Reporter from '.';
 
+jest.mock('../client');
+
+const { RunnerServiceClient } = new Client('', '', false);
+
 describe('Reporter', () => {
-  const reporter = new Reporter({} as any);
+  const reporter = new Reporter(RunnerServiceClient);
   describe('parseLogRow', () => {
     const tests = [
       {
@@ -123,84 +128,62 @@ describe('Reporter', () => {
 
   // fire
   describe('fire', () => {
-    const context = {
-      stage: 'Main',
-      stepNumber: 0,
-      raw_output: true,
-    };
-    const tests: any[] = [
-      {
-        message: 'regular log line',
-      },
-      {
-        message: '::debug::debug log line',
-      },
-      {
-        message: 'regular log line',
-      },
-      {
-        message: '::debug::debug log line',
-      },
-      {
-        message: '::debug::debug log line',
-      },
-      {
-        message: 'regular log line',
-      },
-    ];
+    it('test fire', () => {
+      const context = {
+        stage: 'Main',
+        stepNumber: 0,
+        raw_output: true,
+      };
+      const tests: any[] = [
+        {
+          message: 'regular log line',
+        },
+        {
+          message: '::debug::debug log line',
+        },
+        {
+          message: 'regular log line',
+        },
+        {
+          message: '::debug::debug log line',
+        },
+        {
+          message: '::debug::debug log line',
+        },
+        {
+          message: 'regular log line',
+        },
+      ];
+      const stepNumber = 2;
 
-    const logger = log4js.getLogger();
+      const logger = log4js.getLogger();
+      logger.addContext('jobResult', 0);
+      logger.addContext('stepResult', 'success');
 
-    Object.entries(context).forEach(([key, value]) => {
-      logger.addContext(key, value);
-    });
-
-    tests.forEach((item) => {
-      it(item.message, () => {
-        expect(() => { reporter.fire(logger.info(item.message) as any); }).not.toThrow();
+      Object.entries(context).forEach(([key, value]) => {
+        logger.addContext(key, value);
       });
+
+      logger.addContext('stepNumber', stepNumber);
+
+      reporter.resetSteps(5);
+
+      tests.forEach((item) => {
+        expect(() => { reporter.fire(logger.info(item.message) as any); }).not.toThrow();
+      // 断言模拟方法被调用
+      // expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
+      // expect(RunnerServiceClient.updateTask).toHaveBeenCalled();
+      });
+
+      expect((reporter as any).state.steps[stepNumber].logLength).toBe(BigInt(3));
     });
+  });
 
-    it('ignore command lines', async () => {
-      // const client = new Client(); // 假设 Client 类型存在
-      // // 配置 mock 行为
-      // client.updateLog = jest.fn().mockImplementation((ctx, req) => {
-      //   console.log(`Received UpdateLog: ${req.msg.toString()}`);
-      //   return Promise.resolve({
-      //     msg: {
-      //       ackIndex: req.msg.index + req.msg.rows.length,
-      //     },
-      //   });
-      // });
-      // client.updateTask = jest.fn().mockImplementation((ctx, req) => {
-      //   console.log(`Received UpdateTask: ${req.msg.toString()}`);
-      //   return Promise.resolve({});
-      // });
+  it(('test reportLog'), async () => {
+    await expect(reporter.reportLog(true)).rejects.toThrow('not all logs are submitted');
+    await expect(reporter.reportLog(false)).resolves.not.toThrow();
+    // expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
 
-      // const ctx = {};
-      // const cancel = jest.fn();
-      // const taskCtx = new structpb.Struct();
-      // const task = {
-      //   context: taskCtx,
-      // };
-
-      // const reporter = new Reporter(ctx, cancel, client, task);
-      // reporter.resetSteps(5);
-
-      // 测试 Fire 方法
-      // expect(reporter.fire({
-      //   message: 'regular log line',
-      //   data: {
-      //     stage: 'Main',
-      //     stepNumber: 0,
-      //     raw_output: true,
-      //   },
-      // })).toBeNull();
-
-      // // ... 其他 Fire 方法的测试 ...
-
-      // // 关闭报告器
-      // await reporter.close('');
-    });
+    console.log('reporter', (reporter as any).logOffset);
   });
 });
