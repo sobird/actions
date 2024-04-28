@@ -1,9 +1,8 @@
-import os from 'os';
-import path from 'path';
 import log4js from 'log4js';
 import type { Client, Config } from '@/pkg';
 import { version } from '@/package.json' assert { type: 'json' };
 import { Task } from '@/pkg/client/runner/v1/messages_pb';
+import Reporter from '../reporter';
 
 const logger = log4js.getLogger();
 logger.level = 'info';
@@ -33,33 +32,76 @@ class Runner {
     }
     this.runningTasks.set(taskId, {});
 
+    // 超时设置
     try {
-      const timer = setTimeout(() => {
-        throw Error('Operation timed out');
-      }, this.config.runner.timeout);
-      /** @todo */
-      // const reporter = new Reporter(this.client, task);
-      // await reporter.runDaemon();
+      const timer = setTimeout(() => { throw Error('Operation timed out'); }, this.config.runner.timeout);
+      const reporter = new Reporter(this.client, task);
+      let runErr = null;
       try {
-        await this.runTask(task);
+        reporter.runDaemon();
+        // 抛出异常
+        runErr = this.runTask(task, reporter);
       } finally {
-        // await reporter.close();
+        let lastWords = '';
+        if (runErr !== null) {
+          lastWords = runErr;
+        }
+        reporter.close(lastWords);
+
+        // 清除超时句柄
         clearTimeout(timer);
       }
-    } catch (err) {
-      logger.error('Failed to run task', err);
     } finally {
-      this.runningTasks.delete(taskId);
+      // cancel 取消超时
     }
+
+    this.runningTasks.delete(taskId);
+
+    // try {
+    //   const timer = setTimeout(() => {
+    //     throw Error('Operation timed out');
+    //   }, this.config.runner.timeout);
+    //   /** @todo */
+    //   const reporter = new Reporter(this.client, task);
+    //   // await reporter.runDaemon();
+    //   try {
+    //     await this.runTask(task);
+    //   } finally {
+    //     // await reporter.close();
+    //     clearTimeout(timer);
+    //   }
+    // } catch (err) {
+    //   logger.error('Failed to run task', err);
+    // } finally {
+    //   this.runningTasks.delete(taskId);
+    // }
   }
 
-  async runTask(task: Task) {
-    // ... 实现任务运行逻辑 ...
+  /**
+   * 运行任务
+   *
+   * @param task
+   * @param reporter
+   */
+  async runTask(task: Task, reporter: Reporter) {
+    try {
+      // todo 具体实现
+      reporter.log(`version: ${version} Received task ${task.id} of job ${task.context?.fields.job}, triggered by event: ${task.context?.fields.event_name}`);
+
+      // const [workflow, jobID, err] = this.generateWorkflow(task);
+      // if (err) {
+      //   return;
+      // }
+
+      //
+    } catch (error) {
+      // todo
+    }
   }
 
   private artifactcache() {
     // todo
-    console.log('this', this);
+    console.log('artifactcache:', this);
     return {} as any;
   }
 

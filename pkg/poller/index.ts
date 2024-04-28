@@ -4,60 +4,94 @@
  * sobird<i@sobird.me> at 2024/04/25 22:02:36 created.
  */
 
+import type { Client, Config, Runner } from '@/pkg';
+import { FetchTaskRequest, Task } from '../client/runner/v1/messages_pb';
+
 class Poller {
-  constructor(public client, public runner, public config) {
-    this.tasksVersion = 0; // Node.js 中使用普通数值即可
+  tasksVersion = BigInt(0);
+
+  constructor(
+    public client: typeof Client.prototype.RunnerServiceClient,
+    public runner: typeof Runner.prototype,
+    public config: typeof Config.prototype,
+  ) {}
+
+  async poll() {
+    const promises = [];
+    for (let i = 0; i < this.config.runner.capacity; i++) {
+      const promise = this.pollTask();
+      promises.push(promise);
+    }
+
+    return Promise.all(promises);
   }
 
-  async poll(ctx) {
-    const limiter = new RateLimiter({
-      max: 1, // 每秒一个请求
-      interval: this.config.Runner.FetchInterval * 1000, // 将时间间隔转换为毫秒
+  async pollTask() {
+    return new Promise((resolve, reject) => {
+      const checkInterval = setInterval(async () => {
+        // if (ctx.canceled) {
+        //   clearInterval(checkInterval);
+        //   return resolve();
+        // }
+
+        try {
+          // 模拟限流器等待
+          // await this.limiter.acquire();
+
+          const task = await this.fetchTask();
+
+          if (task) {
+            this.runTaskWithRecover(task);
+          }
+        } catch (error) {
+          console.error('Error in poll loop:', error);
+          clearInterval(checkInterval);
+          return reject(error);
+        }
+      }, 1000); // 每秒检查一次
     });
-
-    for (let i = 0; i < this.config.Runner.Capacity; i++) {
-      await this.pollTask(ctx, limiter);
-    }
   }
 
-  async pollTask(ctx, limiter) {
-    while (true) {
-      await limiter.removeTokens(1, { timeout: this.config.Runner.FetchInterval }); // 等待获取令牌
-      if (ctx.canceled) return;
-
-      const task = await this.fetchTask(ctx);
-      if (task) {
-        await this.runTaskWithRecover(ctx, task);
-      }
-    }
-  }
-
-  async runTaskWithRecover(ctx, task) {
+  async runTaskWithRecover(task: Task) {
     try {
-      await this.runner.run(ctx, task);
+      // 使用try-catch来捕获运行任务时的异常
+      await this.runner.run(task);
     } catch (error) {
-      log.error('failed to run task', error);
+      // 记录运行任务时发生的任何错误
+      console.error('failed to run task', error);
+    } finally {
+      // 无论是否发生错误，都会执行的代码
+      // 可以在这里放置清理逻辑
     }
   }
 
-  async fetchTask(ctx) {
-    const v = this.tasksVersion;
-    const resp = await this.client.FetchTask({
-      TasksVersion: v,
-    }, { timeout: this.config.Runner.FetchTimeout });
+  /**
+   * 获取任务
+   *
+   * @returns Task
+   */
+  async fetchTask() {
+    const { tasksVersion } = this;
+    const timer = setTimeout(() => {
+      throw Error('timeout ');
+    });
+    try {
+      const fetchTaskResponse = await this.client.fetchTask(new FetchTaskRequest({
+        tasksVersion,
+      }));
 
-    if (!resp || !resp.Msg) return null;
+      if (fetchTaskResponse.tasksVersion > tasksVersion) {
+        this.tasksVersion = fetchTaskResponse.tasksVersion;
+      }
 
-    if (resp.Msg.TasksVersion > v) {
-      this.tasksVersion = resp.Msg.TasksVersion;
+      if (fetchTaskResponse.task) {
+        return fetchTaskResponse.task;
+      }
+      this.tasksVersion = BigInt(0);
+    } finally {
+      //
+      clearTimeout(timer);
     }
-
-    if (resp.Msg.Task) {
-      this.tasksVersion = 0; // 强制下一次请求查询数据库
-      return resp.Msg.Task;
-    }
-
-    return null;
   }
 }
 

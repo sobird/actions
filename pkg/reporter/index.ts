@@ -41,7 +41,11 @@ class Reporter {
 
   private closed = false;
 
-  constructor(public client: typeof Client.prototype.RunnerServiceClient, public task: Task = new Task(), public cancel = () => {}) {
+  constructor(
+    public client: typeof Client.prototype.RunnerServiceClient,
+    public task: Task = new Task(),
+    public cancel = () => {},
+  ) {
     ['token', 'gitea_runtime_token'].forEach((key) => {
       const value = task.context?.fields[key].toJsonString();
       if (value) {
