@@ -1,8 +1,12 @@
 import { Timestamp } from '@bufbuild/protobuf';
-import Client from './index';
+import { createRequire } from 'node:module';
+import { jest } from '@jest/globals';
+// import Client from './index';
 import { UpdateLogRequest, LogRow } from './runner/v1/messages_pb';
 
-jest.mock('./index');
+const require = createRequire(import.meta.url);
+
+import.meta.jest.mock('./index');
 
 // // 创建 Client 类的模拟
 // const mockClient = {
@@ -16,6 +20,8 @@ jest.mock('./index');
 // jest.mock('.', () => {
 //   return jest.fn().mockImplementation(() => { return mockClient; });
 // });
+
+const Client = require('./index');
 
 const { RunnerServiceClient } = new Client('', '', false);
 
