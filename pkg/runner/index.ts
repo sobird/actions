@@ -1,5 +1,6 @@
 import log4js from 'log4js';
 import type { Client, Config } from '@/pkg';
+// @ts-ignore
 import pkg from '@/package.json' assert { type: 'json' };
 import { Task } from '@/pkg/client/runner/v1/messages_pb';
 import Reporter from '../reporter';
