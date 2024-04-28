@@ -12,7 +12,7 @@
     "build:buf": "buf generate https://gitea.com/gitea/actions-proto-def.git",
     "build": "rollup -c --environment NODE_ENV:production",
     "eslint:fix": "eslint src --fix",
-    "test": "jest",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
     "lint:eslint": "eslint src --ext ts,js --report-unused-disable-directives --max-warnings 10",
     "preversion": "yarn lint:eslint",
     "version": "git add -A .",

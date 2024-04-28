@@ -3,20 +3,28 @@
 export default {
   verbose: true,
   // 预设配置
-  preset: 'ts-jest',
+  preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   // automock: true,
   moduleNameMapper: {
     '@/(.*)$': '<rootDir>/$1',
   },
+
   moduleFileExtensions: [
     'ts',
     'js',
     'json',
   ],
-  transform: {
-    '^.+\\.ts?$': 'ts-jest',
-  },
+  // transform: {
+  //   // '^.+\\.[tj]sx?$' to process js/ts with `ts-jest`
+  //   // '^.+\\.m?[tj]sx?$' to process js/ts/mjs/mts with `ts-jest`
+  //   '^.+\\.tsx?$': [
+  //     'ts-jest',
+  //     {
+  //       useESM: false,
+  //     },
+  //   ],
+  // },
   testMatch: [
     '**/*.test.ts',
   ],
@@ -41,34 +49,8 @@ export default {
   collectCoverageFrom: [
     './**',
   ],
-  notify: true,
   modulePathIgnorePatterns: [
     '<rootDir>/node_modules',
     // '.*__mocks__.*',
   ],
 };
-
-// "jest": {
-//   "verbose": true,
-//   "clearMocks": true,
-//   "testEnvironment": "node",
-//   "moduleFileExtensions": [
-//     "js"
-//   ],
-//   "testMatch": [
-//     "**/*.test.js"
-//   ],
-//   "testPathIgnorePatterns": [
-//     "/node_modules/",
-//     "/dist/"
-//   ],
-//   "coverageReporters": [
-//     "json-summary",
-//     "text",
-//     "lcov"
-//   ],
-//   "collectCoverage": true,
-//   "collectCoverageFrom": [
-//     "./src/**"
-//   ]
-// },

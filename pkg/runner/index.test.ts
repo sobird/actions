@@ -1,9 +1,10 @@
+import { jest } from '@jest/globals';
 import Runner from '.';
 import Client from '../client';
 import { Config } from '@/pkg';
 import { version } from '@/package.json';
 
-console.log('pkg', version);
+console.log('pkg', import.meta.url);
 
 jest.mock('../client');
 

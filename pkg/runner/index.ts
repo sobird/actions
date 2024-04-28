@@ -39,18 +39,14 @@ class Runner {
     try {
       const timer = setTimeout(() => { throw Error('Operation timed out'); }, this.config.runner.timeout);
       const reporter = new Reporter(this.client, task);
-      let runErr = null;
       try {
         reporter.runDaemon();
         // 抛出异常
-        runErr = this.runTask(task, reporter);
-      } finally {
-        let lastWords = '';
-        if (runErr !== null) {
-          lastWords = runErr;
-        }
+        await this.runTask(task, reporter);
+      } catch (err) {
+        const lastWords = (err as Error).message;
         reporter.close(lastWords);
-
+      } finally {
         // 清除超时句柄
         clearTimeout(timer);
       }
@@ -155,22 +151,5 @@ class Runner {
     });
   }
 }
-
-// 实现 Reporter 类
-// class Reporter {
-//   constructor(ctx, client, task) {
-//     // ... 初始化逻辑 ...
-//   }
-
-//   async runDaemon() {
-//     // ... 实现守护进程运行逻辑 ...
-//   }
-
-//   async close(lastWords) {
-//     // ... 实现关闭逻辑 ...
-//   }
-
-//   // ... 其他报告器方法 ...
-// }
 
 export default Runner;
