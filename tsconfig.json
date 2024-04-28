@@ -115,7 +115,7 @@
     "require": ["tsconfig-paths/register"],
     "compilerOptions": {
       "sourceMap": false,
-      // "module": "commonjs"
+      "module": "ESNext"
     }
   }
 }

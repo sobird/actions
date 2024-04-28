@@ -504,7 +504,7 @@ class Reporter {
 export default Reporter;
 
 // 使用示例
-const reporter = new Reporter({} as any);
+// const reporter = new Reporter({} as any);
 // const result = reporter.parseLogRow({
 //   data: ["::notice file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
 //   startTime: new Date(),
@@ -512,4 +512,4 @@ const reporter = new Reporter({} as any);
 
 // console.log('parseLogRow', result);
 
-reporter.runDaemon();
+// reporter.runDaemon();
