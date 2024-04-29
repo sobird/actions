@@ -1,19 +1,11 @@
-import { vi } from '@vi/globals';
-import Runner from '.';
+import Runner from './index';
 import Client from '../client';
 import { Config } from '@/pkg';
-import pkg from '@/package.json';
+import { version } from '@/package.json';
 
-console.log('pkg', import.meta.url, pkg.version);
+console.log(import.meta.url, version);
 
-import.meta.vi.mock('../client1');
-
-// vi.unstable_mockModule('../client', () => {
-//   return {
-//     execSync: vi.fn(),
-//   // 等等...
-//   };
-// });
+vi.mock('../client');
 
 const { RunnerServiceClient } = new Client('', '', false);
 

@@ -7,6 +7,7 @@ import log4js from 'log4js';
 import Client from '../client';
 import Reporter from './index';
 
+vi.mock('log4js');
 vi.mock('../client');
 
 const { RunnerServiceClient } = new Client('', '', false);
