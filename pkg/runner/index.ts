@@ -17,12 +17,8 @@ class Runner {
 
   constructor(
     public client: typeof Client.prototype.RunnerServiceClient,
-    public registration: typeof Config.Registration.prototype,
     public config: Config,
   ) {
-    // this.name = registration.Name;
-    // this.labels = registration.Labels.map((label) => { return { name: label }; });
-
     this.setupEnvs();
     this.setupGiteaEnv();
     this.setupCacheEnv();
@@ -53,8 +49,10 @@ class Runner {
     } finally {
       // cancel 取消超时
     }
-
+    console.log('1212', 1212);
     this.runningTasks.delete(taskId);
+
+    console.log('this.runningTasks', this.runningTasks.size);
 
     // try {
     //   const timer = setTimeout(() => {
@@ -100,8 +98,8 @@ class Runner {
 
   private artifactcache() {
     // todo
-    console.log('artifactcache:', this);
-    return {} as any;
+    // console.log('artifactcache:', this);
+    return this;
   }
 
   private setupEnvs() {
@@ -117,7 +115,7 @@ class Runner {
     this.envs.GITEA_ACTIONS_RUNNER_VERSION = version;
 
     this.envs.ACTIONS_RUNTIME_URL = this.pipelineUrl;
-    this.envs.ACTIONS_RESULTS_URL = this.registration.address;
+    this.envs.ACTIONS_RESULTS_URL = this.config.registration!.address;
   }
 
   private setupCacheEnv() {
@@ -134,14 +132,14 @@ class Runner {
          */
         const cacheHandler = this.artifactcache();
         if (cacheHandler) {
-          this.envs.ACTIONS_CACHE_URL = cacheHandler.getExternalUrl();
+          // this.envs.ACTIONS_CACHE_URL = cacheHandler.getExternalUrl();
         }
       }
     }
   }
 
   get pipelineUrl(): string {
-    return new URL('/api/actions_pipeline', this.registration.address).toString();
+    return new URL('/api/actions_pipeline', this.config.registration!.address).toString();
   }
 
   async declare(labels: string[]) {

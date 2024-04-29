@@ -77,6 +77,7 @@ class Config {
     public cache: Cache = new Cache(),
     public container: Container = new Container(),
     public host: Host = new Host(),
+    public registration?: Registration,
   ) {}
 
   // 加载默认配置
@@ -88,6 +89,8 @@ class Config {
 
     // 兼容旧环境变量
     config.runner.loadEnvs();
+
+    config.registration = Registration.load(config.runner.file);
 
     // 设置默认值
 
