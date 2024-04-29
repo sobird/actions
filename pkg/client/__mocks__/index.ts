@@ -6,6 +6,8 @@ import { JsonValue, Struct } from '@bufbuild/protobuf';
 import {
   UpdateLogResponse, DeclareResponse, Runner, FetchTaskResponse,
   Task,
+  UpdateTaskResponse,
+  TaskState,
 } from '../runner/v1/messages_pb';
 import contextJson from './data/context';
 
@@ -41,10 +43,19 @@ const mock = vi.fn().mockImplementation(() => {
           vars: {},
         }),
       })),
-      updateTask: vi.fn(),
+      updateTask: vi.fn().mockResolvedValue(new UpdateTaskResponse({
+        state: new TaskState({
+          id: BigInt(123),
+          result: 0,
+          startedAt: undefined,
+          stoppedAt: undefined,
+          steps: [],
+        }),
+        sentOutputs: [],
+      })),
       updateLog: vi.fn((request) => {
-        return new Promise((resolve) => {
-          resolve(new UpdateLogResponse({
+        return new Promise((r) => {
+          r(new UpdateLogResponse({
             ackIndex: request.index + BigInt(request.rows.length),
           }));
         });

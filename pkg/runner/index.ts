@@ -30,13 +30,16 @@ class Runner {
     }
     this.runningTasks.set(taskId, {});
 
-    // 超时设置
+    const reporter = new Reporter(this.client, task);
+
     try {
+      // 任务超时设置
       const timer = setTimeout(() => { throw Error('Operation timed out'); }, this.config.runner.timeout);
-      const reporter = new Reporter(this.client, task);
+
       // setInterval(() => {
       //   reporter.log('hdhdhs dsdsd', reporter.state.id);
       // }, 2000);
+
       try {
         reporter.runDaemon();
         // 抛出异常
@@ -48,8 +51,8 @@ class Runner {
         // 清除超时句柄
         clearTimeout(timer);
       }
-    } finally {
-      // cancel 取消超时
+    } catch (error) {
+      reporter.close((error as Error).message);
     }
     this.runningTasks.delete(taskId);
   }

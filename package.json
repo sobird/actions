@@ -14,6 +14,7 @@
     "eslint:fix": "eslint src --fix",
     "test": "vitest",
     "node": "NODE_OPTIONS=--import=/root/npm-template/dist/register.js node",
+    "cmd": "NODE_OPTIONS=--import=/root/npm-template/dist/register.js node cmd",
     "lint:eslint": "eslint src --ext ts,js --report-unused-disable-directives --max-warnings 10",
     "preversion": "yarn lint:eslint",
     "version": "git add -A .",

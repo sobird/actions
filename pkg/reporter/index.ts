@@ -7,6 +7,7 @@ import util from 'node:util';
 import { Timestamp } from '@bufbuild/protobuf';
 import retry from 'retry';
 import log4js, { LoggingEvent } from 'log4js';
+import { ConnectError } from '@connectrpc/connect';
 import type { Client } from '@/pkg';
 import {
   LogRow, Task, TaskState, StepState, Result, UpdateTaskRequest, UpdateLogRequest,
@@ -198,14 +199,10 @@ class Reporter {
     //   return;
     // }
 
-    try {
-      // 报告日志，但不标记为完成
-      await this.reportLog(false);
-      // 报告任务状态
-      await this.reportState();
-    } catch (error: any) {
-      logger.error('Error running daemon:', error.message);
-    }
+    // 报告日志
+    await this.reportLog(false);
+    // 报告任务状态
+    await this.reportState();
 
     // 使用 setTimeout 来实现延迟执行
     setTimeout(() => { return this.runDaemon(); }, 1000);
@@ -235,11 +232,9 @@ class Reporter {
         logger.warn(`ignore output because the value ${key} is too long: ${value.length}`);
         return;
       }
-      // 检查是否已经存储了该输出
       if (this.outputs.has(key)) {
         return;
       }
-      // 存储输出
       this.outputs.set(key, value);
     });
   }
@@ -320,24 +315,20 @@ class Reporter {
         noMore,
       }));
 
-      if (!updateLogResponse) {
-        throw Error(updateLogResponse);
-      }
-
       // 获取服务端确认的日志索引
       const { ackIndex } = updateLogResponse;
       if (ackIndex < this.logOffset) {
-        throw new Error('submitted logs are lost');
+        logger.info('submitted logs are lost');
       }
 
       this.logRows = this.logRows.slice(Number(ackIndex - this.logOffset));
       this.logOffset = ackIndex;
 
       if (noMore && ackIndex < this.logOffset + BigInt(rows.length)) {
-        throw new Error('not all logs are submitted');
+        logger.info('not all logs are submitted');
       }
-    } finally {
-      // todo
+    } catch (error) {
+      logger.error('Update log fail:', (error as ConnectError).message);
     }
   }
 
@@ -346,34 +337,34 @@ class Reporter {
    */
   async reportState() {
     const state = this.state.clone();
+    const outputs = Object.fromEntries(this.outputs);
 
-    const outputs = Array.from(this.outputs).reduce((accu, [key, val]) => {
-      accu[key] = val;
-      return accu;
-    }, {} as { [key: string]: string });
-
-    const updateTaskResponse = await this.client.updateTask(new UpdateTaskRequest({ state, outputs }));
-    if (!updateTaskResponse) {
-      return;
-    }
-
-    updateTaskResponse.sentOutputs.forEach((outputKey) => {
-      this.outputs.set(outputKey, '');
-    });
-
-    if (updateTaskResponse.state && updateTaskResponse.state.result === Result.CANCELLED) {
-      this.cancel();
-    }
-
-    const notSent: string[] = [];
-    this.outputs.forEach((value, key) => {
-      if (!updateTaskResponse.sentOutputs.includes(key)) {
-        notSent.push(key);
+    try {
+      const updateTaskResponse = await this.client.updateTask(new UpdateTaskRequest({ state, outputs }));
+      if (!updateTaskResponse) {
+        return;
       }
-    });
 
-    if (notSent.length > 0) {
-      throw Error(`there are still outputs that have not been sent: ${notSent}`);
+      updateTaskResponse.sentOutputs.forEach((outputKey) => {
+        this.outputs.set(outputKey, '');
+      });
+
+      if (updateTaskResponse.state && updateTaskResponse.state.result === Result.CANCELLED) {
+        this.cancel();
+      }
+
+      const notSent: string[] = [];
+      this.outputs.forEach((value, key) => {
+        if (!updateTaskResponse.sentOutputs.includes(key)) {
+          notSent.push(key);
+        }
+      });
+
+      if (notSent.length > 0) {
+        logger.info(`there are still outputs that have not been sent: ${notSent}`);
+      }
+    } catch (error) {
+      logger.error('Update task fail:', (error as ConnectError).message);
     }
   }
 
