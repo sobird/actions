@@ -63,7 +63,7 @@ class Runner {
   async runTask(task: Task, reporter: Reporter) {
     try {
       // todo 具体实现
-      reporter.log(`version: ${version} Received task ${task.id} of job ${task.context?.fields.job}, triggered by event: ${task.context?.fields.event_name}`);
+      reporter.log(`version: ${version} Received task ${task.id} of job ${task.context?.fields.job?.toJsonString()}, triggered by event: ${task.context?.fields.event_name?.toJsonString()}`);
 
       // const [workflow, jobID, err] = this.generateWorkflow(task);
       // if (err) {

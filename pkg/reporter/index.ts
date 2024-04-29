@@ -319,6 +319,7 @@ class Reporter {
         rows,
         noMore,
       }));
+
       if (!updateLogResponse) {
         throw Error(updateLogResponse);
       }
@@ -329,9 +330,8 @@ class Reporter {
         throw new Error('submitted logs are lost');
       }
 
-      // 更新日志偏移量和日志行
-      this.logOffset = ackIndex;
       this.logRows = this.logRows.slice(Number(ackIndex - this.logOffset));
+      this.logOffset = ackIndex;
 
       if (noMore && ackIndex < this.logOffset + BigInt(rows.length)) {
         throw new Error('not all logs are submitted');

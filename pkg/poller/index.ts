@@ -58,7 +58,6 @@ class Poller {
 
   async runTaskWithRecover(task: Task) {
     try {
-      // 使用try-catch来捕获运行任务时的异常
       await this.runner.run(task);
     } catch (error) {
       // 记录运行任务时发生的任何错误
