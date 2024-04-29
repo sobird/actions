@@ -220,5 +220,6 @@ describe('Reporter', () => {
   it(('test runDaemon'), async () => {
     await expect(reporter.runDaemon()).resolves.not.toThrow();
     expect(RunnerServiceClient.updateTask).toHaveBeenCalled();
+    expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
   });
 });

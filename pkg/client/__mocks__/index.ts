@@ -1,4 +1,7 @@
-import { UpdateLogResponse, DeclareResponse, Runner } from '../runner/v1/messages_pb';
+import {
+  UpdateLogResponse, DeclareResponse, Runner, FetchTaskResponse,
+  Task,
+} from '../runner/v1/messages_pb';
 
 const mock = vi.fn().mockImplementation(() => {
   return {
@@ -10,7 +13,12 @@ const mock = vi.fn().mockImplementation(() => {
       declare: vi.fn().mockResolvedValue(new DeclareResponse({
         runner: new Runner(),
       })),
-      fetchTask: vi.fn(),
+      fetchTask: vi.fn().mockResolvedValue(new FetchTaskResponse({
+        tasksVersion: BigInt(123),
+        task: new Task({
+          id: BigInt(100),
+        }),
+      })),
       updateTask: vi.fn(),
       updateLog: vi.fn((request) => {
         return new Promise((resolve) => {

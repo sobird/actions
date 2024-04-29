@@ -14,8 +14,7 @@ import {
 import { Replacer } from '@/utils';
 
 const logger = log4js.getLogger();
-
-logger.level = 'info';
+logger.level = 'debug';
 
 const stringToResult: any = {
   success: Result.SUCCESS,
@@ -193,6 +192,7 @@ class Reporter {
     if (this.closed) {
       return;
     }
+
     // 检查上下文是否已取消
     // if (this.context.isCancelled()) {
     //   return;
@@ -504,12 +504,11 @@ class Reporter {
 export default Reporter;
 
 // 使用示例
-// const reporter = new Reporter({} as any);
+const reporter = new Reporter({} as any);
 // const result = reporter.parseLogRow({
 //   data: ["::notice file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
 //   startTime: new Date(),
 // } as LoggingEvent);
 
 // console.log('parseLogRow', result);
-
-// reporter.runDaemon();
+reporter.runDaemon();

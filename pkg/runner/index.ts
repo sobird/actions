@@ -49,29 +49,7 @@ class Runner {
     } finally {
       // cancel 取消超时
     }
-    console.log('1212', 1212);
     this.runningTasks.delete(taskId);
-
-    console.log('this.runningTasks', this.runningTasks.size);
-
-    // try {
-    //   const timer = setTimeout(() => {
-    //     throw Error('Operation timed out');
-    //   }, this.config.runner.timeout);
-    //   /** @todo */
-    //   const reporter = new Reporter(this.client, task);
-    //   // await reporter.runDaemon();
-    //   try {
-    //     await this.runTask(task);
-    //   } finally {
-    //     // await reporter.close();
-    //     clearTimeout(timer);
-    //   }
-    // } catch (err) {
-    //   logger.error('Failed to run task', err);
-    // } finally {
-    //   this.runningTasks.delete(taskId);
-    // }
   }
 
   /**
