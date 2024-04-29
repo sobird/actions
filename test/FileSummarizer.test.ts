@@ -1,6 +1,6 @@
 /**
  * 如果我们想要模拟 Node 的内置模块（例如：fs 或 path），
- * 那么显式调用 jest.mock('path') 是必需的，因为内置模块默认不会被模拟。
+ * 那么显式调用 vi.mock('path') 是必需的，因为内置模块默认不会被模拟。
  *
  * sobird<i@sobird.me> at 2024/04/26 21:58:36 created.
  */

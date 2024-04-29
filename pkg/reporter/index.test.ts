@@ -5,9 +5,9 @@
  */
 import log4js from 'log4js';
 import Client from '../client';
-import Reporter from '.';
+import Reporter from './index';
 
-jest.mock('../client');
+vi.mock('../client');
 
 const { RunnerServiceClient } = new Client('', '', false);
 

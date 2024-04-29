@@ -1,9 +1,9 @@
-/** @type {import('ts-jest').JestConfigWithTsJest} */
+/** @type {import('ts-vi').viConfigWithTsvi} */
 
 export default {
   verbose: true,
   // 预设配置
-  preset: 'ts-jest/presets/default-esm',
+  preset: 'ts-vi/presets/default-esm',
   testEnvironment: 'node',
   // automock: true,
   moduleNameMapper: {
@@ -16,13 +16,13 @@ export default {
     'json',
   ],
   transform: {
-    '\\.[jt]s?$': 'babel-jest', // babel-jest 来转换
+    '\\.[jt]s?$': 'babel-vi', // babel-vi 来转换
   },
   // transform: {
-  //   // '^.+\\.[tj]sx?$' to process js/ts with `ts-jest`
-  //   // '^.+\\.m?[tj]sx?$' to process js/ts/mjs/mts with `ts-jest`
+  //   // '^.+\\.[tj]sx?$' to process js/ts with `ts-vi`
+  //   // '^.+\\.m?[tj]sx?$' to process js/ts/mjs/mts with `ts-vi`
   //   '^.+\\.tsx?$': [
-  //     'ts-jest',
+  //     'ts-vi',
   //     {
   //       useESM: false,
   //     },

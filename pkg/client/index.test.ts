@@ -1,27 +1,8 @@
 import { Timestamp } from '@bufbuild/protobuf';
-import { createRequire } from 'node:module';
-import { jest } from '@jest/globals';
-// import Client from './index';
+import Client from './index';
 import { UpdateLogRequest, LogRow } from './runner/v1/messages_pb';
 
-const require = createRequire(import.meta.url);
-
-import.meta.jest.mock('./index');
-
-// // 创建 Client 类的模拟
-// const mockClient = {
-//   Address: jest.fn(),
-//   Declare: jest.fn(),
-//   FetchTask: jest.fn(),
-//   // ... 其他方法的模拟 ...
-// };
-
-// // 模拟 Client 类的默认导出
-// jest.mock('.', () => {
-//   return jest.fn().mockImplementation(() => { return mockClient; });
-// });
-
-const Client = require('./index');
+vi.mock('./index');
 
 const { RunnerServiceClient } = new Client('', '', false);
 
@@ -58,7 +39,9 @@ describe('RunnerServiceClient', () => {
     const updateLogResponse = RunnerServiceClient.updateLog(request);
 
     // 断言模拟方法的返回值
-    expect(updateLogResponse).resolves.toEqual(request.index + BigInt(request.rows.length));
+    expect(updateLogResponse).resolves.toEqual({
+      ackIndex: request.index + BigInt(request.rows.length),
+    });
 
     // // 断言模拟方法被调用
     expect(RunnerServiceClient.register).toHaveBeenCalled();

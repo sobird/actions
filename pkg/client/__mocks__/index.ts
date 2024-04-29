@@ -1,16 +1,16 @@
 import { UpdateLogResponse } from '../runner/v1/messages_pb';
 
-const mock = jest.fn().mockImplementation(() => {
+const mock = vi.fn().mockImplementation(() => {
   return {
     PingServiceClient: {
-      ping: jest.fn(),
+      ping: vi.fn(),
     },
     RunnerServiceClient: {
-      register: jest.fn(),
-      declare: jest.fn(),
-      fetchTask: jest.fn(),
-      updateTask: jest.fn(),
-      updateLog: jest.fn((request) => {
+      register: vi.fn(),
+      declare: vi.fn(),
+      fetchTask: vi.fn(),
+      updateTask: vi.fn(),
+      updateLog: vi.fn((request) => {
         return new Promise((resolve) => {
           resolve(new UpdateLogResponse({
             ackIndex: request.index + BigInt(request.rows.length),
