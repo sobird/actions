@@ -46,7 +46,7 @@ class Reporter {
     public cancel = () => {},
   ) {
     ['token', 'gitea_runtime_token'].forEach((key) => {
-      const value = task.context?.fields[key].toJsonString();
+      const value = task.context?.fields[key]?.toJsonString();
       if (value) {
         this.logReplacer.add(value, '***');
       }

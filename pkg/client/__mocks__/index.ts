@@ -1,12 +1,18 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import fs from 'fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'path';
 import { JsonValue, Struct } from '@bufbuild/protobuf';
 import {
   UpdateLogResponse, DeclareResponse, Runner, FetchTaskResponse,
   Task,
 } from '../runner/v1/messages_pb';
-import contextJson from './data/context.json';
+import contextJson from './data/context';
 
-const taskWorkflow = fs.readFileSync('./data/workflow.yaml', 'utf-8');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const taskWorkflow = fs.readFileSync(resolve(__dirname, './data/workflow.yaml'), 'utf-8');
 const workflowPayload = Buffer.from(taskWorkflow);
 const context = Struct.fromJson((contextJson as JsonValue));
 

@@ -1,12 +1,11 @@
 import log4js from 'log4js';
 import type { Client, Config } from '@/pkg';
-// @ts-ignore
 import pkg from '@/package.json' assert { type: 'json' };
 import { Task } from '@/pkg/client/runner/v1/messages_pb';
 import Reporter from '../reporter';
 
 const logger = log4js.getLogger();
-logger.level = 'info';
+logger.level = 'debug';
 
 const { version } = pkg;
 
@@ -55,6 +54,9 @@ class Runner {
   /**
    * 运行任务
    *
+   * @todo
+   * run task
+   *
    * @param task
    * @param reporter
    */
@@ -67,8 +69,6 @@ class Runner {
       // if (err) {
       //   return;
       // }
-
-      //
     } catch (error) {
       // todo
     }
