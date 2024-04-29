@@ -15,7 +15,9 @@ export default {
     'js',
     'json',
   ],
-  transform: {},
+  transform: {
+    '\\.[jt]s?$': 'babel-jest', // babel-jest 来转换
+  },
   // transform: {
   //   // '^.+\\.[tj]sx?$' to process js/ts with `ts-jest`
   //   // '^.+\\.m?[tj]sx?$' to process js/ts/mjs/mts with `ts-jest`
