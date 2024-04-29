@@ -1,5 +1,9 @@
 import log4js, { AppenderModule } from 'log4js';
 
+import ip from 'ip';
+
+import util from 'util';
+
 log4js.addLayout('json', (config) => {
   return function (logEvent) {
     console.log('logEvent', logEvent);
@@ -57,3 +61,12 @@ logger.level = 'info';
 logger.addContext('trace', 123);
 
 logger.info('This is a log message using the custom appender.', 'dsds', { name: 'dddd' });
+
+console.log('ip', ip.address());
+
+function formatId(id) {
+  return util.format('%02x', id % 0xff);
+}
+
+const id = 333;
+console.log(formatId(id)); // 输出: "0f"
