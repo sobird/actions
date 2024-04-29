@@ -84,7 +84,7 @@ class Poller {
         tasksVersion,
       }));
 
-      console.log('fetchTaskResponse', fetchTaskResponse);
+      console.log('fetchTaskResponse', fetchTaskResponse.task?.context?.toJson());
 
       if (fetchTaskResponse.tasksVersion > tasksVersion) {
         this.tasksVersion = fetchTaskResponse.tasksVersion;
