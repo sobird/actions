@@ -34,6 +34,9 @@ class Runner {
     try {
       const timer = setTimeout(() => { throw Error('Operation timed out'); }, this.config.runner.timeout);
       const reporter = new Reporter(this.client, task);
+      // setInterval(() => {
+      //   reporter.log('hdhdhs dsdsd', reporter.state.id);
+      // }, 2000);
       try {
         reporter.runDaemon();
         // 抛出异常
