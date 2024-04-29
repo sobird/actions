@@ -12,7 +12,7 @@
     "build:buf": "buf generate https://gitea.com/gitea/actions-proto-def.git",
     "build": "rollup -c --environment NODE_ENV:production",
     "eslint:fix": "eslint src --fix",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "test": "vitest",
     "lint:eslint": "eslint src --ext ts,js --report-unused-disable-directives --max-warnings 10",
     "preversion": "yarn lint:eslint",
     "version": "git add -A .",
@@ -75,7 +75,8 @@
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "ts-jest": "^29.1.2",
     "ts-protoc-gen": "^0.15.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vitest": "^1.5.2"
   },
   "resolutions": {
     "strip-ansi": "6.0.0"

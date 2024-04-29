@@ -7,13 +7,11 @@
 
 import path from 'path';
 
-const fs = jest.createMockFromModule('fs') as any;
-
 // This is a custom function that our tests can use during setup to specify
 // what the files on the "mock" filesystem should look like when any of the
 // `fs` APIs are used.
 let mockFiles = Object.create(null);
-function __setMockFiles(newMockFiles: any) {
+function __setMockFiles(newMockFiles: { [key in string]: string }) {
   mockFiles = Object.create(null);
   // eslint-disable-next-line no-restricted-syntax, guard-for-in
   for (const file in newMockFiles) {
@@ -32,7 +30,12 @@ function readdirSync(directoryPath: string) {
   return mockFiles[directoryPath] || [];
 }
 
-fs.__setMockFiles = __setMockFiles;
-fs.readdirSync = readdirSync;
-
-module.exports = fs;
+export default {
+  __setMockFiles,
+  readdirSync,
+  get: vi.fn(() => {
+    return Promise.resolve({
+      data: { completed: false, title: 'dummy data for mocking', userId: 1 },
+    });
+  }),
+};

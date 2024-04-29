@@ -1,12 +1,12 @@
 // MathService.test.ts
 import { MathService } from './MathService';
 
-jest.mock('./MathService');
+vi.mock('./MathService');
 
 console.log('MathService', new MathService());
 
 // 使用 jest.fn 创建一个模拟函数
-const mockSum = jest.fn();
+const mockSum = vi.fn();
 
 // 创建一个模拟的 MathService 类
 class MockMathService extends MathService {

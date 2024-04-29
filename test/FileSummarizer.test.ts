@@ -5,7 +5,10 @@
  * sobird<i@sobird.me> at 2024/04/26 21:58:36 created.
  */
 
-jest.mock('fs');
+import fs from 'fs';
+import { summarizeFilesInDirectorySync } from './FileSummarizer';
+
+vi.mock('fs');
 
 describe('listFilesInDirectorySync', () => {
   const MOCK_FILE_INFO = {
@@ -16,13 +19,12 @@ describe('listFilesInDirectorySync', () => {
   beforeEach(() => {
     // Set up some mocked out file info before each test
     // eslint-disable-next-line no-underscore-dangle, global-require
-    require('fs').__setMockFiles(MOCK_FILE_INFO);
+    (fs as any).__setMockFiles(MOCK_FILE_INFO);
   });
 
   test('includes all files in the directory in the summary', () => {
     // eslint-disable-next-line global-require
-    const FileSummarizer = require('./FileSummarizer');
-    const fileSummary = FileSummarizer.summarizeFilesInDirectorySync('/path/to');
+    const fileSummary = summarizeFilesInDirectorySync('/path/to');
 
     expect(fileSummary.length).toBe(2);
   });

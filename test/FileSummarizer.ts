@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-function summarizeFilesInDirectorySync(directory: string) {
+export function summarizeFilesInDirectorySync(directory: string) {
   return fs.readdirSync(directory).map((fileName) => {
     return {
       directory,
@@ -8,5 +8,3 @@ function summarizeFilesInDirectorySync(directory: string) {
     };
   });
 }
-
-exports.summarizeFilesInDirectorySync = summarizeFilesInDirectorySync;

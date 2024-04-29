@@ -4,14 +4,10 @@ describe('log4js', () => {
 // 断言模拟函数被调用
   it('logger.info', () => {
     const logger = log4js.getLogger();
-    const mockLoggerInfo = jest.spyOn(logger, 'info');
+    const mockLoggerInfo = vi.spyOn(logger, 'info');
 
     logger.info('This is a test log message');
 
     expect(mockLoggerInfo).toHaveBeenCalled();
-
-    // expect(() => {
-    //   throw Error('eee');
-    // }).toThrow();
   });
 });

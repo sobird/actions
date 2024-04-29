@@ -1,9 +1,9 @@
 import Index from './index';
 
 // jest.mock('./index');
-jest.mock('@/test');
+vi.mock('./index');
 
-console.log('index', new Index());
+console.log('index', Index);
 
 test('test index', () => {
   //

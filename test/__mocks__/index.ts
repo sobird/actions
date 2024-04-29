@@ -1,8 +1,4 @@
-const mock = jest.fn().mockImplementation(() => {
-  return {
-    getAge: jest.fn().mockReturnValue(30),
-    getGender: jest.fn(),
-  };
-});
-
-export default mock;
+export default {
+  getAge: vi.fn().mockReturnValue(30),
+  getGender: vi.fn(),
+};
