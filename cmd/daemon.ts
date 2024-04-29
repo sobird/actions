@@ -9,7 +9,11 @@ import path from 'node:path';
 import { Command } from 'commander';
 import Docker from 'dockerode';
 import log4js from 'log4js';
-import { Config, Labels, Client } from '@/pkg';
+import { ConnectError, Code } from '@connectrpc/connect';
+import {
+  Config, Labels, Client, Runner,
+} from '@/pkg';
+import Poller from '@/pkg/poller';
 
 const logger = log4js.getLogger();
 
@@ -89,7 +93,7 @@ async function runDaemon(options: any, program: typeof Command.prototype) {
     try {
       await docker.ping();
     } catch (err: any) {
-      logger.fatal('cannot ping the docker daemon, is it running? %w', err.message);
+      logger.fatal('cannot ping the docker daemon, is it running?', err.message);
       return;
     }
 
@@ -117,9 +121,6 @@ async function runDaemon(options: any, program: typeof Command.prototype) {
         }
       }
     }
-
-    //
-    const ddd = 12;
   }
 
   if (JSON.stringify(registration.labels.sort()) !== JSON.stringify(labels.toStrings().sort())) {
@@ -131,7 +132,7 @@ async function runDaemon(options: any, program: typeof Command.prototype) {
     logger.info('labels updated to:', registration.labels);
   }
 
-  const { PingServiceClient, RunnerServiceClient } = new Client(
+  const { RunnerServiceClient } = new Client(
     registration.address,
     registration.toke,
     config.runner.insecure,
@@ -139,9 +140,23 @@ async function runDaemon(options: any, program: typeof Command.prototype) {
     opts.version,
   );
 
-  console.log('RunnerServiceClient', RunnerServiceClient);
+  const runner = new Runner(RunnerServiceClient, config);
 
-  const tail = 'tail';
+  try {
+    const resp = await runner.declare(labels.names());
+    logger.info(`runner: ${resp.runner?.name}, with version: ${resp.runner?.version}, with labels: ${resp.runner?.labels}, declare successfully`);
+  } catch (err) {
+    const connectError = err as ConnectError;
+    if (connectError.code === Code.Unimplemented) {
+      logger.error('Your Gitea version is too old to support runner declare, please upgrade to v1.21 or later');
+      return;
+    }
+    logger.error('fail to invoke Declare');
+    return;
+  }
+
+  const poller = new Poller(RunnerServiceClient, runner, config);
+  poller.poll();
 }
 
 export const daemonCommand = new Command('daemon')

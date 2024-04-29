@@ -4,8 +4,12 @@
  * sobird<i@sobird.me> at 2024/04/25 22:02:36 created.
  */
 
+import log4js from 'log4js';
+import { ConnectError } from '@connectrpc/connect';
 import type { Client, Config, Runner } from '@/pkg';
 import { FetchTaskRequest, Task } from '../client/runner/v1/messages_pb';
+
+const logger = log4js.getLogger();
 
 class Poller {
   tasksVersion = BigInt(0);
@@ -74,11 +78,13 @@ class Poller {
     const { tasksVersion } = this;
     const timer = setTimeout(() => {
       throw Error('timeout ');
-    });
+    }, this.config.runner.fetchTimeout);
     try {
       const fetchTaskResponse = await this.client.fetchTask(new FetchTaskRequest({
         tasksVersion,
       }));
+
+      console.log('fetchTaskResponse', fetchTaskResponse);
 
       if (fetchTaskResponse.tasksVersion > tasksVersion) {
         this.tasksVersion = fetchTaskResponse.tasksVersion;
@@ -88,8 +94,10 @@ class Poller {
         return fetchTaskResponse.task;
       }
       this.tasksVersion = BigInt(0);
+    } catch (err) {
+      const connectError = err as ConnectError;
+      logger.error('failed to fetch task', connectError.message);
     } finally {
-      //
       clearTimeout(timer);
     }
   }
