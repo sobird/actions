@@ -3,7 +3,7 @@ import { AddressInfo } from 'node:net';
 import fs from 'node:fs';
 import path from 'node:path';
 import ip from 'ip';
-import express from 'express';
+import express, { Express } from 'express';
 import bodyParser from 'body-parser';
 import { totalist } from 'totalist/sync';
 
@@ -12,11 +12,11 @@ class ArtifactServer {
     public dir: string = path.join(os.homedir(), '.artifacts'),
     public host: string = ip.address(),
     public port: number = 0,
+    public app: Express = express(),
   ) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    const app = express();
 
     app.use(bodyParser.json());
     app.use(bodyParser.raw({
@@ -30,8 +30,10 @@ class ArtifactServer {
       });
     });
 
+    // 获取上传地址
     app.post('/_apis/pipelines/workflows/:runId/artifacts', (req, res) => {
       const { runId } = req.params;
+      console.log('runId', runId);
       const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
 
       res.json({ fileContainerResourceUrl: `${baseURL}/upload/${runId}` });
@@ -43,6 +45,7 @@ class ArtifactServer {
       res.json({ message: 'success', runId });
     });
 
+    // 获取artifaces下载列表
     app.get('/_apis/pipelines/workflows/:runId/artifacts', (req, res) => {
       const { runId } = req.params;
       const artifacts = new Set();
@@ -60,12 +63,13 @@ class ArtifactServer {
       res.status(200).json({ count: artifacts.size, value: [...artifacts] });
     });
 
+    // 获取artifaces runId下载列表
     app.get('/download/:container', (req, res) => {
       const { container } = req.params;
       const { itemPath } = req.query;
 
       const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
-      const safePath = path.join(this.dir, container, itemPath as string);
+      const safePath = path.join(this.dir, container, itemPath as string || '');
 
       const files = new Set();
       totalist(safePath, (relPath, absPath) => {
@@ -80,15 +84,23 @@ class ArtifactServer {
       res.status(200).json({ value: [...files] });
     });
 
+    // 下载文件
     app.get('/download/:container/:path(*)', (req, res) => {
       const safePath = path.join(this.dir, req.params.container, req.params.path);
       fs.createReadStream(safePath, { encoding: 'utf-8' }).pipe(res);
     });
 
+    // 上传artifacts
     app.put('/upload/:runId', (req, res) => {
       const { runId } = req.params;
       const { itemPath } = req.query;
-      const safePath = path.join(this.dir, runId, itemPath as string);
+      if (!itemPath) {
+        res.json({
+          message: 'Missing itemPath parameter',
+        });
+        return;
+      }
+      const safePath = path.join(this.dir, runId, itemPath as string || '');
       fs.mkdirSync(path.dirname(safePath), { recursive: true });
 
       // 写入文件
@@ -101,16 +113,14 @@ class ArtifactServer {
       });
     });
 
-    const server = app.listen(port, () => {
-      console.log('服务已经启动, 端口监听为:', (server.address() as AddressInfo).port);
+    const server = app.listen(port, this.host, () => {
+      console.log('Server running at:', (server.address() as AddressInfo).port);
     });
   }
 }
 
 export default ArtifactServer;
 
-const server = new ArtifactServer(undefined, undefined, 3000);
-console.log('server', server);
 // HTTP 服务器
 // const server = http.createServer((req, res) => {
 //   const { pathname, searchParams } = new URL(req.url || '', `http://${req.headers.host}`);
