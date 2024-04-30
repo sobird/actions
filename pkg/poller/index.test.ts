@@ -1,6 +1,7 @@
-import Poller from './index';
 import { Client, Config, Runner } from '@/pkg';
 import { Task } from '@/pkg/client/runner/v1/messages_pb';
+
+import Poller from './index';
 
 vi.mock('../client');
 

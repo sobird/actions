@@ -1,7 +1,9 @@
 import log4js from 'log4js';
-import type { Client, Config } from '@/pkg';
+
 import pkg from '@/package.json' assert { type: 'json' };
+import type { Client, Config } from '@/pkg';
 import { Task } from '@/pkg/client/runner/v1/messages_pb';
+
 import Reporter from '../reporter';
 
 const logger = log4js.getLogger();

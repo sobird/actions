@@ -1,7 +1,8 @@
-import Runner from './index';
-import Client from '../client';
 import { Config } from '@/pkg';
 import { Task } from '@/pkg/client/runner/v1/messages_pb';
+
+import Runner from './index';
+import Client from '../client';
 
 vi.mock('../client');
 

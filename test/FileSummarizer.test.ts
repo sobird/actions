@@ -6,6 +6,7 @@
  */
 
 import fs from 'fs';
+
 import { summarizeFilesInDirectorySync } from './FileSummarizer';
 
 vi.mock('fs');

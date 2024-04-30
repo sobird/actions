@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable max-classes-per-file */
-import os from 'node:os';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import yaml from 'js-yaml';
+
 import dotenv, { DotenvParseOutput } from 'dotenv';
+import yaml from 'js-yaml';
+
 import { Registration } from './registration';
 
 const __filename = fileURLToPath(import.meta.url);

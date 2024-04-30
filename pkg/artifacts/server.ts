@@ -1,11 +1,13 @@
-import os from 'node:os';
-import { AddressInfo } from 'node:net';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import ip from 'ip';
-import express, { Express } from 'express';
+
 import bodyParser from 'body-parser';
+import express, { Express } from 'express';
+import ip from 'ip';
 import { totalist } from 'totalist/sync';
+
+import type { AddressInfo } from 'node:net';
 
 class ArtifactServer {
   constructor(

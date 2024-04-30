@@ -7,14 +7,15 @@
  * sobird<i@sobird.me> at 2024/04/30 1:58:31 created.
  */
 
-import os from 'os';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
-import type { AddressInfo } from 'net';
-import log4js, { Logger } from 'log4js';
-import ip from 'ip';
+
 import express, { Handler } from 'express';
-import { ClassicLevel } from 'classic-level';
+import ip from 'ip';
+import log4js, { Logger } from 'log4js';
+
+import type { AddressInfo } from 'net';
 
 const BASE_URL = '/_apis/artifactcache';
 

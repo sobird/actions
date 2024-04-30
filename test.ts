@@ -1,8 +1,7 @@
-import log4js, { AppenderModule } from 'log4js';
+import util from 'util';
 
 import ip from 'ip';
-
-import util from 'util';
+import log4js, { AppenderModule } from 'log4js';
 
 log4js.addLayout('json', (config) => {
   return function (logEvent) {

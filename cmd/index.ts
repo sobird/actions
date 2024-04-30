@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import pkg from '../package.json' assert { type: 'json' };
-import { registerCommand } from './register';
-import { generateConfigCommand } from './generate-config';
+
 import { daemonCommand } from './daemon';
+import { generateConfigCommand } from './generate-config';
+import { registerCommand } from './register';
+import pkg from '../package.json' assert { type: 'json' };
 
 const program = new Command();
 

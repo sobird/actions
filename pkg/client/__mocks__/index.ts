@@ -2,14 +2,16 @@
 import fs from 'fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'path';
+
 import { JsonValue, Struct } from '@bufbuild/protobuf';
+
+import contextJson from './data/context';
 import {
   UpdateLogResponse, DeclareResponse, Runner, FetchTaskResponse,
   Task,
   UpdateTaskResponse,
   TaskState,
 } from '../runner/v1/messages_pb';
-import contextJson from './data/context';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

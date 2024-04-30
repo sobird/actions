@@ -1,4 +1,5 @@
 import { Timestamp } from '@bufbuild/protobuf';
+
 import Client from './index';
 import { UpdateLogRequest, LogRow } from './runner/v1/messages_pb';
 

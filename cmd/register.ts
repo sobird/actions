@@ -1,7 +1,9 @@
 import os from 'node:os';
+
 import { Command } from 'commander';
-import prompts, { PromptObject } from 'prompts';
 import log4js from 'log4js';
+import prompts, { PromptObject } from 'prompts';
+
 import { Config, Labels, Client } from '@/pkg';
 
 const logger = log4js.getLogger();

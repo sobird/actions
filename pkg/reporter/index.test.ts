@@ -4,8 +4,9 @@
  * sobird<i@sobird.me> at 2024/04/26 18:18:27 created.
  */
 import log4js from 'log4js';
-import Client from '../client';
+
 import Reporter from './index';
+import Client from '../client';
 
 vi.mock('log4js');
 vi.mock('../client');

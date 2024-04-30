@@ -5,6 +5,7 @@
  */
 
 import fs from 'node:fs';
+
 import yaml from 'js-yaml';
 
 try {

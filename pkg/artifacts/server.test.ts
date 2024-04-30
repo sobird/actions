@@ -1,7 +1,9 @@
-import request from 'supertest';
 import fs from 'fs';
 import path from 'path';
-import ArtifactServer from './server'; // 引入你的 Express 应用
+
+import request from 'supertest';
+
+import ArtifactServer from './server';
 
 export default ArtifactServer;
 

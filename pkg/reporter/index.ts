@@ -4,10 +4,12 @@
  * sobird<i@sobird.me> at 2024/04/26 0:19:33 created.
  */
 import util from 'node:util';
+
 import { Timestamp } from '@bufbuild/protobuf';
-import retry from 'retry';
-import log4js, { LoggingEvent } from 'log4js';
 import { ConnectError } from '@connectrpc/connect';
+import log4js, { LoggingEvent } from 'log4js';
+import retry from 'retry';
+
 import type { Client } from '@/pkg';
 import {
   LogRow, Task, TaskState, StepState, Result, UpdateTaskRequest, UpdateLogRequest,
