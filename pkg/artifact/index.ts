@@ -9,10 +9,10 @@ import { totalist } from 'totalist/sync';
 
 import type { AddressInfo } from 'node:net';
 
-class ArtifactServer {
+class Artifact {
   constructor(
     public dir: string = path.join(os.homedir(), '.artifacts'),
-    public host: string = ip.address(),
+    public outboundIP: string = ip.address(),
     public port: number = 0,
     public app: Express = express(),
   ) {
@@ -114,14 +114,20 @@ class ArtifactServer {
         res.json(JSON.stringify({ message: 'success' }));
       });
     });
+  }
 
-    const server = app.listen(port, this.host, () => {
-      console.log('Server running at:', (server.address() as AddressInfo).port);
+  async serve() {
+    return new Promise((resolve) => {
+      const server = this.app.listen(this.port, this.outboundIP, () => {
+        console.log('Server running at:', (server.address() as AddressInfo).port);
+        const { address, port } = server.address() as AddressInfo;
+        resolve(`http://${address}:${port}`);
+      });
     });
   }
 }
 
-export default ArtifactServer;
+export default Artifact;
 
 // HTTP 服务器
 // const server = http.createServer((req, res) => {

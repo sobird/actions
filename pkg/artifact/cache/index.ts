@@ -22,7 +22,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import sqlite3, { SqliteError, Database } from 'better-sqlite3';
+import sqlite3, { Database } from 'better-sqlite3';
 import bodyParser from 'body-parser';
 import express, { Handler } from 'express';
 import ip from 'ip';
@@ -36,7 +36,7 @@ import type { AddressInfo } from 'net';
 
 const CACHE_DIR = path.join(os.homedir(), '.cache', 'actcache');
 
-class ArtifactCacheServer {
+class ArtifactCache {
   storage: Storage;
 
   db!: Database;
@@ -307,7 +307,7 @@ class ArtifactCacheServer {
   async serve() {
     return new Promise((resolve) => {
       const server = this.app.listen(this.port, this.outboundIP, () => {
-        console.log('服务已经启动, 端口监听为:', (server.address() as AddressInfo).port);
+        console.log('Server running at:', (server.address() as AddressInfo).port);
         const { address, port } = server.address() as AddressInfo;
         resolve(`http://${address}:${port}`);
       });
@@ -315,4 +315,4 @@ class ArtifactCacheServer {
   }
 }
 
-export default ArtifactCacheServer;
+export default ArtifactCache;

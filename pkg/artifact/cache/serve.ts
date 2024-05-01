@@ -1,4 +1,4 @@
-import ArtifactCacheServer from '.';
+import ArtifactCache from '.';
 
-const cache = new ArtifactCacheServer(undefined, undefined, 3000);
-console.log('Server address:', await cache.serve());
+const artifactCache = new ArtifactCache(undefined, undefined, 3000);
+console.log('ArtifactCache Server address:', await artifactCache.serve());
