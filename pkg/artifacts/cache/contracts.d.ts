@@ -4,7 +4,6 @@ interface CacheEntry {
   version: string;
   size: number;
   complete: boolean;
-  started: boolean; // 表示开始上传
   updatedAt: number; // 最后使用时间
   createdAt: number;
 }

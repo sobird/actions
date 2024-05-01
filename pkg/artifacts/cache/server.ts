@@ -141,10 +141,6 @@ class ArtifactsCacheServer {
       const err = `Cache id ${row.id} was already uploaded`;
       console.error(err);
       res.status(400).json({ error: err });
-    } else if (row.started) {
-      const err = `Cache id ${row.id} is already reserved and uploading`;
-      console.error(err);
-      res.status(400).json({ error: err });
     } else {
       console.log(`Cache id ${row.id} already reserved, but did not start uploading`);
       res.status(200).json({ cacheId: row.id } as ReserveCacheResponse);
@@ -169,11 +165,6 @@ class ArtifactsCacheServer {
       console.error(err);
       res.status(400).json({ error: err });
     } else {
-      if (!row.started) {
-        console.log(`Upload for cache id ${row.id} started`);
-        db.prepare('UPDATE caches SET started = 1 WHERE id = ?').run(row.id);
-      }
-
       // the format like "bytes 0-22275422/*" only
       const contentRange = req.header('Content-Range') || '';
       const startRange = Number(contentRange.split('-')[0].split(' ')[1]?.trim()) || 0;
@@ -202,10 +193,6 @@ class ArtifactsCacheServer {
       const err = `Upload cache with ${row.id} has already been committed and completed`;
       console.error(err);
       res.status(400).json({ error: err });
-    } else if (!row.started) {
-      const err = `Upload for cache id ${row.id} has been reserved but never started uploading`;
-      console.error(err);
-      res.status(400).json({ error: err });
     } else {
       try {
         await this.storage.commit(Number(cacheId), size);
@@ -231,7 +218,6 @@ class ArtifactsCacheServer {
         key TEXT NOT NULL, 
         version TEXT NOT NULL, 
         size INTEGER DEFAULT (0) NOT NULL, 
-        started INTEGER DEFAULT (0) NOT NULL, 
         complete INTEGER DEFAULT (0) NOT NULL, 
         updatedAt INTEGER DEFAULT (0) NOT NULL, 
         createdAt INTEGER DEFAULT (0) NOT NULL
