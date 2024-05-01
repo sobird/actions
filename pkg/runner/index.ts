@@ -2,6 +2,7 @@ import log4js from 'log4js';
 
 import pkg from '@/package.json' assert { type: 'json' };
 import type { Client, Config } from '@/pkg';
+import ArtifactCache from '@/pkg/artifact/cache';
 import { Task } from '@/pkg/client/runner/v1/messages_pb';
 
 import Reporter from '../reporter';
@@ -104,7 +105,7 @@ class Runner {
     this.envs.ACTIONS_RESULTS_URL = this.config.registration!.address;
   }
 
-  private setupCacheEnv() {
+  private async setupCacheEnv() {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const { enabled, external_server } = this.config.cache;
     // 检查缓存是否启用
@@ -113,12 +114,15 @@ class Runner {
         // 使用外部缓存服务器
         this.envs.ACTIONS_CACHE_URL = external_server;
       } else {
-        /**
-         * @todo 启动内部缓存处理器 带实现
-         */
-        const cacheHandler = this.artifactcache();
-        if (cacheHandler) {
-          // this.envs.ACTIONS_CACHE_URL = cacheHandler.getExternalUrl();
+        try {
+          const artifactCache = new ArtifactCache(
+            this.config.cache.dir,
+            this.config.cache.host,
+            this.config.cache.port,
+          );
+          this.envs.ACTIONS_CACHE_URL = await artifactCache.serve();
+        } catch (err) {
+          logger.error('cannot init cache server, it will be disabled:', (err as Error).message);
         }
       }
     }

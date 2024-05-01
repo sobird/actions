@@ -57,7 +57,8 @@ class ArtifactCache {
       verbose: console.log,
     });
 
-    db.prepare(`CREATE TABLE caches (
+    try {
+      db.prepare(`CREATE TABLE caches (
         id INTEGER PRIMARY KEY, 
         key TEXT NOT NULL, 
         version TEXT NOT NULL, 
@@ -66,9 +67,12 @@ class ArtifactCache {
         updatedAt INTEGER DEFAULT (0) NOT NULL, 
         createdAt INTEGER DEFAULT (0) NOT NULL
       )`).run();
-    db.prepare('CREATE INDEX idx_key ON caches (key)');
-    db.prepare('CREATE UNIQUE INDEX idx_key ON caches (key, version)');
-    this.db = db;
+      db.prepare('CREATE INDEX idx_key ON caches (key)');
+      db.prepare('CREATE UNIQUE INDEX idx_key ON caches (key, version)');
+      this.db = db;
+    } catch (err) {
+      this.logger.info((err as Error).message);
+    }
 
     app.set('query parser', 'simple');
     app.use(bodyParser.json());
@@ -304,7 +308,7 @@ class ArtifactCache {
     }
   }
 
-  async serve() {
+  async serve(): Promise<string> {
     return new Promise((resolve) => {
       const server = this.app.listen(this.port, this.outboundIP, () => {
         console.log('Server running at:', (server.address() as AddressInfo).port);

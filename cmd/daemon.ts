@@ -153,7 +153,7 @@ async function runDaemon(options: any, program: typeof Command.prototype) {
       logger.error('Your Gitea version is too old to support runner declare, please upgrade to v1.21 or later');
       return;
     }
-    logger.error('fail to invoke Declare');
+    logger.error('Fail to invoke declare', connectError.message);
     return;
   }
 
