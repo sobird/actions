@@ -36,7 +36,7 @@ import type { AddressInfo } from 'net';
 
 const CACHE_DIR = path.join(os.homedir(), '.cache', 'actcache');
 
-class ArtifactsCacheServer {
+class ArtifactCacheServer {
   storage: Storage;
 
   constructor(
@@ -325,4 +325,4 @@ class ArtifactsCacheServer {
   }
 }
 
-export default ArtifactsCacheServer;
+export default ArtifactCacheServer;

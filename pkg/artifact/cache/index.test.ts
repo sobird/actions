@@ -3,11 +3,11 @@ import path from 'path';
 
 import request from 'supertest';
 
-import ArtifactsCacheServer from '.';
+import ArtifactCacheServer from '.';
 
 const {
   app, dir, storage,
-} = new ArtifactsCacheServer(undefined, undefined, 3000);
+} = new ArtifactCacheServer(undefined, undefined, 3000);
 
 describe('Artifact Server Test', () => {
   // 设置 mock-fs
