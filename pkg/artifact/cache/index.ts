@@ -39,25 +39,36 @@ const CACHE_DIR = path.join(os.homedir(), '.cache', 'actcache');
 class ArtifactCacheServer {
   storage: Storage;
 
+  db!: Database;
+
   constructor(
     public dir: string = CACHE_DIR,
     public outboundIP: string = ip.address() || 'localhost',
     public port: number = 0,
     public logger: Logger = log4js.getLogger(),
-    private db: Database = sqlite3(path.join(CACHE_DIR, 'cache.db'), {
-      verbose: console.log,
-    }),
     public app = express(),
   ) {
     this.logger.level = 'debug';
-
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-
-    this.setupDatabase(db);
-
     this.storage = new Storage(path.join(dir, 'cache'));
+    const db = sqlite3(path.join(CACHE_DIR, 'cache.db'), {
+      verbose: console.log,
+    });
+
+    db.prepare(`CREATE TABLE caches (
+        id INTEGER PRIMARY KEY, 
+        key TEXT NOT NULL, 
+        version TEXT NOT NULL, 
+        size INTEGER DEFAULT (0), 
+        complete INTEGER DEFAULT (0) NOT NULL, 
+        updatedAt INTEGER DEFAULT (0) NOT NULL, 
+        createdAt INTEGER DEFAULT (0) NOT NULL
+      )`).run();
+    db.prepare('CREATE INDEX idx_key ON caches (key)');
+    db.prepare('CREATE UNIQUE INDEX idx_key ON caches (key, version)');
+    this.db = db;
 
     app.set('query parser', 'simple');
     app.use(bodyParser.json());
@@ -65,9 +76,7 @@ class ArtifactCacheServer {
       type: 'application/octet-stream',
       limit: '500mb',
     }));
-
     app.use(this.middleware);
-
     app.get('/', (req, res) => {
       res.send({
         status: 'success',
@@ -185,7 +194,6 @@ class ArtifactCacheServer {
     const { db } = this;
 
     const row = db.prepare<unknown[], CacheEntry>('SELECT * FROM caches WHERE id = ?').get(cacheId);
-    console.log('row', row);
 
     if (!row) {
       const error = `Cache with id ${cacheId} has not been reserved`;
@@ -220,24 +228,6 @@ class ArtifactCacheServer {
     this.logger.debug(`Request method: ${req.method}, Request url: ${req.originalUrl}`);
     next();
   };
-
-  setupDatabase(db: Database) {
-    try {
-      db.prepare(`CREATE TABLE caches (
-        id INTEGER PRIMARY KEY, 
-        key TEXT NOT NULL, 
-        version TEXT NOT NULL, 
-        size INTEGER DEFAULT (0), 
-        complete INTEGER DEFAULT (0) NOT NULL, 
-        updatedAt INTEGER DEFAULT (0) NOT NULL, 
-        createdAt INTEGER DEFAULT (0) NOT NULL
-      )`).run();
-      db.prepare('CREATE INDEX idx_key ON caches (key)');
-      db.prepare('CREATE UNIQUE INDEX idx_key ON caches (key, version)');
-    } catch (err) {
-      this.logger.info((err as typeof SqliteError.prototype).message);
-    }
-  }
 
   purge(onlyUncompleted = true) {
     const { db } = this;
