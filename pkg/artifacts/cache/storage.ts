@@ -24,12 +24,11 @@ class Storage {
 
   async write(id: number, offset: number, data: IncomingMessage) {
     const name = this.tmpName(id, offset);
-    const dir = this.tmpDir(id);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
+    const tmpDir = this.tmpDir(id);
+    if (!fs.existsSync(tmpDir)) {
+      fs.mkdirSync(tmpDir, { recursive: true, mode: 0o755 });
     }
-    const file = fs.createWriteStream(name);
-    return data.pipe(file);
+    fs.writeFileSync(name, data as unknown as string);
   }
 
   async commit(id: number, size: number) {
@@ -45,9 +44,18 @@ class Storage {
     }
 
     const cacheFile = this.filename(id);
+    const cacheDir = path.dirname(cacheFile);
+
+    if (!fs.existsSync(cacheDir)) {
+      fs.mkdirSync(cacheDir, { recursive: true, mode: 0o755 });
+    }
+
     const target = fs.createWriteStream(cacheFile);
+    // const readStream = fs.createReadStream(files[0]);
+    // readStream.pipe(target);
 
     await files.reduce(async (chain, file) => {
+      // const result = await chain();
       return chain.then(() => {
         const readStream = fs.createReadStream(file);
         readStream.pipe(target, { end: false }); // end: false 表示不关闭写入流

@@ -3,10 +3,10 @@ import path from 'path';
 
 import request from 'supertest';
 
-import ArtifactsCacheServer from './server';
+import ArtifactsCacheServer from '.';
 
 const {
-  app, dir,
+  app, dir, storage,
 } = new ArtifactsCacheServer(undefined, undefined, 3000);
 
 describe('Artifact Server Test', () => {
@@ -44,11 +44,19 @@ describe('Artifact Server Test', () => {
 
   it('Upload cache file parts with a cache id', async () => {
     const response = await request(app).patch(`/_apis/artifactcache/caches/${cacheId}`)
-      .set('Content-Range', 'bytes 0-102/10000')
+      .set('Content-Range', 'bytes 0-22275422/*')
       .attach('file', Buffer.from('file content123'), filename);
 
     expect(response.statusCode).toBe(200);
-    expect(fs.existsSync(expectFileName)).toBeTruthy();
+    expect(fs.existsSync(storage.tmpName(cacheId, 0))).toBeTruthy();
+  });
+
+  it('Commit the cache parts upload', async () => {
+    const response = await request(app).post(`/_apis/artifactcache/caches/${cacheId}`)
+      .send({ size: 22275422 });
+
+    expect(response.statusCode).toBe(200);
+    expect(fs.existsSync(storage.tmpName(cacheId, 0))).toBeTruthy();
   });
 
   // it('PUT /upload/:cacheId without itemPath', async () => {

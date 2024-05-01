@@ -6,11 +6,14 @@
  * @see https://github.com/JEFuller/artifact-server/blob/main/index.js
  * @see https://github.com/actions/toolkit/blob/main/packages/cache/src/internal/cacheHttpClient.ts
  *
- * @env
+ * @envs
  *
  * ACTIONS_CACHE_URL - server url
  * ACTIONS_RUNTIME_TOKEN - token
  * GITHUB_REF - scope
+ *
+ * @auth
+ * const Authorization = req.get('Authorization');
  *
  * sobird<i@sobird.me> at 2024/04/30 1:58:31 created.
  */
@@ -21,7 +24,7 @@ import path from 'path';
 
 import sqlite3, { SqliteError, Database } from 'better-sqlite3';
 import bodyParser from 'body-parser';
-import express, { Express, Handler } from 'express';
+import express, { Handler } from 'express';
 import ip from 'ip';
 import log4js, { Logger } from 'log4js';
 
@@ -38,13 +41,13 @@ class ArtifactsCacheServer {
 
   constructor(
     public dir: string = CACHE_DIR,
-    public outboundIP: string = ip.address(),
+    public outboundIP: string = ip.address() || 'localhost',
     public port: number = 0,
     public logger: Logger = log4js.getLogger(),
     private db: Database = sqlite3(path.join(CACHE_DIR, 'cache.db'), {
       verbose: console.log,
     }),
-    public app: Express = express(),
+    public app = express(),
   ) {
     this.logger.level = 'debug';
 
@@ -82,7 +85,7 @@ class ArtifactsCacheServer {
     // Download artifact with a given id from the cache
     app.get('/_apis/artifactcache/artifacts/:cacheId', async (req, res) => {
       const { cacheId } = req.params;
-      db.prepare('UPDATE caches SET updatedAt = 1 WHERE id = ?').run(Date.now(), cacheId);
+      db.prepare('UPDATE caches SET updatedAt = ? WHERE id = ?').run(Date.now(), cacheId);
 
       this.storage.serve(res, Number(cacheId));
     });
@@ -90,10 +93,6 @@ class ArtifactsCacheServer {
     app.post('/_apis/artifactcache/clean', (req, res) => {
       this.purge(false);
       res.status(200).json({});
-    });
-
-    const server = app.listen(port, () => {
-      console.log('服务已经启动, 端口监听为:', (server.address() as AddressInfo).port);
     });
   }
 
@@ -113,7 +112,7 @@ class ArtifactsCacheServer {
     const foundPrimaryKey = idAndKey.key;
     console.log(`Found key ${foundPrimaryKey} with id ${cacheId}`);
 
-    const cacheFile = path.join(CACHE_DIR, `${cacheId}`);
+    const cacheFile = this.storage.filename(cacheId);
     if (!this.storage.exist(cacheId)) {
       console.log(`Missing cache file ${cacheFile}`);
       res.status(204).json({});
@@ -125,7 +124,7 @@ class ArtifactsCacheServer {
   };
 
   reserveCache: Handler = (req, res) => {
-    const { key, version, cacheSize } = req.body as ReserveCacheRequest;
+    const { key, version, cacheSize = 0 } = req.body as ReserveCacheRequest;
     const { db } = this;
 
     console.log(`Request to reserve cache ${key} for uploading`);
@@ -170,9 +169,10 @@ class ArtifactsCacheServer {
       const startRange = Number(contentRange.split('-')[0].split(' ')[1]?.trim()) || 0;
 
       try {
-        await this.storage.write(row.id, startRange, req);
+        await this.storage.write(row.id, startRange, req.body);
         res.status(200).json({});
       } catch (err) {
+        res.status(400).json({ error: (err as Error).message });
         this.logger.error((err as Error).message);
       }
     }
@@ -185,14 +185,19 @@ class ArtifactsCacheServer {
     const { db } = this;
 
     const row = db.prepare<unknown[], CacheEntry>('SELECT * FROM caches WHERE id = ?').get(cacheId);
-    if (row === undefined) {
-      const err = `Cache with id ${cacheId} has not been reserved`;
-      console.error(err);
-      res.status(400).json({ error: err });
-    } else if (row.complete) {
-      const err = `Upload cache with ${row.id} has already been committed and completed`;
-      console.error(err);
-      res.status(400).json({ error: err });
+    console.log('row', row);
+
+    if (!row) {
+      const error = `Cache with id ${cacheId} has not been reserved`;
+      this.logger.debug(error);
+      res.status(400).json({ error });
+      return;
+    }
+
+    if (row.complete) {
+      const error = `Upload cache with ${row.id} has already been committed and completed`;
+      this.logger.debug(error);
+      res.status(400).json({ error });
     } else {
       try {
         await this.storage.commit(Number(cacheId), size);
@@ -207,6 +212,11 @@ class ArtifactsCacheServer {
   };
 
   private middleware: Handler = (req, res, next) => {
+    const Authorization = req.get('Authorization');
+    console.log('Authorization', Authorization);
+    // if (req.get('Authorization') !== `Bearer ${process.env.AUTH_KEY}`) {
+    //   res.status(401).json({ message: 'You are not authorized' });
+    // }
     this.logger.debug(`Request method: ${req.method}, Request url: ${req.originalUrl}`);
     next();
   };
@@ -217,7 +227,7 @@ class ArtifactsCacheServer {
         id INTEGER PRIMARY KEY, 
         key TEXT NOT NULL, 
         version TEXT NOT NULL, 
-        size INTEGER DEFAULT (0) NOT NULL, 
+        size INTEGER DEFAULT (0), 
         complete INTEGER DEFAULT (0) NOT NULL, 
         updatedAt INTEGER DEFAULT (0) NOT NULL, 
         createdAt INTEGER DEFAULT (0) NOT NULL
@@ -225,7 +235,7 @@ class ArtifactsCacheServer {
       db.prepare('CREATE INDEX idx_key ON caches (key)');
       db.prepare('CREATE UNIQUE INDEX idx_key ON caches (key, version)');
     } catch (err) {
-      this.logger.info((err as typeof SqliteError.prototype).message, 1212);
+      this.logger.info((err as typeof SqliteError.prototype).message);
     }
   }
 
@@ -303,8 +313,16 @@ class ArtifactsCacheServer {
       return this.findCacheEntry(newPrimaryKey, version, newRestoreKeys, false);
     }
   }
+
+  async serve() {
+    return new Promise((resolve) => {
+      const server = this.app.listen(this.port, this.outboundIP, () => {
+        console.log('服务已经启动, 端口监听为:', (server.address() as AddressInfo).port);
+        const { address, port } = server.address() as AddressInfo;
+        resolve(`http://${address}:${port}`);
+      });
+    });
+  }
 }
 
 export default ArtifactsCacheServer;
-
-const cache = new ArtifactsCacheServer(undefined, undefined, 3000);
