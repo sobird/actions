@@ -14,7 +14,7 @@
       "program": "${file}",
       // "preLaunchTask": "tsc:build - tsconfig.json",
       "env": {
-        "NODE_OPTIONS": "--import=/root/npm-template/dist/register.js"
+        "NODE_OPTIONS": "--import=./node_modules/@sobird/ts-node/register.js"
       }
     }
   ]
