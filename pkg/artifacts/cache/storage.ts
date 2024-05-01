@@ -1,14 +1,20 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import type { IncomingMessage, ServerResponse } from 'http';
 
+/**
+ * Artifact stored in a local specified dir
+ */
 class Storage {
-  constructor(public rootDir: string) {
-    if (!fs.existsSync(rootDir)) {
-      fs.mkdirSync(rootDir, { recursive: true, mode: 0o755 });
+  constructor(
+    public dir: string = path.join(os.homedir(), 'artifact'),
+  ) {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
     }
-    this.rootDir = rootDir;
+    this.dir = dir;
   }
 
   exist(id: number) {
@@ -17,47 +23,56 @@ class Storage {
   }
 
   async write(id: number, offset: number, data: IncomingMessage) {
-    const name = this.tempName(id, offset);
-    const dir = this.tempDir(id);
+    const name = this.tmpName(id, offset);
+    const dir = this.tmpDir(id);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
     }
     const file = fs.createWriteStream(name);
-    return new Promise((resolve, reject) => {
-      data.pipe(file).on('close', resolve).on('error', reject);
-    });
+    return data.pipe(file);
   }
 
   async commit(id: number, size: number) {
-    const tempDir = this.tempDir(id);
-    const files = fs.readdirSync(tempDir).filter((f) => {
-      return !fs.statSync(path.join(tempDir, f)).isDirectory();
-    });
-    if (files.length === 0) return null;
+    const tmpDir = this.tmpDir(id);
+    const files = fs.readdirSync(tmpDir, { withFileTypes: true }).filter((file) => {
+      return file.isFile();
+    }).map((file) => {
+      return path.join(file.path, file.name);
+    }).sort();
 
-    const name = this.filename(id);
-    const target = fs.createWriteStream(name);
-    const promises = files.map((file) => {
-      const readStream = fs.createReadStream(path.join(tempDir, file));
-      return new Promise((resolve, reject) => {
-        readStream.pipe(target, { end: false }).on('end', resolve).on('error', reject);
+    if (files.length === 0) {
+      throw Error(`No uploaded parts to commit for id ${id}`);
+    }
+
+    const cacheFile = this.filename(id);
+    const target = fs.createWriteStream(cacheFile);
+
+    await files.reduce(async (chain, file) => {
+      return chain.then(() => {
+        const readStream = fs.createReadStream(file);
+        readStream.pipe(target, { end: false }); // end: false 表示不关闭写入流
+        // 保存对当前流的引用，以便在流结束时使用
+        // currentStream = readStream;
+
+        return new Promise((resolve, reject) => {
+          readStream.once('end', () => { return resolve(); });
+          readStream.once('error', reject);
+        });
       });
-    });
+    }, Promise.resolve());
 
-    await Promise.all(promises);
     target.end();
 
-    if (size >= 0 && fs.statSync(name).size !== size) {
-      throw new Error(`broken file: ${fs.statSync(name).size} != ${size}`);
+    const cacheSize = fs.statSync(cacheFile).size;
+
+    if (size >= 0 && cacheSize !== size) {
+      throw new Error(`Uploaded size mismatch: received ${cacheSize} expected ${size}`);
     }
 
     // Remove temporary files
-    files.forEach((file) => {
-      fs.unlinkSync(path.join(tempDir, file));
-    });
-    fs.rmdirSync(tempDir);
+    fs.rmSync(tmpDir, { recursive: true, force: true });
 
-    return name;
+    return cacheSize;
   }
 
   serve(res: ServerResponse<IncomingMessage> & {
@@ -73,23 +88,23 @@ class Storage {
     if (this.exist(id)) {
       fs.unlinkSync(name);
     }
-    fs.rmdirSync(this.tempDir(id));
+    fs.rmSync(this.tmpDir(id));
   }
 
   filename(id: number) {
     const no = (id % 0xff).toString(16).toUpperCase().padStart(2, '0');
-    return path.join(this.rootDir, no, `${id}`);
+    return path.join(this.dir, no, `${id}`);
   }
 
-  tempDir(id: number) {
-    return path.join(this.rootDir, 'tmp', `${id}`);
+  tmpDir(id: number) {
+    return path.join(this.dir, 'tmp', `${id}`);
   }
 
-  tempName(id: number, offset: number) {
+  tmpName(id: number, offset: number) {
     const hex = offset.toString(16).toUpperCase();
     const paddedHex = Array(16 - hex.length).join('0') + hex;
-    return path.join(this.tempDir(id), paddedHex);
+    return path.join(this.tmpDir(id), paddedHex);
   }
 }
 
-module.exports = Storage;
+export default Storage;
