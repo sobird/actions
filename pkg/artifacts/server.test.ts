@@ -5,8 +5,6 @@ import request from 'supertest';
 
 import ArtifactServer from './server';
 
-export default ArtifactServer;
-
 const {
   app, dir,
 } = new ArtifactServer(undefined, undefined, 3000);
