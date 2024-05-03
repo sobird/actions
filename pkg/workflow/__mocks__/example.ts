@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 
 import yaml from 'js-yaml';
 
+import Workflow from '..';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -34,9 +36,17 @@ const customSchema = new yaml.Schema({
 
 const workflow = yaml.load(content, { schema: customSchema });
 
-console.log('workflow', workflow);
+console.log('workflow.on', workflow.on);
 
 const needJobIDs = ['a', 'b', 'c'];
+
+const wf = new Workflow(workflow as Workflow);
+
+if (typeof wf.permissions === 'string') {
+  wf.permissions = 'ddd';
+} else {
+  wf.permissions.actions = 'read|write|none';
+}
 
 const rawNeeds = needJobIDs.map((id) => { return yaml.load(`!!str ${id}`); });
 console.log('rawNeeds', rawNeeds);

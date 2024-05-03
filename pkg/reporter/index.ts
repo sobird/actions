@@ -27,6 +27,16 @@ const stringToResult: any = {
   cancelled: Result.CANCELLED,
 };
 
+interface LogEntry extends LoggingEvent {
+  context: {
+    stage: string;
+    raw_output: true;
+    jobResult: Result;
+    stepResult: Result;
+    stepNumber: number;
+  }
+}
+
 class Reporter {
   private logReplacer = new Replacer();
 
@@ -99,7 +109,7 @@ class Reporter {
    * 该方法更新了任务状态，处理了日志行，并在必要时更新了步骤信息
    * @param entry
    */
-  fire(entry: LoggingEvent) {
+  fire(entry: LogEntry) {
     try {
       // 使用提供的日志条目
       logger.trace(entry.data);
@@ -247,7 +257,7 @@ class Reporter {
    * 关闭报告器并报告最终状态
    * @param lastWords
    */
-  async close(flag: string) {
+  async close(flag?: string) {
     let lastWords = flag;
     try {
       this.closed = true;
@@ -345,6 +355,7 @@ class Reporter {
     const outputs = Object.fromEntries(this.outputs);
 
     try {
+      console.log('state, outputs ', state, outputs);
       const updateTaskResponse = await this.client.updateTask(new UpdateTaskRequest({ state, outputs }));
       if (!updateTaskResponse) {
         return;

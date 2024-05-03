@@ -44,23 +44,14 @@ class Runner {
 
     const reporter = new Reporter(this.client, task);
 
+    process.on('SIGTERM', () => {
+      console.log('SIGTERM signal received: closing HTTP server');
+      reporter.close('runner closed');
+    });
+
     try {
-      reporter.runDaemon();
-      // 抛出异常
+      await reporter.runDaemon();
       await withTimeout(this.runTask(task, reporter), this.config.runner.timeout);
-
-      // setInterval(() => {
-      //   const str = fs.readFileSync(path.resolve(__dirname, 'mock_fire.json'), 'utf-8');
-
-      //   try {
-      //     const mock_fire = JSON.parse(str);
-      //     mock_fire.startTime = new Date();
-      //     console.log('mock_fire', mock_fire);
-      //     reporter.fire(mock_fire);
-      //   } catch (err) {
-      //     logger.error((err as Error).message);
-      //   }
-      // }, 2000);
     } catch (error) {
       reporter.close((error as Error).message);
     }
@@ -85,9 +76,44 @@ class Runner {
       // if (err) {
       //   return;
       // }
+
+      this.mockTask(task, reporter);
     } catch (error) {
       // todo
     }
+  }
+
+  async mockTask(task: Task, reporter: Reporter) {
+    //
+
+    reporter.resetSteps(5);
+
+    const taskContext = task.context?.fields;
+    // @todo
+    console.log('event', taskContext?.event.toJson());
+
+    logger.info(`task ${task.id} repo is ${taskContext?.repository.toJsonString()} ${taskContext?.gitea_default_actions_url.toJsonString()} address`);
+
+    reporter.log('workflow prepared');
+
+    const outputs = new Map();
+    outputs.set('test', 'test outputs');
+    reporter.setOutputs(outputs);
+
+    setInterval(() => {
+      const jsonStr = fs.readFileSync(path.resolve(__dirname, 'mock_fire.json'), 'utf-8');
+
+      try {
+        const mock_fire = JSON.parse(jsonStr);
+        if (mock_fire.if) {
+          console.log('mock_fire', mock_fire.entry);
+          mock_fire.entry.startTime = new Date();
+          reporter.fire(mock_fire.entry);
+        }
+      } catch (err) {
+        logger.error((err as Error).message);
+      }
+    }, 2000);
   }
 
   private setupEnvs() {
@@ -136,7 +162,7 @@ class Runner {
 
   async declare(labels: string[]) {
     return this.client.declare({
-      version: '1.0.0', // 使用适当的版本号
+      version,
       labels,
     });
   }

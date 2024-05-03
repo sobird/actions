@@ -1,71 +1,97 @@
-import util from 'util';
-
-import ip from 'ip';
-import log4js, { AppenderModule } from 'log4js';
-
-log4js.addLayout('json', (config) => {
-  return function (logEvent) {
-    console.log('logEvent', logEvent);
-    // return logEvent;
-    return JSON.stringify({
-      projectName: 'test',
-      env: process.env.NODE_ENV || '',
-      uid: logEvent.context.uid || '', // uid
-      trace_id: logEvent.context.trace || '', // trace_id
-      path: logEvent.context.path || '', // request path
-      cost: logEvent.context.cost || '', // costtime
-      // 里面有 startTime 等标识日志时间的字段
-      ...logEvent,
-    }, 0) + config.separator;
-  };
-});
-log4js.configure({
-  appenders: {
-    global: {
-      type: 'console',
-      filename: 'logs/global',
-      pattern: '.yyyy-MM-dd.log',
-      alwaysIncludePattern: true,
-      layout: {
-        type: 'json',
-        separator: '',
-      },
+/* eslint-disable @typescript-eslint/no-shadow */
+/* eslint-disable max-classes-per-file */
+/* eslint-disable no-restricted-syntax */
+const workflow = {
+  jobs: {
+    job1: {
+      needs: [],
+    },
+    job2: {
+      needs: ['job3'],
+    },
+    job3: {
+      needs: ['job1'],
     },
   },
-  categories: {
-    default: {
-      appenders: ['global'],
-      level: 'info',
-    },
-  },
-});
+};
+const jobIds = ['job2', 'job3'];
 
-log4js.addLayout('json', (config) => {
-  return function (logEvent) {
-    console.log('logEvent', logEvent);
-    // return JSON.stringify({
-    //   projectName: 'test',
-    //   env: process.env.NODE_ENV || '',
-    //   uid: logEvent.context.uid || '', // uid
-    //   trace_id: logEvent.context.trace || '', // trace_id
-    //   path: logEvent.context.path || '', // request path
-    //   cost: logEvent.context.cost || '', // costtime
-    //   // 里面有 startTime 等标识日志时间的字段
-    //   ...logEvent,
-    // }, 0) + config.separator;
-  };
-});
-const logger = log4js.getLogger();
-logger.level = 'info';
-logger.addContext('trace', 123);
+function createStages(workflow: any, ...jobIds: string[]) {
+  const jobDependencies: { [key: string]: string[] } = {};
 
-logger.info('This is a log message using the custom appender.', 'dsds', { name: 'dddd' });
+  let njobIds = [...jobIds];
 
-console.log('ip', ip.address());
+  while (njobIds.length > 0) {
+    const newjobIds: string[] = [];
+    njobIds.forEach((jID) => {
+      if (!jobDependencies[jID]) {
+        const job = workflow.jobs[jID];
+        if (job) {
+          jobDependencies[jID] = job.needs;
+          newjobIds.push(...job.needs);
+        }
+      }
+    });
+    njobIds = newjobIds;
+  }
 
-function formatId(id) {
-  return util.format('%02x', id % 0xff);
+  console.log('jobDependencies', jobDependencies);
+
+  const stages = [];
+  while (Object.keys(jobDependencies).length > 0) {
+    const stage: any = {
+      runs: [],
+    };
+    for (const jID in jobDependencies) {
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      if (listInStages(jobDependencies[jID], ...stages)) {
+        stage.runs.push({
+          workflow,
+          jobId: jID,
+        });
+        delete jobDependencies[jID];
+      }
+    }
+    if (stage.runs.length === 0) {
+      console.log('unable to build dependency graph for');
+      break;
+    }
+    stages.push(stage);
+  }
+
+  console.log('stages', stages.map((item) => {
+    return item.runs;
+  }));
 }
 
-const id = 333;
-console.log(formatId(id)); // 输出: "0f"
+createStages(workflow, ...jobIds);
+
+function listInStages(srcList: string[], ...stages: any[]): boolean {
+  for (const src of srcList) {
+    let found = false;
+    console.log('src123', src);
+    for (const stage of stages) {
+      if (stage.runs.map((run) => { console.log('run', run, src); return run.jobId; }).includes(src)) {
+        found = true;
+      }
+    }
+    if (!found) return false;
+  }
+  return true;
+}
+
+console.log('listInStages', listInStages([], ...[]));
+
+class Test {
+  constructor(public name: string, public age: number) {
+
+  }
+
+  getName() {
+    console.log('first', Object.entries(this));
+    return this.name;
+  }
+}
+
+const test1 = new Test('test', 33);
+console.log('test', test1.getName());

@@ -1,12 +1,14 @@
 {
-  "data": ["test 1212"],
-  "startTime": "2008-01-01T12:00:00Z",
-  "context": {
-    "jobResult": "success",
-    "stepNumber": 2,
-    "raw_output": {
-      "a": "tset aaaa"
-    },
-    "stepResult": "success"
+  "if": true,
+  "entry": {
+    "data": ["test 1212"],
+    "startTime": "2008-01-01T12:00:00Z",
+    "context": {
+      "stage": "Main",
+      "jobResult": "",
+      "stepNumber": 1,
+      "raw_output": true,
+      "stepResult": ""
+    }
   }
 }
