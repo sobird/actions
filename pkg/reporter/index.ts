@@ -1,5 +1,6 @@
 /**
- * index.ts
+ * 任务状态&日志 报告器
+ * 每个任务运行时，才会创建一个Reporter实例
  *
  * sobird<i@sobird.me> at 2024/04/26 0:19:33 created.
  */
@@ -29,7 +30,8 @@ const stringToResult: any = {
 class Reporter {
   private logReplacer = new Replacer();
 
-  private state: TaskState; // 需要具体的类型定义
+  /** 任务状态 */
+  private state: TaskState;
 
   private outputs = new Map<string, string>();
 
@@ -201,12 +203,12 @@ class Reporter {
     //   return;
     // }
 
-    // 报告日志
+    // 报告任务日志
     await this.reportLog(false);
     // 报告任务状态
     await this.reportState();
 
-    // 使用 setTimeout 来实现延迟执行
+    // 每隔一秒报告任务日志和状态
     setTimeout(() => { return this.runDaemon(); }, 1000);
   }
 
@@ -252,6 +254,7 @@ class Reporter {
 
       if (this.state.result === Result.UNSPECIFIED) {
         if (!lastWords) {
+          // 提前终止
           lastWords = 'Early termination';
         }
         // 更新所有未指定结果的步骤为已取消
@@ -281,11 +284,11 @@ class Reporter {
       // todo
     }
 
-    // 尝试报告日志和状态
+    // 尝试报告任务日志
     try {
       await this.retryReportLog();
     } catch (error) {
-      logger.error('Failed to report logs and state:', error);
+      logger.error('Failed to report logs:', error);
     }
   }
 
@@ -304,7 +307,7 @@ class Reporter {
   }
 
   /**
-   * 上报日志
+   * 上报任务日志
    * @param noMore
    */
   async reportLog(noMore: boolean): Promise<Error | void > {
@@ -335,7 +338,7 @@ class Reporter {
   }
 
   /**
-   * 报告状态
+   * 上报任务状态
    */
   async reportState() {
     const state = this.state.clone();
@@ -351,7 +354,11 @@ class Reporter {
         this.outputs.set(outputKey, '');
       });
 
+      // 如果任务被取消
       if (updateTaskResponse.state && updateTaskResponse.state.result === Result.CANCELLED) {
+        logger.debug('Task canceled!');
+        // @todo 清除reported定时器
+        this.close('Task canceled!');
         this.cancel();
       }
 

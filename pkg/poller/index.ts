@@ -1,5 +1,5 @@
 /**
- * 轮询器
+ * 轮询器，轮询服务器实例分配的任务，在这之前需要先向服务器声明runner的labels
  *
  * sobird<i@sobird.me> at 2024/04/25 22:02:36 created.
  */

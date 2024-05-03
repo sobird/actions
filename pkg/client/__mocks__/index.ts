@@ -11,6 +11,7 @@ import {
   Task,
   UpdateTaskResponse,
   TaskState,
+  TaskNeed,
 } from '../runner/v1/messages_pb';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -41,7 +42,15 @@ const mock = vi.fn().mockImplementation(() => {
             GITEA_TOKEN: '811c3ee800e04c50ea659fd791afc1bdcc9fea6e',
           },
           machine: '',
-          needs: {},
+          needs: {
+            'test-job1': new TaskNeed({
+              result: 1,
+              outputs: {
+                key1: 'this is outputs 1',
+                key2: 'this is outputs 2',
+              },
+            }),
+          },
           vars: {},
         }),
       })),

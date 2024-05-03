@@ -1,9 +1,9 @@
 {
-  "data": ["test it"],
+  "data": ["test 1212"],
   "startTime": "2008-01-01T12:00:00Z",
   "context": {
     "jobResult": "success",
-    "stepNumber": 1,
+    "stepNumber": 2,
     "raw_output": {
       "a": "tset aaaa"
     },

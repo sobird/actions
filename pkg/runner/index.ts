@@ -9,6 +9,7 @@ import pkg from '@/package.json' assert { type: 'json' };
 import type { Client, Config } from '@/pkg';
 import ArtifactCache from '@/pkg/artifact/cache';
 import { Task } from '@/pkg/client/runner/v1/messages_pb';
+import { withTimeout } from '@/utils';
 
 import Reporter from '../reporter';
 
@@ -44,33 +45,22 @@ class Runner {
     const reporter = new Reporter(this.client, task);
 
     try {
-      // 任务超时设置
-      const timer = setTimeout(() => { throw Error('Operation timed out'); }, this.config.runner.timeout);
+      reporter.runDaemon();
+      // 抛出异常
+      await withTimeout(this.runTask(task, reporter), this.config.runner.timeout);
 
-      setInterval(() => {
-        const str = fs.readFileSync(path.resolve(__dirname, 'mock_fire.json'), 'utf-8');
+      // setInterval(() => {
+      //   const str = fs.readFileSync(path.resolve(__dirname, 'mock_fire.json'), 'utf-8');
 
-        try {
-          const mock_fire = JSON.parse(str);
-          mock_fire.startTime = new Date();
-          console.log('mock_fire', mock_fire);
-          reporter.fire(mock_fire);
-        } catch (err) {
-          logger.error((err as Error).message);
-        }
-      }, 2000);
-
-      try {
-        reporter.runDaemon();
-        // 抛出异常
-        await this.runTask(task, reporter);
-      } catch (err) {
-        const lastWords = (err as Error).message;
-        reporter.close(lastWords);
-      } finally {
-        // 清除超时句柄
-        clearTimeout(timer);
-      }
+      //   try {
+      //     const mock_fire = JSON.parse(str);
+      //     mock_fire.startTime = new Date();
+      //     console.log('mock_fire', mock_fire);
+      //     reporter.fire(mock_fire);
+      //   } catch (err) {
+      //     logger.error((err as Error).message);
+      //   }
+      // }, 2000);
     } catch (error) {
       reporter.close((error as Error).message);
     }
