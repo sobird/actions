@@ -1,0 +1,12 @@
+{
+  "data": ["test it"],
+  "startTime": "2008-01-01T12:00:00Z",
+  "context": {
+    "jobResult": "success",
+    "stepNumber": 1,
+    "raw_output": {
+      "a": "tset aaaa"
+    },
+    "stepResult": "success"
+  }
+}

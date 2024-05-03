@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+import fs from 'fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import log4js from 'log4js';
 
 import pkg from '@/package.json' assert { type: 'json' };
@@ -11,6 +16,9 @@ const logger = log4js.getLogger();
 logger.level = 'debug';
 
 const { version } = pkg;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class Runner {
   envs: { [key in string]: string } = {};
@@ -39,9 +47,18 @@ class Runner {
       // 任务超时设置
       const timer = setTimeout(() => { throw Error('Operation timed out'); }, this.config.runner.timeout);
 
-      // setInterval(() => {
-      //   reporter.log('hdhdhs dsdsd', reporter.state.id);
-      // }, 2000);
+      setInterval(() => {
+        const str = fs.readFileSync(path.resolve(__dirname, 'mock_fire.json'), 'utf-8');
+
+        try {
+          const mock_fire = JSON.parse(str);
+          mock_fire.startTime = new Date();
+          console.log('mock_fire', mock_fire);
+          reporter.fire(mock_fire);
+        } catch (err) {
+          logger.error((err as Error).message);
+        }
+      }, 2000);
 
       try {
         reporter.runDaemon();
@@ -83,12 +100,6 @@ class Runner {
     }
   }
 
-  private artifactcache() {
-    // todo
-    // console.log('artifactcache:', this);
-    return this;
-  }
-
   private setupEnvs() {
     // 初始化环境变量
     const { envs } = this.config.runner;
@@ -98,6 +109,7 @@ class Runner {
   }
 
   private setupGiteaEnv() {
+    // Set specific environments to distinguish between Gitea and GitHub
     this.envs.GITEA_ACTIONS = 'true';
     this.envs.GITEA_ACTIONS_RUNNER_VERSION = version;
 
