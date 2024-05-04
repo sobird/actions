@@ -10,7 +10,7 @@ import log4js from 'log4js';
 const logger = log4js.getLogger();
 logger.level = 'debug';
 
-class Conditional {
+export class Conditional {
   constructor(public fn: (ctx?: object) => boolean) {
   }
 
@@ -27,7 +27,7 @@ class Conditional {
 class Executor {
   constructor(public fn: (ctx?: object) => Promise<void> | void) {}
 
-  execute(ctx?: object) {
+  async execute(ctx?: object) {
     return this.fn(ctx);
   }
 
@@ -116,38 +116,42 @@ class Executor {
     // eslint-disable-next-line no-param-reassign
     parallel = Math.min(parallel, executors.length);
     return new Executor(async (ctx) => {
-      const results: unknown[] = [];
-      let index = 0;
-      let count = 0;
+      const results: unknown[] = await new Promise((resolve) => {
+        const records: unknown[] = [];
+        let index = 0;
+        let count = 0;
 
-      const thread = async () => {
-        const i = index;
-        const executor = executors[i];
-        index += 1;
-        try {
-          const res = await executor.execute(ctx);
-          results[i] = res;
-        } catch (err) {
-          results[i] = err;
-        } finally {
-          count += 1;
-          if (index < executors.length) {
-            thread();
-          }
-          if (count === executors.length) {
-            // 检查是否有错误发生
-            for (const result of results) {
-              if (result instanceof Error) {
-                console.log('result', result);
-              }
+        const thread = async () => {
+          const i = index;
+          const executor = executors[i];
+          index += 1;
+
+          try {
+            const res = await executor.execute(ctx);
+            records[i] = res;
+          } catch (err) {
+            records[i] = err;
+          } finally {
+            count += 1;
+            if (index < executors.length) {
+              thread();
+            }
+            if (count === executors.length) {
+              resolve(records);
             }
           }
-        }
-      };
+        };
 
-      Array(parallel).fill(0).forEach(() => {
-        thread();
+        Array(parallel).fill(0).forEach(() => {
+          thread();
+        });
       });
+
+      for (const result of results) {
+        if (result instanceof Error) {
+          throw result;
+        }
+      }
     });
   }
 }
