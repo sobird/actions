@@ -36,7 +36,7 @@ const customSchema = new yaml.Schema({
 
 const workflow = yaml.load(content, { schema: customSchema });
 
-console.log('workflow.on', workflow);
+console.log('workflow.on', workflow.jobs['Test-Node']);
 
 const needJobIDs = ['a', 'b', 'c'];
 

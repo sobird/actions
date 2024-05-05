@@ -1,10 +1,14 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+/* eslint-disable no-underscore-dangle */
 /**
  * Step is the structure of one step in a job
  *
  * sobird<i@sobird.me> at 2024/05/02 18:29:27 created.
  */
 
-/** StepType describes what type of step we are about to run */
+/**
+ * describes what type of step we are about to run
+ */
 enum StepType {
   Run, // 所有具有 'run' 属性的步骤
   UsesDockerURL, // 所有具有形如 'docker://...' 的 'uses' 的步骤
@@ -15,44 +19,56 @@ enum StepType {
   Invalid, // 所有具有无效步骤动作的步骤
 }
 
+/**
+ * Step is the structure of one step in a job
+ */
 class Step {
-  number: number;
-
+  /**
+   * 步骤的唯一标识符。 可以使用 `id` 在上下文中引用该步骤。
+   */
   id: string;
 
-  if: any;
+  if: string;
 
-  name: string;
+  _name: string;
 
   uses: string;
 
   run: string;
 
-  workingDirectory: string;
+  'working-directory': string;
 
   shell: string;
 
-  env: any;
+  with: {
+    args: string;
+    entrypoint: string;
+  };
 
-  with: { [key: string]: string };
+  _env: Record<string, string>;
 
-  rawContinueOnError: string;
+  /**
+   * 防止步骤失败时作业也会失败。 设置为 true 以允许在此步骤失败时作业能够通过。
+   */
+  'continue-on-error': boolean;
 
-  timeoutMinutes: string;
+  'timeout-minutes': boolean;
 
-  constructor() {
-    this.number = 0;
-    this.id = '';
-    this.name = '';
-    this.uses = '';
-    this.run = '';
-    this.workingDirectory = '';
-    this.shell = '';
-    this.with = {};
+  constructor(step: Step) {
+    this.id = step.id;
+    this.if = step.if;
+    this._name = step.name;
+    this.uses = step.uses;
+    this.run = step.run;
+    this['working-directory'] = step['working-directory'];
+    this.shell = step.shell;
+    this.with = step.with;
+    this._env = step.env;
+    this['continue-on-error'] = step['continue-on-error'];
+    this['timeout-minutes'] = step['timeout-minutes'];
   }
 
-  // String gets the name of step
-  toString() {
+  get name(): string {
     if (this.name !== '') {
       return this.name;
     } if (this.uses !== '') {
@@ -63,22 +79,29 @@ class Step {
     return this.id;
   }
 
-  environment() {
-    return this.env;
+  set name(name) {
+    this._name = name;
   }
 
-  getEnv() {
-    const env = this.environment() || {};
+  /**
+   * 合并with参数到env
+   */
+  get env() {
+    const _env = { ...this._env };
 
     Object.entries(this.with).forEach(([key, value]) => {
       let envKey = key.toUpperCase().replace(/[^A-Z0-9-]/g, '_');
       envKey = `INPUT_${envKey}`;
-      env[envKey] = value;
+      _env[envKey] = value;
     });
 
-    return env;
+    return _env;
   }
 
+  /**
+   * returns the command for the shell
+   * @returns
+   */
   shellCommand() {
     let shellCommand = '';
 
@@ -109,6 +132,11 @@ class Step {
     return shellCommand;
   }
 
+  /**
+   * returns the type of the step
+   *
+   * @returns
+   */
   type() {
     if (this.run === '' && this.uses === '') {
       return StepType.Invalid;
@@ -136,6 +164,12 @@ class Step {
       return StepType.UsesActionLocal;
     }
     return StepType.UsesActionRemote;
+  }
+
+  toJSON() {
+    return {
+      id: this.id,
+    };
   }
 }
 

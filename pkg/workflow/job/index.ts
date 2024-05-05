@@ -3,7 +3,7 @@
  *
  * sobird<i@sobird.me> at 2024/05/02 20:26:29 created.
  */
-import Step from '../step';
+import Step from './step';
 
 class Job {
   name: string;
@@ -36,7 +36,7 @@ class Job {
 
   secrets;
 
-  constructor(name: string) {
+  constructor(public job: Job) {
     this.name = name;
     this.steps = [];
   }

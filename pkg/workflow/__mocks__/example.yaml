@@ -48,6 +48,11 @@ jobs:
   Test-Node:
     runs-on: ubuntu-latest
     steps:
+      - name: My first step
+        uses: octo-org/action-name@main
+      - name: My backup step
+        if: ${{ failure() }}
+        uses: actions/heroku@1.0.0
       - name: Checkout
         uses: actions/checkout@v4
       # 安装node环境
