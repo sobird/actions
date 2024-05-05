@@ -83,6 +83,8 @@ function listInStages(srcList: string[], ...stages: any[]): boolean {
 console.log('listInStages', listInStages([], ...[]));
 
 class Test {
+  test;
+
   constructor(public name: string, public age: number) {
 
   }
@@ -91,7 +93,11 @@ class Test {
     console.log('first', Object.entries(this));
     return this.name;
   }
+
+  get hello(): string {
+    return this.test;
+  }
 }
 
 const test1 = new Test('test', 33);
-console.log('test', test1.getName());
+console.log('test', test1.hello);

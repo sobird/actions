@@ -11,13 +11,12 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 
 import Job from './job';
-import On from './on';
-
-type PermissionsKey = 'actions' | 'checks' | 'contents' | 'deployments' | 'id-token' | 'issues' | 'discussions' | 'packages' | 'pages' | 'pull-requests' | 'repository-projects' | 'security-events' | 'statuses';
-type PermissionsValue = 'read' | 'write' | 'none' | 'read|write' | 'read|none' | 'write|none' | 'read|write|none';
-export type Permissions = { [key in PermissionsKey]: PermissionsValue } | 'read-all' | 'write-all' | {};
+import { On, Permissions } from './types';
 
 class Workflow {
+  /**
+   * 工作流文件路径
+   */
   public file?: string;
 
   /**
@@ -95,6 +94,12 @@ class Workflow {
    */
   public concurrency: { group: string, 'cancel-in-progress': boolean };
 
+  /**
+   * 工作流运行由一个或多个 `jobs` 组成，默认情况下并行运行。
+   *
+   * 若要按顺序运行作业，可以使用 `jobs.<job_id>.needs` 关键字定义对其他作业的依赖关系。
+   * 每个作业在 `runs-on` 指定的运行器环境中运行。
+   */
   public jobs: Map<string, Job>;
 
   constructor({
@@ -102,7 +107,7 @@ class Workflow {
   }: Workflow) {
     this.name = name;
     this['run-name'] = runName;
-    this.on = new On(on);
+    this.on = on;
     this.permissions = permissions;
     this.env = env;
     this.defaults = defaults;
@@ -111,12 +116,8 @@ class Workflow {
   }
 
   toJSON() {
-    const {
-      name, 'run-name': runName, on, permissions, env, defaults, concurrency, jobs,
-    } = this;
-    return {
-      name, 'run-name': runName, on, permissions, env, defaults, concurrency, jobs,
-    };
+    const { file, ...json } = this;
+    return json;
   }
 
   static Load(path: string) {

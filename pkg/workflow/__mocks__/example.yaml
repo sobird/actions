@@ -18,6 +18,8 @@ permissions:
 
 permissions1: read-all
 
+permissions2: {}
+
 jobs:
   Explore-Gitea-Actions:
     needs: Test-Node

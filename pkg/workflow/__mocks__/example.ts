@@ -42,12 +42,11 @@ const needJobIDs = ['a', 'b', 'c'];
 
 const wf = new Workflow(workflow as Workflow);
 
-wf.permissions = {};
-
 if (typeof wf.permissions === 'string') {
-  wf.permissions = 'ddd';
+  wf.permissions = 'read-all';
 } else {
-  wf.permissions.actions = 'read|write|none';
+  wf.permissions.actions = 'none';
+  wf.permissions = {};
 }
 
 const rawNeeds = needJobIDs.map((id) => { return yaml.load(`!!str ${id}`); });
