@@ -9,13 +9,84 @@ import {
   resolve, parse, basename, dirname,
 } from 'node:path';
 
-class Plan {
-  //
+import Debug from 'debug';
+
+const debug = Debug('planner');
+
+/** Run represents a job from a workflow that needs to be run */
+class Run {
+  constructor(public jobName: string, public job: any) {}
+
+  toString() {
+    return this.job.name || this.jobName;
+  }
 }
 
+/** Stage contains a list of runs to execute in parallel */
+class Stage {
+  constructor(public runs: Run[] = []) {}
+
+  /** will get all the job names in the stage */
+  get jobNames() {
+    const names: string[] = [];
+    for (const run of this.runs) {
+      names.push(run.jobName);
+    }
+    return names;
+  }
+}
+
+/** Plan contains a list of stages to run in series */
+class Plan {
+  constructor(public stages: Stage[] = []) {}
+
+  /** determines the max name length of all jobs */
+  maxRunNameLen() {
+    let maxRunNameLen = 0;
+    for (const stage of this.stages) {
+      for (const run of stage.runs) {
+        const runNameLen = run.toString().length;
+        if (runNameLen > maxRunNameLen) {
+          maxRunNameLen = runNameLen;
+        }
+      }
+    }
+    return maxRunNameLen;
+  }
+
+  /** Merge stages with existing stages in plan */
+  mergeStages(stages: Stage[]): void {
+    // 确定新阶段列表的大小
+    const newSize = Math.max(this.stages.length, stages.length);
+    const newStages: Stage[] = new Array(newSize);
+
+    // 合并阶段
+    for (let i = 0; i < newSize; i++) {
+      // 创建新的 Stage 实例
+      const newStage = new Stage([]);
+      newStages[i] = newStage;
+
+      // 如果原始计划中的阶段索引存在，则添加其运行项
+      if (i < this.stages.length) {
+        newStage.runs = newStage.runs.concat(this.stages[i].runs);
+      }
+
+      // 如果新阶段列表中的索引存在，则添加其运行项
+      if (i < stages.length) {
+        newStage.runs = newStage.runs.concat(stages[i].runs);
+      }
+    }
+
+    // 更新计划中的阶段列表
+    this.stages = newStages;
+  }
+}
+
+/** Planner contains methods for creating plans */
 class Planner {
   workflows = [];
 
+  /** will load a specific workflow, all workflows from a directory or all workflows from a directory and its subdirectories */
   constructor(path: string, recursive: boolean = false) {
     const absPath = resolve(path);
     const stat = fs.statSync(absPath);
@@ -23,14 +94,14 @@ class Planner {
     let files: fs.Dirent[] = [];
 
     if (stat.isDirectory()) {
-      console.debug(`Loading workflows from '${absPath}'`);
+      debug(`Loading workflows from '${absPath}'`);
 
       files = fs.readdirSync(absPath, { withFileTypes: true, recursive }).filter((file) => {
         const { ext } = parse(file.name);
         return file.isFile() && (ext === '.yml' || ext === '.yaml');
       });
     } else {
-      console.debug(`Loading workflow '${absPath}'`);
+      debug(`Loading workflow '${absPath}'`);
 
       files.push({
         ...stat,

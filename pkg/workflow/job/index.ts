@@ -40,8 +40,6 @@ class Job {
     this.name = name;
     this.steps = [];
   }
-
-  // 其他Job相关的方法...
 }
 
 export default Job;

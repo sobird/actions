@@ -36,11 +36,13 @@ const customSchema = new yaml.Schema({
 
 const workflow = yaml.load(content, { schema: customSchema });
 
-console.log('workflow.on', workflow.on);
+console.log('workflow.on', workflow);
 
 const needJobIDs = ['a', 'b', 'c'];
 
 const wf = new Workflow(workflow as Workflow);
+
+wf.permissions = {};
 
 if (typeof wf.permissions === 'string') {
   wf.permissions = 'ddd';
