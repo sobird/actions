@@ -5,8 +5,6 @@ import { fileURLToPath } from 'node:url';
 
 import yaml from 'js-yaml';
 
-import Workflow from '..';
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

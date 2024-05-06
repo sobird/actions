@@ -7,17 +7,18 @@
  * @see https://cn.rollupjs.org/configuration-options
  * sobird<i@sobird.me> at 2023/09/28 11:30:37 created.
  */
-import { defineConfig } from 'rollup';
-import { glob } from 'glob';
 import { dirname, relative, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
-import external from 'rollup-plugin-peer-deps-external';
-import esbuild from 'rollup-plugin-esbuild';
+
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
-import copy from 'rollup-plugin-copy';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
+import { glob } from 'glob';
+import { defineConfig } from 'rollup';
 import clear from 'rollup-plugin-clear';
+import copy from 'rollup-plugin-copy';
+import esbuild from 'rollup-plugin-esbuild';
+import external from 'rollup-plugin-peer-deps-external';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

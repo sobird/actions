@@ -13,7 +13,7 @@ export interface WorkflowDispatchInputs {
   options?: string[];
 }
 
-interface OnEvents {
+export interface OnEvents {
   branch_protection_rule: {
     types: Array<'created', 'edited', 'deleted'>;
   };
@@ -116,8 +116,8 @@ interface OnEvents {
     types: string[];
   };
   schedule: {
-    cron: string[];
-  };
+    cron: string;
+  }[];
   status: string;
   watch: {
     types: Array<'started'>

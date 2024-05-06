@@ -12,7 +12,7 @@ import { cartesianProduct, lodash } from '@/utils';
 
 interface StrategyAttrs {
 /**
-   * 使用 jobs.<job_id>.strategy.matrix 定义不同作业配置的矩阵。 在矩阵中，定义一个或多个变量，后跟一个值数组。
+   * 使用 `jobs.<job_id>.strategy.matrix` 定义不同作业配置的矩阵。 在矩阵中，定义一个或多个变量，后跟一个值数组。
    *
    * 例如，以下矩阵有一个称为 version 的变量，其值为 [10, 12, 14] ，以及一个称为 os 的变量，其值为 [ubuntu-latest, windows-latest]：
    *
@@ -52,7 +52,7 @@ interface StrategyAttrs {
 }
 
 /**
- * 使用 jobs.<job_id>.strategy 对作业使用矩阵策略。
+ * 使用 `jobs.<job_id>.strategy` 对作业使用矩阵策略。
  *
  * 使用矩阵策略，可以在单个作业定义中使用变量自动创建基于变量组合的多个作业运行。
  * 例如，可以使用矩阵策略在某个语言的多个版本或多个操作系统上测试代码。

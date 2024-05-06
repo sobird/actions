@@ -1,4 +1,4 @@
-name: Gitea Actions Test
+name: Gitea Actions Workflow Test
 run-name: ${{ github.actor }} is testing out Gitea Actions  
 on: 
   pull_request:
@@ -10,15 +10,12 @@ on:
   label:
     types:
       - created
-on1: 
-  push
+  schedule:
+    - cron: '30 5 * * 1,3'
+    - cron: '30 5 * * 2,4'
 
 permissions:
   contents: read|write|none
-
-permissions1: read-all
-
-permissions2: {}
 
 jobs:
   Explore-Gitea-Actions:

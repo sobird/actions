@@ -12,7 +12,7 @@ import yaml from 'js-yaml';
 
 import Job from './job';
 import {
-  Concurrency, Defaults, On, Permissions,
+  Concurrency, Defaults, On, OnEvents, Permissions,
 } from './types';
 
 class Workflow {
@@ -112,13 +112,29 @@ class Workflow {
     this.jobs = jobs;
   }
 
+  onEvent<K extends keyof OnEvents>(eventName: K) {
+    const { on } = this;
+    if (typeof on === 'string') {
+      return null;
+    }
+    if (Array.isArray(on)) {
+      return null;
+    }
+    return on[eventName] as OnEvents[K];
+  }
+
   toJSON() {
     const { file, ...json } = this;
     return json;
   }
 
-  static Load(path: string) {
+  static Read(path: string) {
     const doc = yaml.load(fs.readFileSync(path, 'utf8'));
+    return new Workflow(doc as Workflow);
+  }
+
+  static Load(str: string) {
+    const doc = yaml.load(str);
     return new Workflow(doc as Workflow);
   }
 }
