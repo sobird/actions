@@ -23,7 +23,7 @@ class Job {
    */
   permissions?: Permissions;
 
-  _needs?: string[];
+  #needs?: string[];
 
   if?: string | boolean;
 
@@ -72,10 +72,10 @@ class Job {
 
   secrets?: Record<string, string> | 'inherit';
 
-  constructor(public job: Job) {
+  constructor(job: Job) {
     this.name = job.name;
     this.permissions = job.permissions;
-    this._needs = job.needs;
+    this.#needs = job.needs;
     this.if = job.if;
     this['runs-on'] = job['runs-on'];
     this.environment = job.environment;
@@ -103,11 +103,11 @@ class Job {
    * 如果希望某个作业在其依赖的作业未成功时也能运行，请在 `jobs.<job_id>.if` 中使用 `always()` 条件表达式。
    */
   get needs() {
-    return typeof this._needs === 'string' ? [this._needs] : this._needs;
+    return typeof this.#needs === 'string' ? [this.#needs] : this.#needs;
   }
 
   set needs(needs) {
-    this._needs = needs;
+    this.#needs = needs;
   }
 
   get runsOn() {

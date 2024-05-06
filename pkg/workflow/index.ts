@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 /**
  * Workflow is the structure of the files in .github/workflows
  *
@@ -8,7 +9,7 @@
 
 import fs from 'fs';
 
-import yaml from 'js-yaml';
+import yaml, { LoadOptions, DumpOptions } from 'js-yaml';
 
 import Job from './job';
 import {
@@ -97,10 +98,10 @@ class Workflow {
    * 若要按顺序运行作业，可以使用 `jobs.<job_id>.needs` 关键字定义对其他作业的依赖关系。
    * 每个作业在 `runs-on` 指定的运行器环境中运行。
    */
-  public jobs: Map<string, Job>;
+  public jobs: Record<string, Job>;
 
   constructor({
-    name, 'run-name': runName, on, permissions, env, defaults, concurrency, jobs,
+    name, 'run-name': runName, on, permissions, env, defaults, concurrency, jobs = {},
   }: Workflow) {
     this.name = name;
     this['run-name'] = runName;
@@ -109,7 +110,9 @@ class Workflow {
     this.env = env;
     this.defaults = defaults;
     this.concurrency = concurrency;
-    this.jobs = jobs;
+    this.jobs = Object.fromEntries(Object.entries(jobs).map(([jobId, job]) => {
+      return [jobId, new Job(job)];
+    }));
   }
 
   onEvent<K extends keyof OnEvents>(eventName: K) {
@@ -128,13 +131,22 @@ class Workflow {
     return json;
   }
 
-  static Read(path: string) {
-    const doc = yaml.load(fs.readFileSync(path, 'utf8'));
+  save(path: string, options?: DumpOptions) {
+    const doc = yaml.dump(this.toJSON(), options);
+    fs.writeFileSync(path, doc);
+  }
+
+  dump(options?: DumpOptions) {
+    return yaml.dump(JSON.parse(JSON.stringify(this)), options);
+  }
+
+  static Read(path: string, options?: LoadOptions) {
+    const doc = yaml.load(fs.readFileSync(path, 'utf8'), options);
     return new Workflow(doc as Workflow);
   }
 
-  static Load(str: string) {
-    const doc = yaml.load(str);
+  static Load(str: string, options?: LoadOptions) {
+    const doc = yaml.load(str, options);
     return new Workflow(doc as Workflow);
   }
 }

@@ -30,7 +30,7 @@ class Step {
 
   if: string;
 
-  _name: string;
+  #name: string;
 
   uses: string;
 
@@ -45,7 +45,7 @@ class Step {
     entrypoint: string;
   };
 
-  _env: Record<string, string>;
+  #env: Record<string, string>;
 
   /**
    * 防止步骤失败时作业也会失败。 设置为 true 以允许在此步骤失败时作业能够通过。
@@ -57,20 +57,20 @@ class Step {
   constructor(step: Step) {
     this.id = step.id;
     this.if = step.if;
-    this._name = step.name;
+    this.#name = step.name;
     this.uses = step.uses;
     this.run = step.run;
     this['working-directory'] = step['working-directory'];
     this.shell = step.shell;
     this.with = step.with;
-    this._env = step.env;
+    this.#env = step.env;
     this['continue-on-error'] = step['continue-on-error'];
     this['timeout-minutes'] = step['timeout-minutes'];
   }
 
   get name(): string {
-    if (this.name !== '') {
-      return this.name;
+    if (this.#name !== '') {
+      return this.#name;
     } if (this.uses !== '') {
       return this.uses;
     } if (this.run !== '') {
@@ -80,22 +80,22 @@ class Step {
   }
 
   set name(name) {
-    this._name = name;
+    this.#name = name;
   }
 
   /**
    * 合并with参数到env
    */
   get env() {
-    const _env = { ...this._env };
+    const env = { ...this.#env };
 
     Object.entries(this.with).forEach(([key, value]) => {
       let envKey = key.toUpperCase().replace(/[^A-Z0-9-]/g, '_');
       envKey = `INPUT_${envKey}`;
-      _env[envKey] = value;
+      env[envKey] = value;
     });
 
-    return _env;
+    return env;
   }
 
   /**
