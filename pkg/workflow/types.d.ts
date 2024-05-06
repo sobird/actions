@@ -5,7 +5,7 @@
  * * inputs 的顶级属性的最大数目为 10。
  * * inputs 的最大有效负载为 65,535 个字符。
  */
-interface WorkflowDispatchInputs {
+export interface WorkflowDispatchInputs {
   description: string;
   required: boolean;
   default?: string;
@@ -139,3 +139,12 @@ export type On = OnEvents | Array<keyof OnEvents> | string;
 type PermissionsKey = 'actions' | 'checks' | 'contents' | 'deployments' | 'id-token' | 'issues' | 'discussions' | 'packages' | 'pages' | 'pull-requests' | 'repository-projects' | 'security-events' | 'statuses';
 type PermissionsValue = 'read' | 'write' | 'none' | 'read|write' | 'read|none' | 'write|none' | 'read|write|none';
 export type Permissions = { [key in PermissionsKey]: PermissionsValue } | 'read-all' | 'write-all' | Record<string, never>;
+
+export type Concurrency = { group: string, 'cancel-in-progress': boolean };
+
+export type Defaults = {
+  run: {
+    shell: 'unspecified' | 'bash' | 'pwsh' | 'python' | 'sh' | 'cmd' | 'powershell';
+    'working-directory': string;
+  }
+};

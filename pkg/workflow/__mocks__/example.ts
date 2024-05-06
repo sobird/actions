@@ -36,18 +36,18 @@ const customSchema = new yaml.Schema({
 
 const workflow = yaml.load(content, { schema: customSchema });
 
-console.log('workflow.on', workflow.jobs['Test-Node']);
+console.log('workflow.on', JSON.stringify(workflow));
 
-const needJobIDs = ['a', 'b', 'c'];
+// const needJobIDs = ['a', 'b', 'c'];
 
-const wf = new Workflow(workflow as Workflow);
+// const wf = new Workflow(workflow as Workflow);
 
-if (typeof wf.permissions === 'string') {
-  wf.permissions = 'read-all';
-} else {
-  wf.permissions.actions = 'none';
-  wf.permissions = {};
-}
+// if (typeof wf.permissions === 'string') {
+//   wf.permissions = 'read-all';
+// } else {
+//   wf.permissions.actions = 'none';
+//   wf.permissions = {};
+// }
 
-const rawNeeds = needJobIDs.map((id) => { return yaml.load(`!!str ${id}`); });
-console.log('rawNeeds', rawNeeds);
+// const rawNeeds = needJobIDs.map((id) => { return yaml.load(`!!str ${id}`); });
+// console.log('rawNeeds', rawNeeds);

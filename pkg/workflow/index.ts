@@ -11,7 +11,9 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 
 import Job from './job';
-import { On, Permissions } from './types';
+import {
+  Concurrency, Defaults, On, Permissions,
+} from './types';
 
 class Workflow {
   /**
@@ -78,12 +80,7 @@ class Workflow {
    * 您也可以设置只可用于作业的默认设置。 有关详细信息，请参阅 `jobs.<job_id>.defaults`。
    * 使用相同名称定义了多个默认设置时，GitHub 会使用最具体的默认设置。 例如，在作业中定义的默认设置将覆盖在工作流程中定义的同名默认设置。
    */
-  public defaults: {
-    run: {
-      shell: 'unspecified' | 'bash' | 'pwsh' | 'python' | 'sh' | 'cmd' | 'powershell';
-      'working-directory': string;
-    }
-  };
+  public defaults: Defaults;
 
   /**
    * 使用 `concurrency` 以确保只有使用相同并发组的单一作业或工作流才会同时运行。
@@ -92,7 +89,7 @@ class Workflow {
    * 表达式只能使用 `github`、`inputs` 和 `vars` 上下文。 有关表达式的详细信息，请参阅“表达式”。
    * 你还可以在作业级别指定 `concurrency`。有关详细信息，请参阅 `jobs.<job_id>.concurrency`。
    */
-  public concurrency: { group: string, 'cancel-in-progress': boolean };
+  public concurrency: Concurrency;
 
   /**
    * 工作流运行由一个或多个 `jobs` 组成，默认情况下并行运行。

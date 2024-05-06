@@ -29,10 +29,10 @@ interface StrategyAttrs {
    * 矩阵在每次工作流运行时最多将生成 256 个作业。 此限制适用于 GitHub 托管和自托管运行器。
    */
   matrix: {
-    os?: string[];
-    node?: string[];
-    include?: Array<Record<string, string>>;
-    exclude?: Array<Record<string, string>>;
+    include?: Record<string, string>[];
+    exclude?: Record<string, string>[];
+  } & {
+    [key: string]: unknown[];
   };
 
   /**
@@ -71,7 +71,7 @@ export default class Strategy {
   }
 
   get matrices() {
-    const { include, exclude, ...restMatrix } = this.matrix;
+    const { include, exclude, ...originalMatrix } = this.matrix;
 
     let matrixes = [];
 
@@ -79,33 +79,33 @@ export default class Strategy {
     const extraIncludes: Record<string, string>[] = [];
 
     if (include) {
-      include.forEach((item) => {
-        if (Array.isArray(item)) {
-          item.forEach((i) => {
+      include.forEach((includeItem) => {
+        if (Array.isArray(includeItem)) {
+          includeItem.forEach((item) => {
             let extraInclude = true;
 
-            for (const k in i) {
-              if (Object.prototype.hasOwnProperty.call(restMatrix, k)) {
-                includes.push(i);
+            for (const key in item) {
+              if (Object.prototype.hasOwnProperty.call(originalMatrix, key)) {
+                includes.push(item);
                 extraInclude = false;
                 break;
               }
             }
             if (extraInclude) {
-              extraIncludes.push(i);
+              extraIncludes.push(item);
             }
           });
         } else {
           let extraInclude = true;
-          for (const k in item) {
-            if (Object.prototype.hasOwnProperty.call(restMatrix, k)) {
-              includes.push(item);
+          for (const k in includeItem) {
+            if (Object.prototype.hasOwnProperty.call(originalMatrix, k)) {
+              includes.push(includeItem);
               extraInclude = false;
               break;
             }
           }
           if (extraInclude) {
-            extraIncludes.push(item);
+            extraIncludes.push(includeItem);
           }
         }
       });
@@ -116,7 +116,7 @@ export default class Strategy {
       exclude.forEach((item) => {
         const excludeEntry: Record<string, string> = {};
         for (const k in item) {
-          if (Object.prototype.hasOwnProperty.call(restMatrix, k)) {
+          if (Object.prototype.hasOwnProperty.call(originalMatrix, k)) {
             excludeEntry[k] = item[k];
           } else {
             throw new Error(`The workflow is not valid. Matrix exclude key "${k}" does not match any key within the matrix`);
@@ -126,7 +126,15 @@ export default class Strategy {
       });
     }
 
-    const matrixProduct = cartesianProduct(restMatrix);
+    // 计算原始矩阵笛卡尔积
+    const matrixProduct = cartesianProduct(originalMatrix);
+
+    // 添加到所有原始矩阵组合, 不会覆盖原始组合的任何部分
+    extraIncludes.forEach((includeItem) => {
+      matrixProduct.forEach((matrixItem) => {
+        Object.assign(matrixItem, includeItem);
+      });
+    });
 
     // 将排除条件转换为一个可以快速检查的对象
     const excludesMap = excludes.reduce((acc, excludeItem) => {
@@ -141,22 +149,21 @@ export default class Strategy {
       return acc;
     }, [] as Record<string, unknown>[]);
 
+    const matchIncludes: Record<string, string>[] = [];
     includes.forEach((includeItem) => {
       let matched = false;
       matrixes.forEach((matrixItem) => {
-        if (lodash.isMatchBy(matrixItem, includeItem, restMatrix)) {
+        if (lodash.isMatchBy(matrixItem, includeItem, originalMatrix)) {
           matched = true;
-          console.debug(`Adding include values '${JSON.stringify(includeItem)}' to existing entry`);
-          Object.assign(restMatrix, includeItem);
+          Object.assign(matrixItem, includeItem);
         }
       });
       if (!matched) {
-        extraIncludes.push(includeItem);
+        matchIncludes.push(includeItem);
       }
     });
 
-    extraIncludes.forEach((includeItem) => {
-      console.debug(`Adding include '${JSON.stringify(include)}'`);
+    matchIncludes.forEach((includeItem) => {
       matrixes.push(includeItem);
     });
 
