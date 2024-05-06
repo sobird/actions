@@ -102,7 +102,7 @@ class Step {
    * returns the command for the shell
    * @returns
    */
-  shellCommand() {
+  get shellCommand() {
     let shellCommand = '';
 
     switch (this.shell) {

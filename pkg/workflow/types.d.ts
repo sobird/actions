@@ -123,7 +123,7 @@ export interface OnEvents {
     types: Array<'started'>
   }
   workflow_call: null;
-  workflow_dispatch: null | {
+  workflow_dispatch: {
     inputs: {
       [key in string]: WorkflowDispatchInputs;
     };

@@ -126,6 +126,27 @@ class Workflow {
     return on[eventName] as OnEvents[K];
   }
 
+  get workflowDispatch(): Record<string, OnEvents['workflow_dispatch']['inputs']> | undefined | OnEvents['workflow_dispatch'] {
+    const { on } = this;
+    if (typeof on === 'string') {
+      if (on === 'workflow_dispatch') {
+        return {};
+      }
+      return;
+    }
+
+    if (Array.isArray(on)) {
+      if (on.includes('workflow_dispatch')) {
+        return {};
+      }
+      return;
+    }
+
+    if (typeof on === 'object') {
+      return on.workflow_dispatch;
+    }
+  }
+
   toJSON() {
     const { file, ...json } = this;
     return json;

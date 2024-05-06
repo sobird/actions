@@ -10,8 +10,14 @@ import os from 'node:os';
 
 import { cartesianProduct, lodash } from '@/utils';
 
-interface StrategyAttrs {
 /**
+ * 使用 `jobs.<job_id>.strategy` 对作业使用矩阵策略。
+ *
+ * 使用矩阵策略，可以在单个作业定义中使用变量自动创建基于变量组合的多个作业运行。
+ * 例如，可以使用矩阵策略在某个语言的多个版本或多个操作系统上测试代码。
+ */
+export default class Strategy {
+  /**
    * 使用 `jobs.<job_id>.strategy.matrix` 定义不同作业配置的矩阵。 在矩阵中，定义一个或多个变量，后跟一个值数组。
    *
    * 例如，以下矩阵有一个称为 version 的变量，其值为 [10, 12, 14] ，以及一个称为 os 的变量，其值为 [ubuntu-latest, windows-latest]：
@@ -28,7 +34,7 @@ interface StrategyAttrs {
    *
    * 矩阵在每次工作流运行时最多将生成 256 个作业。 此限制适用于 GitHub 托管和自托管运行器。
    */
-  matrix: {
+  matrix?: {
     include?: Record<string, string>[];
     exclude?: Record<string, string>[];
   } & {
@@ -49,28 +55,32 @@ interface StrategyAttrs {
  * 若要设置使用 matrix 作业策略时可以同时运行的最大作业数，请使用 `jobs.<job_id>.strategy.max-parallel`。
  */
   'max-parallel'?: number;
-}
 
-/**
- * 使用 `jobs.<job_id>.strategy` 对作业使用矩阵策略。
- *
- * 使用矩阵策略，可以在单个作业定义中使用变量自动创建基于变量组合的多个作业运行。
- * 例如，可以使用矩阵策略在某个语言的多个版本或多个操作系统上测试代码。
- */
-export default class Strategy {
-  matrix;
-
-  'fail-fast';
-
-  'max-parallel';
-
-  constructor(strategy: StrategyAttrs) {
+  constructor(strategy?: Strategy) {
+    if (!strategy) {
+      return;
+    }
     this.matrix = strategy.matrix;
     this['fail-fast'] = strategy['fail-fast'];
     this['max-parallel'] = strategy['max-parallel'];
   }
 
+  get failFast() {
+    const failFast = this['fail-fast'];
+    if (typeof failFast === 'boolean') {
+      return failFast;
+    }
+    return Boolean(failFast || true);
+  }
+
+  set failFast(failFast: boolean) {
+    this['fail-fast'] = failFast;
+  }
+
   get matrices() {
+    if (!this.matrix) {
+      return {};
+    }
     const { include, exclude, ...originalMatrix } = this.matrix;
 
     let matrixes = [];

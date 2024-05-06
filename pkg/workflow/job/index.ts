@@ -112,7 +112,7 @@ class Job {
     }
 
     this['timeout-minutes'] = job['timeout-minutes'];
-    this.strategy = job.strategy;
+    this.strategy = new Strategy(job.strategy);
     this['continue-on-error'] = job['continue-on-error'];
     this.container = new Container(job.container);
     this.services = job.services;
