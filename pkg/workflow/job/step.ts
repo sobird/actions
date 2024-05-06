@@ -9,7 +9,7 @@
 /**
  * describes what type of step we are about to run
  */
-enum StepType {
+export enum StepType {
   Run, // 所有具有 'run' 属性的步骤
   UsesDockerURL, // 所有具有形如 'docker://...' 的 'uses' 的步骤
   UsesActionLocal, // 所有具有指向子目录中本地Action的 'uses' 的步骤
@@ -137,13 +137,13 @@ class Step {
    *
    * @returns
    */
-  type() {
+  get type() {
     if (this.run === '' && this.uses === '') {
       return StepType.Invalid;
     }
 
-    if (this.run !== '') {
-      if (this.uses !== '') {
+    if (this.run) {
+      if (this.uses) {
         return StepType.Invalid;
       }
       return StepType.Run;
@@ -164,12 +164,6 @@ class Step {
       return StepType.UsesActionLocal;
     }
     return StepType.UsesActionRemote;
-  }
-
-  toJSON() {
-    return {
-      id: this.id,
-    };
   }
 }
 

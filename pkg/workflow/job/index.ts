@@ -11,6 +11,28 @@ import {
   WorkflowDispatchInputs, Permissions, Concurrency, Defaults,
 } from '../types';
 
+export enum JobType {
+  /**
+   * JobTypeDefault is all jobs that have a `run` attribute
+   */
+  Default,
+
+  /**
+   *  JobTypeReusableWorkflowLocal is all jobs that have a `uses` that is a local workflow in the .github/workflows directory
+   */
+  ReusableWorkflowLocal,
+
+  /**
+   * JobTypeReusableWorkflowRemote is all jobs that have a `uses` that references a workflow file in a github repo
+   */
+  ReusableWorkflowRemote,
+
+  /**
+   * JobTypeInvalid represents a job which is not configured correctly
+   */
+  Invalid,
+}
+
 class Job {
   /**
    * 使用 jobs.<job_id>.name 设置作业名称，该名称显示在 GitHub UI 中。
@@ -62,7 +84,7 @@ class Job {
 
   'continue-on-error': boolean;
 
-  container?: string | Container;
+  container?: Container;
 
   services?: Record<string, Container>;
 
@@ -83,11 +105,16 @@ class Job {
     this.outputs = job.outputs;
     this.env = job.env;
     this.defaults = job.defaults;
-    this.steps = job.steps;
+    if (Array.isArray(job.steps)) {
+      this.steps = job.steps.map((step) => {
+        return new Step(step);
+      });
+    }
+
     this['timeout-minutes'] = job['timeout-minutes'];
     this.strategy = job.strategy;
     this['continue-on-error'] = job['continue-on-error'];
-    this.container = job.container;
+    this.container = new Container(job.container);
     this.services = job.services;
     this.uses = job.uses;
     this.with = job.with;
@@ -136,6 +163,36 @@ class Job {
 
   set runsOn(runsOn) {
     this['runs-on'] = runsOn;
+  }
+
+  get type() {
+    if (this.uses) {
+      // 检查是否为YAML文件
+      const isYaml = this.uses.match(/\.(ya?ml)(?:$|@)/);
+
+      if (isYaml) {
+        // 检查是否为本地工作流路径
+        const isLocalPath = this.uses.startsWith('./');
+        // 检查是否为远程工作流路径
+        const isRemotePath = this.uses.match(/^[^.](.+?\/){2,}\S*\.ya?ml@/);
+        // 检查是否包含版本信息
+        const hasVersion = this.uses.match('.ya?ml@');
+
+        if (isLocalPath) {
+          return JobType.ReusableWorkflowLocal;
+        } if (isRemotePath && hasVersion) {
+          return JobType.ReusableWorkflowRemote;
+        }
+      }
+
+      // 如果不是有效的工作流路径，返回无效类型
+      // throw new Error(`\`uses\` key references invalid workflow path '${this.uses}'. Must start with './' if it's a local workflow, or must start with '<org>/<repo>/' and include an '@' if it's a remote workflow`);
+
+      return JobType.Invalid;
+    }
+
+    // 如果不是可复用的工作流，则返回默认类型
+    return JobType.Default;
   }
 }
 

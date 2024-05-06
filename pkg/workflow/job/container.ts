@@ -13,7 +13,7 @@ export default class Container {
    *
    * jobs.<job_id>.container.image
    */
-  image: string;
+  image?: string;
 
   /**
    * 如果映像的容器注册表需要身份验证才能拉取映像，
@@ -63,7 +63,10 @@ export default class Container {
   /** 特定于 Gitea 的字段 */
   cmd?: string[];
 
-  constructor(container: Container) {
+  constructor(container?: Container | string) {
+    if (!container) {
+      return;
+    }
     if (typeof container === 'string') {
       this.image = container;
       return;
