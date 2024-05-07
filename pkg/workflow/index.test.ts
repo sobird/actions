@@ -138,7 +138,7 @@ describe('test workfow on event', () => {
     const workflow = Workflow.Load(yaml);
     const schedules = workflow.onEvent('schedule');
 
-    expect(schedules).toBeNull();
+    expect(schedules).toBeUndefined();
   });
 });
 
@@ -533,5 +533,19 @@ describe('workflow dispatch config', () => {
       type: 'choice',
       options: ['info', 'warning', 'debug'],
     });
+  });
+});
+
+describe('workflow create stages', () => {
+  it('create stages by jobIds', () => {
+    const workflow = Workflow.Read(resolve(__dirname, './__mocks__/stages.yaml'));
+    const stages = workflow.stages('Test-Docker');
+    const jobIds = stages.map((runs) => {
+      return runs.map((run) => {
+        return run.jobId;
+      });
+    });
+
+    expect(jobIds).toEqual([['Test-Node'], ['Explore-Gitea-Actions'], ['Test-Docker']]);
   });
 });

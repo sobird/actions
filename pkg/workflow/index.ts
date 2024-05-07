@@ -111,17 +111,33 @@ class Workflow {
     this.defaults = defaults;
     this.concurrency = concurrency;
     this.jobs = Object.fromEntries(Object.entries(jobs).map(([jobId, job]) => {
+      this.validateJobId(jobId);
       return [jobId, new Job(job)];
     }));
   }
 
-  onEvent<K extends keyof OnEvents>(eventName: K) {
+  onEvent<K extends keyof OnEvents>(eventName?: K) {
     const { on } = this;
     if (typeof on === 'string') {
-      return null;
+      if (on === eventName) {
+        return {};
+      }
+      if (eventName === undefined) {
+        return [on];
+      }
+      return;
     }
     if (Array.isArray(on)) {
-      return null;
+      if (eventName === undefined) {
+        return on;
+      }
+      if (on.includes(eventName)) {
+        return {};
+      }
+      return;
+    }
+    if (eventName === undefined) {
+      return Object.keys(on);
     }
     return on[eventName] as OnEvents[K];
   }
@@ -145,6 +161,78 @@ class Workflow {
     if (typeof on === 'object') {
       return on.workflow_dispatch;
     }
+  }
+
+  validateJobId(jobId: string) {
+    const jobIdRegex = /^[A-Za-z_][A-Za-z0-9_-]*$/;
+
+    if (!jobIdRegex.test(jobId)) {
+      // 如果作业名不符合正则表达式规则，抛出错误
+      throw new Error(
+        `Workflow is not valid. '${this.name}': Job name '${jobId}' is invalid. Names must start with a letter or '_' and contain only alphanumeric characters, '-', or '_'`,
+      );
+    }
+  }
+
+  stages(...jobIds: string[]) {
+    const jobNeeds: Record<string, string[]> = {};
+
+    let jobIdsClone = [...jobIds];
+
+    if (jobIds.length === 0) {
+      jobIdsClone = Object.keys(this.jobs);
+    }
+
+    while (jobIdsClone.length > 0) {
+      const newjobIds: string[] = [];
+      jobIdsClone.forEach((jobId) => {
+        if (!jobNeeds[jobId]) {
+          const job = this.jobs[jobId];
+          if (job) {
+            jobNeeds[jobId] = job.needs;
+            newjobIds.push(...job.needs);
+          }
+        }
+      });
+      jobIdsClone = newjobIds;
+    }
+
+    const stages: Array<{ job: Job, jobId: string }[]> = [];
+    // return true if all strings in jobIds exist in at least one of the stages
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const jobIdsInStages = (jobIds: string[], ...stages: Array<{ job: Job, jobId: string }[]>) => {
+      for (const jobId of jobIds) {
+        let found = false;
+        for (const runs of stages) {
+          if (runs.map((run) => { return run.jobId; }).includes(jobId)) {
+            found = true;
+          }
+        }
+        if (!found) return false;
+      }
+      return true;
+    };
+    while (Object.keys(jobNeeds).length > 0) {
+      const runs: { job: Job, jobId: string }[] = [];
+
+      Object.entries(jobNeeds).forEach(([jobId, needs]) => {
+        if (jobIdsInStages(needs, ...stages)) {
+          runs.push({
+            job: this.jobs[jobId],
+            jobId,
+          });
+          delete jobNeeds[jobId];
+        }
+      });
+
+      if (runs.length === 0) {
+        console.log('unable to build dependency graph for');
+        break;
+      }
+      stages.push(runs);
+    }
+
+    return stages;
   }
 
   toJSON() {

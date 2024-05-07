@@ -130,6 +130,9 @@ class Job {
    * 如果希望某个作业在其依赖的作业未成功时也能运行，请在 `jobs.<job_id>.if` 中使用 `always()` 条件表达式。
    */
   get needs() {
+    if (!this.#needs) {
+      return [];
+    }
     return typeof this.#needs === 'string' ? [this.#needs] : this.#needs;
   }
 

@@ -6,19 +6,21 @@
 // eslint-disable-next-line max-classes-per-file
 import fs from 'fs';
 import {
-  resolve, parse, basename, dirname,
+  resolve, parse, join, basename,
 } from 'node:path';
 
 import Debug from 'debug';
+
+import Workflow from '@/pkg/workflow';
 
 const debug = Debug('planner');
 
 /** Run represents a job from a workflow that needs to be run */
 class Run {
-  constructor(public jobName: string, public job: any) {}
+  constructor(public jobId: string, public job: any) {}
 
   toString() {
-    return this.job.name || this.jobName;
+    return this.job.name || this.jobId;
   }
 }
 
@@ -27,10 +29,10 @@ class Stage {
   constructor(public runs: Run[] = []) {}
 
   /** will get all the job names in the stage */
-  get jobNames() {
+  get jobIds() {
     const names: string[] = [];
     for (const run of this.runs) {
-      names.push(run.jobName);
+      names.push(run.jobId);
     }
     return names;
   }
@@ -83,45 +85,38 @@ class Plan {
 }
 
 /** Planner contains methods for creating plans */
-class Planner {
-  workflows = [];
+class WorkflowPlanner {
+  constructor(public workflows: Workflow[]) {}
 
-  /** will load a specific workflow, all workflows from a directory or all workflows from a directory and its subdirectories */
-  constructor(path: string, recursive: boolean = false) {
-    const absPath = resolve(path);
-    const stat = fs.statSync(absPath);
-
-    let files: fs.Dirent[] = [];
-
-    if (stat.isDirectory()) {
-      debug(`Loading workflows from '${absPath}'`);
-
-      files = fs.readdirSync(absPath, { withFileTypes: true, recursive }).filter((file) => {
-        const { ext } = parse(file.name);
-        return file.isFile() && (ext === '.yml' || ext === '.yaml');
+  /**
+   * PlanEvent builds a new list of runs to execute in parallel for an event name
+   */
+  planEvent(eventName: string) {
+    this.workflows.forEach((workflow) => {
+      const events = workflow.onEvent() as string[];
+      if (events.length === 0) {
+        debug('no events found for workflow: %s', workflow.file);
+        return;
+      }
+      events.forEach((event) => {
+        if (event === eventName) {
+          //
+          // const stages =
+        }
       });
-    } else {
-      debug(`Loading workflow '${absPath}'`);
-
-      files.push({
-        ...stat,
-        name: basename(absPath),
-        path: dirname(absPath),
-      });
-    }
-    //
+    });
   }
 
-  async planJob(jobName: string) {
+  async planJob(jobId: string) {
     const plan = new Plan();
     if (this.workflows.length === 0) {
-      console.debug(`no jobs found for workflow: ${jobName}`);
+      console.debug(`no jobs found for workflow: ${jobId}`);
     }
     let lastErr: Error | null = null;
 
     this.workflows.forEach((workflow) => {
       try {
-        const stages = await createStages(w, jobName);
+        const stages = await createStages(w, jobId);
         plan.mergeStages(stages);
       } catch (err) {
         console.warn(err);
@@ -131,9 +126,48 @@ class Planner {
 
     return { plan, error: lastErr };
   }
+
+  /** will load a specific workflow, all workflows from a directory or all workflows from a directory and its subdirectories */
+  static Collect(path: string, recursive: boolean = false) {
+    const absPath = resolve(path);
+    const stat = fs.statSync(absPath);
+
+    const workflows: Workflow[] = [];
+
+    if (stat.isDirectory()) {
+      debug(`Loading workflows from '${absPath}'`);
+
+      fs.readdirSync(absPath, { withFileTypes: true, recursive }).forEach((file) => {
+        const { ext } = parse(file.name);
+        if (file.isFile() && (ext === '.yml' || ext === '.yaml')) {
+          const workflow = Workflow.Read(join(file.path, file.name));
+          workflow.file = file.name;
+          workflows.push();
+        }
+      });
+    } else {
+      debug(`Loading workflow '${absPath}'`);
+      const workflow = Workflow.Read(absPath);
+      workflow.file = basename(absPath);
+      workflows.push();
+    }
+
+    return new WorkflowPlanner(workflows);
+  }
+
+  static Combine(...workflows: Workflow[]) {
+    return new WorkflowPlanner(workflows);
+  }
+
+  static Single(file: string, name?: string) {
+    const workflow = Workflow.Read(file);
+    workflow.file = name;
+
+    return new WorkflowPlanner([workflow]);
+  }
 }
 
-export default Planner;
+export default WorkflowPlanner;
 
 function createStages(w: any, jobIDs: string[]) {
   const jobDependencies: { [key: string]: string[] } = {};

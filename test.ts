@@ -4,10 +4,10 @@
 const workflow = {
   jobs: {
     job1: {
-      needs: [],
+      needs: ['job5'],
     },
     job2: {
-      needs: ['job3'],
+      needs: ['job3', 'job4'],
     },
     job3: {
       needs: ['job1'],
@@ -83,21 +83,10 @@ function listInStages(srcList: string[], ...stages: any[]): boolean {
 console.log('listInStages', listInStages([], ...[]));
 
 class Test {
-  test;
-
-  constructor(public name: string, public age: number) {
-
-  }
-
-  getName() {
-    console.log('first', Object.entries(this));
-    return this.name;
-  }
-
-  get hello(): string {
-    return this.test;
+  toString() {
+    return '1121';
   }
 }
 
-const test1 = new Test('test', 33);
-console.log('test', test1.hello);
+const test = new Test();
+console.log('test', test);
