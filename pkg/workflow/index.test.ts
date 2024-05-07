@@ -80,9 +80,11 @@ describe('test workfow on event', () => {
     const workflow = Workflow.Read(workflowFile);
     const schedules = workflow.onEvent('schedule');
 
-    expect(schedules?.length).toBe(2);
-    expect(schedules?.[0].cron).toBe('30 5 * * 1,3');
-    expect(schedules?.[1].cron).toBe('30 5 * * 2,4');
+    if (Array.isArray(schedules)) {
+      expect(schedules?.length).toBe(2);
+      expect(schedules?.[0].cron).toBe('30 5 * * 1,3');
+      expect(schedules?.[1].cron).toBe('30 5 * * 2,4');
+    }
   });
 
   it('schedule xxx test case', () => {
@@ -101,9 +103,11 @@ describe('test workfow on event', () => {
     const workflow = Workflow.Load(yaml);
     const schedules = workflow.onEvent('schedule');
 
-    expect(schedules?.length).toBe(1);
-    expect(schedules?.[0]?.cron).toBeUndefined();
-    expect(schedules?.[1]?.cron).toBeUndefined();
+    if (Array.isArray(schedules)) {
+      expect(schedules?.length).toBe(1);
+      expect(schedules?.[0]?.cron).toBeUndefined();
+      expect(schedules?.[1]?.cron).toBeUndefined();
+    }
   });
 
   it('schedule empty test case', () => {

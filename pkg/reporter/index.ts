@@ -355,7 +355,7 @@ class Reporter {
     const outputs = Object.fromEntries(this.outputs);
 
     try {
-      console.log('state, outputs ', state, outputs);
+      // console.log('state, outputs ', state, outputs);
       const updateTaskResponse = await this.client.updateTask(new UpdateTaskRequest({ state, outputs }));
       if (!updateTaskResponse) {
         return;

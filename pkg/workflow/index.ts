@@ -116,28 +116,33 @@ class Workflow {
     }));
   }
 
-  onEvent<K extends keyof OnEvents>(eventName?: K) {
+  /**
+   * get on event list
+   */
+  onEvents() {
+    const { on } = this;
+    if (typeof on === 'string') {
+      return [on];
+    }
+    if (Array.isArray(on)) {
+      return on;
+    }
+    return Object.keys(on);
+  }
+
+  onEvent<K extends keyof OnEvents>(eventName: K) {
     const { on } = this;
     if (typeof on === 'string') {
       if (on === eventName) {
         return {};
       }
-      if (eventName === undefined) {
-        return [on];
-      }
       return;
     }
     if (Array.isArray(on)) {
-      if (eventName === undefined) {
-        return on;
-      }
       if (on.includes(eventName)) {
         return {};
       }
       return;
-    }
-    if (eventName === undefined) {
-      return Object.keys(on);
     }
     return on[eventName] as OnEvents[K];
   }

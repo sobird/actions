@@ -90,7 +90,7 @@ class Runner {
 
     const taskContext = task.context?.fields;
     // @todo
-    console.log('event', taskContext?.event.toJson());
+    // console.log('event', taskContext?.event.toJson());
 
     logger.info(`task ${task.id} repo is ${taskContext?.repository.toJsonString()} ${taskContext?.gitea_default_actions_url.toJsonString()} address`);
 
@@ -106,7 +106,7 @@ class Runner {
       try {
         const mock_fire = JSON.parse(jsonStr);
         if (mock_fire.if) {
-          console.log('mock_fire', mock_fire.entry);
+          // console.log('mock_fire', mock_fire.entry);
           mock_fire.entry.startTime = new Date();
           reporter.fire(mock_fire.entry);
         }

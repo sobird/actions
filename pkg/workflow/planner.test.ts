@@ -28,4 +28,36 @@ describe('workflow planner', () => {
     expect(plan?.stages.length).toBe(0);
     expect(plan?.maxRunNameLen()).toBe(0);
   });
+
+  it('planner plan job with needs test case', () => {
+    const plan = workflowPlanner.planJob('Test-Docker');
+
+    expect(plan?.stages.length).toBe(3);
+    expect(plan.stages[2].jobIds).toEqual(['Test-Docker']);
+  });
+
+  it('planner plan job with no needs test case', () => {
+    const plan = workflowPlanner.planJob('Test-Node');
+
+    expect(plan?.stages.length).toBe(1);
+    expect(plan.stages[0].jobIds).toEqual(['Test-Node', 'Test-Node']);
+  });
+
+  it('planner plan job other test case', () => {
+    const plan = workflowPlanner.planJob('other');
+
+    expect(plan?.stages.length).toBe(0);
+  });
+
+  it('planner plan all test case', () => {
+    const plan = workflowPlanner.planAll();
+
+    expect(plan?.stages.length).toBe(3);
+  });
+
+  it('planner events test case', () => {
+    const events = workflowPlanner.events();
+
+    expect(events.length).toBe(2);
+  });
 });

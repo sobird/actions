@@ -101,7 +101,7 @@ class WorkflowPlanner {
     }
     const plan = new Plan();
     this.workflows.forEach((workflow) => {
-      const events = workflow.onEvent() as string[];
+      const events = workflow.onEvents() as string[];
       if (events.length === 0) {
         debug('no events found for workflow: %s', workflow.file);
         return;
@@ -122,25 +122,62 @@ class WorkflowPlanner {
     return plan;
   }
 
-  // async planJob(jobId: string) {
-  //   const plan = new Plan();
-  //   if (this.workflows.length === 0) {
-  //     console.debug(`no jobs found for workflow: ${jobId}`);
-  //   }
-  //   let lastErr: Error | null = null;
+  planJob(jobId: string) {
+    if (this.workflows.length === 0) {
+      debug(`no jobs found for workflow: ${jobId}`);
+    }
 
-  //   this.workflows.forEach((workflow) => {
-  //     try {
-  //       const stages = await createStages(w, jobId);
-  //       plan.mergeStages(stages);
-  //     } catch (err) {
-  //       console.warn(err);
-  //       lastErr = err;
-  //     }
-  //   });
+    const plan = new Plan();
 
-  //   return { plan, error: lastErr };
-  // }
+    this.workflows.forEach((workflow) => {
+      const stages = workflow.stages(jobId).map((runs) => {
+        return new Stage(runs.map((run) => {
+          return new Run(run.jobId, run.job);
+        }));
+      });
+
+      plan.mergeStages(stages);
+    });
+
+    return plan;
+  }
+
+  planAll() {
+    if (this.workflows.length === 0) {
+      debug('no workflows found by planner');
+    }
+
+    const plan = new Plan();
+
+    this.workflows.forEach((workflow) => {
+      const stages = workflow.stages().map((runs) => {
+        return new Stage(runs.map((run) => {
+          return new Run(run.jobId, run.job);
+        }));
+      });
+
+      plan.mergeStages(stages);
+    });
+
+    return plan;
+  }
+
+  /**
+   * gets all the events in the workflows file
+   */
+  events() {
+    const eventsSet = new Set();
+    this.workflows.forEach((workflow) => {
+      // 假设workflow.on()返回一个事件数组
+      workflow.onEvents().forEach((event) => {
+        eventsSet.add(event);
+      });
+    });
+
+    const events = Array.from(eventsSet);
+    events.sort();
+    return events;
+  }
 
   /** will load a specific workflow, all workflows from a directory or all workflows from a directory and its subdirectories */
   static Collect(path: string, recursive: boolean = false) {
@@ -183,50 +220,3 @@ class WorkflowPlanner {
 }
 
 export default WorkflowPlanner;
-
-function createStages(w: any, jobIDs: string[]) {
-  const jobDependencies: { [key: string]: string[] } = {};
-  const newJobIDs: string[] = [];
-
-  // let newJobIDs: string[] = [...jobIDs];
-  // while (newJobIDs.length > 0) {
-  //   const jobIDs = newJobIDs;
-  //   newJobIDs = [];
-  //   for (const jID of jobIDs) {
-  //     if (!jobDependencies.hasOwnProperty(jID)) {
-  //       const job = w.getJob(jID);
-  //       if (job) {
-  //         jobDependencies[jID] = job.needs();
-  //         newJobIDs.push(...job.needs());
-  //       }
-  //     }
-  //   }
-  // }
-
-  const stages: Stage[] = [];
-  while (Object.keys(jobDependencies).length > 0) {
-    const stage = new Stage();
-    for (const jID in jobDependencies) {
-      if (listInStages(jobDependencies[jID], ...stages)) {
-        stage.Runs.push(new Run(w, jID));
-        delete jobDependencies[jID];
-      }
-    }
-    if (stage.Runs.length === 0) {
-      return [[], new Error(`unable to build dependency graph for ${w.Name} (${w.File})`)];
-    }
-    stages.push(stage);
-  }
-
-  if (stages.length === 0) {
-    return [
-      [],
-      new Error(
-        'Could not find any stages to run. View the valid jobs with `act --list`. Use '
-        + '`act --help` to find how to filter by Job ID/Workflow/Event Name',
-      ),
-    ];
-  }
-
-  return [stages, null];
-}

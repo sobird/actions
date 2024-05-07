@@ -1,6 +1,6 @@
 name: Gitea Actions Test2
 run-name: ${{ github.actor }} is testing out Gitea Actions  
-on: [push]
+on: [push, pull_request]
 jobs:
   Explore-Gitea-Actions-Diff:
     needs: Test-Node

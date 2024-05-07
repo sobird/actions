@@ -4,11 +4,11 @@
     "data": ["test 1212"],
     "startTime": "2008-01-01T12:00:00Z",
     "context": {
-      "stage": "Main",
-      "jobResult": "",
-      "stepNumber": 1,
+      "stage": "",
+      "jobResult": "success",
+      "stepNumber": 4,
       "raw_output": true,
-      "stepResult": ""
+      "stepResult": "success"
     }
   }
 }
