@@ -13,11 +13,14 @@ import Debug from 'debug';
 
 import Workflow from '@/pkg/workflow';
 
+import Job from './job';
+
 const debug = Debug('planner');
+debug.enabled = true;
 
 /** Run represents a job from a workflow that needs to be run */
 class Run {
-  constructor(public jobId: string, public job: any) {}
+  constructor(public jobId: string, public job: Job) {}
 
   toString() {
     return this.job.name || this.jobId;
@@ -57,7 +60,7 @@ class Plan {
   }
 
   /** Merge stages with existing stages in plan */
-  mergeStages(stages: Stage[]): void {
+  mergeStages(stages: Stage[]) {
     // 确定新阶段列表的大小
     const newSize = Math.max(this.stages.length, stages.length);
     const newStages: Stage[] = new Array(newSize);
@@ -92,6 +95,11 @@ class WorkflowPlanner {
    * PlanEvent builds a new list of runs to execute in parallel for an event name
    */
   planEvent(eventName: string) {
+    if (this.workflows.length === 0) {
+      debug('no workflows found by planner');
+      return;
+    }
+    const plan = new Plan();
     this.workflows.forEach((workflow) => {
       const events = workflow.onEvent() as string[];
       if (events.length === 0) {
@@ -101,31 +109,38 @@ class WorkflowPlanner {
       events.forEach((event) => {
         if (event === eventName) {
           //
-          // const stages =
+          const stages = workflow.stages().map((runs) => {
+            return new Stage(runs.map((run) => {
+              return new Run(run.jobId, run.job);
+            }));
+          });
+
+          plan.mergeStages(stages);
         }
       });
     });
+    return plan;
   }
 
-  async planJob(jobId: string) {
-    const plan = new Plan();
-    if (this.workflows.length === 0) {
-      console.debug(`no jobs found for workflow: ${jobId}`);
-    }
-    let lastErr: Error | null = null;
+  // async planJob(jobId: string) {
+  //   const plan = new Plan();
+  //   if (this.workflows.length === 0) {
+  //     console.debug(`no jobs found for workflow: ${jobId}`);
+  //   }
+  //   let lastErr: Error | null = null;
 
-    this.workflows.forEach((workflow) => {
-      try {
-        const stages = await createStages(w, jobId);
-        plan.mergeStages(stages);
-      } catch (err) {
-        console.warn(err);
-        lastErr = err;
-      }
-    });
+  //   this.workflows.forEach((workflow) => {
+  //     try {
+  //       const stages = await createStages(w, jobId);
+  //       plan.mergeStages(stages);
+  //     } catch (err) {
+  //       console.warn(err);
+  //       lastErr = err;
+  //     }
+  //   });
 
-    return { plan, error: lastErr };
-  }
+  //   return { plan, error: lastErr };
+  // }
 
   /** will load a specific workflow, all workflows from a directory or all workflows from a directory and its subdirectories */
   static Collect(path: string, recursive: boolean = false) {
@@ -142,14 +157,14 @@ class WorkflowPlanner {
         if (file.isFile() && (ext === '.yml' || ext === '.yaml')) {
           const workflow = Workflow.Read(join(file.path, file.name));
           workflow.file = file.name;
-          workflows.push();
+          workflows.push(workflow);
         }
       });
     } else {
       debug(`Loading workflow '${absPath}'`);
       const workflow = Workflow.Read(absPath);
       workflow.file = basename(absPath);
-      workflows.push();
+      workflows.push(workflow);
     }
 
     return new WorkflowPlanner(workflows);
