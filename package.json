@@ -47,6 +47,7 @@
     "log4js": "^6.9.1",
     "prompts": "^2.4.2",
     "retry": "^0.13.1",
+    "simple-git": "^3.24.0",
     "totalist": "^3.0.1"
   },
   "devDependencies": {
