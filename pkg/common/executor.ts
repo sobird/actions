@@ -11,23 +11,21 @@ const logger = log4js.getLogger();
 logger.level = 'debug';
 
 export class Conditional {
-  constructor(public fn: (ctx?: object) => boolean) {
-  }
+  constructor(public fn: (ctx?: object) => Promise<boolean> | boolean) {}
 
-  // 评估条件是否满足
   evaluate(ctx?: object) {
     return this.fn(ctx);
   }
 
   not() {
-    return new Conditional((ctx) => { return !this.evaluate(ctx); });
+    return new Conditional(async (ctx) => { return !await this.evaluate(ctx); });
   }
 }
 
 class Executor {
   constructor(public fn: (ctx?: object) => Promise<void> | void) {}
 
-  async execute(ctx?: object) {
+  execute(ctx?: object) {
     return this.fn(ctx);
   }
 
@@ -42,20 +40,20 @@ class Executor {
   // Executor 的 If 方法用于在条件满足时执行执行器
   if(conditional: Conditional) {
     return new Executor(async (ctx) => {
-      if (conditional.evaluate(ctx)) {
-        await this.execute(ctx);
+      if (await conditional.evaluate(ctx)) {
+        this.execute(ctx);
       }
     });
   }
 
   // Executor 的 IfNot 方法用于在条件不满足时执行执行器
   ifNot(conditional: Conditional) {
-    return this.if(new Conditional((ctx) => { return !conditional.evaluate(ctx); }));
+    return this.if(conditional.not());
   }
 
   // Executor 的 IfBool 方法用于在布尔条件为真时执行执行器
-  ifBool(conditional: Conditional) {
-    return this.if(new Conditional(() => { return conditional.evaluate(); }));
+  ifBool(conditional: boolean) {
+    return this.if(new Conditional(() => { return conditional; }));
   }
 
   // Executor 的 Finally 方法用于在执行器执行后运行另一个执行器
@@ -96,7 +94,7 @@ class Executor {
   /** 于条件创建一个执行器 */
   static conditional(conditional: Conditional, trueExecutor: Executor, falseExecutor: Executor) {
     return new Executor(async (ctx) => {
-      if (conditional.evaluate(ctx)) {
+      if (await conditional.evaluate(ctx)) {
         await trueExecutor.execute(ctx);
       } else {
         await falseExecutor.execute(ctx);

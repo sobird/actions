@@ -9,10 +9,41 @@ import Executor, { Conditional } from './executor';
 function asyncFunction() {
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve('两秒后执行');
+      resolve('1秒后执行');
     }, 1000);
   });
 }
+
+describe('Test Conditional', () => {
+  it('evaluate() return true test case', () => {
+    const result = new Conditional(() => {
+      return true;
+    }).evaluate();
+    expect(result).toBeTruthy();
+  });
+
+  it('evaluate() return true false case', async () => {
+    const result = new Conditional(async () => {
+      return false;
+    }).evaluate();
+    expect(await result).toBeFalsy();
+  });
+
+  it('not() return true test case', async () => {
+    const result = await new Conditional(async () => {
+      await asyncFunction();
+      return true;
+    }).not().evaluate();
+    expect(result).toBeFalsy();
+  });
+
+  it('not() return false test case', async () => {
+    const result = await new Conditional(() => {
+      return false;
+    }).not().evaluate();
+    expect(result).toBeTruthy();
+  });
+});
 
 describe('Test Static Method', () => {
   it('Empty Pipeline', async () => {
@@ -38,6 +69,69 @@ describe('Test Static Method', () => {
   });
 });
 
+describe('Test Member Method', () => {
+  it('Then Executor: return true case', async () => {
+    let trueCount = 0;
+    // 链式调佣，支持异步
+    await new Executor(() => {
+      trueCount += 1;
+    }).then(new Executor(async () => {
+      await asyncFunction();
+      trueCount += 1;
+    })).then(new Executor(() => {
+      trueCount += 1;
+    })).execute();
+
+    expect(trueCount).toBe(3);
+  });
+
+  it('If Executor: return true case', async () => {
+    let trueCount = 0;
+    await new Executor(() => {
+      trueCount += 1;
+    }).if(new Conditional(() => {
+      return true;
+    })).execute();
+    expect(trueCount).toBe(1);
+  });
+
+  it('If Executor: return false case', async () => {
+    let falseCount = 0;
+    await new Executor(() => {
+      falseCount += 1;
+    }).if(new Conditional(async () => {
+      return false;
+    })).execute();
+    expect(falseCount).toBe(0);
+  });
+
+  it('IfNot Executor: not true case', async () => {
+    let falseCount = 0;
+    await new Executor(() => {
+      falseCount += 1;
+    }).ifNot(new Conditional(async () => {
+      return true;
+    })).execute();
+    expect(falseCount).toBe(0);
+  });
+
+  it('IfBoolean Executor: true case', async () => {
+    let count = 0;
+    await new Executor(() => {
+      count += 1;
+    }).ifBool(true).execute();
+    expect(count).toBe(1);
+  });
+
+  it('IfBoolean Executor: false case', async () => {
+    let count = 0;
+    await new Executor(() => {
+      count += 1;
+    }).ifBool(false).execute();
+    expect(count).toBe(0);
+  });
+});
+
 describe('Test Conditional Executor', () => {
   it('Conditional Executor: return true case', async () => {
     let trueCount = 0;
@@ -57,7 +151,7 @@ describe('Test Conditional Executor', () => {
   it('Conditional Executor: return false case', async () => {
     let trueCount = 0;
     let falseCount = 0;
-    const conditionalExecutor = Executor.conditional(new Conditional(() => {
+    const conditionalExecutor = Executor.conditional(new Conditional(async () => {
       return false;
     }), new Executor(() => {
       trueCount += 1;
@@ -72,7 +166,7 @@ describe('Test Conditional Executor', () => {
   it('Conditional Executor: return false string case', async () => {
     let trueCount = 0;
     let falseCount = 0;
-    const conditionalExecutor = Executor.conditional(new Conditional(() => {
+    const conditionalExecutor = Executor.conditional(new Conditional(async () => {
       return !!'false';
     }), new Executor(() => {
       trueCount += 1;

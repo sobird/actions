@@ -1,3 +1,11 @@
+/**
+ * github context
+ *
+ * @see https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+ *
+ * sobird<i@sobird.me> at 2024/05/07 19:42:02 created.
+ */
+
 class GithubContext {
   event: { [key: string]: any };
 
@@ -57,13 +65,32 @@ class GithubContext {
 
   GraphQLURL: string;
 
-  constructor(init?: Partial<GithubContext>) {
-    if (init) {
-      Object.assign(this, init);
-    }
+  constructor(init: Partial<GithubContext>) {
+    this.event = { ddd: 'ddd' };
+    Object.assign(this, init);
   }
 
   // 类的其他方法...
 }
 
 export default GithubContext;
+
+interface NestedMap {
+  [key: string]: NestedMap | any;
+}
+
+export function nestedMapLookup(m: NestedMap, ...keys: string[]): any {
+  if (keys.length === 0) {
+    return undefined; // 或者抛出错误
+  }
+
+  const firstKey = keys[0];
+  const value = m[firstKey];
+
+  if (value === undefined) {
+    return undefined;
+  } if (keys.length === 1) {
+    return value;
+  }
+  return nestedMapLookup(value as NestedMap, ...keys.slice(1));
+}
