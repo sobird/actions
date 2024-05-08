@@ -42,7 +42,7 @@ class Stage {
 }
 
 /** Plan contains a list of stages to run in series */
-class Plan {
+export class Plan {
   constructor(public stages: Stage[] = []) {}
 
   /** determines the max name length of all jobs */
@@ -122,7 +122,7 @@ class WorkflowPlanner {
     return plan;
   }
 
-  planJob(jobId: string) {
+  planJob(...jobId: string[]) {
     if (this.workflows.length === 0) {
       debug(`no jobs found for workflow: ${jobId}`);
     }
@@ -130,7 +130,7 @@ class WorkflowPlanner {
     const plan = new Plan();
 
     this.workflows.forEach((workflow) => {
-      const stages = workflow.stages(jobId).map((runs) => {
+      const stages = workflow.stages(...jobId).map((runs) => {
         return new Stage(runs.map((run) => {
           return new Run(run.jobId, run.job);
         }));

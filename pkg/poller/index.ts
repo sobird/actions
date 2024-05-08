@@ -85,7 +85,7 @@ class Poller {
         tasksVersion,
       }));
 
-      console.log('fetchTaskResponse', fetchTaskResponse.task?.needs, fetchTaskResponse.task?.workflowPayload?.toString());
+      // console.log('fetchTaskResponse', fetchTaskResponse.task?.needs, fetchTaskResponse.task?.workflowPayload?.toString());
 
       if (fetchTaskResponse.tasksVersion > tasksVersion) {
         this.tasksVersion = fetchTaskResponse.tasksVersion;

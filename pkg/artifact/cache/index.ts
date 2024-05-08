@@ -18,9 +18,9 @@
  * sobird<i@sobird.me> at 2024/04/30 1:58:31 created.
  */
 
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 import sqlite3, { Database } from 'better-sqlite3';
 import bodyParser from 'body-parser';

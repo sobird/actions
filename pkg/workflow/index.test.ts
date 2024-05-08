@@ -387,7 +387,7 @@ describe('job strategy test', () => {
   it('job strategy-only-max-parallel test case', () => {
     const job = workflow.jobs['strategy-only-max-parallel'];
 
-    expect(job.strategy?.matrices).toEqual({});
+    expect(job.strategy?.matrices).toEqual([]);
     expect(job.strategy?.maxParallel).toBe(2);
     expect(job.strategy?.failFast).toBe(true);
   });
@@ -395,7 +395,7 @@ describe('job strategy test', () => {
   it('job strategy-only-fail-fast test case', () => {
     const job = workflow.jobs['strategy-only-fail-fast'];
 
-    expect(job.strategy?.matrices).toEqual({});
+    expect(job.strategy?.matrices).toEqual([]);
     expect(job.strategy?.maxParallel).toBe(os.cpus().length);
     expect(job.strategy?.failFast).toBe(false);
   });
@@ -403,7 +403,7 @@ describe('job strategy test', () => {
   it('job strategy-no-matrix test case', () => {
     const job = workflow.jobs['strategy-no-matrix'];
 
-    expect(job.strategy?.matrices).toEqual({});
+    expect(job.strategy?.matrices).toEqual([]);
     expect(job.strategy?.maxParallel).toBe(2);
     expect(job.strategy?.failFast).toBe(false);
   });
