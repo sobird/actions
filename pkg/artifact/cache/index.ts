@@ -45,16 +45,15 @@ class ArtifactCache {
     public dir: string = CACHE_DIR,
     public outboundIP: string = ip.address() || 'localhost',
     public port: number = 0,
-    public logger: Logger = log4js.getLogger(),
+    public logger: Logger = log4js.getLogger('ArtifactCache'),
     public app = express(),
   ) {
-    this.logger.level = 'debug';
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
     this.storage = new Storage(path.join(dir, 'cache'));
     const db = sqlite3(path.join(CACHE_DIR, 'cache.db'), {
-      verbose: console.log,
+      verbose: logger.debug,
     });
 
     try {
@@ -71,7 +70,7 @@ class ArtifactCache {
       db.prepare('CREATE UNIQUE INDEX idx_key ON caches (key, version)');
       this.db = db;
     } catch (err) {
-      this.logger.info((err as Error).message);
+      this.logger.debug((err as Error).message);
     }
 
     app.set('query parser', 'simple');
@@ -123,11 +122,10 @@ class ArtifactCache {
 
     const cacheId = idAndKey.id;
     const foundPrimaryKey = idAndKey.key;
-    console.log(`Found key ${foundPrimaryKey} with id ${cacheId}`);
 
     const cacheFile = this.storage.filename(cacheId);
     if (!this.storage.exist(cacheId)) {
-      console.log(`Missing cache file ${cacheFile}`);
+      this.logger.debug(`Missing cache file ${cacheFile}`);
       res.status(204).json({});
     } else {
       const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
@@ -140,7 +138,7 @@ class ArtifactCache {
     const { key, version, cacheSize = 0 } = req.body as ReserveCacheRequest;
     const { db } = this;
 
-    console.log(`Request to reserve cache ${key} for uploading`);
+    this.logger.debug(`Request to reserve cache ${key} for uploading`);
     const row = db.prepare<unknown[], CacheEntry>('SELECT * FROM caches WHERE key = ? AND version = ?').get(key, version);
     if (!row) {
       const id = db.prepare<unknown[], CacheEntry>('INSERT INTO caches (key, version, size, updatedAt, createdAt) VALUES (?, ?, ?, ?, ?)')
@@ -150,32 +148,28 @@ class ArtifactCache {
     }
 
     if (row.complete) {
-      const err = `Cache id ${row.id} was already uploaded`;
-      console.error(err);
-      res.status(400).json({ error: err });
+      const error = `Cache id ${row.id} was already uploaded`;
+      res.status(400).json({ error });
     } else {
-      console.log(`Cache id ${row.id} already reserved, but did not start uploading`);
+      this.logger.debug(`Cache id ${row.id} already reserved, but did not start uploading`);
       res.status(200).json({ cacheId: row.id } as ReserveCacheResponse);
     }
   };
 
   uploadCache: Handler = async (req, res) => {
-    console.log('Upload request');
     const { cacheId } = req.params;
     const { db } = this;
 
     const row = db.prepare<unknown[], CacheEntry>('SELECT * FROM caches WHERE id = ?').get(cacheId);
     if (!row) {
-      const err = `Cache with id ${cacheId} has not been reserved`;
-      console.error(err);
-      res.status(400).json({ error: err });
+      const error = `Cache with id ${cacheId} has not been reserved`;
+      res.status(400).json({ error });
       return;
     }
 
     if (row.complete) {
-      const err = `Upload cache with ${row.id} has already been committed and completed`;
-      console.error(err);
-      res.status(400).json({ error: err });
+      const error = `Upload cache with ${row.id} has already been committed and completed`;
+      res.status(400).json({ error });
     } else {
       // the format like "bytes 0-22275422/*" only
       const contentRange = req.header('Content-Range') || '';
@@ -192,7 +186,6 @@ class ArtifactCache {
   };
 
   commitCache: Handler = async (req, res) => {
-    console.log('Commit cache request');
     const { cacheId } = req.params;
     const { size } = req.body as CommitCacheRequest;
     const { db } = this;
@@ -224,8 +217,7 @@ class ArtifactCache {
   };
 
   private middleware: Handler = (req, res, next) => {
-    const Authorization = req.get('Authorization');
-    console.log('Authorization', Authorization);
+    // const Authorization = req.get('Authorization');
     // if (req.get('Authorization') !== `Bearer ${process.env.AUTH_KEY}`) {
     //   res.status(401).json({ message: 'You are not authorized' });
     // }
@@ -249,7 +241,6 @@ class ArtifactCache {
       // Remove cached artifacts if any and temporary uploads
       this.storage.remove(row.id);
     });
-    console.log('Purging DB');
     db.prepare(deleteQ).run();
   }
 
@@ -311,7 +302,7 @@ class ArtifactCache {
   async serve(): Promise<string> {
     return new Promise((resolve) => {
       const server = this.app.listen(this.port, this.outboundIP, () => {
-        console.log('Server running at:', (server.address() as AddressInfo).port);
+        this.logger.info('Server running at:', (server.address() as AddressInfo).port);
         const { address, port } = server.address() as AddressInfo;
         resolve(`http://${address}:${port}`);
       });

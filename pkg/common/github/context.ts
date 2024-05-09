@@ -2,6 +2,7 @@
  * github context
  *
  * @see https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+ * @see https://github.com/actions/runner/blob/main/src/Runner.Worker/GitHubContext.cs
  *
  * sobird<i@sobird.me> at 2024/05/07 19:42:02 created.
  */
@@ -69,8 +70,6 @@ class GithubContext {
     this.event = { ddd: 'ddd' };
     Object.assign(this, init);
   }
-
-  // 类的其他方法...
 }
 
 export default GithubContext;
