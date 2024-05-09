@@ -1,10 +1,10 @@
-export async function withTimeout<T>(awaited: Promise<T>, ms?: number) {
+export async function withTimeout<T>(awaited: Promise<T>, ms?: number, message: string = 'Operation timed out') {
   const timer = setTimeout(() => {
-    throw new Error('Operation timed out');
+    throw new Error(message);
   }, ms);
 
   try {
-    await awaited;
+    return await awaited;
   } finally {
     clearTimeout(timer);
   }

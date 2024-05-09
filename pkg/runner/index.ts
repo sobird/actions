@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import Debug from 'debug';
 import log4js from 'log4js';
 
-import pkg from '@/package.json' assert { type: 'json' };
+import pkg from '@/package.json' with { type: 'json' };
 import type { Client, Config } from '@/pkg';
 import ArtifactCache from '@/pkg/artifact/cache';
 import { Task } from '@/pkg/client/runner/v1/messages_pb';

@@ -8,6 +8,7 @@ import { ConnectError } from '@connectrpc/connect';
 import log4js from 'log4js';
 
 import type { Client, Config, Runner } from '@/pkg';
+import { withTimeout } from '@/utils';
 
 import { FetchTaskRequest, Task } from '../client/runner/v1/messages_pb';
 
@@ -24,6 +25,9 @@ class Poller {
 
   async poll() {
     const promises = [];
+    /**
+     * @todo 此处 capacity 的逻辑是否正确
+     */
     for (let i = 0; i < this.config.runner.capacity; i++) {
       const promise = this.pollTask();
       promises.push(promise);
@@ -77,13 +81,8 @@ class Poller {
    */
   async fetchTask() {
     const { tasksVersion } = this;
-    const timer = setTimeout(() => {
-      throw Error('timeout ');
-    }, this.config.runner.fetchTimeout);
     try {
-      const fetchTaskResponse = await this.client.fetchTask(new FetchTaskRequest({
-        tasksVersion,
-      }));
+      const fetchTaskResponse = await withTimeout(this.client.fetchTask(new FetchTaskRequest({ tasksVersion })), this.config.runner.fetchTimeout);
 
       // console.log('fetchTaskResponse', fetchTaskResponse.task?.needs, fetchTaskResponse.task?.workflowPayload?.toString());
 
@@ -95,11 +94,8 @@ class Poller {
         return fetchTaskResponse.task;
       }
       this.tasksVersion = BigInt(0);
-    } catch (err) {
-      const connectError = err as ConnectError;
-      logger.error('failed to fetch task', connectError.message);
-    } finally {
-      clearTimeout(timer);
+    } catch (error) {
+      logger.error('failed to fetch task', (error as ConnectError).message);
     }
   }
 }

@@ -5,7 +5,7 @@ import { Command } from 'commander';
 import { daemonCommand } from './daemon';
 import { generateConfigCommand } from './generate-config';
 import { registerCommand } from './register';
-import pkg from '../package.json' assert { type: 'json' };
+import pkg from '../package.json' with { type: 'json' };
 
 const program = new Command();
 
