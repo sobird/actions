@@ -43,7 +43,11 @@ class Runner {
     this.setupCacheEnv();
   }
 
-  async run(task: Task) {
+  async run(task?: Task) {
+    if (!task) {
+      return;
+    }
+
     const taskId = task.id;
     if (this.runningTasks.has(taskId)) {
       throw new Error(`Task ${taskId} is already running`);
@@ -88,11 +92,9 @@ class Runner {
       // this.mockTask(task, reporter);
 
       const workflow = Workflow.Load(task.workflowPayload?.toString());
-      console.log('workflow', workflow);
 
       const wp = WorkflowPlanner.Combine(workflow);
       const plan = wp.planJob();
-      console.log('plan', plan);
 
       this.planExecutor(task.context, plan);
     } catch (error) {
@@ -258,12 +260,12 @@ class Runner {
         this.envs.ACTIONS_CACHE_URL = external_server;
       } else {
         try {
-          const artifactCache = new ArtifactCache(
-            this.config.cache.dir,
-            this.config.cache.host,
-            this.config.cache.port,
-          );
-          this.envs.ACTIONS_CACHE_URL = await artifactCache.serve();
+          // const artifactCache = new ArtifactCache(
+          //   this.config.cache.dir,
+          //   this.config.cache.host,
+          //   this.config.cache.port,
+          // );
+          // this.envs.ACTIONS_CACHE_URL = await artifactCache.serve();
         } catch (err) {
           logger.error('cannot init cache server, it will be disabled:', (err as Error).message);
         }

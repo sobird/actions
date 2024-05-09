@@ -21,6 +21,30 @@ const taskWorkflow = fs.readFileSync(resolve(__dirname, './data/workflow.yaml'),
 const workflowPayload = Buffer.from(taskWorkflow);
 const context = Struct.fromJson((contextJson as JsonValue));
 
+export const fetchTaskResponse = new FetchTaskResponse({
+  tasksVersion: BigInt(123),
+  task: new Task({
+    id: BigInt(100),
+    workflowPayload,
+    context,
+    secrets: {
+      GITHUB_TOKEN: '811c3ee800e04c50ea659fd791afc1bdcc9fea6e',
+      GITEA_TOKEN: '811c3ee800e04c50ea659fd791afc1bdcc9fea6e',
+    },
+    machine: '',
+    needs: {
+      'test-job1': new TaskNeed({
+        result: 1,
+        outputs: {
+          key1: 'this is outputs 1',
+          key2: 'this is outputs 2',
+        },
+      }),
+    },
+    vars: {},
+  }),
+});
+
 const mock = vi.fn().mockImplementation(() => {
   return {
     PingServiceClient: {
@@ -31,29 +55,7 @@ const mock = vi.fn().mockImplementation(() => {
       declare: vi.fn().mockResolvedValue(new DeclareResponse({
         runner: new Runner(),
       })),
-      fetchTask: vi.fn().mockResolvedValue(new FetchTaskResponse({
-        tasksVersion: BigInt(123),
-        task: new Task({
-          id: BigInt(100),
-          workflowPayload,
-          context,
-          secrets: {
-            GITHUB_TOKEN: '811c3ee800e04c50ea659fd791afc1bdcc9fea6e',
-            GITEA_TOKEN: '811c3ee800e04c50ea659fd791afc1bdcc9fea6e',
-          },
-          machine: '',
-          needs: {
-            'test-job1': new TaskNeed({
-              result: 1,
-              outputs: {
-                key1: 'this is outputs 1',
-                key2: 'this is outputs 2',
-              },
-            }),
-          },
-          vars: {},
-        }),
-      })),
+      fetchTask: vi.fn().mockResolvedValue(fetchTaskResponse),
       updateTask: vi.fn().mockResolvedValue(new UpdateTaskResponse({
         state: new TaskState({
           id: BigInt(123),

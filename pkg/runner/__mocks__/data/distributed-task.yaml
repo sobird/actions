@@ -2,7 +2,7 @@ name: Gitea Actions Test
 run-name: ${{ github.actor }} is testing out Gitea Actions  
 on: [push]
 jobs:
-  Explore-Gitea-Actions:
+  Explore-Actions:
     runs-on: ubuntu-latest
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."

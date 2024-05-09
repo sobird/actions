@@ -69,14 +69,7 @@ class Step {
   }
 
   get name(): string {
-    if (this.#name !== '') {
-      return this.#name;
-    } if (this.uses !== '') {
-      return this.uses;
-    } if (this.run !== '') {
-      return this.run;
-    }
-    return this.id;
+    return this.#name || this.uses || this.run || this.id;
   }
 
   set name(name) {
