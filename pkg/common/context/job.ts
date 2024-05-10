@@ -8,6 +8,14 @@ export interface Container {
   ports: Record<string, string>;
   volumes: Record<string, string>;
   options: string[];
+  /**
+     * 容器的 ID。
+     */
+  id: string;
+  /**
+   * 容器网络的 ID。 运行程序创建作业中所有容器使用的网络。
+   */
+  network: string;
 }
 
 /**
@@ -38,16 +46,7 @@ export interface Job {
   /**
    * 作业的容器相关信息。 有关容器的详细信息，请参阅“{@link https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idcontainer GitHub Actions 的工作流语法}”。
    */
-  container: {
-    /**
-     * 容器的 ID。
-     */
-    id: string;
-    /**
-     * 容器网络的 ID。 运行程序创建作业中所有容器使用的网络。
-     */
-    network: string;
-  }
+  container: Container
   /**
    * 为作业创建的服务容器
    */
