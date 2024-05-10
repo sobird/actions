@@ -48,33 +48,41 @@ export default class Strategy {
  * 如果 `jobs.<job_id>.strategy.fail-fast` 设置为 `true`，或者其表达式计算结果为 `true`，
  * 则在矩阵中的任何作业失败的情况下，GitHub 将取消矩阵中所有正在进行和在队列中的作业。 此属性的默认值为 `true`。
  */
-  'fail-fast'?: boolean;
+  #failFast?: boolean;
 
   /**
  * 默认情况下，GitHub 将根据运行器的可用性将并行运行的作业数最大化。
  * 若要设置使用 matrix 作业策略时可以同时运行的最大作业数，请使用 `jobs.<job_id>.strategy.max-parallel`。
  */
-  'max-parallel'?: number;
+  #maxParallel?: number;
 
-  constructor(strategy?: Strategy) {
+  constructor(strategy?: Partial<Strategy>) {
     if (!strategy) {
       return;
     }
     this.matrix = strategy.matrix;
-    this['fail-fast'] = strategy['fail-fast'];
-    this['max-parallel'] = strategy['max-parallel'];
+    this.#failFast = strategy['fail-fast'];
+    this.#maxParallel = strategy['max-parallel'];
   }
 
-  get failFast() {
-    const failFast = this['fail-fast'];
+  get 'fail-fast'() {
+    const failFast = this.#failFast;
     if (typeof failFast === 'boolean') {
       return failFast;
     }
     return Boolean(failFast || true);
   }
 
-  set failFast(failFast: boolean) {
-    this['fail-fast'] = failFast;
+  set 'fail-fast'(failFast: boolean) {
+    this.#failFast = failFast;
+  }
+
+  get 'max-parallel'() {
+    return this.#maxParallel || os.cpus().length;
+  }
+
+  set 'max-parallel'(maxParallel: number) {
+    this.#maxParallel = maxParallel;
   }
 
   get matrices() {
@@ -180,11 +188,27 @@ export default class Strategy {
     return matrixes;
   }
 
-  get maxParallel() {
-    return this['max-parallel'] || os.cpus().length;
-  }
-
-  set maxParallel(maxParallel: number) {
-    this['max-parallel'] = maxParallel;
+  /**
+   * 筛选出所有与 targetMatrixValues 中指定的允许值匹配的矩阵。
+   *
+   * @param targetMatrixValues
+   * @returns
+   */
+  select(targetMatrixValues: Record<string, Record<string, boolean>>) {
+    const originalMatrices = this.matrices;
+    const matrices: Record<string, unknown>[] = [];
+    originalMatrices.forEach((original) => {
+      const isAllowed = Object.keys(original).every((key) => {
+        const val = original[key];
+        const allowedVals = targetMatrixValues[key];
+        if (!allowedVals) return true;
+        const valToString = String(val);
+        return allowedVals[valToString];
+      });
+      if (isAllowed) {
+        matrices.push(original);
+      }
+    });
+    return matrices;
   }
 }

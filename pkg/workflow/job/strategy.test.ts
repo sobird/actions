@@ -1,6 +1,12 @@
 import Strategy from './strategy';
 
 describe('Strategy Class test', () => {
+  it('get matrices empty test case', () => {
+    const strategy = new Strategy({});
+
+    expect(strategy.matrices).toEqual([]);
+  });
+
   it('get matrices test case', () => {
     const strategy = new Strategy({
       'fail-fast': false,
@@ -52,6 +58,29 @@ describe('Strategy Class test', () => {
       { fruit: 'pear', animal: 'dog', color: 'green' },
       { fruit: 'banana' },
       { fruit: 'banana', animal: 'cat' },
+    ]);
+  });
+
+  it('get matrices empty test case', () => {
+    const strategy = new Strategy({
+      matrix: {
+        fruit: ['apple', 'pear'],
+        animal: ['cat', 'dog'],
+        include: [{ color: 'green' }, { color: 'pink', animal: 'cat' }, { fruit: 'apple', shape: 'circle' }, { fruit: 'banana' }, { fruit: 'banana', animal: 'cat' }],
+      },
+    });
+
+    const selected = strategy.select({
+      fruit: { apple: true },
+    });
+
+    expect(selected).toEqual([
+      {
+        fruit: 'apple', animal: 'cat', color: 'pink', shape: 'circle',
+      },
+      {
+        fruit: 'apple', animal: 'dog', color: 'green', shape: 'circle',
+      },
     ]);
   });
 });

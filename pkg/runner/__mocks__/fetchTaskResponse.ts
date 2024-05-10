@@ -6,7 +6,7 @@ import { FetchTaskResponse, Task, TaskNeed } from '@/pkg/client/runner/v1/messag
 
 import contextJson from './data/context';
 
-const workflowPayload = fs.readFileSync(`${__dirname}/data/distributed-task.yaml`);
+const workflowPayload = fs.readFileSync(`${__dirname}/data/Test-Node.yaml`);
 
 const context = Struct.fromJson((contextJson as JsonValue));
 

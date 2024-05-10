@@ -35,7 +35,7 @@ export enum JobType {
 
 class Job {
   /**
-   * 使用 jobs.<job_id>.name 设置作业名称，该名称显示在 GitHub UI 中。
+   * 使用 `jobs.<job_id>.name` 设置作业名称，该名称显示在 GitHub UI 中。
    */
   name: string;
 
@@ -94,6 +94,8 @@ class Job {
 
   secrets?: Record<string, string> | 'inherit';
 
+  result?: string;
+
   constructor(job: Job) {
     this.name = job.name;
     this.permissions = job.permissions;
@@ -119,6 +121,7 @@ class Job {
     this.uses = job.uses;
     this.with = job.with;
     this.secrets = job.secrets;
+    this.result = job.result;
   }
 
   /**

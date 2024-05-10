@@ -4,7 +4,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import Debug from 'debug';
 import log4js from 'log4js';
 
 import pkg from '@/package.json' with { type: 'json' };
@@ -17,9 +16,6 @@ import Executor from '../common/executor';
 import Reporter from '../reporter';
 import Workflow from '../workflow';
 import WorkflowPlanner, { Plan } from '../workflow/planner';
-
-const debug = Debug('runner');
-debug.enabled = true;
 
 const logger = log4js.getLogger();
 logger.level = 'debug';
@@ -135,11 +131,11 @@ class Runner {
     }, 2000);
   }
 
-  planExecutor(config: Task['context'], plan: Plan) {
+  async planExecutor(config: Task['context'], plan: Plan) {
     let maxJobNameLen = 0;
     const stagePipeline: Executor[] = [];
 
-    debug('Plan Stages:', plan.stages);
+    logger.debug('Plan Stages:', plan.stages);
 
     plan.stages.forEach((stage) => {
       stagePipeline.push(new Executor(async () => {
@@ -152,36 +148,18 @@ class Runner {
           const { job } = run;
 
           job.steps?.forEach(((step) => {
-            debug('Job.Steps:', step.name);
+            logger.debug('Job.Steps:', step.name);
           }));
 
-          // debug('job', job);
+          logger.debug('Job.TimeoutMinutes:', job['timeout-minutes']);
 
-          const matrixes = job.strategy?.matrices;
-          debug('Job Matrices:', matrixes);
+          const matrices = job.strategy!.select({});
+          logger.debug('Final matrix after applying user inclusions', matrices);
 
-          const selectedMatrixes = this.selectMatrixes(matrixes, []);
-          debug('Final matrix after applying user inclusions', selectedMatrixes);
+          const maxParallel = job.strategy ? job.strategy['max-parallel'] : 4;
 
-          const maxParallel = job.strategy ? job.strategy.maxParallel : 4;
-          // const rcs = selectedMatrixes.map((matrix, i) => {
-          //   const rc = {
-          //     name: '顶顶顶对对对',
-          //     jobName: 'jobName',
-          //     run,
-          //     matrix,
-          //   };
-          //   rc.jobName = rc.name;
-          //   if (selectedMatrixes.length > 1) {
-          //     rc.name = `${rc.name}-${i + 1}`;
-          //   }
-          //   if (rc.toString().length > maxJobNameLen) {
-          //     maxJobNameLen = rc.toString().length;
-          //   }
-          //   return rc;
-          // });
-
-          matrixes?.forEach((matrix, i) => {
+          matrices.forEach((matrix, i) => {
+            // todo
             const rc = {
               name: '顶顶顶对对对',
               jobName: 'jobName',
@@ -189,7 +167,7 @@ class Runner {
               matrix,
             };
             rc.jobName = rc.name;
-            if (selectedMatrixes.length > 1) {
+            if (matrices.length > 1) {
               rc.name = `${rc.name}-${i + 1}`;
             }
             if (rc.toString().length > maxJobNameLen) {
@@ -206,31 +184,22 @@ class Runner {
         });
 
         const ncpu = os.cpus().length;
-        debug('Detected CPUs:', ncpu);
+        logger.debug('Detected CPUs:', ncpu);
         Executor.parallel(ncpu, ...pipeline).execute();
       }));
     });
 
-    return Executor.pipeline(...stagePipeline).then(new Executor(() => {
-      console.log('handleFailure');
-    })).execute();
-  }
-
-  selectMatrixes(originalMatrixes, targetMatrixValues) {
-    const matrices: any = [];
-    originalMatrixes.forEach((original: any) => {
-      const isAllowed = Object.keys(original).every((key) => {
-        const val = original[key];
-        const allowedVals = targetMatrixValues[key];
-        if (!allowedVals) return true; // 如果没有定义允许的值，则默认允许
-        const valToString = String(val);
-        return allowedVals.hasOwnProperty(valToString); // 检查是否允许该值
-      });
-      if (isAllowed) {
-        matrices.push(original); // 如果对象中的所有值都是允许的，则添加到结果数组
+    await Executor.pipeline(...stagePipeline).then(new Executor(() => {
+      for (const stage of plan.stages) {
+        for (const run of stage.runs) {
+          // todo
+          const jobResult = run.job.result;
+          if (jobResult === 'failure') {
+            return Promise.reject(new Error(`Job '${run.toString()}' failed`));
+          }
+        }
       }
-    });
-    return matrices;
+    })).execute();
   }
 
   private setupEnvs() {
