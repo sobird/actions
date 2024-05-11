@@ -1,12 +1,27 @@
-import simpleGit from 'simple-git';
+import _ from 'lodash';
 
-const git = simpleGit({ baseDir: './test' });
+// const compiled = _.template('<%= user %>');
+// const result = compiled({ user: true });
+// console.log('result', result);
 
-const commit = await git.revparse(['HEAD']);
-console.log('commit', commit);
-// await git.clone('http://192.168.50.100:3000/sobird/actions-test.git', './dd');
+// const compiled = _.template('<% print("hello " + user); %>!');
+// const result = compiled({ user: 'barney' });
 
-// const result = await git.raw(['archive', '--output', './dd/latest.zip', commit]);
-const archive = await git.raw(['archive', '--output', './dd/latest.zip', commit, '--prefix=repo2/']);
+_.templateSettings.interpolate = /\${{([\s\S]+?)}}/g;
 
-console.log('archive', archive);
+class Test {
+  constructor(public name: string = 'test') {
+
+  }
+
+  getName() {
+    return this.name;
+  }
+}
+
+const test = new Test('hello');
+
+const compiled = _.template('The job was automatically triggered by a ${{ getName() }} event.');
+const result = compiled(test);
+
+console.log('result', result);

@@ -40,6 +40,17 @@ class Git {
     for (const ref of refnames) {
       // eslint-disable-next-line no-await-in-loop
       const sha = await this.cli.revparse(ref);
+      /* tags and branches will have the same hash
+       * when a user checks out a tag, it is not mentioned explicitly
+       * in the go-git package, we must identify the revision
+       * then check if any tag matches that revision,
+       * if so then we checked out a tag
+       * else we look for branches and if matches,
+       * it means we checked out a branch
+       *
+       * If a branches matches first we must continue and check all tags (all references)
+       * in case we match with a tag later in the interation
+       */
       if (sha === headSha) {
         if (ref.startsWith('refs/tags')) {
           refTag = ref;
