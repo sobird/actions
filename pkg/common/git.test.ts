@@ -29,6 +29,32 @@ describe('Test Git', () => {
     expect(remoteURL?.refs.fetch).toBe(wantRemoteURL);
   });
 
+  it('get repository test case', async () => {
+    const rangeTest = [
+      ['https://git-codecommit.us-east-1.amazonaws.com/v1/repos/my-repo-name', 'CodeCommit', 'v1/repos/my-repo-name'],
+      ['ssh://git-codecommit.us-west-2.amazonaws.com/v1/repos/my-repo', 'CodeCommit', 'v1/repos/my-repo'],
+      ['git@github.com:nektos/act.git', 'GitHub', 'nektos/act'],
+      ['git@github.com:nektos/act', 'GitHub', 'nektos/act'],
+      ['https://github.com/nektos/act.git', 'GitHub', 'nektos/act'],
+      ['http://github.com/nektos/act.git', 'GitHub', 'nektos/act'],
+      ['https://github.com/nektos/act', 'GitHub', 'nektos/act'],
+      ['http://github.com/nektos/act', 'GitHub', 'nektos/act'],
+      ['git+ssh://git@github.com/owner/repo.git', 'GitHub', 'owner/repo'],
+      ['http://myotherrepo.com/act.git', '', 'act'],
+    ];
+
+    for (const [index, [url, , slug]] of rangeTest.entries()) {
+      const dir = path.join(testTmp, `repository${index}`);
+      fs.mkdirSync(dir, { recursive: true });
+      const git = new Git(dir);
+      await git.cli.init();
+      await git.cli.addRemote('origin', url);
+
+      const repository = await git.repository();
+      expect(repository).toBe(slug);
+    }
+  });
+
   it('get git ref test case', async () => {
     const testRange: Record<string, {
       prepare: (git?: SimpleGit) => Promise<void>;
@@ -36,8 +62,7 @@ describe('Test Git', () => {
     }> = {
       new_repo: {
         prepare: async () => {},
-        assert: async (ref, err) => {
-          console.log('ref1', ref);
+        assert: async (ref) => {
           expect(ref).toBe('');
         },
       },
@@ -46,7 +71,6 @@ describe('Test Git', () => {
           await gitCli?.commit('msg', ['--allow-empty']);
         },
         assert: async (ref) => {
-          console.log('ref2', ref);
           expect(ref).toBe('refs/heads/master');
         },
       },

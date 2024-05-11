@@ -132,3 +132,6 @@ export default Git;
 
 // const info1 = hostedGitInfo.fromUrl('http://myotherrepo.com/act.git');
 // console.log('info1', info1?.shortcut());
+
+// const res = new URL('git@github.com:nektos/act.git');
+// console.log('res', res);
