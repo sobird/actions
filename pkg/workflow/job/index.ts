@@ -13,22 +13,22 @@ import {
 
 export enum JobType {
   /**
-   * JobTypeDefault is all jobs that have a `run` attribute
+   * all jobs that have a `run` attribute
    */
   Default,
 
   /**
-   *  JobTypeReusableWorkflowLocal is all jobs that have a `uses` that is a local workflow in the .github/workflows directory
+   * all jobs that have a `uses` that is a local workflow in the .github/workflows directory
    */
   ReusableWorkflowLocal,
 
   /**
-   * JobTypeReusableWorkflowRemote is all jobs that have a `uses` that references a workflow file in a github repo
+   * all jobs that have a `uses` that references a workflow file in a github repo
    */
   ReusableWorkflowRemote,
 
   /**
-   * JobTypeInvalid represents a job which is not configured correctly
+   * represents a job which is not configured correctly
    */
   Invalid,
 }
