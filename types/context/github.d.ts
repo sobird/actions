@@ -131,11 +131,9 @@ export interface Github {
    */
   ref_protected: boolean;
   /**
-   * 触发工作流运行的 ref 类型。
-   *
-   * 有效值为 `branch` or `tag`进行求值的基于 SQL 语言的筛选器表达式。
+   * The type of ref that triggered the workflow run. Valid values are `branch` or `tag`.
    */
-  ref_type: string;
+  ref_type: 'branch' | 'tag';
   /**
    * 所有者和存储库名称。 例如，octocat/Hello-World。
    */

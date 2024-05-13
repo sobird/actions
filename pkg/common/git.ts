@@ -6,7 +6,7 @@
 
 import GitUrlParse from 'git-url-parse';
 import hostedGitInfo from 'hosted-git-info';
-import simpleGit, { GitError } from 'simple-git';
+import simpleGit, { GitError, CloneOptions } from 'simple-git';
 
 class Git {
   cli;
@@ -25,10 +25,11 @@ class Git {
   }
 
   /**
-   * 获取当前 ref name
+   * 获取当前 ref，形如：refs/heads/main
+   *
    * @returns
    */
-  async refname() {
+  async ref() {
     let refTag;
     let refBranch;
 
@@ -98,17 +99,21 @@ class Git {
   static async Clone(repoPath: string, localPath: string) {
     const git = simpleGit(localPath);
     try {
-      // const options = ['--depth', '1', '--branch', 'main'];
-      await git.clone(repoPath);
+      const options = ['--depth', '1', '--branch', 'refs/tags/v0.2.16'];
+      await git.clone(repoPath, options);
     } catch (error) {
       //
+      console.log('error', error);
     }
   }
 }
 
 export default Git;
 
-// const git = simpleGit('/private/var/folders/0g/085cjcx1231cqqknq0k8pbzh0000gn/T/git-test/current_head_is_tag');
+// const git = new Git('/Users/sobird/eslint-config');
+const git = simpleGit('/Users/sobird/eslint-config');
+const refs = await git.raw('show-ref');
+console.log('refs', refs.split('\n'));
 // // get short sha
 // // const ref = await git.revparse();
 // const sha = await git.revparse('refs/tags/v1.2.3');

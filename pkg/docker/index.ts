@@ -1,8 +1,14 @@
-import Docker from 'dockerode';
+import Docker, { DockerOptions } from 'dockerode';
+
+class Dokcer {
+  static get instance() {
+    return 1212;
+  }
+}
 
 const docker = new Docker({ socketPath: '/var/run/docker.sock' });
-const result = await docker.ping();
-console.log('ping:', result.toString());
+// const result = await docker.ping();
+// console.log('ping:', result.toString());
 
 // const images = await docker.listImages();
 // console.log('images', images.length);
@@ -21,7 +27,7 @@ console.log('ping:', result.toString());
 // const data = await container.start();
 // console.log('data', data.toString());
 
-const container = docker.getContainer('296e7501a56ca880d738157f2ab8abeb1c0fa8f637bd31145c03c3192e9ba87b');
+// const container = docker.getContainer('296e7501a56ca880d738157f2ab8abeb1c0fa8f637bd31145c03c3192e9ba87b');
 
 // 获取日志
 // container.logs({
@@ -47,36 +53,36 @@ const container = docker.getContainer('296e7501a56ca880d738157f2ab8abeb1c0fa8f63
 //   });
 // });
 
-container.exec({
-  Cmd: ['sh', '-c', 'ls /'], // 替换为你要执行的命令
-  AttachStdout: true,
-  AttachStderr: true,
-  Tty: true,
-}, (err, exec) => {
-  if (err) {
-    console.error('Error executing command:', err);
-    return;
-  }
+// container.exec({
+//   Cmd: ['sh', '-c', 'ls /'], // 替换为你要执行的命令
+//   AttachStdout: true,
+//   AttachStderr: true,
+//   Tty: true,
+// }, (err, exec) => {
+//   if (err) {
+//     console.error('Error executing command:', err);
+//     return;
+//   }
 
-  // exec?.resize({ h: 720, w: 120 }); // 根据需要设置终端大小
+//   // exec?.resize({ h: 720, w: 120 }); // 根据需要设置终端大小
 
-  // 启动 exec 实体
-  const stream1 = exec?.start({}, (err, stream) => {
-    if (err) {
-      console.error('Error starting exec stream:', err);
-      return;
-    }
+//   // 启动 exec 实体
+//   const stream1 = exec?.start({}, (err, stream) => {
+//     if (err) {
+//       console.error('Error starting exec stream:', err);
+//       return;
+//     }
 
-    // 监听输出
-    stream?.on('data', (data) => {
-      process.stdout.write(data);
-    });
-    stream?.on('error', (err) => {
-      console.error('Error on exec stream:', err);
-    });
-    stream?.on('end', () => {
-      console.log('Exec stream ended.');
-    });
-  });
-});
+//     // 监听输出
+//     stream?.on('data', (data) => {
+//       process.stdout.write(data);
+//     });
+//     stream?.on('error', (err) => {
+//       console.error('Error on exec stream:', err);
+//     });
+//     stream?.on('end', () => {
+//       console.log('Exec stream ended.');
+//     });
+//   });
+// });
 // console.log('res', res);
