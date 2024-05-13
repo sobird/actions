@@ -1,14 +1,96 @@
-import Docker, { DockerOptions } from 'dockerode';
+/**
+ *
+ * envs
+ * DOCKER_HOST,SSH_AUTH_SOCK,DOCKER_PATH_PREFIX,DOCKER_CERT_PATH,DOCKER_CLIENT_TIMEOUT
+ *
+ * sobird<i@sobird.me> at 2024/04/25 19:09:50 created.
+ */
 
-class Dokcer {
+import fs from 'node:fs';
+import os from 'node:os';
+import { join } from 'node:path';
+
+import Dockerode from 'dockerode';
+
+import Executor from '@/pkg/common/executor';
+
+const socketPath = process.env.DOCKER_HOST || [
+  join(os.homedir(), '.docker', 'run', 'docker.sock'),
+  '/var/run/docker.sock',
+  '/run/podman/podman.sock',
+  '//./pipe/docker_engine',
+  join(os.homedir(), '.colima', 'docker.sock'),
+  process.env.XDG_RUNTIME_DIR ? join(process.env.XDG_RUNTIME_DIR, 'docker.sock') : '',
+  process.env.XDG_RUNTIME_DIR ? join(process.env.XDG_RUNTIME_DIR, 'podman', 'podman.sock') : '',
+].find((path) => {
+  return fs.existsSync(path);
+});
+
+console.log('socketPath', socketPath);
+
+interface DockerPullExecutorInput {
+  image: string;
+  force?: boolean;
+  platform?: string;
+  username?: string;
+  password?: string;
+}
+
+class Docker extends Dockerode {
   static get instance() {
     return 1212;
   }
+
+  pullExecutor(input: DockerPullExecutorInput) {
+    return new Executor(async () => {
+      const {
+        image, force, platform, ...authconfig
+      } = input;
+
+      const img = this.getImage(image);
+      try {
+        await img.inspect();
+        if (force) {
+          img.remove({ force: true });
+        } else {
+          return;
+        }
+      } catch (err) {
+        //
+      }
+
+      await new Promise((resolve, reject) => {
+        console.log("pulling image '%s' (%s)", image, platform);
+        this.pull(image, {
+          platform,
+          authconfig,
+        }, (err, stream) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+
+          this.modem.followProgress(stream!, (err2, output) => {
+            if (err2) {
+              reject(err2);
+            } else {
+              resolve(output);
+            }
+          });
+        });
+      });
+    });
+  }
 }
 
-const docker = new Docker({ socketPath: '/var/run/docker.sock' });
-// const result = await docker.ping();
-// console.log('ping:', result.toString());
+export default Docker;
+
+const docker = new Docker();
+
+docker.pullExecutor({
+  image: 'alpine',
+  force: true,
+}).execute();
 
 // const images = await docker.listImages();
 // console.log('images', images.length);
