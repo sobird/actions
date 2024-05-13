@@ -22,8 +22,8 @@ describe('Test Git', () => {
     const dir = path.join(testTmp, 'remote-url');
     fs.mkdirSync(dir, { recursive: true });
     const git = new Git(dir);
-    await git.cli.init();
-    await git.cli.addRemote('origin', wantRemoteURL);
+    await git.git.init();
+    await git.git.addRemote('origin', wantRemoteURL);
 
     const remoteURL = await git.remoteURL();
     expect(remoteURL?.refs.fetch).toBe(wantRemoteURL);
@@ -47,8 +47,8 @@ describe('Test Git', () => {
       const dir = path.join(testTmp, `repository${index}`);
       fs.mkdirSync(dir, { recursive: true });
       const git = new Git(dir);
-      await git.cli.init();
-      await git.cli.addRemote('origin', url);
+      await git.git.init();
+      await git.git.addRemote('origin', url);
 
       const repository = await git.repository();
       expect(repository).toBe(slug);
@@ -121,9 +121,9 @@ describe('Test Git', () => {
       const dir = path.join(testTmp, name);
       fs.mkdirSync(dir, { recursive: true });
       const git = new Git(dir);
-      await git.cli.init(['--initial-branch', 'master']);
+      await git.git.init(['--initial-branch', 'master']);
 
-      await item.prepare(git.cli);
+      await item.prepare(git.git);
       try {
         const refname = await git.refname();
         await item.assert(refname);

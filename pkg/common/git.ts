@@ -4,20 +4,50 @@
  * sobird<i@sobird.me> at 2024/05/11 1:46:13 created.
  */
 
+import fs from 'node:fs';
+
 import GitUrlParse from 'git-url-parse';
-import hostedGitInfo from 'hosted-git-info';
-import simpleGit, { GitError, CloneOptions } from 'simple-git';
+import simpleGit from 'simple-git';
+
+export { GitError } from 'simple-git';
 
 class Git {
-  cli;
+  git;
 
   constructor(public base: string) {
-    this.cli = simpleGit(base);
+    fs.mkdirSync(base, { recursive: true });
+
+    this.git = simpleGit(base, {
+      progress({ method, stage, progress }) {
+        console.log(`git ${method} ${stage} stage ${progress}% complete`);
+      },
+    });
+  }
+
+  async fetch(url: string, ref: string = 'HEAD') {
+    const { git } = this;
+
+    const options = ['--recurse-submodules'];
+    await git.clone(url, this.base, options);
+
+    const sha = await git.revparse(ref);
+    await git.checkout(sha);
+
+    return sha;
+  }
+
+  async clone(repoPath: string) {
+    try {
+      const options = ['--recurse-submodules'];
+      await this.git.clone(repoPath, options);
+    } catch (error) {
+      // logger.Errorf('Unable to clone %v %s: %v', input.URL, refName, err);
+    }
   }
 
   async revision() {
-    const shortSha = await this.cli.revparse(['--short', 'HEAD']);
-    const sha = await this.cli.revparse(['HEAD']);
+    const shortSha = await this.git.revparse(['--short', 'HEAD']);
+    const sha = await this.git.revparse(['HEAD']);
     return {
       shortSha,
       sha,
@@ -33,14 +63,14 @@ class Git {
     let refTag;
     let refBranch;
 
-    const raw = await this.cli.raw(['for-each-ref', '--format', '%(refname)']);
+    const raw = await this.git.raw(['for-each-ref', '--format', '%(refname)']);
     const refnames = raw.trim().split('\n');
 
-    const headSha = await this.cli.revparse('HEAD');
+    const headSha = await this.git.revparse('HEAD');
 
     for (const ref of refnames) {
       // eslint-disable-next-line no-await-in-loop
-      const sha = await this.cli.revparse(ref);
+      const sha = await this.git.revparse(ref);
       /* tags and branches will have the same hash
        * when a user checks out a tag, it is not mentioned explicitly
        * in the go-git package, we must identify the revision
@@ -86,7 +116,7 @@ class Git {
   }
 
   async remoteURL(remoteName: string = 'origin') {
-    const remotes = await this.cli.getRemotes(true);
+    const remotes = await this.git.getRemotes(true);
     return remotes.find((item) => { return item.name === remoteName; });
   }
 
@@ -97,23 +127,16 @@ class Git {
   }
 
   static async Clone(repoPath: string, localPath: string) {
-    const git = simpleGit(localPath);
-    try {
-      const options = ['--depth', '1', '--branch', 'refs/tags/v0.2.16'];
-      await git.clone(repoPath, options);
-    } catch (error) {
-      //
-      console.log('error', error);
-    }
+    const git = simpleGit();
+    const options = ['--recurse-submodules'];
+    await git.clone(repoPath, localPath, options);
   }
 }
 
 export default Git;
 
-// const git = new Git('/Users/sobird/eslint-config');
-const git = simpleGit('/Users/sobird/eslint-config');
-const refs = await git.raw('show-ref');
-console.log('refs', refs.split('\n'));
+const git = new Git('/Users/sobird/test/git-test');
+await git.fetch('https://gitea.com/actions/checkout', 'v4', 'ddd');
 // // get short sha
 // // const ref = await git.revparse();
 // const sha = await git.revparse('refs/tags/v1.2.3');
