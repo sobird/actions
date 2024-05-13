@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 class Log {
-  constructor(public level: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal' = 'info') {}
+  constructor(public level: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal' = 'debug') {}
 }
 
 class Runner {

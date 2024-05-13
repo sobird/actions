@@ -158,6 +158,9 @@ class Runner {
 
           const maxParallel = job.strategy ? job.strategy['max-parallel'] : 4;
 
+          console.log('matrices', matrices);
+          console.log('matrices2', job.strategy?.matrices);
+
           matrices.forEach((matrix, i) => {
             // todo
             const rc = {
@@ -179,6 +182,8 @@ class Runner {
               console.log('jobName', jobName);
             }));
           });
+
+          console.log('job', job.executor());
 
           pipeline.push(Executor.parallel(maxParallel, ...pipeline));
         });

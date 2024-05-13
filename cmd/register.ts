@@ -7,7 +7,7 @@ import prompts, { PromptObject } from 'prompts';
 import { Config, Labels, Client } from '@/pkg';
 
 const logger = log4js.getLogger();
-logger.level = 'info';
+// logger.level = 'info';
 
 // 定义 RegisterOptions 接口，用于描述注册命令的参数
 interface RegisterArgs {

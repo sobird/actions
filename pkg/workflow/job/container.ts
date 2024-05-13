@@ -83,4 +83,13 @@ export default class Container {
     this.reuse = container.reuse;
     this.cmd = container.cmd;
   }
+
+  // 创建容器实例
+  create() {
+    console.log('create container: ', this);
+  }
+
+  start() {
+    console.log('start container: ', this);
+  }
 }

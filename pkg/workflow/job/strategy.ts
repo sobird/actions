@@ -194,7 +194,7 @@ export default class Strategy {
    * @param targetMatrixValues
    * @returns
    */
-  select(targetMatrixValues: Record<string, Record<string, boolean>>) {
+  select(targetMatrixValues: Record<string, Record<string, boolean>> = {}) {
     const originalMatrices = this.matrices;
     const matrices: Record<string, unknown>[] = [];
     originalMatrices.forEach((original) => {

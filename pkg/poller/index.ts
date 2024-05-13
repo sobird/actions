@@ -10,12 +10,14 @@ import log4js from 'log4js';
 import type { Client, Config, Runner } from '@/pkg';
 import { withTimeout } from '@/utils';
 
-import { FetchTaskRequest, Task } from '../client/runner/v1/messages_pb';
+import { FetchTaskRequest } from '../client/runner/v1/messages_pb';
 
 const logger = log4js.getLogger();
 
 class Poller {
   tasksVersion = BigInt(0);
+
+  runningTask = 0;
 
   constructor(
     public client: typeof Client.prototype.RunnerServiceClient,
@@ -24,54 +26,23 @@ class Poller {
   ) {}
 
   async poll() {
-    const promises = [];
-    /**
-     * @todo 此处 capacity 的逻辑是否正确
-     */
-    for (let i = 0; i < this.config.runner.capacity; i++) {
-      const promise = this.pollTask();
-      promises.push(promise);
-    }
+    const checkInterval = setInterval(async () => {
+      if (this.runningTask >= this.config.runner.capacity) {
+        return;
+      }
+      const task = await this.fetchTask();
 
-    return Promise.all(promises);
-  }
-
-  async pollTask() {
-    return new Promise((resolve, reject) => {
-      const checkInterval = setInterval(async () => {
-        // if (ctx.canceled) {
-        //   clearInterval(checkInterval);
-        //   return resolve();
-        // }
-
-        try {
-          // 模拟限流器等待
-          // await this.limiter.acquire();
-
-          const task = await this.fetchTask();
-
-          if (task) {
-            this.runTaskWithRecover(task);
-          }
-        } catch (error) {
-          console.error('Error in poll loop:', error);
-          clearInterval(checkInterval);
-          return reject(error);
+      try {
+        if (task) {
+          this.runningTask += 1;
+          await this.runner.run(task);
+          this.runningTask -= 1;
         }
-      }, 1000); // 每秒检查一次
-    });
-  }
-
-  async runTaskWithRecover(task: Task) {
-    try {
-      await this.runner.run(task);
-    } catch (error) {
-      // 记录运行任务时发生的任何错误
-      console.error('failed to run task', error);
-    } finally {
-      // 无论是否发生错误，都会执行的代码
-      // 可以在这里放置清理逻辑
-    }
+      } catch (error) {
+        console.error('failed to run task', error);
+        clearInterval(checkInterval);
+      }
+    }, this.config.runner.fetchInterval);
   }
 
   /**

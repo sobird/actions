@@ -4,6 +4,8 @@
  *
  * sobird<i@sobird.me> at 2024/05/02 20:26:29 created.
  */
+import Executor from '@/pkg/common/executor';
+
 import Container from './container';
 import Step from './step';
 import Strategy from './strategy';
@@ -123,7 +125,6 @@ class Job {
     this.defaults = job.defaults;
     if (Array.isArray(job.steps)) {
       this.steps = job.steps.map((step) => {
-        console.log('step', step);
         return new Step(step);
       });
     }
@@ -216,8 +217,11 @@ class Job {
     return JobType.Default;
   }
 
-  start() {
-    //
+  executor() {
+    // todo
+    return new Executor(() => {
+      console.log('Job executor:', this);
+    });
   }
 }
 
