@@ -88,6 +88,20 @@ class Job {
 
   services?: Record<string, Container>;
 
+  /**
+   * The location and version of a reusable workflow file to run as a job. Use one of the following syntaxes:
+   *
+   * * `{owner}/{repo}/.github/workflows/{filename}@{ref}` for reusable workflows in public and private repositories.
+   * * `./.github/workflows/{filename}` for reusable workflows in the same repository.
+   *
+   * In the first option, `{ref}` can be a SHA, a release tag, or a branch name.
+   * If a release tag and a branch have the same name, the release tag takes precedence over the branch name.
+   * Using the commit SHA is the safest option for stability and security.
+   * For more information, see "{@link https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#reusing-third-party-workflows Security hardening for GitHub Actions}".
+   *
+   * If you use the second syntax option (without `{owner}/{repo}` and `@{ref}`) the called workflow is from the same commit as the caller workflow.
+   * Ref prefixes such as `refs/heads` and `refs/tags` are not allowed.
+   */
   uses?: string;
 
   with?: Record<string, string | WorkflowDispatchInputs>;
@@ -109,6 +123,7 @@ class Job {
     this.defaults = job.defaults;
     if (Array.isArray(job.steps)) {
       this.steps = job.steps.map((step) => {
+        console.log('step', step);
         return new Step(step);
       });
     }
@@ -199,6 +214,10 @@ class Job {
 
     // 如果不是可复用的工作流，则返回默认类型
     return JobType.Default;
+  }
+
+  start() {
+    //
   }
 }
 

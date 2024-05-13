@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import { join } from 'node:path';
 
-import Dockerode from 'dockerode';
+import Dockerode, { Container } from 'dockerode';
 
 import Executor from '@/pkg/common/executor';
 
