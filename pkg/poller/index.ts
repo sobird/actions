@@ -30,6 +30,7 @@ class Poller {
       if (this.runningTask >= this.config.runner.capacity) {
         return;
       }
+      logger.debug('fetching task', this.tasksVersion, this.runningTask, this.config.runner.capacity);
       const task = await this.fetchTask();
 
       try {

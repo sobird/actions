@@ -23,14 +23,14 @@ class Runner {
     public capacity: number = 1,
     public envs: DotenvParseOutput = {},
     public envFile: string = '',
-    public timeout: number = 3 * 3600,
+    public timeout: number = 3 * 3600 * 1000,
     public insecure: boolean = false,
-    public fetchTimeout: number = 5000,
-    public fetchInterval: number = 2000,
+    public fetchTimeout: number = 5 * 1000,
+    public fetchInterval: number = 2 * 1000,
     public labels: string[] = [],
   ) {
     this.capacity = capacity > 0 ? capacity : 1;
-    this.timeout = timeout > 0 ? timeout : 3 * 3600;
+    this.timeout = timeout > 0 ? timeout : 3 * 3600 * 1000;
     this.fetchTimeout = fetchTimeout > 0 ? fetchTimeout : 5000;
     this.fetchInterval = fetchInterval > 0 ? fetchInterval : 2000;
   }

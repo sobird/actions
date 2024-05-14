@@ -92,7 +92,7 @@ class Runner {
       const wp = WorkflowPlanner.Combine(workflow);
       const plan = wp.planJob();
 
-      this.planExecutor(task.context, plan);
+      await this.planExecutor(task.context, plan);
     } catch (error) {
       // todo
     }
@@ -132,7 +132,7 @@ class Runner {
   }
 
   async planExecutor(config: Task['context'], plan: Plan) {
-    let maxJobNameLen = 0;
+    const maxJobNameLen = 0;
     const stagePipeline: Executor[] = [];
 
     logger.debug('Plan Stages:', plan.stages);
@@ -153,44 +153,39 @@ class Runner {
 
           logger.debug('Job.TimeoutMinutes:', job['timeout-minutes']);
 
-          const matrices = job.strategy!.select({});
-          logger.debug('Final matrix after applying user inclusions', matrices);
+          // const matrices = job.strategy!.select({});
+          // logger.debug('Final matrix after applying user inclusions', matrices);
 
-          const maxParallel = job.strategy ? job.strategy['max-parallel'] : 4;
+          // const maxParallel = job.strategy ? job.strategy['max-parallel'] : 4;
 
-          console.log('matrices', matrices);
-          console.log('matrices2', job.strategy?.matrices);
+          // matrices.forEach((matrix, i) => {
+          //   // todo
+          //   const rc = {
+          //     name: '顶顶顶对对对',
+          //     jobName: 'jobName',
+          //     run,
+          //     matrix,
+          //   };
+          //   rc.jobName = rc.name;
+          //   if (matrices.length > 1) {
+          //     rc.name = `${rc.name}-${i + 1}`;
+          //   }
+          //   if (rc.toString().length > maxJobNameLen) {
+          //     maxJobNameLen = rc.toString().length;
+          //   }
 
-          matrices.forEach((matrix, i) => {
-            // todo
-            const rc = {
-              name: '顶顶顶对对对',
-              jobName: 'jobName',
-              run,
-              matrix,
-            };
-            rc.jobName = rc.name;
-            if (matrices.length > 1) {
-              rc.name = `${rc.name}-${i + 1}`;
-            }
-            if (rc.toString().length > maxJobNameLen) {
-              maxJobNameLen = rc.toString().length;
-            }
+          //   stageExecutor.push(new Executor(() => {
+          //     const jobName = rc.toString().padEnd(maxJobNameLen);
+          //     console.log('jobName', jobName);
+          //   }));
+          // });
 
-            stageExecutor.push(new Executor(() => {
-              const jobName = rc.toString().padEnd(maxJobNameLen);
-              console.log('jobName', jobName);
-            }));
-          });
-
-          console.log('job', job.executor());
-
-          pipeline.push(Executor.parallel(maxParallel, ...pipeline));
+          pipeline.push(job.executor());
         });
 
         const ncpu = os.cpus().length;
         logger.debug('Detected CPUs:', ncpu);
-        Executor.parallel(ncpu, ...pipeline).execute();
+        await Executor.parallel(ncpu, ...pipeline).execute();
       }));
     });
 

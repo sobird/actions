@@ -5,6 +5,7 @@
  * sobird<i@sobird.me> at 2024/05/02 20:26:29 created.
  */
 import Executor from '@/pkg/common/executor';
+import { asyncFunction } from '@/utils';
 
 import Container from './container';
 import Step from './step';
@@ -219,8 +220,10 @@ class Job {
 
   executor() {
     // todo
-    return new Executor(() => {
-      console.log('Job executor:', this);
+    return new Executor(async () => {
+      console.log('Job executor:', this.name);
+      await asyncFunction(1000 * 10);
+      console.log('Job finshed');
     });
   }
 }
