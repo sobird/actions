@@ -1,4 +1,6 @@
 class Job {
+  test = {};
+
   constructor(public name: string, public needs: string[] = [], public isScheduled: boolean = false) {}
 }
 
@@ -64,32 +66,43 @@ export function stages(jobs:any) {
   return stages;
 }
 
-const result = stages([jobA, jobB, jobC, jobD].reduce((acc, job) => {
-  acc[job.name] = job;
-  return acc;
-}, {}));
+// const jobs = {
+//   B: { name: 'B', needs: ['A'] },
+//   C: { name: 'C', needs: ['A', 'B'] },
+//   D: { name: 'D', needs: ['C'] },
+//   A: { name: 'A', needs: [] },
+// };
 
-console.log('result', result);
+// const result = stages(jobs);
 
-export function topologicalSort(jobs: any[]) {
-  const sortedJobs = [];
-  const visit = (job: Job) => {
-    if (job.isScheduled) {
-      return;
-    }
-    if (job.needs.length) {
-      for (const need of job.needs) {
-        const depJob = jobs.find((j) => { return j.name === need; });
-        if (depJob) {
-          visit(depJob);
-        }
-      }
-    }
-    job.isScheduled = true;
-    sortedJobs.push(job);
-  };
-  jobs.forEach((job) => { return visit(job); });
-  return sortedJobs;
-}
+// console.log('result', result);
 
-console.log('topologicalSort', topologicalSort([jobA, jobB, jobC, jobD]));
+// export function topologicalSort(jobs: any[]) {
+//   const sortedJobs = [];
+//   const visit = (job: Job) => {
+//     if (job.isScheduled) {
+//       return;
+//     }
+//     if (job.needs.length) {
+//       for (const need of job.needs) {
+//         const depJob = jobs.find((j) => { return j.name === need; });
+//         if (depJob) {
+//           visit(depJob);
+//         }
+//       }
+//     }
+//     job.isScheduled = true;
+//     sortedJobs.push(job);
+//   };
+//   jobs.forEach((job) => { return visit(job); });
+//   return sortedJobs;
+// }
+
+// console.log('topologicalSort', topologicalSort([jobA, jobB, jobC, jobD]));
+
+const str = JSON.stringify(jobA, (key, value) => {
+  console.log('key', key);
+
+  return value;
+});
+console.log('str', str);

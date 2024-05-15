@@ -20,6 +20,13 @@ it('test workflow Read，dump and Load', () => {
   expect(workflow).toEqual(workflow2);
 });
 
+it('test workflow Read and Save', () => {
+  const workflow = Workflow.Read(workflowFile);
+  workflow.save('./sobird_test.yaml');
+
+  // expect(workflow).toEqual(workflow2);
+});
+
 describe('test workfow on event', () => {
   it('string event test case', () => {
     const yaml = `

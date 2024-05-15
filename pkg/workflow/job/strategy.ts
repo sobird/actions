@@ -212,4 +212,13 @@ export default class Strategy {
     });
     return matrices;
   }
+
+  toJSON() {
+    return {
+      'fail-fast': this.#failFast,
+      'max-parallel': this.#maxParallel,
+      matrix: this.matrix,
+
+    };
+  }
 }

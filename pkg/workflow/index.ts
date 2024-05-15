@@ -10,6 +10,7 @@
 import fs from 'fs';
 
 import yaml, { LoadOptions, DumpOptions } from 'js-yaml';
+import { parse, stringify } from 'yaml';
 
 import Job from './job';
 import {
@@ -246,21 +247,31 @@ class Workflow {
   }
 
   save(path: string, options?: DumpOptions) {
-    const doc = yaml.dump(this.toJSON(), options);
-    fs.writeFileSync(path, doc);
+    fs.writeFileSync(path, this.dump(options));
   }
 
   dump(options?: DumpOptions) {
-    return yaml.dump(JSON.parse(JSON.stringify(this)), options);
+    return stringify(JSON.parse(JSON.stringify(this, (key, value) => {
+      // console.log(key);
+      if (key === 'strategy') {
+        console.log(key, value, Object.keys(value));
+      }
+
+      // if (typeof value === 'object' && Object.keys(value).length === 0) {
+      //   console.log(key, value);
+      //   return undefined;
+      // }
+      return value;
+    })), { lineWidth: 150 });
   }
 
   static Read(path: string, options?: LoadOptions) {
-    const doc = yaml.load(fs.readFileSync(path, 'utf8'), options);
+    const doc = parse(fs.readFileSync(path, 'utf8'));
     return new Workflow(doc as Workflow);
   }
 
   static Load(str: string, options?: LoadOptions) {
-    const doc = yaml.load(str, options);
+    const doc = parse(str);
     return new Workflow(doc as Workflow);
   }
 }

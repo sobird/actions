@@ -1,5 +1,5 @@
-name: Gitea Actions Workflow Test
-run-name: ${{ github.actor }} is testing out Gitea Actions  
+name: Actions Workflow Test
+run-name: ${{ github.actor }} is testing out Actions  
 on: 
   pull_request:
   push:
@@ -15,27 +15,27 @@ on:
     - cron: '30 5 * * 2,4'
 
 permissions:
-  contents: read|write|none
+  contents: read
 
 jobs:
-  Explore-Gitea-Actions:
+  Explore-Actions:
     needs: Test-Node
     runs-on: ubuntu-latest
     steps:
-      - run: echo "  The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "  This job is now running on a ${{ runner.os }} server hosted by Gitea!"
-      - run: echo "  The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - run: echo "The job was automatically triggered by a ${{ github.event_name }} ddd dsdsd dd event."
+      - run: echo "This job is now running on a ${{ runner.os }} server hosted by !"
+      - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
         uses: actions/checkout@v3
-      - run: echo "  The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo " ️ The workflow is now ready to test your code on the runner."
+      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "The workflow is now ready to test your code on the runner."
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}
-      - run: echo "  This job's status is ${{ job.status }}."
+      - run: echo "This job's status is ${{ job.status }}."
 
   Test-Docker:
-    needs: [Test-Node, Explore-Gitea-Actions]
+    needs: [Test-Node, Explore--Actions]
     runs-on: ubuntu-latest
     # 此容器可使用docker，可查看 https://github.com/catthehacker/docker_images
     # container: catthehacker/ubuntu:act-latest
@@ -44,6 +44,11 @@ jobs:
 
   Test-Node:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-20.04]
+        node: [18, 20]
+      fail-fast: false
     steps:
       - name: My first step
         uses: octo-org/action-name@main
