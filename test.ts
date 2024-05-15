@@ -4,7 +4,7 @@ class Job {
 
 const jobA = new Job('Explore-Gitea-Actions', ['Test-Node']);
 const jobB = new Job('Test-Docker', ['Test-Node', 'Explore-Gitea-Actions']);
-const jobC = new Job('Test-Node');
+const jobC = new Job('Test-Node', ['Test-Docker']);
 const jobD = new Job('Test-C', ['ddd']);
 
 export function stages(jobs:any) {

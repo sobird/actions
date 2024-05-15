@@ -89,12 +89,12 @@ class Runner {
 
       const workflow = Workflow.Load(task.workflowPayload?.toString());
 
-      console.log('workflow', workflow.jobs['Test-Node'].strategy);
+      console.log('workflow', workflow.jobs, task.needs);
 
       const wp = WorkflowPlanner.Combine(workflow);
       const plan = wp.planJob();
 
-      await this.planExecutor(task.context, plan);
+      await this.planExecutor(task.context, plan, reporter);
     } catch (error) {
       // todo
     }
@@ -133,7 +133,7 @@ class Runner {
     }, 2000);
   }
 
-  async planExecutor(config: Task['context'], plan: Plan) {
+  async planExecutor(config: Task['context'], plan: Plan, reporter: Reporter) {
     const stagePipeline: Executor[] = [];
 
     logger.debug('Plan Stages:', plan.stages);
@@ -178,7 +178,7 @@ class Runner {
           //   }));
           // });
 
-          pipeline.push(job.executor());
+          pipeline.push(job.executor(reporter));
         });
 
         const ncpu = os.cpus().length;

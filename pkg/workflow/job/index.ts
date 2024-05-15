@@ -7,6 +7,7 @@
 import log4js from 'log4js';
 
 import Executor from '@/pkg/common/executor';
+import Reporter from '@/pkg/reporter';
 import { asyncFunction } from '@/utils';
 
 import Container from './container';
@@ -83,7 +84,7 @@ class Job {
 
   defaults?: Defaults;
 
-  steps?: Step[];
+  steps: Step[] = [];
 
   'timeout-minutes': number;
 
@@ -231,7 +232,7 @@ class Job {
     return JobType.Default;
   }
 
-  executor() {
+  executor(reporter: Reporter) {
     const { strategy } = this;
     const stageExecutor: Executor[] = [];
 
@@ -245,10 +246,76 @@ class Job {
       logger.debug('matrix: %v', matrix);
     });
 
+    // mock job 执行过程
+
     // todo 处理 Context, strategy 和 matrix
 
     // todo
-    return Executor.parallel(3, ...stageExecutor);
+    return Executor.parallel(1, new Executor(async () => {
+      const entry = {
+        data: [this.name],
+        startTime: new Date(),
+        context: {
+          stage: '',
+          jobResult: '',
+          stepNumber: 0,
+          raw_output: true,
+          stepResult: '',
+        },
+      };
+
+      reporter.resetSteps(this.steps.length);
+
+      reporter.fire(entry);
+      await asyncFunction(1000);
+
+      for (const [index, step] of this.steps.entries()) {
+        const entry = {
+          data: [this.name, '-', step.name],
+          startTime: new Date(),
+          context: {
+            stage: 'Main',
+            jobResult: '',
+            stepNumber: index,
+            raw_output: true,
+            stepResult: '',
+          },
+        };
+
+        reporter.fire(entry);
+        reporter.log(this.name, '-', step.name);
+        // eslint-disable-next-line no-await-in-loop
+        await asyncFunction(500);
+        reporter.log(this.name, '-', step.name);
+        await asyncFunction(500);
+        console.log('index', index);
+        reporter.fire({
+          data: [this.name, '-', step.name],
+          startTime: new Date(),
+          context: {
+            stage: 'Main',
+            jobResult: '',
+            stepNumber: index,
+            raw_output: true,
+            stepResult: 'success',
+          },
+        });
+        await asyncFunction(500);
+      }
+
+      await asyncFunction(1000);
+      reporter.fire({
+        data: [this.name, 'post'],
+        startTime: new Date(),
+        context: {
+          stage: 'Post',
+          jobResult: 'success',
+          // stepNumber: index,
+          raw_output: true,
+          stepResult: 'success',
+        },
+      });
+    }));
   }
 }
 
