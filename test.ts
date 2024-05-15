@@ -2,6 +2,10 @@ class Job {
   test = {};
 
   constructor(public name: string, public needs: string[] = [], public isScheduled: boolean = false) {}
+
+  getName() {
+    return this.name;
+  }
 }
 
 const jobA = new Job('Explore-Gitea-Actions', ['Test-Node']);
@@ -106,3 +110,5 @@ const str = JSON.stringify(jobA, (key, value) => {
   return value;
 });
 console.log('str', str);
+
+console.log('first', Object.keys(jobA));

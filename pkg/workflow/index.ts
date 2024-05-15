@@ -254,7 +254,7 @@ class Workflow {
     return stringify(JSON.parse(JSON.stringify(this, (key, value) => {
       // console.log(key);
       if (key === 'strategy') {
-        console.log(key, value, Object.keys(value));
+        // console.log(key, value, Object.keys(value));
       }
 
       // if (typeof value === 'object' && Object.keys(value).length === 0) {

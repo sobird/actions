@@ -23,6 +23,8 @@ export enum StepType {
  * Step is the structure of one step in a job
  */
 class Step {
+  #raw: Step;
+
   /**
    * 步骤的唯一标识符。 可以使用 `id` 在上下文中引用该步骤。
    */
@@ -108,6 +110,8 @@ class Step {
   'timeout-minutes': boolean;
 
   constructor(step: Step) {
+    this.#raw = step;
+
     this.id = step.id;
     this.if = step.if;
     this.#name = step.name;
@@ -216,6 +220,17 @@ class Step {
       return StepType.UsesActionLocal;
     }
     return StepType.UsesActionRemote;
+  }
+
+  set<K extends keyof Step>(key: K, value: Step[K]) {
+    this.#raw[key] = value;
+  }
+
+  toJSON() {
+    return {
+      ...this.#raw,
+      ...this,
+    };
   }
 }
 

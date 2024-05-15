@@ -317,6 +317,13 @@ class Job {
       });
     }));
   }
+
+  toJSON() {
+    return {
+      ...this,
+      needs: this.#needs,
+    };
+  }
 }
 
 export default Job;
