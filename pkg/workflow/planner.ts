@@ -1,5 +1,7 @@
 /**
  * workflows planner
+ * 主要是针对，本地运行时进行的计划
+ * 对于通过服务端获取任务执行的的计划，服务端只会每次任务只会分配一个Job.
  *
  * sobird<i@sobird.me> at 2024/05/03 18:52:14 created.
  */

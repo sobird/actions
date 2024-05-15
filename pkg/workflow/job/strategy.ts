@@ -31,8 +31,6 @@ export default class Strategy {
    *       version: [10, 12, 14]
    *       os: [ubuntu-latest, windows-latest]
    * ```
-   *
-   * 矩阵在每次工作流运行时最多将生成 256 个作业。 此限制适用于 GitHub 托管和自托管运行器。
    */
   matrix?: {
     include?: Record<string, string>[];
@@ -85,6 +83,9 @@ export default class Strategy {
     this.#maxParallel = maxParallel;
   }
 
+  /**
+   * 默认返回一个长度为1的数组，包含一个空对象
+   */
   get matrices() {
     if (!this.matrix) {
       return [];

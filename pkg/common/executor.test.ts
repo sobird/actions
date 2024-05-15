@@ -219,4 +219,24 @@ describe('Parallel Executor', () => {
     expect(count).toBe(3);
     expect(maxCount).toBe(1);
   });
+
+  it('should run at empty executors array', async () => {
+    const count = 0;
+    // const activeCount = 0;
+    const maxCount = 0;
+    // const executor = new Executor(async () => {
+    //   count += 1;
+    //   activeCount += 1;
+    //   if (activeCount > maxCount) {
+    //     maxCount = activeCount;
+    //   }
+
+    //   await asyncFunction();
+    //   activeCount -= 1;
+    // });
+
+    await Executor.parallel(1).execute();
+    expect(count).toBe(0);
+    expect(maxCount).toBe(0);
+  });
 });

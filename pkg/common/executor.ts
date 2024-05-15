@@ -108,11 +108,13 @@ class Executor {
   }
 
   /** 创建一个并行执行多个执行器的执行器 */
-  static parallel(parallel: number, ...executors: Executor[]) {
-    // eslint-disable-next-line no-param-reassign
-    parallel = Math.max(1, parallel);
-    // eslint-disable-next-line no-param-reassign
+  // todo executors.length === 0 时的容错处理
+  static parallel(size: number, ...executors: Executor[]) {
+    let parallel = Math.max(1, size);
     parallel = Math.min(parallel, executors.length);
+    if (executors.length === 0) {
+      return new Executor(() => {});
+    }
     return new Executor(async (ctx) => {
       const results: unknown[] = await new Promise((resolve) => {
         const records: unknown[] = [];

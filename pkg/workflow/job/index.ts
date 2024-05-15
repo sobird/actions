@@ -4,6 +4,8 @@
  *
  * sobird<i@sobird.me> at 2024/05/02 20:26:29 created.
  */
+import log4js from 'log4js';
+
 import Executor from '@/pkg/common/executor';
 import { asyncFunction } from '@/utils';
 
@@ -13,6 +15,8 @@ import Strategy from './strategy';
 import {
   WorkflowDispatchInputs, Permissions, Concurrency, Defaults,
 } from '../types';
+
+const logger = log4js.getLogger();
 
 export enum JobType {
   /**
@@ -83,11 +87,20 @@ class Job {
 
   'timeout-minutes': number;
 
-  strategy?: Strategy;
+  strategy: Strategy;
 
   'continue-on-error': boolean;
 
-  container?: Container;
+  /**
+   * 使用 `jobs.<job_id>.container` 创建用于运行作业中尚未指定容器的任何步骤的容器。
+   * 如有步骤同时使用脚本和容器操作，则容器操作将运行为同一网络上使用相同卷挂载的同级容器。
+   *
+   * 若不设置 `container`，所有步骤将直接在 `runs-on` 指定的主机上运行，除非步骤引用已配置为在容器中运行的操作。
+   *
+   * 注意：用于容器中的 `run` 步骤的默认 shell 是 `sh`，而不是 `bash`。
+   * 这可以使用 `jobs.<job_id>.defaults.run` 或 `jobs.<job_id>.steps[*].shell` 进行替代。
+   */
+  container: Container;
 
   services?: Record<string, Container>;
 
@@ -144,7 +157,7 @@ class Job {
   /**
    * 使用 `jobs.<job_id>.needs` 标识运行此作业之前必须成功完成的所有作业。
    *
-   * 它可以是一个字符串，也可以是字符串数组。
+   * 它可以是一个字符串，也可以是字符串数组(此处统一为字符串数组)。
    * 如果某个作业失败或跳过，则所有需要它的作业都会被跳过，除非这些作业使用让该作业继续的条件表达式。
    * 如果运行包含一系列相互需要的作业，则故障或跳过将从故障点或跳过点开始，应用于依赖项链中的所有作业。
    * 如果希望某个作业在其依赖的作业未成功时也能运行，请在 `jobs.<job_id>.if` 中使用 `always()` 条件表达式。
@@ -219,12 +232,23 @@ class Job {
   }
 
   executor() {
-    // todo
-    return new Executor(async () => {
-      console.log('Job executor:', this.name);
-      await asyncFunction(1000 * 10);
-      console.log('Job finshed');
+    const { strategy } = this;
+    const stageExecutor: Executor[] = [];
+
+    const matrices = strategy.select({});
+    logger.debug('Final matrix after applying user inclusions', matrices);
+
+    const maxParallel = Math.min(strategy['max-parallel'] || 4, matrices.length);
+    console.log('maxParallel', maxParallel);
+
+    matrices.forEach((matrix) => {
+      logger.debug('matrix: %v', matrix);
     });
+
+    // todo 处理 Context, strategy 和 matrix
+
+    // todo
+    return Executor.parallel(3, ...stageExecutor);
   }
 }
 

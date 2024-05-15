@@ -89,6 +89,8 @@ class Runner {
 
       const workflow = Workflow.Load(task.workflowPayload?.toString());
 
+      console.log('workflow', workflow.jobs['Test-Node'].strategy);
+
       const wp = WorkflowPlanner.Combine(workflow);
       const plan = wp.planJob();
 
@@ -132,7 +134,6 @@ class Runner {
   }
 
   async planExecutor(config: Task['context'], plan: Plan) {
-    const maxJobNameLen = 0;
     const stagePipeline: Executor[] = [];
 
     logger.debug('Plan Stages:', plan.stages);
@@ -142,9 +143,6 @@ class Runner {
         const pipeline: Executor[] = [];
 
         stage.runs.forEach((run) => {
-          const stageExecutor: Executor[] = [];
-          // debug('Stages Runs:', run);
-
           const { job } = run;
 
           job.steps?.forEach(((step) => {
