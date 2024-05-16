@@ -26,8 +26,6 @@ const socketPath = process.env.DOCKER_HOST || [
   return fs.existsSync(path);
 });
 
-console.log('socketPath', socketPath);
-
 interface DockerPullExecutorInput {
   image: string;
   force?: boolean;
@@ -85,12 +83,27 @@ class Docker extends Dockerode {
 
 export default Docker;
 
-const docker = new Docker();
+// 获取 Docker Host 路径
+export function getDockerHost(configDockerHost?: string) {
+  // a `-` means don't mount the docker socket to job containers
+  if (configDockerHost && configDockerHost !== '-') {
+    return configDockerHost;
+  }
 
-docker.pullExecutor({
-  image: 'alpine',
-  force: true,
-}).execute();
+  if (process.env.DOCKER_HOST) {
+    return process.env.DOCKER_HOST;
+  }
+
+  const protocol = /^\\\\.\\pipe\\docker_engine/.test(socketPath!) ? 'npipe://' : 'unix://';
+  return protocol + socketPath;
+}
+
+// const docker = new Docker();
+
+// docker.pullExecutor({
+//   image: 'alpine',
+//   force: true,
+// }).execute();
 
 // const images = await docker.listImages();
 // console.log('images', images.length);
