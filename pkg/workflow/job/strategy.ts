@@ -11,18 +11,17 @@ import os from 'node:os';
 import { cartesianProduct, lodash } from '@/utils';
 
 /**
- * 使用 `jobs.<job_id>.strategy` 对作业使用矩阵策略。
- *
- * 使用矩阵策略，可以在单个作业定义中使用变量自动创建基于变量组合的多个作业运行。
- * 例如，可以使用矩阵策略在某个语言的多个版本或多个操作系统上测试代码。
+ * Use `jobs.<job_id>.strategy` to use a matrix strategy for your jobs.
+ * A matrix strategy lets you use variables in a single job definition to automatically create multiple job runs that are based on the combinations of the variables.
+ * For example, you can use a matrix strategy to test your code in multiple versions of a language or on multiple operating systems.
+ * For more information, see "{@link https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs `Using a matrix for your jobs`}."
  */
 export default class Strategy {
   /**
-   * 使用 `jobs.<job_id>.strategy.matrix` 定义不同作业配置的矩阵。 在矩阵中，定义一个或多个变量，后跟一个值数组。
+   * Use `jobs.<job_id>.strategy.matrix` to define a matrix of different job configurations.
+   * Within your matrix, define one or more variables followed by an array of values.
+   * For example, the following matrix has a variable called `version` with the value `[10, 12, 14]` and a variable called `os` with the value `[ubuntu-latest, windows-latest]`:
    *
-   * 例如，以下矩阵有一个称为 version 的变量，其值为 [10, 12, 14] ，以及一个称为 os 的变量，其值为 [ubuntu-latest, windows-latest]：
-   *
-   * @example
    * ```yaml
    * jobs:
    *   example_matrix:
@@ -31,62 +30,121 @@ export default class Strategy {
    *       version: [10, 12, 14]
    *       os: [ubuntu-latest, windows-latest]
    * ```
+   *
+   * A job will run for each possible combination of the variables.
+   * In this example, the workflow will run six jobs, one for each combination of the `os` and `version` variables.
+   *
+   * By default, GitHub will maximize the number of jobs run in parallel depending on runner availability.
+   * The order of the variables in the matrix determines the order in which the jobs are created.
+   * The first variable you define will be the first job that is created in your workflow run.
+   * For example, the above matrix will create the jobs in the following order:
+   * * `{version: 10, os: ubuntu-latest}`
+   * * `{version: 10, os: windows-latest}`
+   * * `{version: 12, os: ubuntu-latest}`
+   * * `{version: 12, os: windows-latest}`
+   * * `{version: 14, os: ubuntu-latest}`
+   * * `{version: 14, os: windows-latest}`
+   *
+   * A matrix will generate a maximum of 256 jobs per workflow run.
+   * This limit applies to both GitHub-hosted and self-hosted runners.
+   *
+   * The variables that you define become properties in the `matrix` context,
+   * and you can reference the property in other areas of your workflow file.
+   * In this example, you can use `matrix.version` and `matrix.os` to access the current value of `version` and `os` that the job is using.
+   * For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/contexts Contexts}."
    */
   matrix?: {
+    /**
+     * Use `jobs.<job_id>.strategy.matrix.include` to expand existing matrix configurations or to add new configurations.
+     * The value of `include` is a list of objects.
+     *
+     * For each object in the `include` list,
+     * the key:value pairs in the object will be added to each of the matrix combinations if none of the key:value pairs overwrite any of the original matrix values.
+     * If the object cannot be added to any of the matrix combinations, a new matrix combination will be created instead.
+     * Note that the original matrix values will not be overwritten,
+     * but added matrix values can be overwritten.
+     */
     include?: Record<string, string>[];
+    /**
+     * To remove specific configurations defined in the matrix, use `jobs.<job_id>.strategy.matrix.exclude`.
+     * An excluded configuration only has to be a partial match for it to be excluded.
+     * For example, the following workflow will run nine jobs: one job for each of the 12 configurations,
+     * minus the one excluded job that matches `{os: macos-latest, version: 12, environment: production}`,
+     * and the two excluded jobs that match `{os: windows-latest, version: 16}`.
+     *
+     * **Note:** All `include` combinations are processed after `exclude`.
+     * This allows you to use include to add back combinations that were previously excluded.
+     */
     exclude?: Record<string, string>[];
   } & {
     [key: string]: unknown[];
   };
 
   /**
- * 你可以使用 `jobs.<job_id>.strategy.fail-fast `和 `jobs.<job_id>.continue-on-error` 来控制如何处理作业失败。
- *
- * `jobs.<job_id>.strategy.fail-fast` 适用于整个矩阵。
- * 如果 `jobs.<job_id>.strategy.fail-fast` 设置为 `true`，或者其表达式计算结果为 `true`，
- * 则在矩阵中的任何作业失败的情况下，GitHub 将取消矩阵中所有正在进行和在队列中的作业。 此属性的默认值为 `true`。
- */
-  #failFast?: boolean;
+   * You can control how job failures are handled with `jobs.<job_id>.strategy.fail-fast` and `jobs.<job_id>.continue-on-error`.
+   *
+   * `jobs.<job_id>.strategy.fail-fast` applies to the entire matrix.
+   * If `jobs.<job_id>.strategy.fail-fast` is set to `true` or its expression evaluates to `true`,
+   * GitHub will cancel all in-progress and queued jobs in the matrix if any job in the matrix fails.
+   * This property defaults to `true`.
+   *
+   * `jobs.<job_id>.continue-on-error` applies to a single job.
+   * If `jobs.<job_id>.continue-on-error` is `true`,
+   * other jobs in the matrix will continue running even if the job with `jobs.<job_id>.continue-on-error: true` fails.
+   *
+   * You can use `jobs.<job_id>.strategy.fail-fast` and `jobs.<job_id>.continue-on-error` together.
+   * For example, the following workflow will start four jobs.
+   * For each job, `continue-on-error` is determined by the value of `matrix.experimental`.
+   * If any of the jobs with `continue-on-error: false` fail,
+   * all jobs that are in progress or queued will be cancelled.
+   * If the job with `continue-on-error: true `fails, the other jobs will not be affected.
+   */
+  'fail-fast'?: boolean;
 
   /**
- * 默认情况下，GitHub 将根据运行器的可用性将并行运行的作业数最大化。
- * 若要设置使用 matrix 作业策略时可以同时运行的最大作业数，请使用 `jobs.<job_id>.strategy.max-parallel`。
+ * By default, GitHub will maximize the number of jobs run in parallel depending on runner availability.
+ * To set the maximum number of jobs that can run simultaneously when using a `matrix` job strategy, use `jobs.<job_id>.strategy.max-parallel`.
+ *
+ * For example, the following workflow will run a maximum of two jobs at a time,
+ * even if there are runners available to run all six jobs at once.
+ *
+ * ```yaml
+ * jobs:
+ *   example_matrix:
+ *     strategy:
+ *       max-parallel: 2
+ *       matrix:
+ *         version: [10, 12, 14]
+ *         os: [ubuntu-latest, windows-latest]
+ * ```
  */
-  #maxParallel?: number;
+  'max-parallel'?: number;
 
   constructor(strategy?: Partial<Strategy>) {
     if (!strategy) {
       return;
     }
     this.matrix = strategy.matrix;
-    this.#failFast = strategy['fail-fast'];
-    this.#maxParallel = strategy['max-parallel'];
+    this['fail-fast'] = strategy['fail-fast'];
+    this['max-parallel'] = strategy['max-parallel'];
   }
 
-  get 'fail-fast'() {
-    const failFast = this.#failFast;
+  getFailFast() {
+    const failFast = this['fail-fast'];
     if (typeof failFast === 'boolean') {
       return failFast;
     }
     return Boolean(failFast || true);
   }
 
-  set 'fail-fast'(failFast: boolean) {
-    this.#failFast = failFast;
-  }
-
-  get 'max-parallel'() {
-    return this.#maxParallel || os.cpus().length;
-  }
-
-  set 'max-parallel'(maxParallel: number) {
-    this.#maxParallel = maxParallel;
+  getMaxParallel() {
+    return this['max-parallel'] || os.cpus().length;
   }
 
   /**
    * 默认返回一个长度为1的数组，包含一个空对象
    */
-  get matrices() {
+  getMatrices() {
     if (!this.matrix) {
       return [];
     }
@@ -195,8 +253,8 @@ export default class Strategy {
    * @param targetMatrixValues
    * @returns
    */
-  select(targetMatrixValues: Record<string, Record<string, boolean>> = {}) {
-    const originalMatrices = this.matrices;
+  selectMatrices(targetMatrixValues: Record<string, Record<string, boolean>> = {}) {
+    const originalMatrices = this.getMatrices();
     const matrices: Record<string, unknown>[] = [];
     originalMatrices.forEach((original) => {
       const isAllowed = Object.keys(original).every((key) => {
@@ -211,14 +269,5 @@ export default class Strategy {
       }
     });
     return matrices;
-  }
-
-  toJSON() {
-    return {
-      'fail-fast': this.#failFast,
-      'max-parallel': this.#maxParallel,
-      matrix: this.matrix,
-
-    };
   }
 }

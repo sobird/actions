@@ -236,10 +236,10 @@ class Job {
     const { strategy } = this;
     const stageExecutor: Executor[] = [];
 
-    const matrices = strategy.select({});
+    const matrices = strategy.selectMatrices({});
     logger.debug('Final matrix after applying user inclusions', matrices);
 
-    const maxParallel = Math.min(strategy['max-parallel'] || 4, matrices.length);
+    const maxParallel = Math.min(strategy.getMaxParallel(), matrices.length);
     console.log('maxParallel', maxParallel);
 
     matrices.forEach((matrix) => {

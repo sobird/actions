@@ -5,20 +5,33 @@
  */
 
 /**
- * the specification of the container to use for the job
+ * **Note:** If your workflows use Docker container actions, job containers, or service containers, then you must use a Linux runner:
+ *
+ * - If you are using GitHub-hosted runners, you must use an Ubuntu runner.
+ * - If you are using self-hosted runners, you must use a Linux machine as your runner and Docker must be installed.
+ *
+ * Use `jobs.<job_id>.container` to create a container to run any steps in a job that don't already specify a container.
+ * If you have steps that use both script and container actions,
+ * the container actions will run as sibling containers on the same network with the same volume mounts.
+ *
+ * If you do not set a `container`, all steps will run directly on the host specified by runs-on unless a step refers to an action configured to run in a container.
+ *
+ * **Note:** The default shell for run steps inside a container is sh instead of bash.
+ * This can be overridden with {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_iddefaultsrun `jobs.<job_id>.defaults.run`} or {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsshell `jobs.<job_id>.steps[*].shell`}.
+ *
+ * When you only specify a container image, you can omit the image keyword.
  */
 export default class Container {
   /**
-   * 定义要用作运行操作的容器的 Docker 映像。 值可以是 Docker Hub 映像名称或注册表名称。
-   *
-   * jobs.<job_id>.container.image
+   * Use `jobs.<job_id>.container.image` to define the Docker image to use as the container to run the action.
+   * The value can be the Docker Hub image name or a registry name.
    */
   image?: string;
 
   /**
-   * 如果映像的容器注册表需要身份验证才能拉取映像，
-   * 可以使用 `jobs.<job_id>.container.credentials` 设置 `username` 和 `password` 的 `map`。
-   * 凭据是你将提供给 `docker login` 命令的相同值。
+   * If the image's container registry requires authentication to pull the image,
+   * you can use `jobs.<job_id>.container.credentials` to set a `map` of the `username` and `password`.
+   * The credentials are the same values that you would provide to the {@link https://docs.docker.com/engine/reference/commandline/login/ `docker login`} command.
    */
   credentials?: {
     username?: string;
@@ -26,42 +39,35 @@ export default class Container {
   };
 
   /**
-   * 使用 `jobs.<job_id>.container.env` 以在容器中设置环境变量的 `map`。
+   * Use `jobs.<job_id>.container.env` to set a `map` of environment variables in the container.
    */
   env?: Record<string, string> = {};
 
   /**
-   * 使用 `jobs.<job_id>.container.ports` 设置要在容器上显示的 `array` 个端口。
+   * Use `jobs.<job_id>.container.ports` to set an array of ports to expose on the container.
    */
   ports?: string[];
 
   /**
-   * 使用 `jobs.<job_id>.container.volumes` 设置容器要使用的卷 `array`。
+   * Use `jobs.<job_id>.container.volumes` to set an `array` of volumes for the container to use.
+   * You can use volumes to share data between services or other steps in a job.
+   *  You can specify named Docker volumes, anonymous Docker volumes, or bind mounts on the host.
    *
-   * 您可以使用卷分享作业中服务或其他步骤之间的数据。 可以指定命名的 Docker 卷、匿名的 Docker 卷或主机上的绑定挂载。
-   * 要指定卷，需指定来源和目标路径：
-   * * `<source>:<destinationPath>`。
-   * * `<source>` 是主机上的卷名称或绝对路径，`<destinationPath>` 是容器中的绝对路径。
+   * To specify a volume, you specify the source and destination path:
+   *
+   * `<source>:<destinationPath>`.
+   *
+   * The `<source>` is a volume name or an absolute path on the host machine,
+   * and `<destinationPath>` is an absolute path in the container.
    */
   volumes?: string[];
 
   /**
-   * 使用 `jobs.<job_id>.container.options` 配置其他 Docker 容器资源选项。 有关选项列表，请参阅“{@link https://docs.docker.com/engine/reference/commandline/create/#options docker create 选项}”。
+   * Use jobs.<job_id>.container.options to configure additional Docker container resource options. For a list of options, see "docker create options."
    *
-   * **警告：** 不支持 --network 和 --entrypoint 选项。
+   * Warning: The --network and --entrypoint options are not supported.
    */
   options?: string;
-
-  entrypoint?: string;
-
-  args?: string;
-
-  name?: string;
-
-  reuse?: boolean;
-
-  /** 特定于 Gitea 的字段 */
-  cmd?: string[];
 
   constructor(container?: Container | string) {
     if (!container) {
@@ -77,11 +83,6 @@ export default class Container {
     this.ports = container.ports;
     this.volumes = container.volumes;
     this.options = container.options;
-    this.entrypoint = container.entrypoint;
-    this.args = container.args;
-    this.name = container.name;
-    this.reuse = container.reuse;
-    this.cmd = container.cmd;
   }
 
   // 创建容器实例

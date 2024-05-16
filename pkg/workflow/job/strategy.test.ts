@@ -4,7 +4,7 @@ describe('Strategy Class test', () => {
   it('get matrices empty test case', () => {
     const strategy = new Strategy({});
 
-    expect(strategy.matrices).toEqual([]);
+    expect(strategy.getMatrices()).toEqual([]);
   });
 
   it('get matrices test case', () => {
@@ -20,7 +20,7 @@ describe('Strategy Class test', () => {
       'max-parallel': 2,
     });
 
-    expect(strategy.matrices).toEqual([
+    expect(strategy.getMatrices()).toEqual([
       {
         datacenter: 'site-c', 'node-version': '14.x', site: 'staging', 'php-version': '5.4',
       },
@@ -47,7 +47,7 @@ describe('Strategy Class test', () => {
       },
     });
 
-    expect(strategy.matrices).toEqual([
+    expect(strategy.getMatrices()).toEqual([
       {
         fruit: 'apple', animal: 'cat', color: 'pink', shape: 'circle',
       },
@@ -70,7 +70,7 @@ describe('Strategy Class test', () => {
       },
     });
 
-    const selected = strategy.select({
+    const selected = strategy.selectMatrices({
       fruit: { apple: true },
     });
 
