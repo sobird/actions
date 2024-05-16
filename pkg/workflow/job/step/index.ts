@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-/* eslint-disable no-underscore-dangle */
 /**
  * Step is the structure of one step in a job
  *
@@ -20,130 +18,179 @@ export enum StepType {
 }
 
 /**
- * Step is the structure of one step in a job
+ * A job contains a sequence of tasks called steps.
+ * Steps can run commands, run setup tasks, or run an action in your repository, a public repository, or an action published in a Docker registry.
+ * Not all steps run actions, but all actions run as a step.
+ * Each step runs in its own process in the runner environment and has access to the workspace and filesystem.
+ * Because steps run in their own process, changes to environment variables are not preserved between steps.
+ * GitHub provides built-in steps to set up and complete a job.
+ *
+ * GitHub only displays the first 1,000 checks, however, you can run an unlimited number of steps as long as you are within the workflow usage limits.
+ * For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration Usage limits, billing, and administration}" for GitHub-hosted runners and "{@link https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#usage-limits About self-hosted runners}" for self-hosted runner usage limits.
  */
 class Step {
-  #raw: Step;
-
   /**
-   * 步骤的唯一标识符。 可以使用 `id` 在上下文中引用该步骤。
+   * A unique identifier for the step.
+   *
+   * You can use the id to reference the step in contexts. For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/contexts Contexts}."
    */
   id: string;
 
   /**
-   * 可以使用 `if` 条件来阻止步骤运行，除非满足条件。
+   * You can use the if conditional to prevent a step from running unless a condition is met.
    *
-   * 您可以使用任何支持上下文和表达式来创建条件。
-   * * 支持的上下文：`github`, `needs`, `strategy`, `matrix`, `job`, `runner`, `env`, `vars`, `steps`, `inputs`
-   * * 支持的特殊函数：`always`, `cancelled`, `success`, `failure`, `hashFiles`
-   * 在 `if` 条件中使用表达式时，可以有选择地忽略 `${{ }}` 表达式语法，因为 GitHub Actions 自动将 if 条件作为表达式求值。
-   * 但此例外并非适用于所有情况。必须始终使用 `${{ }}` 表达式语法，或者当表达式以`!`开头时，必须使用 `''`、`""`、`()` 进行转义，因为 `!` 是 YAML 格式的保留表示法。
-   * 例如：`if: ${{ ! startsWith(github.ref, 'refs/tags/') }}`
+   * You can use any supported context and expression to create a conditional.
+   * For more information on which contexts are supported in this key, see "{@link https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability Contexts}."
+   *
+   * When you use expressions in an if conditional,
+   * you can, optionally, omit the ${{ }} expression syntax because GitHub Actions automatically evaluates the if conditional as an expression.
+   * However, this exception does not apply everywhere.
+   *
+   * You must always use the ${{ }} expression syntax or escape with '', "",
+   * or () when the expression starts with !, since ! is reserved notation in YAML format. For example:
+   *
+   * ```yaml
+   * if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
+   * ```
    */
   if: string;
 
-  #name: string;
+  /**
+   * A name for your step to display on GitHub.
+   */
+  name: string;
 
   /**
-   * 选择要作为作业中步骤的一部分运行的操作。
+   * Selects an action to run as part of a step in your job. An action is a reusable unit of code.
+   * You can use an action defined in the same repository as the workflow, a public repository, or in a {@link https://hub.docker.com/ published Docker container image}.
    *
-   * 操作是一种可重复使用的代码单位。 可以使用在与工作流、公共存储库或已发布的 Docker 容器映像相同的存储库中定义的操作。
-   * 强烈建议指定 Git ref、SHA 或 Docker 标记来包含所用操作的版本。 如果不指定版本，在操作所有者发布更新时可能会中断您的工作流程或造成非预期的行为。
-   * * 使用已发行操作版本的 SHA 对于稳定性和安全性是最安全的。
-   * * 如果操作发布主版本标记，则应收到关键修补程序和安全修补程序，同时仍保持兼容性。 请注意，此行为由操作创建者决定。
-   * * 使用操作的默认分支可能很方便，但如果有人新发布具有突破性更改的主要版本，您的工作流程可能会中断。
-   * 某些操作需要必须使用 with 关键字设置的输入。 请查阅操作的自述文件，确定所需的输入。
+   * We strongly recommend that you include the version of the action you are using by specifying a Git ref, SHA, or Docker tag.
+   * If you don't specify a version, it could break your workflows or cause unexpected behavior when the action owner publishes an update.
+   * * Using the commit SHA of a released action version is the safest for stability and security.
+   * * If the action publishes major version tags, you should expect to receive critical fixes and security patches while still retaining compatibility. Note that this behavior is at the discretion of the action's author.
+   * * Using the default branch of an action may be convenient, but if someone releases a new major version with a breaking change, your workflow could break.
    *
-   * 操作为 JavaScript 文件或 Docker 容器。 如果您使用的操作是 Docker 容器，则必须在 Linux 环境中运行作业。 有关详细信息，请参阅 runs-on。
+   * Some actions require inputs that you must set using the {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepswith with} keyword. Review the action's README file to determine the inputs required.
+   *
+   * Actions are either JavaScript files or Docker containers. If the action you're using is a Docker container you must run the job in a Linux environment. For more details, see {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idruns-on runs-on}.
    */
   uses: string;
 
   /**
-   * 使用操作系统的 `shell` 运行不超过 21,000 个字符的命令行程序。 如果不提供 `name`，步骤名称将默认为 `run` 命令中指定的文本。
+   * Runs command-line programs that do not exceed 21,000 characters using the operating system's shell.
+   * If you do not provide a name, the step name will default to the text specified in the run command.
    *
-   * 命令默认使用非登录 shell 运行。 您可以选择不同的 shell，也可以自定义用于运行命令的 shell。 有关详细信息，请参阅 {@link https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsshell `jobs.<job_id>.steps[*].shell`}。
-   * 每个 `run` 关键字代表运行器环境中一个新的进程和 shell。 当您提供多行命令时，每行都在同一个 shell 中运行。
+   * Commands run using non-login shells by default.
+   * You can choose a different shell and customize the shell used to run commands.
+   * For more information, see {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsshell `jobs.<job_id>.steps[*].shell`}.
+   *
+   * Each run keyword represents a new process and shell in the runner environment.
+   * When you provide multi-line commands, each line runs in the same shell. For example:
+   *
+   * * A single-line command:
+   * ```yaml
+   *   - name: Install Dependencies
+   *     run: npm install
+   * ```
+   * * A multi-line command:
+   * ```yaml
+   *   - name: Clean install dependencies and build
+   *     run: |
+   *       npm ci
+   *       npm run build
+   * ```
    */
   run: string;
 
   /**
-   * 使用 working-directory 关键字，你可以指定运行命令的工作目录位置。
+   * Using the `working-directory` keyword, you can specify the working directory of where to run the command.
+   *
+   * Alternatively, you can specify a default working directory for all run steps in a job, or for all run steps in the entire workflow.
+   * For more information, see "${@link https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions#defaultsrunworking-directory `defaults.run.working-directory`}" and "{@link https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_iddefaultsrunworking-directory `jobs.<job_id>.defaults.run.working-directory`}."
    */
   'working-directory': string;
 
   /**
-   * 你可以使用 `shell` 关键字，覆盖运行器操作系统中的默认 Shell 设置，以及作业的默认值。
-   * 你可以使用内置的 `shell` 关键字，也可以自定义 `shell` 选项集。
-   * 内部运行的 `shell` 命令执行一个临时文件，其中包含 `run` 关键字中指定的命令。
+   * You can override the default shell settings in the runner's operating system and the job's default using the `shell` keyword.
+   * You can use built-in `shell` keywords, or you can define a custom set of shell options.
+   * The shell command that is run internally executes a temporary file that contains the commands specified in the `run` keyword.
    */
   shell: string;
 
   /**
-   * 由操作定义的输入参数的 map。 每个输入参数都是一个键/值对。
-   * 输入参数被设置为环境变量。 该变量的前缀为 INPUT_，并转换为大写。
-   * 为 Docker 容器定义的输入参数必须使用 args
+   * A map of the input parameters defined by the action.
+   * Each input parameter is a key/value pair.
+   * Input parameters are set as environment variables.
+   * The variable is prefixed with INPUT_ and converted to upper case.
+   *
+   * Input parameters defined for a Docker container must use args.
+   * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepswithargs `jobs.<job_id>.steps[*].with.args`}."
    */
   with: {
     /**
-     * string 定义 Docker 容器的输入。 GitHub 在容器启动时将 args 传递到容器的 ENTRYPOINT。
-     * 此参数不支持 array of strings。 包含空格的单个参数应该用双引号 "" 括起来。
+     * A `string` that defines the inputs for a Docker container.
+     * GitHub passes the `args` to the container's `ENTRYPOINT` when the container starts up.
+     * An `array of strings` is not supported by this parameter. A single argument that includes spaces should be surrounded by double quotes `""`.
      */
     args: string;
     /**
-     * 如果未指定该项，则替代 `Dockerfile` 中的 Docker `ENTRYPOINT`，否则对其进行设置。
-     * 与包含 shell 和 exec 表单的 Docker `ENTRYPOINT` 指令不同，`entrypoint` 关键字只接受定义要运行的可执行文件的单个字符串。
+     * Overrides the Docker `ENTRYPOINT` in the `Dockerfile`, or sets it if one wasn't already specified.
+     * Unlike the Docker `ENTRYPOINT` instruction which has a shell and exec form,
+     * `entrypoint` keyword accepts only a single string defining the executable to be run.
+     *
+     * The `entrypoint` keyword is meant to be used with Docker container actions,
+     * but you can also use it with JavaScript actions that don't define any inputs.
      */
     entrypoint: string;
     [key: string]: string;
   };
 
-  #env: Record<string, string>;
+  /**
+   * Sets variables for steps to use in the runner environment.
+   * You can also set variables for the entire workflow or a job.
+   * For more information, see {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#env `env`} and {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idenv `jobs.<job_id>.env`}.
+   *
+   * When more than one environment variable is defined with the same name, GitHub uses the most specific variable.
+   * For example, an environment variable defined in a step will override job and workflow environment variables with the same name, while the step executes.
+   * An environment variable defined for a job will override a workflow variable with the same name, while the job executes.
+   *
+   * Public actions may specify expected variables in the README file.
+   * If you are setting a secret or sensitive value, such as a password or token,
+   * you must set secrets using the secrets context. For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/contexts Contexts}."
+   */
+  env: Record<string, string>;
 
   /**
-   * 防止步骤失败时作业也会失败。 设置为 true 以允许在此步骤失败时作业能够通过。
+   * Prevents a job from failing when a step fails. Set to true to allow a job to pass when this step fails.
    */
   'continue-on-error': boolean;
 
   /**
-   * 在 GitHub 自动取消运行之前可让作业运行的最大分钟数。 默认值：360
+   * The maximum number of minutes to run the step before killing the process.
    */
   'timeout-minutes': boolean;
 
   constructor(step: Step) {
-    this.#raw = step;
-
     this.id = step.id;
     this.if = step.if;
-    this.#name = step.name;
+    this.name = step.name;
     this.uses = step.uses;
     this.run = step.run;
     this['working-directory'] = step['working-directory'];
     this.shell = step.shell;
     this.with = step.with;
-    this.#env = step.env;
+    this.env = step.env;
     this['continue-on-error'] = step['continue-on-error'];
     this['timeout-minutes'] = step['timeout-minutes'];
   }
 
-  /**
-   * 步骤显示在 GitHub 上的名称。
-   */
-  get name(): string {
-    return this.#name || this.uses || this.run || this.id;
+  getName(): string {
+    return this.name || this.uses || this.run || this.id;
   }
 
-  set name(name) {
-    this.#name = name;
-  }
-
-  /**
-   * 设置供步骤在运行器环境中使用的变量。 也可以设置用于整个工作流或某个作业的变量。
-   *
-   * 当多个环境变量使用相同的名称定义时，GitHub 会使用最特定的变量。 例如，步骤中定义的环境变量在步骤执行时将覆盖名称相同的作业和工作流环境变量。 为作业定义的环境变量在作业执行时将覆盖名称相同的工作流变量。
-   * 公共操作可在自述文件中指定预期的变量。 如果要设置机密或敏感值（如密码或令牌），则必须使用 secrets 上下文来设置机密。
-   */
-  get env() {
-    const env = { ...this.#env };
+  // Merge variables from with into env
+  getEnv() {
+    const env = { ...this.env };
 
     Object.entries(this.with).forEach(([key, value]) => {
       let envKey = key.toUpperCase().replace(/[^A-Z0-9-]/g, '_');
@@ -155,10 +202,9 @@ class Step {
   }
 
   /**
-   * returns the command for the shell
-   * @returns
+   * returns the Command run internally for the shell
    */
-  get shellCommand() {
+  getShellCommand() {
     let shellCommand = '';
 
     switch (this.shell) {
@@ -167,7 +213,7 @@ class Step {
         shellCommand = 'bash --noprofile --norc -e -o pipefail {0}';
         break;
       case 'pwsh':
-        shellCommand = 'pwsh -command . \'{0}\'';
+        shellCommand = "pwsh -command . '{0}'";
         break;
       case 'python':
         shellCommand = 'python {0}';
@@ -179,7 +225,7 @@ class Step {
         shellCommand = 'cmd /D /E:ON /V:OFF /S /C "CALL "{0}""';
         break;
       case 'powershell':
-        shellCommand = 'powershell -command . \'{0}\'';
+        shellCommand = "powershell -command . '{0}'";
         break;
       default:
         shellCommand = this.shell;
@@ -190,8 +236,6 @@ class Step {
 
   /**
    * returns the type of the step
-   *
-   * @returns
    */
   get type() {
     if (this.run === '' && this.uses === '') {
@@ -220,17 +264,6 @@ class Step {
       return StepType.UsesActionLocal;
     }
     return StepType.UsesActionRemote;
-  }
-
-  set<K extends keyof Step>(key: K, value: Step[K]) {
-    this.#raw[key] = value;
-  }
-
-  toJSON() {
-    return {
-      ...this.#raw,
-      ...this,
-    };
   }
 }
 
