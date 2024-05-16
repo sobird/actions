@@ -548,16 +548,14 @@ describe('workflow dispatch config', () => {
   });
 });
 
-describe('workflow create stages', () => {
-  it('create stages by jobIds', () => {
+describe('workflow plan jobs', () => {
+  it('plan jobs by jobIds', () => {
     const workflow = Workflow.Read(resolve(__dirname, './__mocks__/stages.yaml'));
-    const stages = workflow.stages('Test-Docker');
-    const jobIds = stages.map((runs) => {
-      return runs.map((run) => {
-        return run.jobId;
-      });
+    const stages = workflow.planJobs('Test-Docker');
+    const jobIds = stages.map((stage) => {
+      return stage.jobId;
     });
 
-    expect(jobIds).toEqual([['Test-Node'], ['Explore-Gitea-Actions'], ['Test-Docker']]);
+    expect(jobIds).toEqual(['Test-Node', 'Explore-Gitea-Actions', 'Test-Docker']);
   });
 });

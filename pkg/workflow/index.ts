@@ -214,6 +214,71 @@ class Workflow {
     }
   }
 
+  /**
+   * Obtain the correct job execution order through topological sort(Kahn)
+   *
+   * Directed Acyclic Graph(DAG)
+   */
+  planJobs(...jobIds: string[]) {
+    let jobIdsClone = jobIds;
+    if (jobIds.length === 0) {
+      jobIdsClone = Object.keys(this.jobs);
+    }
+
+    // first, build a list of all the necessary jobs to run, and their dependencies
+    const jobNeeds: Record<string, string[]> = {};
+    while (jobIdsClone.length > 0) {
+      const tmpJobIds: string[] = [];
+      jobIdsClone.forEach((jobId) => {
+        if (!jobNeeds[jobId]) {
+          const job = this.jobs[jobId];
+          if (job) {
+            jobNeeds[jobId] = job.getNeeds();
+            tmpJobIds.push(...job.getNeeds());
+          }
+        }
+      });
+      jobIdsClone = tmpJobIds;
+    }
+
+    const queue: { jobId: string, job: Job }[] = [];
+
+    Object.entries(jobNeeds).forEach(([jobId, needs]) => {
+      const job = this.jobs[jobId];
+      // In degree is 0
+      if (needs.length === 0) {
+        queue.push({
+          jobId,
+          job,
+        });
+
+        delete jobNeeds[jobId];
+      }
+    });
+
+    // next, build an execution graph
+    let k = 0;
+    while (k < queue.length) {
+      const zeroNeedsJob = queue[k];
+      Object.entries(jobNeeds).forEach(([jobId, needs]) => {
+        const newNeeds = needs.filter((need) => { return need !== zeroNeedsJob.jobId; });
+        if (newNeeds.length === 0) {
+          queue.push({
+            jobId,
+            job: this.jobs[jobId],
+          });
+          delete jobNeeds[jobId];
+        } else {
+          jobNeeds[jobId] = newNeeds;
+        }
+      });
+
+      k += 1;
+    }
+
+    return queue;
+  }
+
   stages(...jobIds: string[]) {
     const jobNeeds: Record<string, string[]> = {};
 
