@@ -3,49 +3,13 @@ import fs from 'fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import yaml from 'js-yaml';
+import yaml from 'yaml';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const content = fs.readFileSync(path.resolve(__dirname, 'example.yaml'), 'utf-8');
 
-const customSchema = new yaml.Schema({
-  explicit: [
-    new yaml.Type('name', {
-      kind: 'scalar',
-      resolve: (data) => { return typeof data === 'number' && Math.floor(data) === data; },
-      construct: (data) => {
-        console.log('data', data);
-        return data * 1;
-      }, // 将解析的数据转换为整数
-    }),
-    new yaml.Type('!tag:yaml.org,2002:float', {
-      kind: 'scalar',
-      resolve: (data) => { return typeof data === 'number'; },
-      construct: (data) => { return data * 1.0; }, // 将解析的数据转换为浮点数
-    }),
-  ],
-});
+const workflow = yaml.parse(content);
 
-// const SEXY_SCHEMA = yaml.Schema.create([SexyYamlType]);
-
-// result = yaml.load(yourData, { schema: SEXY_SCHEMA });
-
-const workflow = yaml.load(content, { schema: customSchema });
-
-console.log('workflow.on', JSON.stringify(workflow));
-
-// const needJobIDs = ['a', 'b', 'c'];
-
-// const wf = new Workflow(workflow as Workflow);
-
-// if (typeof wf.permissions === 'string') {
-//   wf.permissions = 'read-all';
-// } else {
-//   wf.permissions.actions = 'none';
-//   wf.permissions = {};
-// }
-
-// const rawNeeds = needJobIDs.map((id) => { return yaml.load(`!!str ${id}`); });
-// console.log('rawNeeds', rawNeeds);
+console.log('workflow', workflow);

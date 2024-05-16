@@ -9,7 +9,6 @@
 
 import fs from 'fs';
 
-import yaml, { LoadOptions, DumpOptions } from 'js-yaml';
 import { parse, stringify } from 'yaml';
 
 import { isEmptyDeep } from '@/utils';

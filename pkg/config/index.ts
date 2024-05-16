@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import dotenv, { DotenvParseOutput } from 'dotenv';
-import yaml from 'js-yaml';
+import yaml from 'yaml';
 
 import { Registration } from './registration';
 
@@ -86,7 +86,7 @@ class Config {
   static loadDefault(file?: string) {
     let config = new Config();
     if (file && fs.existsSync(file)) {
-      config = yaml.load(fs.readFileSync(file, 'utf8'), { schema: yaml.DEFAULT_SCHEMA }) as any;
+      config = yaml.parse(fs.readFileSync(file, 'utf8'));
     }
 
     // 兼容旧环境变量
