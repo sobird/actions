@@ -10,12 +10,6 @@ import os from 'node:os';
 
 import { cartesianProduct, lodash } from '@/utils';
 
-/**
- * Use `jobs.<job_id>.strategy` to use a matrix strategy for your jobs.
- * A matrix strategy lets you use variables in a single job definition to automatically create multiple job runs that are based on the combinations of the variables.
- * For example, you can use a matrix strategy to test your code in multiple versions of a language or on multiple operating systems.
- * For more information, see "{@link https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs `Using a matrix for your jobs`}."
- */
 export default class Strategy {
   /**
    * Use `jobs.<job_id>.strategy.matrix` to define a matrix of different job configurations.
