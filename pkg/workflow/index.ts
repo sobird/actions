@@ -18,86 +18,109 @@ import {
 } from './types';
 
 class Workflow {
-  /**
-   * 工作流文件路径
-   */
-  public file?: string;
+  #file?: string;
 
   /**
-   * 工作流的名称。
+   * The name of the workflow.
    *
-   * GitHub 在存储库的“操作”选项卡下显示工作流的名称。
-   * 如果省略 name，GitHub 会显示相对于存储库根目录的工作流文件路径。
+   * GitHub displays the names of your workflows under your repository's "Actions" tab.
+   * If you omit `name`, GitHub displays the workflow file path relative to the root of the repository.
    */
   public name?: string;
 
   /**
-   * 从工作流生成的工作流运行的名称。
+   * The name for workflow runs generated from the workflow.
    *
-   * GitHub 在存储库的“操作”选项卡上的工作流运行列表中显示工作流运行名称。
-   * 如果省略了 run-name 或仅为空格，则运行名称将设置为工作流运行的事件特定信息。
-   * 例如，对于由 push 或 pull_request 事件触发的工作流，将其设置为提交消息或拉取请求的标题。
-   * 此值可包含表达式，且可引用 github 和 inputs 上下文。
+   * GitHub displays the workflow run name in the list of workflow runs on your repository's "Actions" tab. If run-name is omitted or is only whitespace, then the run name is set to event-specific information for the workflow run. For example, for a workflow triggered by a push or pull_request event, it is set as the commit message or the title of the pull request.
    *
-   * @example
+   * This value can include expressions and can reference the github and inputs contexts.
+   *
+   * * Example of run-name
+   * ```yaml
    * run-name: Deploy to ${{ inputs.deploy_target }} by @${{ github.actor }}
+   * ```
    */
   public 'run-name'?: string;
 
   /**
-   * 若要自动触发工作流，请使用 on 定义哪些事件可以触发工作流运行。
+   * To automatically trigger a workflow, use on to define which events can cause the workflow to run.
+   * For a list of available events, see "{@link https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows Events that trigger workflows}."
    *
-   * 有关可用事件的列表，请参阅“{@link https://docs.github.com/zh/actions/using-workflows/events-that-trigger-workflows 触发工作流的事件}”。
-   * 可以定义单个或多个可以触发工作流的事件，或设置时间计划。
-   * 还可以将工作流的执行限制为仅针对特定文件、标记或分支更改。
-   *
-   * @see https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions#on
+   * You can define single or multiple events that can trigger a workflow,
+   * or set a time schedule. You can also restrict the execution of a workflow to only occur for specific files, tags, or branch changes.
    */
   public on: On;
 
   /**
-   * 可以使用 `permissions` 修改授予 `GITHUB_TOKEN` 的默认权限，根据需要添加或删除访问权限，以便只授予所需的最低访问权限。
+   * You can use `permissions` to modify the default permissions granted to the `GITHUB_TOKEN`, adding or removing access as required, so that you only allow the minimum required access.
+   * For more information, see "{@link https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token Automatic token authentication}."
    *
-   * 可以使用 `permissions` 作为顶级密钥，以应用于工作流中的所有作业或特定作业。
-   * 当你在特定作业中添加 `permissions` 密钥时，该作业中使用 `GITHUB_TOKEN` 的所有操作和运行命令都将获得你指定的访问权限。
+   * You can use `permissions` either as a top-level key, to apply to all jobs in the workflow, or within specific jobs.
+   * When you add the permissions key within a specific job, all actions and run commands within that job that use the `GITHUB_TOKEN` gain the access rights you specify.
+   * For more information, see {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idpermissions `jobs.<job_id>.permissions`}.
    *
-   * 对于下表中显示的每个可用范围，可以分配以下权限之一：`read`、`write` 或 `none`。
-   * 如果你指定其中任何作用域的访问权限，则所有未指定的作用域都被设置为 `none`。
-   *
-   * @see https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions#permissions
+   * For each of the available scopes, shown in the table below, you can assign one of the permissions: `read`, `write`, or `none`.
+   * If you specify the access for any of these scopes, all of those that are not specified are set to `none`.
    */
   public permissions: Permissions;
 
   /**
-   * 可用于工作流中所有作业的步骤的变量的 `map`。
+   * A map of variables that are available to the steps of all jobs in the workflow.
+   * You can also set variables that are only available to the steps of a single job or to a single step.
+   * For more information, see {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idenv `jobs.<job_id>.env`} and {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsenv `jobs.<job_id>.steps[*].env`}.
    *
-   * 还可以设置仅适用于单个作业的步骤或单个步骤的变量。
-   * 有关详细信息，请参阅 `jobs.<job_id>.env` 和 `jobs.<job_id>.steps[*].env`。
+   * Variables in the `env` map cannot be defined in terms of other variables in the map.
+   *
+   * When more than one environment variable is defined with the same name, GitHub uses the most specific variable.
+   * For example, an environment variable defined in a step will override job and workflow environment variables with the same name,
+   * while the step executes. An environment variable defined for a job will override a workflow variable with the same name, while the job executes.
    */
   public env: object;
 
   /**
-   * 使用 `defaults` 创建将应用于工作流中所有作业的默认设置的 `map`。
+   * Use defaults to create a map of default settings that will apply to all jobs in the workflow.
+   * You can also set default settings that are only available to a job.
+   * For more information, see {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_iddefaults `jobs.<job_id>.defaults`}.
    *
-   * 您也可以设置只可用于作业的默认设置。 有关详细信息，请参阅 `jobs.<job_id>.defaults`。
-   * 使用相同名称定义了多个默认设置时，GitHub 会使用最具体的默认设置。 例如，在作业中定义的默认设置将覆盖在工作流程中定义的同名默认设置。
+   * When more than one default setting is defined with the same name, GitHub uses the most specific default setting.
+   * For example, a default setting defined in a job will override a default setting that has the same name defined in a workflow.
    */
   public defaults: Defaults;
 
   /**
-   * 使用 `concurrency` 以确保只有使用相同并发组的单一作业或工作流才会同时运行。
+   * Use `concurrency` to ensure that only a single job or workflow using the same concurrency group will run at a time.
+   * A concurrency group can be any string or expression.
+   * The expression can only use `github`, `inputs` and `vars` contexts.
+   * For more information about expressions, see "{@link https://docs.github.com/en/actions/learn-github-actions/expressions Expressions}."
    *
-   * 并发组可以是任何字符串或表达式。
-   * 表达式只能使用 `github`、`inputs` 和 `vars` 上下文。 有关表达式的详细信息，请参阅“表达式”。
-   * 你还可以在作业级别指定 `concurrency`。有关详细信息，请参阅 `jobs.<job_id>.concurrency`。
+   * You can also specify `concurrency` at the job level. For more information, see {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idconcurrency jobs.<job_id>.concurrency}.
+   *
+   * When a concurrent job or workflow is queued, if another job or workflow using the same concurrency group in the repository is in progress,
+   * the queued job or workflow will be pending. Any pending job or workflow in the concurrency group will be canceled.
+   * This means that there can be at most one running and one pending job in a concurrency group at any time.
+   *
+   * To also cancel any currently running job or workflow in the same concurrency group, specify `cancel-in-progress: true`.
+   * To conditionally cancel currently running jobs or workflows in the same concurrency group,
+   * you can specify `cancel-in-progress` as an expression with any of the allowed expression contexts.
+   *
+   * **Notes:**
+   * * The concurrency group name is case insensitive. For example, `prod` and `Prod` will be treated as the same concurrency group.
+   * * Ordering is not guaranteed for jobs or workflow runs using concurrency groups.
+   * Jobs or workflow runs in the same concurrency group are handled in an arbitrary order.
    */
   public concurrency: Concurrency;
 
   /**
-   * 工作流运行由一个或多个 `jobs` 组成，默认情况下并行运行。
+   * A workflow run is made up of one or more `jobs`, which run in parallel by default.
+   * To run jobs sequentially, you can define dependencies on other jobs using the `jobs.<job_id>.needs` keyword.
    *
-   * 若要按顺序运行作业，可以使用 `jobs.<job_id>.needs` 关键字定义对其他作业的依赖关系。
-   * 每个作业在 `runs-on` 指定的运行器环境中运行。
+   * Each job runs in a runner environment specified by `runs-on`.
+   *
+   * You can run an unlimited number of jobs as long as you are within the workflow usage limits.
+   * For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration Usage limits, billing, and administration}" for GitHub-hosted runners and "{@link https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#usage-limits About self-hosted runners}" for self-hosted runner usage limits.
+   *
+   * If you need to find the unique identifier of a job running in a workflow run, you can use the GitHub API.
+   * For more information, see "{@link https://docs.github.com/en/rest/actions#workflow-jobs REST API endpoints for GitHub Actions}."
    */
   public jobs: Record<string, Job>;
 
@@ -118,9 +141,20 @@ class Workflow {
   }
 
   /**
-   * get on event list
+  * workflow file name
+  */
+  get file() {
+    return this.#file;
+  }
+
+  set file(file) {
+    this.#file = file;
+  }
+
+  /**
+   * workflow on events
    */
-  onEvents() {
+  get events() {
     const { on } = this;
     if (typeof on === 'string') {
       return [on];
@@ -148,7 +182,7 @@ class Workflow {
     return on[eventName] as OnEvents[K];
   }
 
-  get workflowDispatch(): Record<string, OnEvents['workflow_dispatch']['inputs']> | undefined | OnEvents['workflow_dispatch'] {
+  getWorkflowDispatch(): Record<string, OnEvents['workflow_dispatch']['inputs']> | undefined | OnEvents['workflow_dispatch'] {
     const { on } = this;
     if (typeof on === 'string') {
       if (on === 'workflow_dispatch') {
@@ -173,7 +207,6 @@ class Workflow {
     const jobIdRegex = /^[A-Za-z_][A-Za-z0-9_-]*$/;
 
     if (!jobIdRegex.test(jobId)) {
-      // 如果作业名不符合正则表达式规则，抛出错误
       throw new Error(
         `Workflow is not valid. '${this.name}': Job name '${jobId}' is invalid. Names must start with a letter or '_' and contain only alphanumeric characters, '-', or '_'`,
       );
@@ -195,8 +228,8 @@ class Workflow {
         if (!jobNeeds[jobId]) {
           const job = this.jobs[jobId];
           if (job) {
-            jobNeeds[jobId] = job.needs;
-            newjobIds.push(...job.needs);
+            jobNeeds[jobId] = job.getNeeds();
+            newjobIds.push(...job.getNeeds());
           }
         }
       });
@@ -239,11 +272,6 @@ class Workflow {
     }
 
     return stages;
-  }
-
-  toJSON() {
-    const { file, ...json } = this;
-    return json;
   }
 
   save(path: string, options?: DumpOptions) {

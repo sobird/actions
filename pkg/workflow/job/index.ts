@@ -376,7 +376,7 @@ class Job {
     return typeof this.needs === 'string' ? [this.needs] : this.needs;
   }
 
-  get getRunsOn() {
+  getRunsOn() {
     const runsOn = this['runs-on'];
     if (typeof runsOn === 'string') {
       return [runsOn];

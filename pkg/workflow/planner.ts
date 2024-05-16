@@ -103,7 +103,7 @@ class WorkflowPlanner {
     }
     const plan = new Plan();
     this.workflows.forEach((workflow) => {
-      const events = workflow.onEvents() as string[];
+      const { events } = workflow;
       if (events.length === 0) {
         debug('no events found for workflow: %s', workflow.file);
         return;
@@ -171,7 +171,7 @@ class WorkflowPlanner {
     const eventsSet = new Set();
     this.workflows.forEach((workflow) => {
       // 假设workflow.on()返回一个事件数组
-      workflow.onEvents().forEach((event) => {
+      workflow.events.forEach((event) => {
         eventsSet.add(event);
       });
     });

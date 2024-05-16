@@ -35,7 +35,7 @@ jobs:
       - run: echo "This job's status is ${{ job.status }}."
 
   Test-Docker:
-    needs: [Test-Node, Explore--Actions]
+    needs: [Test-Node, Explore-Actions]
     runs-on: ubuntu-latest
     # 此容器可使用docker，可查看 https://github.com/catthehacker/docker_images
     # container: catthehacker/ubuntu:act-latest

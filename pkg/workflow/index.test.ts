@@ -174,7 +174,7 @@ describe('test workflow runs-on labels', () => {
         steps:
         - uses: ./actions/docker-url`;
     const workflow = Workflow.Load(yaml);
-    expect(workflow.jobs.test?.runsOn).toEqual(['ubuntu-latest']);
+    expect(workflow.jobs.test?.getRunsOn()).toEqual(['ubuntu-latest']);
   });
 
   it('runs-on labels with group test case', () => {
@@ -190,7 +190,7 @@ describe('test workflow runs-on labels', () => {
         steps:
         - uses: ./actions/docker-url`;
     const workflow = Workflow.Load(yaml);
-    expect(workflow.jobs.test?.runsOn).toEqual(['ubuntu-latest', 'linux']);
+    expect(workflow.jobs.test?.getRunsOn()).toEqual(['ubuntu-latest', 'linux']);
   });
 });
 
@@ -391,9 +391,9 @@ describe('test workflow job', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.jobs.test1.steps?.[0].shellCommand).toBe("pwsh -v '. {0}'");
-    expect(workflow.jobs.test1.steps?.[1].shellCommand).toBe("pwsh -command . '{0}'");
-    expect(workflow.jobs.test1.steps?.[2].shellCommand).toBe("powershell -command . '{0}'");
+    expect(workflow.jobs.test1.steps?.[0].getShellCommand()).toBe("pwsh -v '. {0}'");
+    expect(workflow.jobs.test1.steps?.[1].getShellCommand()).toBe("pwsh -command . '{0}'");
+    expect(workflow.jobs.test1.steps?.[2].getShellCommand()).toBe("powershell -command . '{0}'");
   });
 });
 
@@ -402,31 +402,31 @@ describe('job strategy test', () => {
   it('job strategy-only-max-parallel test case', () => {
     const job = workflow.jobs['strategy-only-max-parallel'];
 
-    expect(job.strategy?.matrices).toEqual([]);
-    expect(job.strategy?.maxParallel).toBe(2);
-    expect(job.strategy?.failFast).toBe(true);
+    expect(job.strategy?.getMatrices()).toEqual([]);
+    expect(job.strategy?.getMaxParallel()).toBe(2);
+    expect(job.strategy?.getFailFast()).toBe(true);
   });
 
   it('job strategy-only-fail-fast test case', () => {
     const job = workflow.jobs['strategy-only-fail-fast'];
 
-    expect(job.strategy?.matrices).toEqual([]);
-    expect(job.strategy?.maxParallel).toBe(os.cpus().length);
-    expect(job.strategy?.failFast).toBe(false);
+    expect(job.strategy?.getMatrices()).toEqual([]);
+    expect(job.strategy?.getMaxParallel()).toBe(os.cpus().length);
+    expect(job.strategy?.getFailFast()).toBe(false);
   });
 
   it('job strategy-no-matrix test case', () => {
     const job = workflow.jobs['strategy-no-matrix'];
 
-    expect(job.strategy?.matrices).toEqual([]);
-    expect(job.strategy?.maxParallel).toBe(2);
-    expect(job.strategy?.failFast).toBe(false);
+    expect(job.strategy?.getMatrices()).toEqual([]);
+    expect(job.strategy?.getMaxParallel()).toBe(2);
+    expect(job.strategy?.getFailFast()).toBe(false);
   });
 
   it('job strategy-all test case', () => {
     const job = workflow.jobs['strategy-all'];
 
-    expect(job.strategy?.matrices).toEqual([
+    expect(job.strategy?.getMatrices()).toEqual([
       {
         datacenter: 'site-c', 'node-version': '14.x', site: 'staging', 'php-version': 5.4,
       },
@@ -442,8 +442,8 @@ describe('job strategy test', () => {
       { datacenter: 'site-a', 'node-version': '10.x', site: 'prod' },
       { datacenter: 'site-b', 'node-version': '12.x', site: 'dev' },
     ]);
-    expect(job.strategy?.maxParallel).toBe(2);
-    expect(job.strategy?.failFast).toBe(false);
+    expect(job.strategy?.getMaxParallel()).toBe(2);
+    expect(job.strategy?.getFailFast()).toBe(false);
   });
 
   it('job strategy test case1', () => {
@@ -458,7 +458,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.workflowDispatch).toBeUndefined();
+    expect(workflow.getWorkflowDispatch()).toBeUndefined();
   });
 
   it('dispatch config empty test case', () => {
@@ -468,7 +468,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.workflowDispatch).toBeUndefined();
+    expect(workflow.getWorkflowDispatch()).toBeUndefined();
   });
 
   it('dispatch config string test case', () => {
@@ -478,7 +478,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.workflowDispatch).toEqual({});
+    expect(workflow.getWorkflowDispatch()).toEqual({});
   });
 
   it('dispatch config empty array test case', () => {
@@ -488,7 +488,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.workflowDispatch).toBeUndefined();
+    expect(workflow.getWorkflowDispatch()).toBeUndefined();
   });
 
   it('dispatch config array include test case', () => {
@@ -498,7 +498,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.workflowDispatch).toEqual({});
+    expect(workflow.getWorkflowDispatch()).toEqual({});
   });
 
   it('dispatch config array include test case', () => {
@@ -510,7 +510,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.workflowDispatch).toEqual({});
+    expect(workflow.getWorkflowDispatch()).toEqual({});
   });
 
   it('dispatch config array include test case', () => {
@@ -522,7 +522,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.workflowDispatch).toBeUndefined();
+    expect(workflow.getWorkflowDispatch()).toBeUndefined();
   });
 
   it('dispatch config array include test case', () => {
@@ -545,7 +545,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.workflowDispatch?.inputs.logLevel).toEqual({
+    expect(workflow.getWorkflowDispatch()?.inputs.logLevel).toEqual({
       description: 'Log level',
       required: true,
       default: 'warning',
