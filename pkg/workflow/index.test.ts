@@ -21,16 +21,9 @@ it('test workflow Read，dump and Load', () => {
 });
 
 it('test workflow Read and Save', () => {
-  const workflow = Workflow.Read(workflowFile);
+  // const workflow = Workflow.Read(workflowFile);
 
-  Object.entries(workflow.jobs).forEach(([jobId, job]) => {
-    console.log('jobId:', jobId);
-    job.steps[0].name = 'sobird';
-  });
-
-  console.log('first', workflow.jobs['Explore-Actions'].steps[0].dsdsd = 1212);
-
-  workflow.save('./sobird_test.yaml');
+  // workflow.save('./sobird_test.yaml');
 
   // expect(workflow).toEqual(workflow2);
 });

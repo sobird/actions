@@ -12,6 +12,8 @@ import fs from 'fs';
 import yaml, { LoadOptions, DumpOptions } from 'js-yaml';
 import { parse, stringify } from 'yaml';
 
+import { isEmptyDeep } from '@/utils';
+
 import Job from './job';
 import {
   Concurrency, Defaults, On, OnEvents, Permissions,
@@ -274,32 +276,29 @@ class Workflow {
     return stages;
   }
 
-  save(path: string, options?: DumpOptions) {
+  save(path: string, options?: Parameters<typeof stringify>[1]) {
     fs.writeFileSync(path, this.dump(options));
   }
 
-  dump(options?: DumpOptions) {
+  dump<T extends Parameters<typeof stringify>[1]>(options?: T) {
     return stringify(JSON.parse(JSON.stringify(this, (key, value) => {
-      // console.log(key);
-      if (key === 'strategy') {
-        // console.log(key, value, Object.keys(value));
+      if (isEmptyDeep(value)) {
+        return undefined;
       }
-
-      // if (typeof value === 'object' && Object.keys(value).length === 0) {
-      //   console.log(key, value);
-      //   return undefined;
-      // }
       return value;
-    })), { lineWidth: 150 });
+    })), {
+      lineWidth: 150,
+      ...options,
+    } as unknown as T);
   }
 
-  static Read(path: string, options?: LoadOptions) {
-    const doc = parse(fs.readFileSync(path, 'utf8'));
+  static Read(path: string, options?: Parameters<typeof parse>[2]) {
+    const doc = parse(fs.readFileSync(path, 'utf8'), options);
     return new Workflow(doc as Workflow);
   }
 
-  static Load(str: string, options?: LoadOptions) {
-    const doc = parse(str);
+  static Load(str: string, options?: Parameters<typeof parse>[2]) {
+    const doc = parse(str, options);
     return new Workflow(doc as Workflow);
   }
 }
