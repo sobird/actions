@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import { Command } from 'commander';
+import { Command } from '@commander-js/extra-typings';
 
+import { configCommand } from './config';
 import { daemonCommand } from './daemon';
-import { generateConfigCommand } from './generate-config';
 import { registerCommand } from './register';
 import { runCommand } from './run';
 import pkg from '../package.json' with { type: 'json' };
@@ -24,7 +24,7 @@ program
 
 program.addCommand(registerCommand);
 program.addCommand(daemonCommand);
-program.addCommand(generateConfigCommand);
+program.addCommand(configCommand);
 program.addCommand(runCommand);
 
 program.parse(process.argv);

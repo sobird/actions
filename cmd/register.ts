@@ -1,25 +1,18 @@
 import os from 'node:os';
 
-import { Command } from 'commander';
+import { Command } from '@commander-js/extra-typings';
 import log4js from 'log4js';
 import prompts, { PromptObject } from 'prompts';
 
 import { Config, Labels, Client } from '@/pkg';
 
 const logger = log4js.getLogger();
-// logger.level = 'info';
 
-// 定义 RegisterOptions 接口，用于描述注册命令的参数
-interface RegisterArgs {
-  instance: string;
-  token: string;
-  name: string;
-  labels: string[];
-}
-interface RegisterOptions extends RegisterArgs {
+type RegisterArgs = ReturnType<typeof registerCommand.opts>;
+type RegisterOptions = Required<RegisterArgs> & {
   config?: string;
   version?: string;
-}
+};
 
 async function doRegister(options: RegisterOptions) {
   const {
@@ -78,8 +71,8 @@ async function doRegister(options: RegisterOptions) {
   }
 }
 
-const registerAction = async (options: Omit<RegisterOptions, 'config'>, program: typeof Command.prototype) => {
-  const opts = program.optsWithGlobals() as RegisterOptions;
+const registerAction = async (options: RegisterArgs, program: typeof Command.prototype) => {
+  const opts = program.optsWithGlobals<RegisterOptions>();
   opts.version = program.parent?.version();
   const {
     instance, token, name, labels,

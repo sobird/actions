@@ -3,12 +3,13 @@
  *
  * sobird<i@sobird.me> at 2024/04/25 17:21:30 created.
  */
-import { Command } from 'commander';
+import { Command } from '@commander-js/extra-typings';
 
 import { Config } from '@/pkg';
 
-export const generateConfigCommand = new Command('generate-config')
+export const configCommand = new Command('config')
   .description('Generate an example config file')
   .action(async () => {
+    // eslint-disable-next-line no-console
     console.log(Config.example());
   });

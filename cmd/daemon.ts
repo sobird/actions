@@ -4,8 +4,8 @@
  * sobird<i@sobird.me> at 2024/04/25 17:44:32 created.
  */
 
+import { Command } from '@commander-js/extra-typings';
 import { ConnectError, Code } from '@connectrpc/connect';
-import { Command } from 'commander';
 import log4js from 'log4js';
 
 import {
@@ -16,13 +16,14 @@ import Poller from '@/pkg/poller';
 
 const logger = log4js.getLogger();
 
-interface DaemonOptions {
+type Options = ReturnType<typeof daemonCommand.opts>;
+type DaemonOptions = Options & {
   config: string
   version?: string;
-}
+};
 
-async function runDaemon(options: any, program: typeof Command.prototype) {
-  const opts = program.optsWithGlobals() as DaemonOptions;
+async function daemonAction(options: Options, program: typeof Command.prototype) {
+  const opts = program.optsWithGlobals<DaemonOptions>();
   opts.version = program.parent?.version();
   const config = Config.loadDefault(opts.config);
   logger.level = config.log.level;
@@ -102,4 +103,4 @@ async function runDaemon(options: any, program: typeof Command.prototype) {
 
 export const daemonCommand = new Command('daemon')
   .description('Run as a runner daemon')
-  .action(runDaemon);
+  .action(daemonAction);

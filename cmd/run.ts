@@ -132,7 +132,7 @@ async function optionList(planner: WorkflowPlanner, options: ReturnType<typeof r
 }
 
 export const runCommand = new Command('run')
-  .description('Run GitHub actions locally by specifying the event name (e.g. `push`) or an action name directly.')
+  .description('Run workflow locally')
   .option('-l, --list', 'list workflows')
   .option('-j, --job <job>', 'run a specific job ID')
   .option('-E, --event <event>', 'run a event name')
