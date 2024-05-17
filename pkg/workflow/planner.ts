@@ -97,11 +97,12 @@ class WorkflowPlanner {
    * PlanEvent builds a new list of runs to execute in parallel for an event name
    */
   planEvent(eventName: string) {
+    const plan = new Plan();
     if (this.workflows.length === 0) {
       debug('no workflows found by planner');
-      return;
+      return plan;
     }
-    const plan = new Plan();
+
     this.workflows.forEach((workflow) => {
       const { events } = workflow;
       if (events.length === 0) {
@@ -170,7 +171,6 @@ class WorkflowPlanner {
   events() {
     const eventsSet = new Set<string>();
     this.workflows.forEach((workflow) => {
-      // 假设workflow.on()返回一个事件数组
       workflow.events.forEach((event) => {
         eventsSet.add(event);
       });

@@ -81,7 +81,7 @@ async function optionList(planner: WorkflowPlanner, options: ReturnType<typeof r
   // plan with filtered jobs - to be used for filtering only
   let filterPlan: Plan;
   // Determine the event name to be filtered
-  let filterEventName:string = '';
+  let filterEventName: string = '';
 
   if (options.event) {
     logger.info('Using chosed event for filtering: %s', options.event);
@@ -89,16 +89,16 @@ async function optionList(planner: WorkflowPlanner, options: ReturnType<typeof r
   } else if (options.detectEvent) {
     // collect all events from loaded workflows
     const events = planner.events();
-
     logger.info('Using first detected workflow event for filtering: %s', events[0]);
-
-    filterEventName = events[0];
+    [filterEventName] = events;
   }
 
   if (options.job) {
     logger.info('Preparing plan with a job: %s', options.job);
+    filterPlan = planner.planJob(options.job);
   } else if (filterEventName) {
-    //
+    logger.info('Preparing plan for a event: %s', filterEventName);
+    filterPlan = planner.planEvent(filterEventName);
   } else {
     logger.info('Preparing plan with all jobs');
     filterPlan = planner.planAll();
