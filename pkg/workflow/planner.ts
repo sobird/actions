@@ -168,7 +168,7 @@ class WorkflowPlanner {
    * gets all the events in the workflows file
    */
   events() {
-    const eventsSet = new Set();
+    const eventsSet = new Set<string>();
     this.workflows.forEach((workflow) => {
       // 假设workflow.on()返回一个事件数组
       workflow.events.forEach((event) => {

@@ -5,6 +5,7 @@ import { Command } from 'commander';
 import { daemonCommand } from './daemon';
 import { generateConfigCommand } from './generate-config';
 import { registerCommand } from './register';
+import { runCommand } from './run';
 import pkg from '../package.json' with { type: 'json' };
 
 const program = new Command();
@@ -22,6 +23,8 @@ program
 // });
 
 program.addCommand(registerCommand);
-program.addCommand(generateConfigCommand);
 program.addCommand(daemonCommand);
+program.addCommand(generateConfigCommand);
+program.addCommand(runCommand);
+
 program.parse(process.argv);
