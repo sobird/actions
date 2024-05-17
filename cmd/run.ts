@@ -116,14 +116,14 @@ async function optionList(planner: WorkflowPlanner, options: ReturnType<typeof r
 
   filterPlan.stages.forEach((stage, index) => {
     stage.runs.forEach((run) => {
-      const { jobId, job } = run;
+      const { jobId, jobName, workflow } = run;
       data.push({
         stage: index,
         jobId,
-        jobName: job.name,
-        wfName: '',
-        wfFile: '',
-        events: '',
+        jobName,
+        wfName: workflow.name,
+        wfFile: workflow.file,
+        events: workflow.events,
       });
     });
   });

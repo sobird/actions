@@ -22,9 +22,9 @@ debug.enabled = true;
 
 /** Run represents a job from a workflow that needs to be run */
 class Run {
-  constructor(public jobId: string, public job: Job) {}
+  constructor(public jobId: string, public job: Job, public workflow: Workflow) {}
 
-  toString() {
+  get jobName() {
     return this.job.name || this.jobId;
   }
 }
@@ -113,7 +113,7 @@ class WorkflowPlanner {
           //
           const stages = workflow.stages().map((runs) => {
             return new Stage(runs.map((run) => {
-              return new Run(run.jobId, run.job);
+              return new Run(run.jobId, run.job, workflow);
             }));
           });
 
@@ -134,7 +134,7 @@ class WorkflowPlanner {
     this.workflows.forEach((workflow) => {
       const stages = workflow.stages(...jobId).map((runs) => {
         return new Stage(runs.map((run) => {
-          return new Run(run.jobId, run.job);
+          return new Run(run.jobId, run.job, workflow);
         }));
       });
 
@@ -154,7 +154,7 @@ class WorkflowPlanner {
     this.workflows.forEach((workflow) => {
       const stages = workflow.stages().map((runs) => {
         return new Stage(runs.map((run) => {
-          return new Run(run.jobId, run.job);
+          return new Run(run.jobId, run.job, workflow);
         }));
       });
 
