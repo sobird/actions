@@ -168,7 +168,7 @@ class WorkflowPlanner {
   /**
    * gets all the events in the workflows file
    */
-  events() {
+  get events() {
     const eventsSet = new Set<string>();
     this.workflows.forEach((workflow) => {
       workflow.events.forEach((event) => {

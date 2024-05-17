@@ -219,7 +219,7 @@ class Workflow {
    *
    * Directed Acyclic Graph(DAG)
    */
-  planJobs(...jobIds: string[]) {
+  sortJobs(...jobIds: string[]) {
     let jobIdsClone = jobIds;
     if (jobIds.length === 0) {
       jobIdsClone = Object.keys(this.jobs);

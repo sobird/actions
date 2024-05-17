@@ -87,9 +87,9 @@ class Runner {
 
       // this.mockTask(task, reporter);
 
-      const workflow = Workflow.Load(task.workflowPayload?.toString());
+      const workflow = Workflow.Load(task.workflowPayload?.toString()!);
 
-      console.log('workflow', workflow.jobs, task.needs);
+      console.log('workflow', workflow.jobs['Test-Node'].strategy.getMatrices(), task.needs);
 
       const wp = WorkflowPlanner.Combine(workflow);
       const plan = wp.planJob();

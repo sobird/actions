@@ -5,10 +5,11 @@
  */
 
 import { Command } from '@commander-js/extra-typings';
+import chalk from 'chalk';
 import log4js from 'log4js';
 
 import WorkflowPlanner, { Plan } from '@/pkg/workflow/planner';
-import { printList } from '@/utils';
+import { printList, Pen } from '@/utils';
 
 const logger = log4js.getLogger();
 
@@ -31,79 +32,7 @@ function collectObject(value: string, prev: Record<string, string>) {
   };
 }
 
-// function printList(plan) {
-//   const header = {
-//     jobID: 'Job ID',
-//     jobName: 'Job name',
-//     stage: 'Stage',
-//     wfName: 'Workflow name',
-//     wfFile: 'Workflow file',
-//     events: 'Events',
-//   };
-
-//   const lineInfos = [];
-//   const duplicateJobIDs = false;
-//   // ... 其他变量初始化
-
-//   // 收集作业信息并计算最大宽度
-//   // ...
-
-//   // 打印标题
-//   console.log(
-//     `%-${header.stage.length}s %-${header.jobID.length}s %-${header.jobName.length}s %-${header.wfName.length}s %-${header.wfFile.length}s %-${header.events.length}s`,
-//     header.stage,
-//     header.jobID,
-//     header.jobName,
-//     header.wfName,
-//     header.wfFile,
-//     header.events,
-//   );
-
-//   // 打印作业详细信息
-//   lineInfos.forEach((line) => {
-//     console.log(
-//       `%-${stageMaxWidth}s %-${jobIDMaxWidth}s %-${jobNameMaxWidth}s %-${wfNameMaxWidth}s %-${wfFileMaxWidth}s %-${eventsMaxWidth}s`,
-//       line.stage,
-//       line.jobID,
-//       line.jobName,
-//       line.wfName,
-//       line.wfFile,
-//       line.events,
-//     );
-//   });
-
-//   if (duplicateJobIDs) {
-//     console.log('\nDetected multiple jobs with the same job name, use `-W` to specify the path to the specific workflow.\n');
-//   }
-// }
-
-async function optionList(planner: WorkflowPlanner, options: ReturnType<typeof runCommand.opts>) {
-  // plan with filtered jobs - to be used for filtering only
-  let filterPlan: Plan;
-  // Determine the event name to be filtered
-  let filterEventName: string = '';
-
-  if (options.event) {
-    logger.info('Using chosed event for filtering: %s', options.event);
-    filterEventName = options.event;
-  } else if (options.detectEvent) {
-    // collect all events from loaded workflows
-    const events = planner.events();
-    logger.info('Using first detected workflow event for filtering: %s', events[0]);
-    [filterEventName] = events;
-  }
-
-  if (options.job) {
-    logger.info('Preparing plan with a job: %s', options.job);
-    filterPlan = planner.planJob(options.job);
-  } else if (filterEventName) {
-    logger.info('Preparing plan for a event: %s', filterEventName);
-    filterPlan = planner.planEvent(filterEventName);
-  } else {
-    logger.info('Preparing plan with all jobs');
-    filterPlan = planner.planAll();
-  }
-
+async function optionList(filterPlan: Plan) {
   const header = {
     stage: 'Stage',
     jobId: 'Job ID',
@@ -131,9 +60,32 @@ async function optionList(planner: WorkflowPlanner, options: ReturnType<typeof r
   printList(data, header);
 }
 
+function optionGraph(filterPlan: Plan) {
+  const pen = new Pen('dashedLine');
+  const pads: any[] = [];
+  let maxWidth = 0;
+  filterPlan.stages.forEach((stage, index) => {
+    if (index > 0) {
+      const arrowPad = pen.drawArrow();
+      maxWidth = Math.max(maxWidth, arrowPad.width);
+      pads.push(arrowPad);
+    }
+
+    const jodIds = stage.runs.map((run) => { return run.jobId; });
+    const labelPad = pen.drawLabels(...jodIds);
+    maxWidth = Math.max(maxWidth, labelPad.width);
+    pads.push(labelPad);
+  });
+
+  pads.forEach((pad) => {
+    console.log(chalk.cyan(pad.padLeft(maxWidth)));
+  });
+}
+
 export const runCommand = new Command('run')
   .description('Run workflow locally')
   .option('-l, --list', 'list workflows')
+  .option('-g, --graph', 'draw workflows', false)
   .option('-j, --job <job>', 'run a specific job ID')
   .option('-E, --event <event>', 'run a event name')
   .option('-W, --workflows <path>', 'path to workflow file(s)', './.github/workflows/')
@@ -170,9 +122,42 @@ export const runCommand = new Command('run')
     console.log('version', version);
     console.log('options', options);
     const planner = WorkflowPlanner.Collect(options.workflows, options.workflowRecurse);
+    const { events } = planner;
+
+    /** plan with filtered jobs - to be used for filtering only */
+    let filterPlan: Plan;
+    /** Determine the event name to be filtered */
+    let filterEventName: string = '';
+
+    if (options.event) {
+      logger.info('Using chosed event for filtering: %s', options.event);
+      filterEventName = options.event;
+    } else if (events.length === 1 && events[0]) {
+      logger.info('Using the only detected workflow event: %s', events[0]);
+      [filterEventName] = events;
+    } else if (options.detectEvent && events.length > 0 && events[0]) {
+      // set default event type to first event from many available
+      // this way user dont have to specify the event.
+      logger.info('Using first detected workflow event for filtering: %s', events[0]);
+      [filterEventName] = events;
+    }
+
+    if (options.job) {
+      logger.info('Preparing plan with a job: %s', options.job);
+      filterPlan = planner.planJob(options.job);
+    } else if (filterEventName) {
+      logger.info('Preparing plan for a event: %s', filterEventName);
+      filterPlan = planner.planEvent(filterEventName);
+    } else {
+      logger.info('Preparing plan with all jobs');
+      filterPlan = planner.planAll();
+    }
 
     if (options.list) {
-      return optionList(planner, options);
+      return optionList(filterPlan);
     }
-    //
+
+    if (options.graph) {
+      return optionGraph(filterPlan);
+    }
   });

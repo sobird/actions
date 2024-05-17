@@ -20,7 +20,7 @@ class Log {
 class Runner {
   constructor(
     public file: string = '.runner',
-    public capacity: number = 1,
+    public capacity: number = 3,
     public envs: DotenvParseOutput = {},
     public envFile: string = '',
     public timeout: number = 3 * 3600 * 1000,
