@@ -6,16 +6,14 @@
 
 /* eslint-disable no-console */
 
-import fs from 'node:fs';
-import os from 'node:os';
-
 import { Command } from '@commander-js/extra-typings';
-import chalk from 'chalk';
 import log4js from 'log4js';
 
-import docker, { dockerSocketLocations } from '@/pkg/docker';
 import WorkflowPlanner, { Plan } from '@/pkg/workflow/planner';
-import { Pen } from '@/utils';
+
+import { bugReportOption } from './bugReportOption';
+import { graphOption } from './graphOption';
+import { listOption } from './listOption';
 
 const logger = log4js.getLogger();
 
@@ -36,121 +34,6 @@ function collectObject(value: string, prev: Record<string, string>) {
     ...prev,
     ...options,
   };
-}
-
-async function bugReportOption(version?: string) {
-  const reports: string[] = [];
-
-  reports.push(`actions version: ${version}`);
-  reports.push(`platform: ${os.platform()}`);
-  reports.push(`arch: ${os.arch()}`);
-  reports.push(`cpuN: ${os.cpus().length}`);
-
-  let dockerHost = process.env.DOCKER_HOST;
-  if (dockerHost === undefined) {
-    dockerHost = 'DOCKER_HOST environment variable is not set';
-  } else if (dockerHost === '') {
-    dockerHost = 'DOCKER_HOST environment variable is empty.';
-  }
-
-  reports.push(`Docker host: ${dockerHost}`);
-  reports.push('Sockets found:');
-
-  dockerSocketLocations.forEach((p) => {
-    if (fs.existsSync(p)) {
-      reports.push(`\t${p}`);
-    }
-  });
-
-  reports.push('Node versions:');
-
-  Object.entries(process.versions).forEach(([key, value]) => {
-    reports.push(`\t${key}: ${value}`);
-  });
-
-  reports.push('Docker Engine:');
-
-  try {
-    const dockerInfo = await docker.info();
-    console.log('dockerInfo', dockerInfo);
-    reports.push(`\tEngine version: ${dockerInfo.ServerVersion}`);
-    reports.push(`\tEngine runtime: ${dockerInfo.DefaultRuntime}`);
-    reports.push(`\tCgroupDriver: ${dockerInfo.CgroupDriver}`);
-    reports.push(`\tCgroupVersion: ${dockerInfo.CgroupVersion}`);
-    reports.push(`\tIndexServerAddress: ${dockerInfo.IndexServerAddress}`);
-
-    reports.push(`\tOperatingSystem: ${dockerInfo.OperatingSystem}`);
-    reports.push(`\tOSType: ${dockerInfo.OSType}`);
-    reports.push(`\tOSVersion: ${dockerInfo.OSVersion}`);
-    reports.push(`\tArchitecture: ${dockerInfo.OperatingSystem}`);
-    reports.push(`\tKernelVersion: ${dockerInfo.KernelVersion}`);
-    reports.push(`\tNCPU: ${dockerInfo.NCPU}`);
-    reports.push(`\tMemTotal: ${dockerInfo.MemTotal / 1024 / 1024} MB`);
-    reports.push('\tSecurity options:');
-    dockerInfo.SecurityOptions?.forEach((item: string) => {
-      reports.push(`\t\t${item}`);
-    });
-  } catch (error) {
-    reports.push(`\tError: ${(error as Error).message}`);
-  }
-
-  console.log(reports.join('\n'));
-}
-
-async function optionList(filterPlan: Plan) {
-  const header = {
-    stage: 'Stage',
-    matrix: 'Matrix',
-    jobId: 'Job ID',
-    jobName: 'Job name',
-    wfName: 'Workflow name',
-    wfFile: 'Workflow file',
-    events: 'Events',
-  };
-  const data: Record<string, unknown>[] = [];
-
-  filterPlan.stages.forEach((stage, index) => {
-    stage.runs.forEach((run) => {
-      const {
-        jobId, jobName, workflow, job,
-      } = run;
-      data.push({
-        stage: index,
-        matrix: `${job.strategy.getMatrices().length} jobs`,
-        jobId,
-        jobName,
-        wfName: workflow.name,
-        wfFile: workflow.file,
-        events: workflow.events,
-      });
-    });
-  });
-
-  const pen = new Pen('dashedLine');
-  const table = pen.drawTable(data, header);
-  console.log(table.toString());
-}
-
-function optionGraph(filterPlan: Plan) {
-  const pen = new Pen('dashedLine');
-  const pads: any[] = [];
-  let maxWidth = 0;
-  filterPlan.stages.forEach((stage, index) => {
-    if (index > 0) {
-      const arrowPad = pen.drawArrow();
-      maxWidth = Math.max(maxWidth, arrowPad.width);
-      pads.push(arrowPad);
-    }
-
-    const jodIds = stage.runs.map((run) => { return run.jobId; });
-    const labelPad = pen.drawLabels(...jodIds);
-    maxWidth = Math.max(maxWidth, labelPad.width);
-    pads.push(labelPad);
-  });
-
-  pads.forEach((pad) => {
-    console.log(chalk.magentaBright(pad.padLeft(maxWidth)));
-  });
 }
 
 export const runCommand = new Command('run')
@@ -230,10 +113,10 @@ export const runCommand = new Command('run')
     }
 
     if (options.list) {
-      return optionList(filterPlan);
+      return listOption(filterPlan);
     }
 
     if (options.graph) {
-      return optionGraph(filterPlan);
+      return graphOption(filterPlan);
     }
   });
