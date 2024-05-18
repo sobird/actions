@@ -11,14 +11,13 @@ import {
   resolve, parse, join, basename,
 } from 'node:path';
 
-import Debug from 'debug';
+import log4js from 'log4js';
 
 import Workflow from '@/pkg/workflow';
 
 import Job from './job';
 
-const debug = Debug('planner');
-debug.enabled = true;
+const logger = log4js.getLogger();
 
 /** Run represents a job from a workflow that needs to be run */
 class Run {
@@ -35,11 +34,7 @@ class Stage {
 
   /** will get all the job names in the stage */
   get jobIds() {
-    const names: string[] = [];
-    for (const run of this.runs) {
-      names.push(run.jobId);
-    }
-    return names;
+    return this.runs.map((run) => { return run.jobId; });
   }
 }
 
@@ -62,7 +57,7 @@ export class Plan {
   }
 
   /** Merge stages with existing stages in plan */
-  mergeStages(stages: Stage[]) {
+  merge(stages: Stage[]) {
     // 确定新阶段列表的大小
     const newSize = Math.max(this.stages.length, stages.length);
     const newStages: Stage[] = new Array(newSize);
@@ -99,14 +94,14 @@ class WorkflowPlanner {
   planEvent(eventName: string) {
     const plan = new Plan();
     if (this.workflows.length === 0) {
-      debug('no workflows found by planner');
+      logger.debug('no workflows found by planner');
       return plan;
     }
 
     this.workflows.forEach((workflow) => {
       const { events } = workflow;
       if (events.length === 0) {
-        debug('no events found for workflow: %s', workflow.file);
+        logger.debug('no events found for workflow: %s', workflow.file);
         return;
       }
       events.forEach((event) => {
@@ -118,7 +113,7 @@ class WorkflowPlanner {
             }));
           });
 
-          plan.mergeStages(stages);
+          plan.merge(stages);
         }
       });
     });
@@ -127,7 +122,7 @@ class WorkflowPlanner {
 
   planJob(...jobId: string[]) {
     if (this.workflows.length === 0) {
-      debug(`no jobs found for workflow: ${jobId}`);
+      logger.debug(`no jobs found for workflow: ${jobId}`);
     }
 
     const plan = new Plan();
@@ -139,7 +134,7 @@ class WorkflowPlanner {
         }));
       });
 
-      plan.mergeStages(stages);
+      plan.merge(stages);
     });
 
     return plan;
@@ -147,7 +142,7 @@ class WorkflowPlanner {
 
   planAll() {
     if (this.workflows.length === 0) {
-      debug('no workflows found by planner');
+      logger.debug('no workflows found by planner');
     }
 
     const plan = new Plan();
@@ -159,7 +154,7 @@ class WorkflowPlanner {
         }));
       });
 
-      plan.mergeStages(stages);
+      plan.merge(stages);
     });
 
     return plan;
@@ -189,7 +184,7 @@ class WorkflowPlanner {
     const workflows: Workflow[] = [];
 
     if (stat.isDirectory()) {
-      debug(`Loading workflows from '${absPath}'`);
+      logger.debug(`Loading workflows from '${absPath}'`);
 
       fs.readdirSync(absPath, { withFileTypes: true, recursive }).forEach((file) => {
         const { ext } = parse(file.name);
@@ -200,7 +195,7 @@ class WorkflowPlanner {
         }
       });
     } else {
-      debug(`Loading workflow '${absPath}'`);
+      logger.debug(`Loading workflow '${absPath}'`);
       const workflow = Workflow.Read(absPath);
       workflow.file = basename(absPath);
       workflows.push(workflow);
@@ -213,10 +208,9 @@ class WorkflowPlanner {
     return new WorkflowPlanner(workflows);
   }
 
-  static Single(file: string, name?: string) {
-    const workflow = Workflow.Read(file);
+  static Single(workflowPayload: string, name?: string) {
+    const workflow = Workflow.Load(workflowPayload);
     workflow.file = name;
-
     return new WorkflowPlanner([workflow]);
   }
 }

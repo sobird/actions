@@ -1,5 +1,6 @@
 /**
  * github context
+ * 每个job拥有一个Context实例
  *
  * @see https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
  * @see https://github.com/actions/runner/blob/main/src/Runner.Worker/GitHubContext.cs

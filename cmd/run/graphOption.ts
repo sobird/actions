@@ -15,8 +15,17 @@ export function graphOption(filterPlan: Plan) {
       pads.push(arrowPad);
     }
 
-    const jodIds = stage.runs.map((run) => { return run.jobId; });
-    const labelPad = pen.drawLabels(...jodIds);
+    const lables = stage.runs.map((run) => {
+      const { job: { strategy } } = run;
+      const matrices = strategy.getMatrices();
+
+      if (matrices.length > 0) {
+        return `${run.jobId} x [matrix: ${matrices.length}]`;
+      }
+
+      return run.jobId;
+    });
+    const labelPad = pen.drawLabels(...lables);
     maxWidth = Math.max(maxWidth, labelPad.width);
     pads.push(labelPad);
   });

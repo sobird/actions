@@ -7,9 +7,15 @@
 
 /* eslint-disable no-console */
 
+import os from 'node:os';
+import path from 'node:path';
+
 import { Command } from '@commander-js/extra-typings';
+import ip from 'ip';
 import log4js from 'log4js';
 
+import Artifact from '@/pkg/artifact';
+import ArtifactCache from '@/pkg/artifact/cache';
 import { getSocketAndHost } from '@/pkg/docker';
 import WorkflowPlanner, { Plan } from '@/pkg/workflow/planner';
 import { appendEnvs } from '@/utils';
@@ -19,6 +25,9 @@ import { graphOption } from './graphOption';
 import { listOption } from './listOption';
 
 const logger = log4js.getLogger();
+
+const HOME_DIR = os.homedir();
+const HOME_CACHE_DIR = process.env.XDG_CACHE_HOME || path.join(HOME_DIR, '.cache');
 
 function collectArray(value: string, prev: string[]) {
   return prev.concat(value.split(','));
@@ -50,6 +59,7 @@ export const runCommand = new Command('run')
   .option('-W, --workflows <path>', 'path to workflow file(s)', './.github/workflows/')
   .option('-C, --directory <directory>', 'working directory', '.')
   .option('--no-workflowRecurse', "Flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
+  .option('--defaultbranch', 'the name of the main branch')
   .option('-E, --event <event>', 'run a event name')
   .option('-e --event-file <event path>', 'path to event JSON file', 'event.json')
   .option('--detect-event', 'Use first event type from workflow as event that triggered the workflow')
@@ -68,12 +78,17 @@ export const runCommand = new Command('run')
   .option('--insecure-secrets', "NOT RECOMMENDED! Doesn't hide secrets while printing logs")
   .option('--privileged', 'use privileged mode')
   .option('--userns <userns>', 'user namespace to use')
+  .option('-P, --platform <platform>', 'custom image to use per platform (e.g. -P ubuntu-18.04=nektos/act-environments-ubuntu:18.04)', collectArray, [])
   .option('--container-architecture <arch>', 'Architecture which should be used to run containers, e.g.: linux/amd64. If not specified, will use host default architecture. Requires Docker server API Version 1.41+. Ignored on earlier Docker server platforms.')
   .option('--container-daemon-socket <socket>', 'Path to Docker daemon socket which will be mounted to containers')
   .option('--use-gitignore', 'Controls whether paths specified in .gitignore should be copied into container')
   .option('--container-cap-add <cap...>', 'kernel capabilities to add to the workflow containers (e.g. --container-cap-add SYS_PTRACE)', collectArray, [])
   .option('--container-cap-drop <drop...>', 'kernel capabilities to remove from the workflow containers (e.g. --container-cap-drop SYS_PTRACE)', collectArray, [])
   .option('--container-opts <opts>', 'container options')
+  .option('--no-cache-server', 'Disable cache server')
+  .option('--cache-server-path <path>', 'Defines the path where the cache server stores caches.', path.join(HOME_CACHE_DIR, 'artifact', 'cache'))
+  .option('--cache-server-addr <addr>', 'Defines the address to which the cache server binds.', ip.address())
+  .option('--cache-server-port <port>', 'Defines the port where the artifact server listens. 0 means a randomly available port.', (value: string) => { return Number(value); }, 0)
   .option('--artifact-server-path <path>', 'Defines the path where the artifact server stores uploads and retrieves downloads from. If not specified the artifact server will not start')
   .option('--artifact-server-addr <addr>', 'Defines the address where the artifact server listens')
   .option('--artifact-server-port <port>', 'Defines the port where the artifact server listens (will only bind to localhost)', '34567')
@@ -84,6 +99,10 @@ export const runCommand = new Command('run')
   .option('-i, --image <image>', 'Docker image to use. Use "-self-hosted" to run directly on the host', 'gitea/runner-images:ubuntu-latest')
   .option('--network <network>', 'Specify the network to which the container will connect')
   .option('--gitea-instance <instance>', 'Gitea instance to use')
+  .option('--use-new-action-cache', 'Enable using the new Action Cache for storing Actions locally', false)
+  .option('--action-offline-mode', 'If action contents exists, it will not be fetch and pull again. If turn on this, will turn off force pull', false)
+  .option('--action-cache-path <path>', 'Defines the path where the actions get cached and host workspaces created.', path.join(HOME_CACHE_DIR, 'actions'))
+  .option('--local-repository <local repository>', 'Replaces the specified repository and ref with a local folder (e.g. https://github.com/test/test@v0=/home/act/test or test/test@v0=/home/act/test, the latter matches any hosts or protocols)', collectArray, [])
   .action(async (eventName, options, program) => {
     const version = program.parent?.version();
     if (options.bugReport) {
@@ -163,4 +182,51 @@ export const runCommand = new Command('run')
     }
     console.log('filterEventName', filterEventName);
     console.log('first', eventName);
+
+    if (options.platform.length === 0) {
+      // init todo
+    }
+
+    const deprecationWarning = '--%s is deprecated and will be removed soon, please switch to cli: `--container-options "%[2]s"` or `.actrc`: `--container-options %[2]s`.';
+    if (options.privileged) {
+      logger.warn(deprecationWarning, 'privileged', '--privileged');
+    }
+    if (options.userns) {
+      logger.warn(deprecationWarning, 'userns', `--userns=${options.userns}`);
+    }
+    if (options.containerCapAdd) {
+      logger.warn(deprecationWarning, 'container-cap-add', `--container-cap-add=${options.containerCapAdd}`);
+    }
+    if (options.containerCapDrop) {
+      logger.warn(deprecationWarning, 'container-cap-drop', `--container-cap-drop=${options.containerCapDrop}`);
+    }
+
+    if (options.useNewActionCache || options.localRepository.length > 0) {
+      if (options.actionOfflineMode) {
+        // todo offline model
+      } else {
+        // todo online model
+      }
+      if (options.localRepository.length > 0) {
+        // todo init LocalRepositoryCache
+      }
+    }
+
+    // Artifact Server
+    if (options.artifactServerPath) {
+      const artifact = new Artifact(options.artifactServerPath, options.artifactServerAddr, options.artifactServerPort);
+      logger.debug('Artifact Server address:', await artifact.serve());
+    }
+    // Artifact Cache Server
+    const cacheURLKey = 'ACTIONS_CACHE_URL';
+    if (options.cacheServer && !options.env[cacheURLKey]) {
+      const artifactCache = new ArtifactCache(options.cacheServerPath, options.cacheServerAddr, options.cacheServerPort);
+      const artifactCacheServeURL = await artifactCache.serve();
+      logger.debug('Artifact Cache Server address:', artifactCacheServeURL);
+      options.env[cacheURLKey] = artifactCacheServeURL;
+    }
+
+    // run the plan
+
+    process.exit();
   });

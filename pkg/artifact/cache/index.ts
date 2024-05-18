@@ -302,7 +302,7 @@ class ArtifactCache {
   async serve(): Promise<string> {
     return new Promise((resolve) => {
       const server = this.app.listen(this.port, this.outboundIP, () => {
-        this.logger.info('Server running at:', (server.address() as AddressInfo).port);
+        // this.logger.info('Server running at:', (server.address() as AddressInfo).port);
         const { address, port } = server.address() as AddressInfo;
         resolve(`http://${address}:${port}`);
       });

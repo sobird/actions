@@ -13,7 +13,7 @@ class Artifact {
   constructor(
     public dir: string = path.join(os.homedir(), '.artifacts'),
     public outboundIP: string = ip.address(),
-    public port: number = 0,
+    public port: number | string = 0,
     public app: Express = express(),
   ) {
     if (!fs.existsSync(dir)) {
@@ -118,8 +118,8 @@ class Artifact {
 
   async serve() {
     return new Promise((resolve) => {
-      const server = this.app.listen(this.port, this.outboundIP, () => {
-        console.log('Server running at:', (server.address() as AddressInfo).port);
+      const server = this.app.listen(Number(this.port), this.outboundIP, () => {
+        // console.log('Server running at:', (server.address() as AddressInfo).port);
         const { address, port } = server.address() as AddressInfo;
         resolve(`http://${address}:${port}`);
       });

@@ -7,12 +7,16 @@ import simpleGit, { GitError } from 'simple-git';
 import { safeFilename } from '@/utils';
 
 class ActionCache {
-  constructor(public base: string) {}
+  git;
 
-  async fetch(path: string, url: string, ref: string, token?: string) {
-    const gitPath = join(this.base, `${safeFilename(path)}.git`);
+  constructor(public base: string) {
+    const gitPath = join(this.base, `${safeFilename(base)}.git`);
     fs.mkdirSync(gitPath, { recursive: true });
-    const git = simpleGit({ baseDir: gitPath });
+    this.git = simpleGit(gitPath);
+  }
+
+  async fetch(url: string, ref: string, token?: string) {
+    const { git } = this;
 
     const commit = await git.revparse([ref]);
 
