@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /**
  * Run workflows
  *
@@ -11,6 +12,7 @@ import log4js from 'log4js';
 
 import { getSocketAndHost } from '@/pkg/docker';
 import WorkflowPlanner, { Plan } from '@/pkg/workflow/planner';
+import { appendEnvs } from '@/utils';
 
 import { bugReportOption } from './bugReportOption';
 import { graphOption } from './graphOption';
@@ -51,9 +53,14 @@ export const runCommand = new Command('run')
   .option('-p, --pull', 'pull docker image(s) even if already present')
   .option('--rebuild', 'rebuild local action docker image(s) even if already present')
   .option('--json', 'Output logs in json format')
+  .option('--input <input>', 'action input to make available to actions (e.g. --input myinput=foo)', collectObject, {})
+  .option('--input-file <input file>', 'input file to read and use as action input', '.input')
   .option('--env <env>', 'env to make available to actions with optional value (e.g. --env myenv=foo,other=bar)', collectObject, {})
-  .option('--env-file <envfile>', 'environment file to read and use as env in the containers', '.env')
+  .option('--env-file <env file>', 'environment file to read and use as env in the containers', '.env')
+  .option('--var <var>', 'variable to make available to actions with optional value (e.g. --var myvar=foo or --var myvar)', collectObject, {})
+  .option('--var-file <var file>', 'file with list of vars to read from (e.g. --var-file .vars)', '.var')
   .option('-s --secret <secret>', 'secret to make available to actions with optional value (e.g. --secret mysecret=foo,toke=bar)', collectObject, {})
+  .option('--secret-file <secretfile>', 'file with list of secrets to read from (e.g. --secret-file .secrets)', '.secrets')
   .option('--insecure-secrets', "NOT RECOMMENDED! Doesn't hide secrets while printing logs")
   .option('--privileged', 'use privileged mode')
   .option('--userns <userns>', 'user namespace to use')
@@ -82,7 +89,6 @@ export const runCommand = new Command('run')
     try {
       const { socket, host } = getSocketAndHost(options.containerDaemonSocket);
       process.env.DOCKER_HOST = host;
-      // eslint-disable-next-line no-param-reassign
       options.containerDaemonSocket = socket;
       logger.info("Using docker host '%s', and daemon socket '%s'", host, socket);
     } catch (error) {
@@ -92,6 +98,22 @@ export const runCommand = new Command('run')
     if (process.platform === 'darwin' && process.arch === 'arm64' && !options.containerArchitecture) {
       console.warn(" \u26d4 You are using Apple M-series chip and you have not specified container architecture, you might encounter issues while running act. If so, try running it with '--container-architecture linux/amd64'. \u26d4");
     }
+
+    logger.debug('Loading environment from %s', options.envFile);
+    appendEnvs(options.envFile, options.env);
+    console.log('options.env', options.env);
+
+    logger.debug('Loading action inputs from %s', options.inputFile);
+    appendEnvs(options.inputFile, options.input);
+    console.log('options.input', options.input);
+
+    logger.debug('Loading secrets from %s', options.secretFile);
+    appendEnvs(options.secretFile, options.secret);
+    console.log('options.secret', options.secret);
+
+    logger.debug('Loading vars from %s', options.varFile);
+    appendEnvs(options.varFile, options.var);
+    console.log('options.secret', options.var);
 
     const planner = WorkflowPlanner.Collect(options.workflows, options.workflowRecurse);
     const { events } = planner;

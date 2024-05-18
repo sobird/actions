@@ -6,4 +6,5 @@ export { safeFilename } from './safeFilename';
 export { asyncFunction } from './asyncFunction';
 export { isEmptyDeep } from './isEmptyObject';
 export { Pen } from './printer';
+export { appendEnvs } from './appendEnvs';
 export { default as lodash } from './lodash';
