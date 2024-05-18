@@ -11,7 +11,7 @@ import pkg from '../package.json' with { type: 'json' };
 const program = new Command();
 
 program
-  .name('act_runner')
+  .name('actions')
   .description('Run GitHub actions locally by specifying the event name (e.g. `push`) or an action name directly.')
   .version(pkg.version)
   // .arguments('[eventName]')

@@ -41,14 +41,17 @@ function collectObject(value: string, prev: Record<string, string>) {
 
 export const runCommand = new Command('run')
   .description('Run workflow locally')
+  .arguments('[eventName]')
   .option('-l, --list', 'list workflows')
   .option('-g, --graph', 'draw workflows', false)
   .option('-j, --job <job>', 'run a specific job ID')
   .option('--bug-report', 'Display system information for bug report', false)
-  .option('-E, --event <event>', 'run a event name')
+
   .option('-W, --workflows <path>', 'path to workflow file(s)', './.github/workflows/')
   .option('-C, --directory <directory>', 'working directory', '.')
   .option('--no-workflowRecurse', "Flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
+  .option('-E, --event <event>', 'run a event name')
+  .option('-e --event-file <event path>', 'path to event JSON file', 'event.json')
   .option('--detect-event', 'Use first event type from workflow as event that triggered the workflow')
   .option('-p, --pull', 'pull docker image(s) even if already present')
   .option('--rebuild', 'rebuild local action docker image(s) even if already present')
@@ -61,6 +64,7 @@ export const runCommand = new Command('run')
   .option('--var-file <var file>', 'file with list of vars to read from (e.g. --var-file .vars)', '.var')
   .option('-s --secret <secret>', 'secret to make available to actions with optional value (e.g. --secret mysecret=foo,toke=bar)', collectObject, {})
   .option('--secret-file <secretfile>', 'file with list of secrets to read from (e.g. --secret-file .secrets)', '.secrets')
+  .option('--matrix', 'specify which matrix configuration to include (e.g. --matrix java:13')
   .option('--insecure-secrets', "NOT RECOMMENDED! Doesn't hide secrets while printing logs")
   .option('--privileged', 'use privileged mode')
   .option('--userns <userns>', 'user namespace to use')
@@ -80,7 +84,7 @@ export const runCommand = new Command('run')
   .option('-i, --image <image>', 'Docker image to use. Use "-self-hosted" to run directly on the host', 'gitea/runner-images:ubuntu-latest')
   .option('--network <network>', 'Specify the network to which the container will connect')
   .option('--gitea-instance <instance>', 'Gitea instance to use')
-  .action(async (options, program) => {
+  .action(async (eventName, options, program) => {
     const version = program.parent?.version();
     if (options.bugReport) {
       return bugReportOption(version);
@@ -115,7 +119,10 @@ export const runCommand = new Command('run')
     appendEnvs(options.varFile, options.var);
     console.log('options.secret', options.var);
 
+    // @todo matrix
+
     const planner = WorkflowPlanner.Collect(options.workflows, options.workflowRecurse);
+    // collect all events from loaded workflows
     const { events } = planner;
 
     /** plan with filtered jobs - to be used for filtering only */
@@ -154,4 +161,6 @@ export const runCommand = new Command('run')
     if (options.graph) {
       return graphOption(filterPlan);
     }
+    console.log('filterEventName', filterEventName);
+    console.log('first', eventName);
   });
