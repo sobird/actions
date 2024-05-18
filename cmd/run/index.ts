@@ -9,6 +9,7 @@
 import { Command } from '@commander-js/extra-typings';
 import log4js from 'log4js';
 
+import { getSocketAndHost } from '@/pkg/docker';
 import WorkflowPlanner, { Plan } from '@/pkg/workflow/planner';
 
 import { bugReportOption } from './bugReportOption';
@@ -57,7 +58,7 @@ export const runCommand = new Command('run')
   .option('--privileged', 'use privileged mode')
   .option('--userns <userns>', 'user namespace to use')
   .option('--container-architecture <arch>', 'Architecture which should be used to run containers, e.g.: linux/amd64. If not specified, will use host default architecture. Requires Docker server API Version 1.41+. Ignored on earlier Docker server platforms.')
-  .option('--container-daemon-socket <socket>', 'Path to Docker daemon socket which will be mounted to containers', '/var/run/docker.sock')
+  .option('--container-daemon-socket <socket>', 'Path to Docker daemon socket which will be mounted to containers')
   .option('--use-gitignore', 'Controls whether paths specified in .gitignore should be copied into container')
   .option('--container-cap-add <cap...>', 'kernel capabilities to add to the workflow containers (e.g. --container-cap-add SYS_PTRACE)', collectArray, [])
   .option('--container-cap-drop <drop...>', 'kernel capabilities to remove from the workflow containers (e.g. --container-cap-drop SYS_PTRACE)', collectArray, [])
@@ -78,8 +79,20 @@ export const runCommand = new Command('run')
       return bugReportOption(version);
     }
 
-    console.log('version', version);
-    console.log('options', options);
+    try {
+      const { socket, host } = getSocketAndHost(options.containerDaemonSocket);
+      process.env.DOCKER_HOST = host;
+      // eslint-disable-next-line no-param-reassign
+      options.containerDaemonSocket = socket;
+      logger.info("Using docker host '%s', and daemon socket '%s'", host, socket);
+    } catch (error) {
+      logger.warn("Couldn't get a valid docker connection: %+v", (error as Error).message);
+    }
+
+    if (process.platform === 'darwin' && process.arch === 'arm64' && !options.containerArchitecture) {
+      console.warn(" \u26d4 You are using Apple M-series chip and you have not specified container architecture, you might encounter issues while running act. If so, try running it with '--container-architecture linux/amd64'. \u26d4");
+    }
+
     const planner = WorkflowPlanner.Collect(options.workflows, options.workflowRecurse);
     const { events } = planner;
 
