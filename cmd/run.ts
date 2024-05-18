@@ -6,10 +6,14 @@
 
 /* eslint-disable no-console */
 
+import fs from 'node:fs';
+import os from 'node:os';
+
 import { Command } from '@commander-js/extra-typings';
 import chalk from 'chalk';
 import log4js from 'log4js';
 
+import docker, { dockerSocketLocations } from '@/pkg/docker';
 import WorkflowPlanner, { Plan } from '@/pkg/workflow/planner';
 import { Pen } from '@/utils';
 
@@ -32,6 +36,65 @@ function collectObject(value: string, prev: Record<string, string>) {
     ...prev,
     ...options,
   };
+}
+
+async function bugReportOption(version?: string) {
+  const reports: string[] = [];
+
+  reports.push(`actions version: ${version}`);
+  reports.push(`platform: ${os.platform()}`);
+  reports.push(`arch: ${os.arch()}`);
+  reports.push(`cpuN: ${os.cpus().length}`);
+
+  let dockerHost = process.env.DOCKER_HOST;
+  if (dockerHost === undefined) {
+    dockerHost = 'DOCKER_HOST environment variable is not set';
+  } else if (dockerHost === '') {
+    dockerHost = 'DOCKER_HOST environment variable is empty.';
+  }
+
+  reports.push(`Docker host: ${dockerHost}`);
+  reports.push('Sockets found:');
+
+  dockerSocketLocations.forEach((p) => {
+    if (fs.existsSync(p)) {
+      reports.push(`\t${p}`);
+    }
+  });
+
+  reports.push('Node versions:');
+
+  Object.entries(process.versions).forEach(([key, value]) => {
+    reports.push(`\t${key}: ${value}`);
+  });
+
+  reports.push('Docker Engine:');
+
+  try {
+    const dockerInfo = await docker.info();
+    console.log('dockerInfo', dockerInfo);
+    reports.push(`\tEngine version: ${dockerInfo.ServerVersion}`);
+    reports.push(`\tEngine runtime: ${dockerInfo.DefaultRuntime}`);
+    reports.push(`\tCgroupDriver: ${dockerInfo.CgroupDriver}`);
+    reports.push(`\tCgroupVersion: ${dockerInfo.CgroupVersion}`);
+    reports.push(`\tIndexServerAddress: ${dockerInfo.IndexServerAddress}`);
+
+    reports.push(`\tOperatingSystem: ${dockerInfo.OperatingSystem}`);
+    reports.push(`\tOSType: ${dockerInfo.OSType}`);
+    reports.push(`\tOSVersion: ${dockerInfo.OSVersion}`);
+    reports.push(`\tArchitecture: ${dockerInfo.OperatingSystem}`);
+    reports.push(`\tKernelVersion: ${dockerInfo.KernelVersion}`);
+    reports.push(`\tNCPU: ${dockerInfo.NCPU}`);
+    reports.push(`\tMemTotal: ${dockerInfo.MemTotal / 1024 / 1024} MB`);
+    reports.push('\tSecurity options:');
+    dockerInfo.SecurityOptions?.forEach((item: string) => {
+      reports.push(`\t\t${item}`);
+    });
+  } catch (error) {
+    reports.push(`\tError: ${(error as Error).message}`);
+  }
+
+  console.log(reports.join('\n'));
 }
 
 async function optionList(filterPlan: Plan) {
@@ -95,6 +158,7 @@ export const runCommand = new Command('run')
   .option('-l, --list', 'list workflows')
   .option('-g, --graph', 'draw workflows', false)
   .option('-j, --job <job>', 'run a specific job ID')
+  .option('--bug-report', 'Display system information for bug report', false)
   .option('-E, --event <event>', 'run a event name')
   .option('-W, --workflows <path>', 'path to workflow file(s)', './.github/workflows/')
   .option('-C, --directory <directory>', 'working directory', '.')
@@ -127,6 +191,10 @@ export const runCommand = new Command('run')
   .option('--gitea-instance <instance>', 'Gitea instance to use')
   .action(async (options, program) => {
     const version = program.parent?.version();
+    if (options.bugReport) {
+      return bugReportOption(version);
+    }
+
     console.log('version', version);
     console.log('options', options);
     const planner = WorkflowPlanner.Collect(options.workflows, options.workflowRecurse);

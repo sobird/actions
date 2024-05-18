@@ -14,7 +14,7 @@ import Dockerode, { Container } from 'dockerode';
 
 import Executor from '@/pkg/common/executor';
 
-const socketPath = process.env.DOCKER_HOST || [
+export const dockerSocketLocations = [
   join(os.homedir(), '.docker', 'run', 'docker.sock'),
   '/var/run/docker.sock',
   '/run/podman/podman.sock',
@@ -22,7 +22,9 @@ const socketPath = process.env.DOCKER_HOST || [
   join(os.homedir(), '.colima', 'docker.sock'),
   process.env.XDG_RUNTIME_DIR ? join(process.env.XDG_RUNTIME_DIR, 'docker.sock') : '',
   process.env.XDG_RUNTIME_DIR ? join(process.env.XDG_RUNTIME_DIR, 'podman', 'podman.sock') : '',
-].find((path) => {
+];
+
+const socketPath = process.env.DOCKER_HOST || dockerSocketLocations.find((path) => {
   return fs.existsSync(path);
 });
 
@@ -34,7 +36,7 @@ interface DockerPullExecutorInput {
   password?: string;
 }
 
-class Docker extends Dockerode {
+export class Docker extends Dockerode {
   static get instance() {
     return 1212;
   }
@@ -81,7 +83,7 @@ class Docker extends Dockerode {
   }
 }
 
-export default Docker;
+export default new Docker();
 
 // 获取 Docker Host 路径
 export function getDockerHost(configDockerHost?: string) {
