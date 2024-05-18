@@ -1,6 +1,12 @@
-/* eslint-disable max-classes-per-file */
+/**
+ * print table list
+ *
+ * sobird<i@sobird.me> at 2024/05/17 10:40:47 created.
+ */
 
-// 定义边框样式
+/* eslint-disable max-classes-per-file */
+import chalk from 'chalk';
+
 const styles = {
   doubleLine: {
     cornerTL: '╔',
@@ -91,5 +97,50 @@ export class Pen {
     });
 
     return new Pad(outputs, maxWidth);
+  }
+
+  drawTable(data: Record<string, unknown>[], columns: { title: string, key: string }[] | Record<string, string>) {
+    const styleDef = styles[this.style];
+    const maxWidth: Record<string, number> = {};
+
+    if (!Array.isArray(columns)) {
+      // eslint-disable-next-line no-param-reassign
+      columns = Object.entries(columns).map(([key, title]) => {
+        return {
+          key,
+          title,
+        };
+      });
+    }
+
+    columns.forEach((item) => {
+      maxWidth[item.key] = item.title.length;
+    });
+
+    data.forEach((item) => {
+      Object.entries(item).forEach(([key, value]) => {
+        maxWidth[key] = Math.max(maxWidth[key], String(value).length);
+      });
+    });
+
+    const outputs = [];
+
+    const hd = columns.map((item) => {
+      return item.title.padEnd(maxWidth[item.key]);
+    }).join('  ');
+
+    outputs.push(chalk.magentaBright(hd));
+
+    const hr = styleDef.lineH.repeat(hd.length);
+    outputs.push(chalk.magenta.dim(hr));
+
+    data.forEach((item) => {
+      const result = columns.map((col) => {
+        return String(item[col.key]).padEnd(maxWidth[col.key]);
+      }).join('  ');
+      outputs.push(result);
+    });
+
+    return new Pad(outputs, hd.length);
   }
 }

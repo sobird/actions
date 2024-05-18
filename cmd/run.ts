@@ -4,12 +4,14 @@
  * sobird<i@sobird.me> at 2024/05/17 5:25:33 created.
  */
 
+/* eslint-disable no-console */
+
 import { Command } from '@commander-js/extra-typings';
 import chalk from 'chalk';
 import log4js from 'log4js';
 
 import WorkflowPlanner, { Plan } from '@/pkg/workflow/planner';
-import { printList, Pen } from '@/utils';
+import { Pen } from '@/utils';
 
 const logger = log4js.getLogger();
 
@@ -35,6 +37,7 @@ function collectObject(value: string, prev: Record<string, string>) {
 async function optionList(filterPlan: Plan) {
   const header = {
     stage: 'Stage',
+    matrix: 'Matrix',
     jobId: 'Job ID',
     jobName: 'Job name',
     wfName: 'Workflow name',
@@ -45,9 +48,12 @@ async function optionList(filterPlan: Plan) {
 
   filterPlan.stages.forEach((stage, index) => {
     stage.runs.forEach((run) => {
-      const { jobId, jobName, workflow } = run;
+      const {
+        jobId, jobName, workflow, job,
+      } = run;
       data.push({
         stage: index,
+        matrix: `${job.strategy.getMatrices().length} jobs`,
         jobId,
         jobName,
         wfName: workflow.name,
@@ -57,7 +63,9 @@ async function optionList(filterPlan: Plan) {
     });
   });
 
-  printList(data, header);
+  const pen = new Pen('dashedLine');
+  const table = pen.drawTable(data, header);
+  console.log(table.toString());
 }
 
 function optionGraph(filterPlan: Plan) {
@@ -78,7 +86,7 @@ function optionGraph(filterPlan: Plan) {
   });
 
   pads.forEach((pad) => {
-    console.log(chalk.cyan(pad.padLeft(maxWidth)));
+    console.log(chalk.magentaBright(pad.padLeft(maxWidth)));
   });
 }
 
