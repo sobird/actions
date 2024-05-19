@@ -135,9 +135,6 @@ export default class Strategy {
     return this['max-parallel'] || os.cpus().length;
   }
 
-  /**
-   * 默认返回一个长度为1的数组，包含一个空对象
-   */
   getMatrices() {
     if (!this.matrix) {
       return [];

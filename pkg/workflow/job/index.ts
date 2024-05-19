@@ -51,7 +51,7 @@ class Job {
   /**
    * Use `jobs.<job_id>.name` to set a name for the job, which is displayed in the GitHub UI.
    */
-  name: string;
+  name?: string;
 
   /**
    * For a specific job, you can use `jobs.<job_id>.permissions` to modify the default permissions granted to the `GITHUB_TOKEN`,
@@ -121,7 +121,7 @@ class Job {
    *
    * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-self-hosted-runners Choosing self-hosted runners}."
    */
-  'runs-on': string | string[] | { group: string;labels: string; };
+  'runs-on'?: string | string[] | { group: string;labels: string; };
 
   /**
    * Use `jobs.<job_id>.environment` to define the environment that the job references.
@@ -259,7 +259,7 @@ class Job {
    * For self-hosted runners, the token may be the limiting factor if the job timeout is greater than 24 hours.
    * For more information on the `GITHUB_TOKEN`, see "{@link https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret Automatic token authentication}."
    */
-  'timeout-minutes': number;
+  'timeout-minutes'?: number;
 
   /**
    * Use `jobs.<job_id>.strategy` to use a matrix strategy for your jobs.
@@ -342,7 +342,7 @@ class Job {
    */
   secrets?: Record<string, string> | 'inherit';
 
-  constructor(job: Job) {
+  constructor(job: Partial<Job>) {
     this.name = job.name;
     this.permissions = job.permissions;
     this.needs = job.needs;
@@ -367,6 +367,31 @@ class Job {
     this.uses = job.uses;
     this.with = job.with;
     this.secrets = job.secrets;
+  }
+
+  clone() {
+    return new Job(JSON.parse(JSON.stringify(this)));
+  }
+
+  spread() {
+    const matrices = this.strategy.getMatrices();
+    if (matrices.length === 0) {
+      return [this];
+    }
+    return matrices.map((matrix) => {
+      const job = this.clone();
+      const { name } = job;
+
+      if (!name?.includes('${{') || !name.includes('}}')) {
+        job.name = `${name} (${Object.values(matrix).join(', ')})`;
+      }
+
+      job.strategy.matrix = Object.entries(matrix).reduce((accu, [key, value]) => {
+        accu[key] = [value];
+        return accu;
+      }, {} as Record<string, unknown[]>);
+      return job;
+    });
   }
 
   getNeeds() {

@@ -340,6 +340,10 @@ class Workflow {
     return stages;
   }
 
+  clone() {
+    return new Workflow(JSON.parse(JSON.stringify(this)));
+  }
+
   save(path: string, options?: Parameters<typeof stringify>[1]) {
     fs.writeFileSync(path, this.dump(options));
   }
