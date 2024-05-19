@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import chalk from 'chalk';
 
-import { Plan } from '@/pkg/workflow/planner';
+import Plan from '@/pkg/workflow/plan';
 import { Pen } from '@/utils';
 
 export function graphOption(filterPlan: Plan) {

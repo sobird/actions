@@ -48,6 +48,8 @@ export enum JobType {
  * The `<job_id>` must start with a letter or `_` and contain only alphanumeric characters, `-`, or `_`.
  */
 class Job {
+  #id: string;
+
   /**
    * Use `jobs.<job_id>.name` to set a name for the job, which is displayed in the GitHub UI.
    */
@@ -245,7 +247,7 @@ class Job {
    * GitHub only displays the first 1,000 checks, however, you can run an unlimited number of steps as long as you are within the workflow usage limits.
    * For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration Usage limits, billing, and administration}" for GitHub-hosted runners and "{@link https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#usage-limits About self-hosted runners}" for self-hosted runner usage limits.
    */
-  steps: Step[] = [];
+  steps?: Step[] = [];
 
   /**
    * The maximum number of minutes to let a job run before GitHub automatically cancels it. Default: 360
@@ -273,7 +275,7 @@ class Job {
    * Prevents a workflow run from failing when a job fails.
    * Set to `true` to allow a workflow run to pass when this job fails.
    */
-  'continue-on-error': boolean;
+  'continue-on-error'?: boolean;
 
   container: Container;
 
@@ -342,7 +344,8 @@ class Job {
    */
   secrets?: Record<string, string> | 'inherit';
 
-  constructor(job: Partial<Job>) {
+  constructor(job: Partial<Job>, id: string) {
+    this.#id = id;
     this.name = job.name;
     this.permissions = job.permissions;
     this.needs = job.needs;
@@ -353,6 +356,7 @@ class Job {
     this.outputs = job.outputs;
     this.env = job.env;
     this.defaults = job.defaults;
+
     if (Array.isArray(job.steps)) {
       this.steps = job.steps.map((step) => {
         return new Step(step);
@@ -369,8 +373,12 @@ class Job {
     this.secrets = job.secrets;
   }
 
+  get id() {
+    return this.#id;
+  }
+
   clone() {
-    return new Job(JSON.parse(JSON.stringify(this)));
+    return new Job(JSON.parse(JSON.stringify(this)), this.#id);
   }
 
   spread() {
@@ -402,6 +410,10 @@ class Job {
   }
 
   getRunsOn() {
+    if (!this['runs-on']) {
+      return [];
+    }
+
     const runsOn = this['runs-on'];
     if (typeof runsOn === 'string') {
       return [runsOn];

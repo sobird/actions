@@ -239,21 +239,21 @@ export default class Strategy {
   }
 
   /**
-   * 筛选出所有与 targetMatrixValues 中指定的允许值匹配的矩阵。
+   * 筛选出所有与 targetMatrix 中指定的允许值匹配的矩阵。
    *
-   * @param targetMatrixValues
+   * @param targetMatrix
    * @returns
    */
-  selectMatrices(targetMatrixValues: Record<string, Record<string, boolean>> = {}) {
+  selectMatrices(targetMatrix: Record<string, unknown[]> = {}) {
     const originalMatrices = this.getMatrices();
     const matrices: Record<string, unknown>[] = [];
     originalMatrices.forEach((original) => {
       const isAllowed = Object.keys(original).every((key) => {
         const val = original[key];
-        const allowedVals = targetMatrixValues[key];
+        const allowedVals = targetMatrix[key];
         if (!allowedVals) return true;
         const valToString = String(val);
-        return allowedVals[valToString];
+        return allowedVals.includes(valToString);
       });
       if (isAllowed) {
         matrices.push(original);

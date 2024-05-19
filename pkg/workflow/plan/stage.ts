@@ -1,3 +1,5 @@
+import type Run from './run';
+
 /** Stage contains a list of runs to execute in parallel */
 class Stage {
   constructor(public runs: Run[] = []) {}

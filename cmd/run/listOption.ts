@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { Plan } from '@/pkg/workflow/planner';
+import Plan from '@/pkg/workflow/plan';
 import { Pen } from '@/utils';
 
 export async function listOption(filterPlan: Plan) {

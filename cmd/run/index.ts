@@ -17,7 +17,7 @@ import log4js from 'log4js';
 import Artifact from '@/pkg/artifact';
 import ArtifactCache from '@/pkg/artifact/cache';
 import { getSocketAndHost } from '@/pkg/docker';
-import WorkflowPlanner, { Plan } from '@/pkg/workflow/planner';
+import WorkflowPlanner from '@/pkg/workflow/planner';
 import { appendEnvs } from '@/utils';
 
 import { bugReportOption } from './bugReportOption';
@@ -50,6 +50,7 @@ function collectObject(value: string, prev: Record<string, string>) {
 
 export const runCommand = new Command('run')
   .description('Run workflow locally')
+  // run a event name
   .arguments('[eventName]')
   .option('-l, --list', 'list workflows')
   .option('-g, --graph', 'draw workflows', false)
@@ -60,7 +61,7 @@ export const runCommand = new Command('run')
   .option('-C, --directory <directory>', 'working directory', '.')
   .option('--no-workflowRecurse', "Flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
   .option('--defaultbranch', 'the name of the main branch')
-  .option('-E, --event <event>', 'run a event name')
+  // .option('-E, --event <event>', 'run a event name')
   .option('-e --event-file <event path>', 'path to event JSON file', 'event.json')
   .option('--detect-event', 'Use first event type from workflow as event that triggered the workflow')
   .option('-p, --pull', 'pull docker image(s) even if already present')
@@ -144,44 +145,39 @@ export const runCommand = new Command('run')
     // collect all events from loaded workflows
     const { events } = planner;
 
-    /** plan with filtered jobs - to be used for filtering only */
-    let filterPlan: Plan;
-    /** Determine the event name to be filtered */
-    let filterEventName: string = '';
+    // default plan all jobs
+    let plan = planner.planAll();
 
-    if (options.event) {
-      logger.info('Using chosed event for filtering: %s', options.event);
-      filterEventName = options.event;
+    if (eventName) {
+      logger.info('Using chosed event for filtering: %s', eventName);
     } else if (events.length === 1 && events[0]) {
       logger.info('Using the only detected workflow event: %s', events[0]);
-      [filterEventName] = events;
+      [eventName] = events;
     } else if (options.detectEvent && events.length > 0 && events[0]) {
       // set default event type to first event from many available
       // this way user dont have to specify the event.
       logger.info('Using first detected workflow event for filtering: %s', events[0]);
-      [filterEventName] = events;
+      [eventName] = events;
     }
 
     if (options.job) {
       logger.info('Preparing plan with a job: %s', options.job);
-      filterPlan = planner.planJob(options.job);
-    } else if (filterEventName) {
-      logger.info('Preparing plan for a event: %s', filterEventName);
-      filterPlan = planner.planEvent(filterEventName);
+      plan = planner.planJob(options.job);
+    } else if (eventName) {
+      logger.info('Preparing plan for a event: %s', eventName);
+      plan = planner.planEvent(eventName);
     } else {
       logger.info('Preparing plan with all jobs');
-      filterPlan = planner.planAll();
+      plan = planner.planAll();
     }
 
     if (options.list) {
-      return listOption(filterPlan);
+      return listOption(plan);
     }
 
     if (options.graph) {
-      return graphOption(filterPlan);
+      return graphOption(plan);
     }
-    console.log('filterEventName', filterEventName);
-    console.log('first', eventName);
 
     if (options.platform.length === 0) {
       // init todo
@@ -227,6 +223,8 @@ export const runCommand = new Command('run')
     }
 
     // run the plan
+
+    console.log('plan', plan.stages[0].runs[0].job.spread());
 
     process.exit();
   });

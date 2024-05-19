@@ -1,5 +1,8 @@
 import Stage from './stage';
 
+export { default as Stage } from './stage';
+export { default as Run } from './run';
+
 /** Plan contains a list of stages to run in series */
 export default class Plan {
   constructor(public stages: Stage[] = []) {}
@@ -19,7 +22,8 @@ export default class Plan {
   }
 
   /** Merge stages with existing stages in plan */
-  merge(stages: Stage[]) {
+  merge(plan: Plan) {
+    const { stages } = plan;
     // 确定新阶段列表的大小
     const newSize = Math.max(this.stages.length, stages.length);
     const newStages: Stage[] = new Array(newSize);

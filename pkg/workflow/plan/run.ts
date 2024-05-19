@@ -1,7 +1,7 @@
-import Workflow from '..';
-import Job from '../job';
+import type Workflow from '..';
+import type Job from '../job';
 
-/** Run represents a job from a workflow that needs to be run */
+/** represents a job from a workflow that needs to be run */
 class Run {
   constructor(public jobId: string, public job: Job, public workflow: Workflow) {}
 

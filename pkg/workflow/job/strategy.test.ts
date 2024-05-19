@@ -61,7 +61,7 @@ describe('Strategy Class test', () => {
     ]);
   });
 
-  it('get matrices empty test case', () => {
+  it('select matrices test case', () => {
     const strategy = new Strategy({
       matrix: {
         fruit: ['apple', 'pear'],
@@ -71,7 +71,7 @@ describe('Strategy Class test', () => {
     });
 
     const selected = strategy.selectMatrices({
-      fruit: { apple: true },
+      fruit: ['apple', ''],
     });
 
     expect(selected).toEqual([

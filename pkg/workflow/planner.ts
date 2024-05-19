@@ -15,9 +15,7 @@ import log4js from 'log4js';
 
 import Workflow from '@/pkg/workflow';
 
-import Job from './job';
 import Plan from './plan';
-import Stage from './plan/stage';
 
 const logger = log4js.getLogger();
 
@@ -26,7 +24,7 @@ class WorkflowPlanner {
   constructor(public workflows: Workflow[]) {}
 
   /**
-   * PlanEvent builds a new list of runs to execute in parallel for an event name
+   * builds a new list of runs to execute in parallel for an event name
    */
   planEvent(eventName: string) {
     const plan = new Plan();
@@ -43,14 +41,7 @@ class WorkflowPlanner {
       }
       events.forEach((event) => {
         if (event === eventName) {
-          //
-          const stages = workflow.stages().map((runs) => {
-            return new Stage(runs.map((run) => {
-              return new Run(run.jobId, run.job, workflow);
-            }));
-          });
-
-          plan.merge(stages);
+          plan.merge(workflow.plan());
         }
       });
     });
@@ -65,13 +56,7 @@ class WorkflowPlanner {
     const plan = new Plan();
 
     this.workflows.forEach((workflow) => {
-      const stages = workflow.stages(...jobId).map((runs) => {
-        return new Stage(runs.map((run) => {
-          return new Run(run.jobId, run.job, workflow);
-        }));
-      });
-
-      plan.merge(stages);
+      plan.merge(workflow.plan(...jobId));
     });
 
     return plan;
@@ -85,13 +70,7 @@ class WorkflowPlanner {
     const plan = new Plan();
 
     this.workflows.forEach((workflow) => {
-      const stages = workflow.stages().map((runs) => {
-        return new Stage(runs.map((run) => {
-          return new Run(run.jobId, run.job, workflow);
-        }));
-      });
-
-      plan.merge(stages);
+      plan.merge(workflow.plan());
     });
 
     return plan;
