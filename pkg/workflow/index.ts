@@ -11,11 +11,10 @@ import fs from 'fs';
 
 import { parse, stringify } from 'yaml';
 
-import Runner from '@/pkg/runner';
 import { isEmptyDeep } from '@/utils';
 
 import Job from './job';
-import Plan, { Stage } from './plan';
+import Plan, { Stages } from './plan';
 import {
   Concurrency, Defaults, On, OnEvents, Permissions,
 } from './types';
@@ -304,14 +303,14 @@ class Workflow {
       jobIdsClone = newjobIds;
     }
 
-    const stages: Stage[] = [];
+    const stages: Stages = [];
     // return true if all strings in jobIds exist in at least one of the stages
     // eslint-disable-next-line @typescript-eslint/no-shadow
-    const jobIdsInStages = (jobIds: string[], ...stages: Stage[]) => {
+    const jobIdsInStages = (jobIds: string[], ...stages: Stages) => {
       for (const jobId of jobIds) {
         let found = false;
         for (const stage of stages) {
-          if (stage.runs.map((run) => { return run.jobId; }).includes(jobId)) {
+          if (stage.map((run) => { return run.jobId; }).includes(jobId)) {
             found = true;
           }
         }
@@ -320,11 +319,14 @@ class Workflow {
       return true;
     };
     while (Object.keys(jobNeeds).length > 0) {
-      const runs: Runner[] = [];
+      const runs: Stages[number] = [];
 
       Object.entries(jobNeeds).forEach(([jobId, needs]) => {
         if (jobIdsInStages(needs, ...stages)) {
-          runs.push(new Runner(jobId, this));
+          runs.push({
+            jobId,
+            workflow: this,
+          });
           delete jobNeeds[jobId];
         }
       });
@@ -333,7 +335,7 @@ class Workflow {
         console.log('unable to build dependency graph for');
         break;
       }
-      stages.push(new Stage(runs));
+      stages.push(runs);
     }
 
     return new Plan(stages);

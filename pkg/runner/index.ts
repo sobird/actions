@@ -32,7 +32,7 @@ class Runner {
   }
 
   executor() {
-    console.log('jobId:', this.jobId);
+    console.log('jobName:', this.workflow.jobs[this.jobId].name);
     return new Executor(() => {
       // todo
     });
