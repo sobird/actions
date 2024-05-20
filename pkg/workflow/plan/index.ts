@@ -1,7 +1,15 @@
+import os from 'node:os';
+
+import log4js from 'log4js';
+
+import Executor from '@/pkg/common/executor';
+
 import Stage from './stage';
 
 export { default as Stage } from './stage';
 export { default as Run } from './run';
+
+const logger = log4js.getLogger();
 
 /** Plan contains a list of stages to run in series */
 export default class Plan {
@@ -47,5 +55,43 @@ export default class Plan {
 
     // 更新计划中的阶段列表
     this.stages = newStages;
+  }
+
+  executor() {
+    const { stages } = this;
+    const stagePipeline: Executor[] = [];
+
+    stages.forEach((stage) => {
+      stagePipeline.push(new Executor(async () => {
+        const pipeline: Executor[] = [];
+
+        stage.runs.forEach((run) => {
+          const { job } = run;
+
+          job.steps?.forEach(((step) => {
+            logger.debug('Job.Steps:', step.name);
+          }));
+
+          // pipeline.push(job.executor());
+        });
+
+        const ncpu = os.cpus().length;
+        logger.debug('Detected CPUs:', ncpu);
+        await Executor.parallel(ncpu, ...pipeline).execute();
+      }));
+    });
+
+    return Executor.pipeline(...stagePipeline);
+    // .then(new Executor(() => {
+    //   for (const stage of stages) {
+    //     for (const run of stage.runs) {
+    //     // todo
+    //       const jobResult = run.job.result;
+    //       if (jobResult === 'failure') {
+    //         return Promise.reject(new Error(`Job '${run.toString()}' failed`));
+    //       }
+    //     }
+    //   }
+    // }));
   }
 }

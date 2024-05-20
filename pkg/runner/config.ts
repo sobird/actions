@@ -7,8 +7,9 @@
 import { HostConfig } from 'dockerode';
 import { Level } from 'log4js';
 
+import { Github } from '@/types/context/github';
+
 import ActionCache from './action/cache';
-import GithubContext from '../common/github/context';
 
 /**
  * The configuration interface for the runner.
@@ -225,7 +226,7 @@ export interface Config {
    * The preset github context, overrides some fields like DefaultBranch, Env, Secrets etc.
    * @type {GithubContext}
    */
-  presetGitHubContext?: GithubContext;
+  presetGitHubContext?: Github;
 
   /**
    * The content of JSON file to use for event.json in containers, overrides EventPath.

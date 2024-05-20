@@ -8,10 +8,8 @@ import { Command } from '@commander-js/extra-typings';
 import { ConnectError, Code } from '@connectrpc/connect';
 import log4js from 'log4js';
 
-import {
-  Config, Labels, Client, Runner,
-} from '@/pkg';
-import Docker from '@/pkg/docker';
+import { Config, Labels, Client } from '@/pkg';
+import docker from '@/pkg/docker';
 import Poller from '@/pkg/poller';
 
 const logger = log4js.getLogger();
@@ -58,7 +56,7 @@ async function daemonAction(options: Options, program: typeof Command.prototype)
     }
 
     try {
-      await new Docker().ping();
+      await docker.ping();
     } catch (err: any) {
       logger.fatal('cannot ping the docker daemon, is it running?', err.message);
       return;
@@ -82,10 +80,11 @@ async function daemonAction(options: Options, program: typeof Command.prototype)
     opts.version,
   );
 
-  const runner = new Runner(RunnerServiceClient, config);
-
   try {
-    const resp = await runner.declare(labels.names());
+    const resp = await RunnerServiceClient.declare({
+      labels: labels.names(),
+      version: opts.version,
+    });
     logger.info(`runner: ${resp.runner?.name}, with version: ${resp.runner?.version}, with labels: ${resp.runner?.labels}, declare successfully`);
   } catch (err) {
     const connectError = err as ConnectError;
@@ -97,7 +96,7 @@ async function daemonAction(options: Options, program: typeof Command.prototype)
     return;
   }
 
-  const poller = new Poller(RunnerServiceClient, runner, config);
+  const poller = new Poller(RunnerServiceClient, config, opts.version);
   poller.poll();
 }
 

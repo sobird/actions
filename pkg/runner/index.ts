@@ -15,7 +15,7 @@ import { withTimeout } from '@/utils';
 import Executor from '../common/executor';
 import Reporter from '../reporter';
 import Workflow from '../workflow';
-import WorkflowPlanner, { Plan } from '../workflow/planner';
+import WorkflowPlanner from '../workflow/planner';
 
 const logger = log4js.getLogger();
 logger.level = 'debug';
@@ -51,11 +51,6 @@ class Runner {
     this.runningTasks.set(taskId, {});
 
     const reporter = new Reporter(this.client, task);
-
-    process.on('SIGTERM', () => {
-      console.log('SIGTERM signal received: closing HTTP server');
-      reporter.close('runner closed');
-    });
 
     try {
       await reporter.runDaemon();
@@ -242,13 +237,6 @@ class Runner {
 
   get pipelineUrl(): string {
     return new URL('/api/actions_pipeline', this.config.registration!.address).toString();
-  }
-
-  async declare(labels: string[]) {
-    return this.client.declare({
-      version,
-      labels,
-    });
   }
 }
 
