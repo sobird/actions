@@ -1,6 +1,6 @@
 /**
  * 任务状态&日志 报告器
- * 每个任务运行时，才会创建一个Reporter实例
+ * @todo 每个任务运行时，才会创建一个Reporter实例，任务结束，超时或者出错时，自动结束报告
  *
  * sobird<i@sobird.me> at 2024/04/26 0:19:33 created.
  */
@@ -212,6 +212,8 @@ class Reporter {
     // if (this.context.isCancelled()) {
     //   return;
     // }
+
+    logger.debug('Reporting task: %v', this.task.id);
 
     // 报告任务日志
     await this.reportLog(false);

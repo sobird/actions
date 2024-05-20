@@ -54,11 +54,14 @@ class Poller {
 
   async assign(task: Task) {
     const reporter = new Reporter(this.client, task);
+    await reporter.runDaemon();
     reporter.log(`Current runner version: ${this.runnerVersion} Received task ${task.id} of job ${task.context?.fields.job?.toJsonString()}, triggered by event: ${task.context?.fields.event_name?.toJsonString()}`);
     // @todo: context,secrets,needs,vars
     // SingleWorkflow is a workflow with single job and single matrix
     const singleWorkflow = Workflow.Load(task.workflowPayload?.toString()!);
     const plan = singleWorkflow.plan();
+
+    // await withTimeout(plan.executor().execute(), this.config.runner.timeout);
 
     await plan.executor().execute();
   }
