@@ -17,6 +17,8 @@ import {
 } from '@/pkg/client/runner/v1/messages_pb';
 import { Replacer } from '@/utils';
 
+import { LoggerHook, LogEntry } from '../common/logger';
+
 const logger = log4js.getLogger();
 
 const stringToResult: any = {
@@ -26,17 +28,7 @@ const stringToResult: any = {
   cancelled: Result.CANCELLED,
 };
 
-interface LogEntry extends LoggingEvent {
-  context: {
-    stage: string;
-    raw_output: true;
-    jobResult: Result;
-    stepResult: Result;
-    stepNumber: number;
-  }
-}
-
-class Reporter {
+class Reporter implements LoggerHook {
   private logReplacer = new Replacer();
 
   /** 任务状态 */

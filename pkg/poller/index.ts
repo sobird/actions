@@ -11,6 +11,7 @@ import type { Client, Config } from '@/pkg';
 import { withTimeout } from '@/utils';
 
 import { FetchTaskRequest, Task } from '../client/runner/v1/messages_pb';
+import { WithLoggerHook } from '../common/logger';
 import Reporter from '../reporter';
 import Workflow from '../workflow';
 
@@ -32,7 +33,7 @@ class Poller {
       if (this.runningTasks.size >= this.config.runner.capacity) {
         return;
       }
-      logger.debug('fetching task', this.tasksVersion, this.runningTasks, this.config.runner.capacity);
+      logger.debug('fetching task', this.tasksVersion, this.runningTasks.size, this.config.runner.capacity);
       const task = await this.fetchTask();
 
       if (this.runningTasks.has(task?.id)) {
@@ -61,6 +62,8 @@ class Poller {
     const singleWorkflow = Workflow.Load(task.workflowPayload?.toString()!);
     const plan = singleWorkflow.plan();
 
+    const loggerWithReporter = WithLoggerHook(reporter, 'Reporter');
+    loggerWithReporter.info('task:', task.id);
     // await withTimeout(plan.executor().execute(), this.config.runner.timeout);
 
     await plan.executor().execute();
