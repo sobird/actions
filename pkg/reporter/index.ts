@@ -18,7 +18,6 @@ import {
 import { Replacer } from '@/utils';
 
 const logger = log4js.getLogger();
-logger.level = 'debug';
 
 const stringToResult: any = {
   success: Result.SUCCESS,
