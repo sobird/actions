@@ -63,21 +63,21 @@ export default class Plan {
 
     stages.forEach((stage) => {
       stagePipeline.push(new Executor(async () => {
-        const pipeline: Executor[] = [];
+        // const jobPipeline: Executor[] = [];
 
-        stage.runs.forEach((run) => {
-          const { job } = run;
+        const jobPipeline = stage.runs.map((run) => {
+          // job.steps?.forEach(((step) => {
+          //   logger.debug('Job.Steps:', step.name);
+          // }));
 
-          job.steps?.forEach(((step) => {
-            logger.debug('Job.Steps:', step.name);
-          }));
+          console.log('run.workflow', run.workflow);
 
-          // pipeline.push(job.executor());
+          return run.executor();
         });
 
         const ncpu = os.cpus().length;
         logger.debug('Detected CPUs:', ncpu);
-        await Executor.parallel(ncpu, ...pipeline).execute();
+        await Executor.parallel(ncpu, ...jobPipeline).execute();
       }));
     });
 

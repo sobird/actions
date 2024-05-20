@@ -11,10 +11,11 @@ import fs from 'fs';
 
 import { parse, stringify } from 'yaml';
 
+import Runner from '@/pkg/runner';
 import { isEmptyDeep } from '@/utils';
 
 import Job from './job';
-import Plan, { Stage, Run } from './plan';
+import Plan, { Stage } from './plan';
 import {
   Concurrency, Defaults, On, OnEvents, Permissions,
 } from './types';
@@ -319,11 +320,11 @@ class Workflow {
       return true;
     };
     while (Object.keys(jobNeeds).length > 0) {
-      const runs: Run[] = [];
+      const runs: Runner[] = [];
 
       Object.entries(jobNeeds).forEach(([jobId, needs]) => {
         if (jobIdsInStages(needs, ...stages)) {
-          runs.push(new Run(jobId, this.jobs[jobId], this));
+          runs.push(new Runner(jobId, this));
           delete jobNeeds[jobId];
         }
       });

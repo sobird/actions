@@ -1,5 +1,6 @@
 /**
  * 一个Runner实例仅支持运行一个job
+ * represents a job from a workflow that needs to be run
  *
  * @example
  * const runner = new Runner(jobId, workflow, config);
@@ -13,6 +14,7 @@ import log4js from 'log4js';
 import pkg from '@/package.json' with { type: 'json' };
 import type { Config } from '@/pkg';
 
+import Executor from '../common/executor';
 import Workflow from '../workflow';
 
 const logger = log4js.getLogger();
@@ -23,10 +25,17 @@ const { version } = pkg;
 class Runner {
   envs: { [key in string]: string } = {};
 
-  constructor(public jobId: string, public workflow: Workflow, public config: Config) {
-    this.setupEnvs();
-    this.setupGiteaEnv();
-    this.setupCacheEnv();
+  constructor(public jobId: string, public workflow: Workflow, public config?: Config) {
+    // this.setupEnvs();
+    // this.setupGiteaEnv();
+    // this.setupCacheEnv();
+  }
+
+  executor() {
+    console.log('jobId:', this.jobId);
+    return new Executor(() => {
+      // todo
+    });
   }
 
   private setupEnvs() {

@@ -224,7 +224,9 @@ export const runCommand = new Command('run')
 
     // run the plan
 
-    console.log('plan', plan.stages[0].runs[0].job.spread());
+    // console.log('plan', plan.stages[0].runs[0].job.spread());
+
+    await plan.executor().execute();
 
     process.exit();
   });
