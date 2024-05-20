@@ -552,8 +552,8 @@ describe('workflow plan jobs', () => {
   it('plan jobs by jobIds', () => {
     const workflow = Workflow.Read(resolve(__dirname, './__mocks__/stages.yaml'));
     const plan = workflow.plan('Test-Docker');
-    const jobIds = plan.stages.map((runs) => {
-      return runs.map((run) => { return run.jobId; });
+    const jobIds = plan.stages.map((stage) => {
+      return stage.jobIds;
     });
 
     expect(jobIds).toEqual([['Test-Node'], ['Explore-Gitea-Actions'], ['Test-Docker']]);

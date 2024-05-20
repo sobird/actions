@@ -56,7 +56,7 @@ describe('workflow planner', () => {
   });
 
   it('planner events test case', () => {
-    const events = workflowPlanner.events();
+    const { events } = workflowPlanner;
 
     expect(events.length).toBe(2);
   });

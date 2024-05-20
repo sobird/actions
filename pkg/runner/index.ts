@@ -13,6 +13,7 @@ import log4js from 'log4js';
 
 import pkg from '@/package.json' with { type: 'json' };
 import type { Config } from '@/pkg';
+import { asyncFunction } from '@/utils';
 
 import Executor from '../common/executor';
 import Workflow from '../workflow';
@@ -33,8 +34,10 @@ class Runner {
 
   executor() {
     console.log('jobName:', this.workflow.jobs[this.jobId].name);
-    return new Executor(() => {
+    return new Executor(async () => {
+      await asyncFunction(2000);
       // todo
+      console.log('jobName1212:', this.workflow.jobs[this.jobId].name);
     });
   }
 
