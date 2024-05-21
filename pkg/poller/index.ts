@@ -47,7 +47,7 @@ class Poller {
           this.runningTasks.delete(task.id);
         }
       } catch (error) {
-        console.error('failed to run task', error);
+        logger.error('failed to run task', error);
         clearInterval(checkInterval);
       }
     }, this.config.runner.fetchInterval);

@@ -12,6 +12,7 @@ import { asyncFunction } from '@/utils';
 
 import Container from './container';
 import Step from './step';
+import StepExecutorRun from './step/run';
 import Strategy from './strategy';
 import {
   WorkflowDispatchInputs, Permissions, Concurrency, Defaults,
@@ -359,7 +360,7 @@ class Job {
 
     if (Array.isArray(job.steps)) {
       this.steps = job.steps.map((step) => {
-        return new Step(step);
+        return new StepExecutorRun(step);
       });
     }
 

@@ -254,6 +254,11 @@ class Step {
     }
     return StepType.UsesActionRemote;
   }
+
+  static Factory(step: Step) {
+    console.log('step', step);
+    import('./run');
+  }
 }
 
 export default Step;

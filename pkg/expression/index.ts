@@ -1,6 +1,7 @@
 /* eslint-disable no-template-curly-in-string */
 /**
  * Expressions
+ * 表达式在运行时进行计算取值
  *
  * @see https://docs.github.com/en/actions/learn-github-actions/expressions
  *

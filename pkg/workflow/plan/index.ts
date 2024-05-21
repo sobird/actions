@@ -63,15 +63,12 @@ export default class Plan {
     stages.forEach((stage) => {
       stagePipeline.push(new Executor(async () => {
         const jobPipeline = stage.runs.map((run) => {
-          // job.steps?.forEach(((step) => {
-          //   logger.debug('Job.Steps:', step.name);
-          // }));
-
           const { jobId } = run;
 
           const jobs = run.job.spread();
+          const maxParallel = run.job.strategy.getMaxParallel();
 
-          const spreadExecutor = jobs.map((job) => {
+          const jobsExecutor = jobs.map((job) => {
             const workflow = run.workflow.clone();
             workflow.jobs = {
               [jobId]: job,
@@ -81,9 +78,7 @@ export default class Plan {
             return runner.executor();
           });
 
-          console.log('jobs', jobs.length);
-
-          return Executor.parallel(3, ...spreadExecutor);
+          return Executor.parallel(maxParallel, ...jobsExecutor);
         });
 
         const ncpu = os.cpus().length;

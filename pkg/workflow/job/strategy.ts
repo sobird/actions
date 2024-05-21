@@ -132,7 +132,7 @@ export default class Strategy {
   }
 
   getMaxParallel() {
-    return this['max-parallel'] || os.cpus().length;
+    return this['max-parallel'] || 1;
   }
 
   getMatrices() {
