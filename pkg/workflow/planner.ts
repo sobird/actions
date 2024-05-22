@@ -13,11 +13,14 @@ import {
 
 import log4js from 'log4js';
 
+import Git from '@/pkg/common/git';
 import Workflow from '@/pkg/workflow';
 
 import Plan from './plan';
 
 const logger = log4js.getLogger();
+
+const git = new Git('.');
 
 /** Planner contains methods for creating plans */
 class WorkflowPlanner {
@@ -93,7 +96,7 @@ class WorkflowPlanner {
   }
 
   /** will load a specific workflow, all workflows from a directory or all workflows from a directory and its subdirectories */
-  static Collect(path: string, recursive: boolean = false) {
+  static async Collect(path: string, recursive: boolean = false) {
     const absPath = resolve(path);
     const stat = fs.statSync(absPath);
 
@@ -102,14 +105,24 @@ class WorkflowPlanner {
     if (stat.isDirectory()) {
       logger.debug(`Loading workflows from '${absPath}'`);
 
-      fs.readdirSync(absPath, { withFileTypes: true, recursive }).forEach((file) => {
+      const files = fs.readdirSync(absPath, { withFileTypes: true, recursive });
+
+      for (const file of files) {
         const { ext } = parse(file.name);
         if (file.isFile() && (ext === '.yml' || ext === '.yaml')) {
-          const workflow = Workflow.Read(join(file.path, file.name));
+          const filename = join(file.parentPath, file.name);
+          const workflow = Workflow.Read(filename);
           workflow.file = file.name;
+          try {
+            // eslint-disable-next-line no-await-in-loop
+            const sha = await git.fileSha(filename);
+            workflow.sha = sha;
+          } catch (error) {
+            //
+          }
           workflows.push(workflow);
         }
-      });
+      }
     } else {
       logger.debug(`Loading workflow '${absPath}'`);
       const workflow = Workflow.Read(absPath);

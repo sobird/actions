@@ -22,6 +22,8 @@ import {
 class Workflow {
   #file?: string;
 
+  #sha?: string;
+
   /**
    * The name of the workflow.
    *
@@ -156,6 +158,14 @@ class Workflow {
 
   set file(file) {
     this.#file = file;
+  }
+
+  get sha() {
+    return this.#sha;
+  }
+
+  set sha(sha) {
+    this.#sha = sha;
   }
 
   /**

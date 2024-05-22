@@ -32,6 +32,10 @@ class Git {
     return logUsername || gitUsername;
   }
 
+  async fileSha(filename: string) {
+    return (await this.git.log(['--pretty=%H', '-1', filename])).latest?.hash;
+  }
+
   async fetch(url: string, ref: string = 'HEAD') {
     const { git } = this;
 

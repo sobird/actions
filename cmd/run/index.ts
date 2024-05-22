@@ -145,7 +145,7 @@ export const runCommand = new Command('run')
 
     // @todo matrix
 
-    const planner = WorkflowPlanner.Collect(options.workflows, options.workflowRecurse);
+    const planner = await WorkflowPlanner.Collect(options.workflows, options.workflowRecurse);
     // collect all events from loaded workflows
     const { events } = planner;
 
@@ -232,6 +232,8 @@ export const runCommand = new Command('run')
     console.log('repository', repository);
     const actor = options.actor || username;
     console.log('actor', actor);
+    const { sha } = await git.revision();
+    console.log('sha', sha);
 
     // console.log('plan', plan.stages[0].runs[0].job.spread());
     console.log('options', options);

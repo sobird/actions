@@ -2,10 +2,6 @@
  * 一个Runner实例仅支持运行一个job
  * represents a job from a workflow that needs to be run
  *
- * @example
- * const runner = new Runner(jobId, workflow, config);
- * runner.execute();
- *
  * sobird<i@sobird.me> at 2024/05/19 6:18:35 created.
  */
 

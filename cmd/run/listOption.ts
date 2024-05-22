@@ -17,13 +17,13 @@ export async function listOption(filterPlan: Plan) {
   filterPlan.stages.forEach((stage, index) => {
     stage.runs.forEach((run) => {
       const {
-        jobId, jobName, workflow, job,
+        jobId, name, workflow, job,
       } = run;
       data.push({
         stage: index,
         matrix: `${job.strategy.getMatrices().length} jobs`,
         jobId,
-        jobName,
+        jobName: name,
         wfName: workflow.name,
         wfFile: workflow.file,
         events: workflow.events,

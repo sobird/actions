@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // 全局使用
-const workflowPlanner = WorkflowPlanner.Collect(resolve(__dirname, './__mocks__/data/planner'));
+const workflowPlanner = await WorkflowPlanner.Collect(resolve(__dirname, './__mocks__/data/planner'));
 
 describe('workflow planner', () => {
   it('planner collect workflow test case', () => {
