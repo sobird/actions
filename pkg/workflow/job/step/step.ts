@@ -2,18 +2,15 @@ import path from 'node:path';
 
 import Executor from '@/pkg/common/executor';
 
+import Step from '.';
+
 export enum StepStage {
   Pre,
   Main,
   Post,
 }
 
-export default abstract class Step {
-  constructor(id, name) {
-    this.id = id;
-    this.name = name;
-  }
-
+export default abstract class Step2 extends Step {
   abstract pre(): Executor;
 
   main() {
@@ -36,10 +33,6 @@ export default abstract class Step {
     return { id: this.id, name: this.name };
   }
 
-  getEnv() {
-    return {};
-  }
-
   abstract getIfExpression(stage: StepStage): string;
 
   runStepExecutor(stage: StepStage, executor: Executor) {
@@ -47,8 +40,16 @@ export default abstract class Step {
     const stepResult = {};
 
     if (stage === StepStage.Main) {
+      // 设置当前步骤结果
       // this.stepResult = stepResult;
     }
+
+    // 设置环境变量
+    this.setupEnv();
+  }
+
+  setupEnv() {
+    const env = this.getEnv();
   }
 
   symlinkJoin(filename: string, sym: string, parent: string) {

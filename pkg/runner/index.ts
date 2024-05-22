@@ -13,31 +13,32 @@ import log4js from 'log4js';
 
 import pkg from '@/package.json' with { type: 'json' };
 import type { Config } from '@/pkg';
+import Context from '@/types/context';
 import { asyncFunction } from '@/utils';
 
 import Executor from '../common/executor';
-import Workflow from '../workflow';
+import { Run } from '../workflow/plan';
 
 const logger = log4js.getLogger();
-logger.level = 'debug';
 
 const { version } = pkg;
 
 class Runner {
   envs: { [key in string]: string } = {};
 
-  constructor(public jobId: string, public workflow: Workflow, public config?: Config) {
+  context: Context;
+
+  constructor(public run: Run, public config?: Config) {
     // this.setupEnvs();
     // this.setupGiteaEnv();
     // this.setupCacheEnv();
   }
 
   executor() {
-    console.log('jobName:', this.workflow.jobs[this.jobId].name);
     return new Executor(async () => {
       await asyncFunction(2000);
       // todo
-      console.log('jobName1212:', this.workflow.jobs[this.jobId].name);
+      console.log('jobName1212:', this.run);
     });
   }
 

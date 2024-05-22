@@ -13,6 +13,7 @@ import path from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import ip from 'ip';
 import log4js from 'log4js';
+import simpleGit from 'simple-git';
 
 import Artifact from '@/pkg/artifact';
 import ArtifactCache from '@/pkg/artifact/cache';
@@ -28,6 +29,8 @@ const logger = log4js.getLogger();
 
 const HOME_DIR = os.homedir();
 const HOME_CACHE_DIR = process.env.XDG_CACHE_HOME || path.join(HOME_DIR, '.cache');
+
+const git = simpleGit('.');
 
 function collectArray(value: string, prev: string[]) {
   return prev.concat(value.split(','));
@@ -56,9 +59,10 @@ export const runCommand = new Command('run')
   .option('-g, --graph', 'draw workflows', false)
   .option('-j, --job <job>', 'run a specific job ID')
   .option('--bug-report', 'Display system information for bug report', false)
+  .option('-a, --actor <actor>', 'The username of the user that triggered the initial workflow run')
 
   .option('-W, --workflows <path>', 'path to workflow file(s)', './.github/workflows/')
-  .option('-C, --directory <directory>', 'working directory', '.')
+  .option('-C, --workdir <directory>', 'working directory', '.')
   .option('--no-workflowRecurse', "Flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
   .option('--defaultbranch', 'the name of the main branch')
   // .option('-E, --event <event>', 'run a event name')
@@ -223,9 +227,14 @@ export const runCommand = new Command('run')
     }
 
     // run the plan
+    const gitUsername = (await git.getConfig('user.name')).value;
+    const logUsername = (await git.log(['-n', '1'])).latest?.author_name;
+    const actor = options.actor || logUsername || gitUsername;
+
+    console.log('actor', actor);
 
     // console.log('plan', plan.stages[0].runs[0].job.spread());
-
+    console.log('options', options);
     await plan.executor().execute();
 
     process.exit();
