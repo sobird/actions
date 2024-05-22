@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 
 import glob from '@actions/glob';
+import _ from 'lodash';
 
 /**
  * Returns true if search contains item.
@@ -196,6 +197,13 @@ export function failure() {
 
 }
 
-export function objectFilters() {
+// const reg = /^(\w+\.)+\*\.(\w+)$/;
+export function objectFilter(path: string) {
+  const parts = path.split('.*.');
+  const [prefix, suffix] = parts;
+  const result = _.result({}, prefix);
 
+  if (_.isObject(result)) {
+    return Object.keys(result).map((item: any) => { return item[suffix]; });
+  }
 }
