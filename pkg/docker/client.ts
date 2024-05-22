@@ -23,9 +23,9 @@ export async function parseEnvFile(container: Container, path: string) {
 }
 
 // test case
-const docker = new Docker();
-const container = docker.getContainer('a2ce6a03aeafe3d81a4ab2de13f28be8d4b187956c2bca8506665eddfb646ea2');
+// const docker = new Docker();
+// const container = docker.getContainer('a2ce6a03aeafe3d81a4ab2de13f28be8d4b187956c2bca8506665eddfb646ea2');
 
-parseEnvFile(container, '/root/env');
+// parseEnvFile(container, '/root/env');
 
-docker.createContainer();
+// docker.createContainer();

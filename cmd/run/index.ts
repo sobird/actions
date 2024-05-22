@@ -13,10 +13,10 @@ import path from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import ip from 'ip';
 import log4js from 'log4js';
-import simpleGit from 'simple-git';
 
 import Artifact from '@/pkg/artifact';
 import ArtifactCache from '@/pkg/artifact/cache';
+import Git from '@/pkg/common/git';
 import { getSocketAndHost } from '@/pkg/docker';
 import WorkflowPlanner from '@/pkg/workflow/planner';
 import { appendEnvs } from '@/utils';
@@ -30,7 +30,7 @@ const logger = log4js.getLogger();
 const HOME_DIR = os.homedir();
 const HOME_CACHE_DIR = process.env.XDG_CACHE_HOME || path.join(HOME_DIR, '.cache');
 
-const git = simpleGit('.');
+const git = new Git('.');
 
 function collectArray(value: string, prev: string[]) {
   return prev.concat(value.split(','));
@@ -227,10 +227,10 @@ export const runCommand = new Command('run')
     }
 
     // run the plan
-    const gitUsername = (await git.getConfig('user.name')).value;
-    const logUsername = (await git.log(['-n', '1'])).latest?.author_name;
-    const actor = options.actor || logUsername || gitUsername;
-
+    const username = await git.username();
+    const repository = await git.repository();
+    console.log('repository', repository);
+    const actor = options.actor || username;
     console.log('actor', actor);
 
     // console.log('plan', plan.stages[0].runs[0].job.spread());

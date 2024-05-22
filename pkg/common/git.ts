@@ -24,6 +24,14 @@ class Git {
     });
   }
 
+  async username() {
+    const { git } = this;
+    const gitUsername = (await git.getConfig('user.name')).value;
+    const logUsername = (await git.log(['-n', '1'])).latest?.author_name;
+
+    return logUsername || gitUsername;
+  }
+
   async fetch(url: string, ref: string = 'HEAD') {
     const { git } = this;
 
@@ -135,8 +143,8 @@ class Git {
 
 export default Git;
 
-const git = new Git('/Users/sobird/test/git-test');
-await git.fetch('https://gitea.com/actions/checkout', 'v4', 'ddd');
+// const git = new Git('/Users/sobird/test/git-test');
+// await git.fetch('https://gitea.com/actions/checkout', 'v4', 'ddd');
 // // get short sha
 // // const ref = await git.revparse();
 // const sha = await git.revparse('refs/tags/v1.2.3');
