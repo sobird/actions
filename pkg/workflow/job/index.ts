@@ -49,7 +49,7 @@ export enum JobType {
  * The `<job_id>` must start with a letter or `_` and contain only alphanumeric characters, `-`, or `_`.
  */
 class Job {
-  #id: string;
+  #id?: string;
 
   /**
    * Use `jobs.<job_id>.name` to set a name for the job, which is displayed in the GitHub UI.
@@ -345,8 +345,9 @@ class Job {
    */
   secrets?: Record<string, string> | 'inherit';
 
-  constructor(job: Partial<Job>, id: string) {
-    this.#id = id;
+  constructor(job: Partial<Job>) {
+    this.#id = job.id;
+
     this.name = job.name;
     this.permissions = job.permissions;
     this.needs = job.needs;
@@ -378,8 +379,15 @@ class Job {
     return this.#id;
   }
 
+  set id(id) {
+    this.#id = id;
+  }
+
   clone() {
-    return new Job(JSON.parse(JSON.stringify(this)), this.#id);
+    const cloned = structuredClone(this);
+    cloned.id = this.#id;
+
+    return new Job(cloned);
   }
 
   spread() {

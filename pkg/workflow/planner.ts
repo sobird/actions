@@ -97,6 +97,7 @@ class WorkflowPlanner {
 
   /** will load a specific workflow, all workflows from a directory or all workflows from a directory and its subdirectories */
   static async Collect(path: string, recursive: boolean = false) {
+    console.log('path', path);
     const absPath = resolve(path);
     const stat = fs.statSync(absPath);
 
@@ -105,13 +106,14 @@ class WorkflowPlanner {
     if (stat.isDirectory()) {
       logger.debug(`Loading workflows from '${absPath}'`);
 
-      const files = fs.readdirSync(absPath, { withFileTypes: true, recursive });
+      const files = fs.readdirSync(path, { withFileTypes: true, recursive });
 
       for (const file of files) {
         const { ext } = parse(file.name);
         if (file.isFile() && (ext === '.yml' || ext === '.yaml')) {
           const filename = join(file.parentPath, file.name);
           const workflow = Workflow.Read(filename);
+          console.log('filename', filename);
           workflow.file = file.name;
           try {
             // eslint-disable-next-line no-await-in-loop

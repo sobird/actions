@@ -128,19 +128,22 @@ class Workflow {
    */
   public jobs: Record<string, Job>;
 
-  constructor({
-    name, 'run-name': runName, on, permissions, env, defaults, concurrency, jobs = {},
-  }: Workflow) {
-    this.name = name;
-    this['run-name'] = runName;
-    this.on = on;
-    this.permissions = permissions;
-    this.env = env;
-    this.defaults = defaults;
-    this.concurrency = concurrency;
-    this.jobs = Object.fromEntries(Object.entries(jobs).map(([jobId, job]) => {
+  constructor(workflow: Workflow) {
+    this.#file = workflow.file;
+    this.#sha = workflow.sha;
+
+    this.name = workflow.name;
+    this['run-name'] = workflow['run-name'];
+    this.on = workflow.on;
+    this.permissions = workflow.permissions;
+    this.env = workflow.env;
+    this.defaults = workflow.defaults;
+    this.concurrency = workflow.concurrency;
+    this.jobs = Object.fromEntries(Object.entries(workflow.jobs).map(([jobId, job]) => {
       this.validateJobId(jobId);
-      return [jobId, new Job(job, jobId)];
+      // eslint-disable-next-line no-param-reassign
+      job.id = jobId;
+      return [jobId, new Job(job)];
     }));
   }
 
@@ -354,7 +357,10 @@ class Workflow {
   }
 
   clone() {
-    return new Workflow(JSON.parse(JSON.stringify(this)));
+    const cloned = structuredClone(this);
+    cloned.file = this.#file;
+    cloned.sha = this.#sha;
+    return new Workflow(cloned);
   }
 
   save(path: string, options?: Parameters<typeof stringify>[1]) {
