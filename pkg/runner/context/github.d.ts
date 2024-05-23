@@ -182,7 +182,7 @@ export interface Github {
    *
    * 可能的值为 None、Actions、Codespaces 或 Dependabot。
    */
-  secret_source: string;
+  secret_source: 'None' | 'Actions' | 'Codespaces' | 'Dependabot';
   /**
    * GitHub 服务器的 URL。 例如：https://github.com。
    */

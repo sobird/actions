@@ -9,7 +9,7 @@ import log4js from 'log4js';
 
 import pkg from '@/package.json' with { type: 'json' };
 import type { Config } from '@/pkg';
-import Context from '@/types/context';
+import Context from '@/pkg/runner/context';
 import { asyncFunction } from '@/utils';
 
 import Executor from '../common/executor';

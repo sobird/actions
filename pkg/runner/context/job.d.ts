@@ -56,5 +56,5 @@ export interface Job {
    *
    * 可能的值为 `success`、`failure` 或 `cancelled`。
    */
-  status: string;
+  status: 'success' | 'failure' | 'cancelled';
 }

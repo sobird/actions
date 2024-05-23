@@ -7,7 +7,7 @@
 import { HostConfig } from 'dockerode';
 import { Level } from 'log4js';
 
-import { Github } from '@/types/context/github';
+import { Github } from '@/pkg/runner/context/github';
 
 import ActionCache from './action/cache';
 

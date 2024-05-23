@@ -97,8 +97,7 @@ class WorkflowPlanner {
 
   /** will load a specific workflow, all workflows from a directory or all workflows from a directory and its subdirectories */
   static async Collect(path: string, recursive: boolean = false) {
-    console.log('path', path);
-    const absPath = resolve(path);
+    const absPath = path || resolve(path);
     const stat = fs.statSync(absPath);
 
     const workflows: Workflow[] = [];
@@ -106,19 +105,17 @@ class WorkflowPlanner {
     if (stat.isDirectory()) {
       logger.debug(`Loading workflows from '${absPath}'`);
 
-      const files = fs.readdirSync(path, { withFileTypes: true, recursive });
+      const files = fs.readdirSync(absPath, { withFileTypes: true, recursive });
 
       for (const file of files) {
         const { ext } = parse(file.name);
         if (file.isFile() && (ext === '.yml' || ext === '.yaml')) {
           const filename = join(file.parentPath, file.name);
           const workflow = Workflow.Read(filename);
-          console.log('filename', filename);
-          workflow.file = file.name;
+          workflow.file = filename;
           try {
             // eslint-disable-next-line no-await-in-loop
-            const sha = await git.fileSha(filename);
-            workflow.sha = sha;
+            workflow.sha = await git.fileSha(filename);
           } catch (error) {
             //
           }
@@ -129,6 +126,11 @@ class WorkflowPlanner {
       logger.debug(`Loading workflow '${absPath}'`);
       const workflow = Workflow.Read(absPath);
       workflow.file = basename(absPath);
+      try {
+        workflow.sha = await git.fileSha(absPath);
+      } catch (error) {
+        //
+      }
       workflows.push(workflow);
     }
 
