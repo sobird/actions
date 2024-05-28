@@ -1,6 +1,6 @@
 /**
  * github context
- * 每个job拥有一个Context实例
+ * Each job has a Context instance
  *
  * @see https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
  * @see https://github.com/actions/runner/blob/main/src/Runner.Worker/GitHubContext.cs
@@ -38,17 +38,45 @@ import { Vars } from './vars';
  * Certain contexts should be treated as untrusted input, as an attacker could insert their own malicious content.
  * For more information, see "{@link https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#understanding-the-risk-of-script-injections Security hardening for GitHub Actions}."
  */
-export default interface Context {
+export default class Context {
   github: Github;
+
   env: Env;
+
   vars: Vars;
+
   job: Job;
+
   jobs: Jobs;
+
   steps: Steps;
+
   runner: Runner;
+
   secrets: Secrets;
+
   strategy: Strategy;
+
   matrix: Matrix;
+
   needs: Needs;
+
   inputs: Inputs;
+
+  constructor(context: Context) {
+    this.github = new Github(context.github || {});
+    this.env = context.env;
+    this.vars = context.vars;
+    this.job = new Job(context.job || {});
+    this.jobs = context.jobs;
+    this.steps = context.steps;
+  }
+
+  test() {
+    return this.env;
+  }
 }
+
+const context = new Context({});
+console.log('context', context);
+console.log('context', Object.keys(context));
