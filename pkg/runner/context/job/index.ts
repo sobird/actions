@@ -26,9 +26,9 @@ export class Job {
   status: 'success' | 'failure' | 'cancelled';
 
   constructor(job: Job) {
-    this.container = new Container(job.container || {});
-    this.services = Object.fromEntries(Object.entries(job.services || {}).map(([serviceId, container]) => {
-      return [serviceId, new Container(container)];
+    this.container = new Container(job.container ?? {});
+    this.services = Object.fromEntries(Object.entries(job.services ?? {}).map(([serviceId, container]) => {
+      return [serviceId, new Container(container ?? {})];
     }));
     this.status = job.status;
   }

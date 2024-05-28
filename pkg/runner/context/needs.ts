@@ -24,14 +24,25 @@
  * }
  * ```
  */
-export type Needs = Record<string, {
-  /**
-   * The set of outputs of a job that the current job depends on.
-   */
-  outputs: Record<string, string>;
-  /**
-   * The result of a job that the current job depends on.
-   * Possible values are `success`, `failure`, `cancelled`, or `skipped`.
-   */
-  result: 'success' | 'failure' | 'cancelled' | 'skipped';
-}>;
+export class Needs {
+  [index: string]: {
+    /**
+     * The set of outputs of a job that the current job depends on.
+     */
+    outputs: Record<string, string>;
+    /**
+     * The result of a job that the current job depends on.
+     * Possible values are `success`, `failure`, `cancelled`, or `skipped`.
+     */
+    result: 'success' | 'failure' | 'cancelled' | 'skipped';
+  }
+
+  constructor(needs: Needs) {
+    Object.entries(needs).forEach(([needId, need]) => {
+      this[needId] = {
+        result: need.result,
+        outputs: need.outputs ?? {},
+      };
+    });
+  }
+}

@@ -17,7 +17,7 @@
  * }
  * ```
  */
-export interface Strategy {
+export class Strategy {
   /**
    * When this evaluates to true, all in-progress jobs are canceled if any job in a matrix fails.
    * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategyfail-fast Workflow syntax for GitHub Actions}."
@@ -42,4 +42,11 @@ export interface Strategy {
    * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategymax-parallel Workflow syntax for GitHub Actions}."
    */
   'max-parallel': number;
+
+  constructor(strategy: Strategy) {
+    this['fail-fast'] = strategy['fail-fast'];
+    this['job-index'] = strategy['job-index'];
+    this['job-total'] = strategy['job-total'];
+    this['max-parallel'] = strategy['max-parallel'];
+  }
 }

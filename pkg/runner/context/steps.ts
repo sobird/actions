@@ -42,4 +42,16 @@ export interface Step {
  * }
  * ```
  */
-export type Steps = Record<string, Step>;
+export class Steps {
+  [index: string]: Step
+
+  constructor(steps: Steps) {
+    Object.entries(steps).forEach(([stepId, step]) => {
+      this[stepId] = {
+        outputs: step.outputs ?? {},
+        conclusion: step.conclusion,
+        outcome: step.outcome,
+      };
+    });
+  }
+}

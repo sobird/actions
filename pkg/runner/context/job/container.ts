@@ -30,11 +30,11 @@ export class Container {
 
   constructor(container: Container) {
     this.image = container.image;
-    this.credentials = container.credentials;
-    this.env = container.env;
-    this.ports = container.ports;
-    this.volumes = container.volumes;
-    this.options = container.options;
+    this.credentials = container.credentials ?? {};
+    this.env = container.env ?? {};
+    this.ports = container.ports ?? {};
+    this.volumes = container.volumes ?? {};
+    this.options = container.options ?? [];
     this.id = container.id;
     this.network = container.network;
   }

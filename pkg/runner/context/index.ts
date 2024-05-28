@@ -63,20 +63,22 @@ export default class Context {
 
   inputs: Inputs;
 
-  constructor(context: Context) {
-    this.github = new Github(context.github || {});
-    this.env = context.env;
-    this.vars = context.vars;
-    this.job = new Job(context.job || {});
-    this.jobs = context.jobs;
-    this.steps = context.steps;
+  constructor(context: Context = {} as Context) {
+    this.github = new Github(context.github ?? {});
+    this.env = context.env ?? {};
+    this.vars = context.vars ?? {};
+    this.job = new Job(context.job ?? {});
+    this.jobs = new Jobs(context.jobs ?? {});
+    this.steps = new Steps(context.steps ?? {});
+    this.runner = new Runner(context.runner ?? {});
+    this.secrets = context.secrets ?? {};
+    this.strategy = new Strategy(context.strategy ?? {});
+    this.matrix = context.matrix ?? {};
+    this.needs = new Needs(context.needs ?? {});
+    this.inputs = context.inputs ?? {};
   }
 
   test() {
     return this.env;
   }
 }
-
-const context = new Context({});
-console.log('context', context);
-console.log('context', Object.keys(context));

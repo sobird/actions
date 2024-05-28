@@ -17,13 +17,25 @@
  * }
  * ```
  */
-export type Jobs = Record<string, {
-  /**
+export class Jobs {
+  [index: string]: {
+    /**
    * The result of a job in the reusable workflow. Possible values are `success`, `failure`, `cancelled`, or `skipped`.
    */
-  result: 'success' | 'failure' | 'cancelled' | 'skipped';
-  /**
+    result: 'success' | 'failure' | 'cancelled' | 'skipped';
+
+    /**
    * The set of outputs of a job in a reusable workflow.
    */
-  outputs: Record<string, string>;
-}>;
+    outputs: Record<string, string>;
+  }
+
+  constructor(jobs: Jobs) {
+    Object.entries(jobs).forEach(([jobId, job]) => {
+      this[jobId] = {
+        result: job.result,
+        outputs: job.outputs ?? {},
+      };
+    });
+  }
+}
