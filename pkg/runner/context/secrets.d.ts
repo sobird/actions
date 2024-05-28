@@ -1,15 +1,28 @@
 /**
- * `secrets` 上下文包含可用于工作流运行的机密的名称和值。
+ * The `secrets` context contains the names and values of secrets that are available to a workflow run.
+ * The secrets context is not available for composite actions due to security reasons.
+ * If you want to pass a secret to a composite action, you need to do it explicitly as an input.
+ * For more information about secrets, see "{@link https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions Using secrets in GitHub Actions}."
  *
- * 出于安全原因，上下文 `secrets` 不适用于复合操作。 如果要将机密传递给复合操作，则需要将其作为输入显式传递
+ * `GITHUB_TOKEN` is a secret that is automatically created for every workflow run, and is always included in the secrets context.
+ * For more information, see "{@link https://docs.github.com/en/actions/security-guides/automatic-token-authentication Automatic token authentication}."
  *
- * `GITHUB_TOKEN` 是为每个工作流运行自动创建的机密，始终包含在 `secrets` 上下文中。
+ * Warning: If a secret was used in the job, GitHub automatically redacts secrets printed to the log.
+ * You should avoid printing secrets to the log intentionally.
  *
- * @example
+ * This context is the same for each job in a workflow run.
+ * You can access this context from any step in a job.
+ *
+ * Example contents of the secrets context
+ *
+ * The following example contents of the secrets context shows the automatic `GITHUB_TOKEN`,
+ * as well as two other secrets available to the workflow run.
+ * ```json
  * {
  *   "github_token": "***",
  *   "NPM_TOKEN": "***",
  *   "SUPERSECRET": "***"
  * }
+ * ```
  */
-export type Secrets = Record<'GITHUB_TOKEN' | string, string>;
+export type Secrets = Record<'GITHUB_TOKEN', string> & Record<string, string>;

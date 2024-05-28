@@ -1,37 +1,45 @@
 /**
- * 对于具有矩阵的工作流，strategy 上下文包含有关当前作业的矩阵执行策略的信息。
+ * For workflows with a matrix, the `strategy` context contains information about the matrix execution strategy for the current job.
  *
- * 此上下文针对工作流程运行中的每项作业而改变。 您可以从工作流程中的任何作业或步骤访问此上下文。
+ * This context changes for each job in a workflow run.
+ * You can access this context from any job or step in a workflow.
  *
- * @example
+ * Example contents of the strategy context
+ *
+ * The following example contents of the `strategy` context is from a matrix with four jobs, and is taken from the final job.
+ * Note the difference between the zero-based `job-index` number, and job-total which is not zero-based.
+ * ```json
  * {
  *   "fail-fast": true,
  *   "job-index": 3,
  *   "job-total": 4,
  *   "max-parallel": 4
  * }
+ * ```
  */
 export interface Strategy {
   /**
-   * 如果此计算结果为 true，那么当矩阵中的任何作业失败时，将会取消所有正在进行的作业。
-   * 有关详细信息，请参阅“{@link https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategyfail-fast GitHub Actions 的工作流语法}”。
+   * When this evaluates to true, all in-progress jobs are canceled if any job in a matrix fails.
+   * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategyfail-fast Workflow syntax for GitHub Actions}."
    */
   'fail-fast': boolean;
 
   /**
-   * 矩阵中当前作业的索引。 注意：此数字是从零开始的数字。 矩阵中的第一个作业索引为 0。
+   * The index of the current job in the matrix.
+   * ***Note:*** This number is a zero-based number. The first job's index in the matrix is `0`.
    */
   'job-index': number;
 
   /**
-   * 矩阵中的作业总数。
-   *
-   * 注意：此数字不是从零开始的数字。 例如，对于具有四个作业的矩阵，job-total 的值为 4。
+   * The total number of jobs in the matrix.
+   * ***Note:*** This number is not a zero-based number.
+   * For example, for a matrix with four jobs, the value of job-total is `4`.
    */
   'job-total': number;
 
   /**
-   * 使用 matrix 作业策略时可以同时运行的最大作业数。
+   * The maximum number of jobs that can run simultaneously when using a matrix job strategy.
+   * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategymax-parallel Workflow syntax for GitHub Actions}."
    */
   'max-parallel': number;
 }

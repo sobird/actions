@@ -1,5 +1,7 @@
 /**
- * runner 上下文包含正在执行当前作业的运行器相关信息。
+ * The `runner` context contains information about the runner that is executing the current job.
+ *
+ * This context changes for each job in a workflow run.
  *
  * @example
  * {
@@ -12,48 +14,41 @@
  */
 export interface Runner {
   /**
-   * 执行作业的运行器的名称。
-   *
-   * 此名称在工作流运行中可能并不唯一，因为存储库和组织级别的运行器可以使用同一名称。
+   * The name of the runner executing the job.
+   * This name may not be unique in a workflow run as runners at the repository and organization levels could use the same name.
    */
   name: string;
   /**
-   * 执行作业的运行器的操作系统。
-   *
-   * 可能的值为 `Linux`、`Windows` 或 `macOS`。
+   * The operating system of the runner executing the job. Possible values are `Linux`, `Windows`, or `macOS`.
    */
   os: 'Linux' | 'Windows' | 'macOS';
 
   /**
-   * 执行作业的运行器的体系结构。
-   *
-   * 可能的值为 X86、X64、ARM 或 ARM64。
+   * The architecture of the runner executing the job. Possible values are `X86`, `X64`, `ARM`, or `ARM64`.
    */
   arch: 'X86' | 'X64' | 'ARM' | 'ARM64';
 
   /**
-   * 运行器临时目录的路径。
-   *
-   * 此目录在每个作业的开始和结束时都是空的。
-   * 注意，如果运行者的用户帐户没有权限删除这些文件，则不会被删除。
+   * The path to a temporary directory on the runner.
+   * This directory is emptied at the beginning and end of each job.
+   * Note that files will not be removed if the runner's user account does not have permission to delete them.
    */
   temp: string;
 
   /**
-   * 包含 GitHub 托管运行器预安装工具的目录路径。
-   * 有关详细信息，请参阅“{@link https://docs.github.com/zh/actions/using-github-hosted-runners/about-github-hosted-runners#supported-software 使用 GitHub 托管的运行器}”。
+   * The path to the directory containing preinstalled tools for GitHub-hosted runners.
+   * For more information, see "{@link https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-software Using GitHub-hosted runners}".
    */
   tool_cache: string;
   /**
-   * 仅当启用{@link https://docs.github.com/zh/actions/monitoring-and-troubleshooting-workflows/enabling-debug-logging 调试日志记录}并且始终具有值 1 时，才会进行此设置。
-   * 它可以用作指示器，以便在自己的作业步骤中启用更多调试或详细日志记录。
+   * This is set only if {@link https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/enabling-debug-logging debug logging} is enabled, and always has the value of 1.
+   * It can be useful as an indicator to enable additional debugging or verbose logging in your own job steps.
    */
   debug: string;
 
   /**
-   * 执行作业的运行器的环境。
-   *
-   * 可能的值包括：对于 GitHub 提供的 GitHub 托管的运行器为 `github-hosted`，对于存储库所有者配置的自承载运行器为 `self-hosted`。
+   * The environment of the runner executing the job.
+   * Possible values are: `github-hosted` for GitHub-hosted runners provided by GitHub, and `self-hosted` for self-hosted runners configured by the repository owner.
    */
   environment: 'github-hosted' | 'self-hosted`';
 }

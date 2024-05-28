@@ -1,16 +1,37 @@
 /**
- * `needs` 上下文包含定义为当前作业直接依赖项的所有作业的输出。
- * 请注意，这不包括隐式依赖作业（例如依赖作业的依赖作业）。
+ * The `needs` context contains outputs from all jobs that are defined as a direct dependency of the current job.
+ * Note that this doesn't include implicitly dependent jobs (for example, dependent jobs of a dependent job).
+ * For more information on defining job dependencies, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idneeds Workflow syntax for GitHub Actions}."
+ *
+ * This context is only populated for workflow runs that have dependent jobs, and changes for each job in a workflow run.
+ * You can access this context from any job or step in a workflow.
+ *
+ * Example contents of the needs context
+ *
+ * The following example contents of the needs context shows information for two jobs that the current job depends on.
+ * ```json
+ * {
+ *   "build": {
+ *     "result": "success",
+ *     "outputs": {
+ *       "build_id": "123456"
+ *     }
+ *   },
+ *   "deploy": {
+ *     "result": "failure",
+ *     "outputs": {}
+ *   }
+ * }
+ * ```
  */
 export type Needs = Record<string, {
   /**
-   * 可重用工作流中作业的输出集。
+   * The set of outputs of a job that the current job depends on.
    */
   outputs: Record<string, string>;
   /**
-   * 可重用工作流中作业的结果。
-   *
-   * 可能的值为 `success`、`failure`、`cancelled` 或 `skipped`。
+   * The result of a job that the current job depends on.
+   * Possible values are `success`, `failure`, `cancelled`, or `skipped`.
    */
   result: 'success' | 'failure' | 'cancelled' | 'skipped';
 }>;

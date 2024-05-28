@@ -1,31 +1,31 @@
 export interface Step {
   /**
-   * 为步骤定义的输出集。 有关详细信息，请参阅“{@link https://docs.github.com/zh/actions/creating-actions/metadata-syntax-for-github-actions#outputs-for-docker-container-and-javascript-actions GitHub Actions 的元数据语法}”。
+   * The set of outputs defined for the step.
+   * For more information, see "{@link https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions#outputs-for-docker-container-and-javascript-actions Metadata syntax for GitHub Actions}."
    */
   outputs: Record<string, string>;
   /**
-   * 应用 {@link https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepscontinue-on-error continue-on-error} 后完成的步骤的结果。
+   * The result of a completed step after {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepscontinue-on-error continue-on-error} is applied.
    *
-   * 可能的值为 `success`、`failure`、`cancelled` 或 `skipped`。
-   * 当 `continue-on-error` 步骤失败时，`outcome` 是 `failure`，但最终 `conclusion` 是 `success`。
+   * Possible values are `success`, `failure`, `cancelled`, or `skipped`. When a continue-on-error step fails, the outcome is failure, but the final conclusion is success.
    */
   conclusion: 'success' | 'failure' | 'cancelled' | 'skipped';
 
   /**
-   * 应用 continue-on-error 前完成的步骤的结果。
+   * The result of a completed step before {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepscontinue-on-error continue-on-error} is applied.
    *
-   * 可能的值为 success、failure、cancelled 或 skipped。
-   * 当 continue-on-error 步骤失败时，outcome 是 failure，但最终 conclusion 是 success。
+   * Possible values are `success`, `failure`, `cancelled`, or `skipped`. When a continue-on-error step fails, the outcome is failure, but the final conclusion is success.
    */
   outcome: 'success' | 'failure' | 'cancelled' | 'skipped';
 }
 
 /**
- * `steps` 上下文包含有关当前作业中已指定 id 且已运行的步骤的信息。
+ * The `steps` context contains information about the steps in the current job that have an {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsid `id`} specified and have already run.
  *
- * 此上下文针对作业中的每个步骤而改变。 您可以从作业中的任何步骤访问此上下文。
+ * This context changes for each step in a job. You can access this context from any step in a job.
  *
  * @example
+ * ```json
  * {
  *   "checkout": {
  *     "outputs": {},
@@ -40,5 +40,6 @@ export interface Step {
  *     "conclusion": "success"
  *   }
  * }
+ * ```
  */
 export type Steps = Record<string, Step>;

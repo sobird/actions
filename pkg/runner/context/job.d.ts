@@ -5,56 +5,44 @@ export interface Container {
     password: string;
   }
   env: object;
+  /**
+   * The exposed ports of the service container.
+   */
   ports: Record<string, string>;
   volumes: Record<string, string>;
   options: string[];
   /**
-     * 容器的 ID。
-     */
+   * The ID of the service container.
+   */
   id: string;
   /**
-   * 容器网络的 ID。 运行程序创建作业中所有容器使用的网络。
+   * The ID of the service container network.
+   * The runner creates the network used by all containers in a job.
    */
   network: string;
 }
 
 /**
- * job 上下文包含当前正在运行的作业相关信息。
+ * The job context contains information about the currently running job.
  *
- * 此上下文针对工作流程运行中的每项作业而改变。 您可以从作业中的任何步骤访问此上下文
- *
- * @example
- * ```json
- * {
- *   "status": "success",
- *   "container": {
- *     "network": "github_network_53269bd575974817b43f4733536b200c"
- *    },
- *   "services": {
- *     "postgres": {
- *       "id": "60972d9aa486605e66b0dad4abb638dc3d9116f566579e418166eedb8abb9105",
- *       "ports": {
- *         "5432": "49153"
- *        },
- *       "network": "github_network_53269bd575974817b43f4733536b200c"
- *      }
- *   }
- * }
- * ```
+ * This context changes for each job in a workflow run. You can access this context from any step in a job.
  */
 export interface Job {
   /**
-   * 作业的容器相关信息。 有关容器的详细信息，请参阅“{@link https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idcontainer GitHub Actions 的工作流语法}”。
+   * Information about the job's container.
+   *
+   * For more information about containers, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idcontainer Workflow syntax for GitHub Actions}."
    */
   container: Container
   /**
-   * 为作业创建的服务容器
+   * The service containers created for a job.
+   *
+   * For more information about service containers, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idservices Workflow syntax for GitHub Actions}."
    */
   services: Record<string, Container>;
   /**
-   * 作业的当前状态。
-   *
-   * 可能的值为 `success`、`failure` 或 `cancelled`。
+   * The current status of the job.
+   * Possible values are `success`, `failure`, or `cancelled`.
    */
   status: 'success' | 'failure' | 'cancelled';
 }
