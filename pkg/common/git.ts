@@ -5,13 +5,18 @@
  */
 
 import fs from 'node:fs';
-// import os from 'node:os';
+import os from 'node:os';
 import path from 'node:path';
 
 import GitUrlParse from 'git-url-parse';
-import simpleGit from 'simple-git';
+import log4js from 'log4js';
+import simpleGit, { CheckRepoActions } from 'simple-git';
+
+import Executor from './executor';
 
 export { GitError } from 'simple-git';
+
+const logger = log4js.getLogger();
 
 class Git {
   git;
@@ -45,29 +50,18 @@ class Git {
     return (await this.git.log(['--pretty=%H', '-1', filename])).latest?.hash;
   }
 
-  async fetch(url: string, ref: string = 'HEAD') {
-    const { git } = this;
-
-    const options = ['--recurse-submodules'];
-    await git.clone(url, this.base, options);
-
-    const sha = await git.revparse(ref);
-    await git.checkout(sha);
-
-    return sha;
-  }
-
-  async clone(repoPath: string, refName: string) {
+  async clone(repoPath: string, ref: string = 'HEAD') {
     const { git } = this;
     try {
       await git.status();
+      await git.fetch();
       // logger.info(`Repository already exists at ${localPath}`);
     } catch (err) {
-      const options = ['--recurse-submodules', '--branch', refName];
-      await git.clone(repoPath, options);
+      const options = ['--recurse-submodules'];
+      await git.clone(repoPath, this.base, options);
     }
 
-    await git.checkout(refName);
+    await git.checkout(ref);
   }
 
   async revision() {
@@ -162,19 +156,36 @@ class Git {
     return current;
   }
 
-  static async Clone(repoPath: string, localPath: string, refName: string) {
+  static async Clone(repoPath: string, localPath: string, ref: string) {
     fs.mkdirSync(localPath, { recursive: true });
     const git = simpleGit(localPath);
 
     try {
       await git.status();
+      await git.fetch();
       // logger.info(`Repository already exists at ${localPath}`);
     } catch (err) {
-      const options = ['--recurse-submodules', '--branch', refName];
+      const options = ['--recurse-submodules'];
       await git.clone(repoPath, localPath, options);
     }
 
-    await git.checkout(refName);
+    await git.checkout(ref);
+
+    return git;
+  }
+
+  static CloneExecutor(repoPath: string, localPath: string, ref: string = 'HEAD', offlineMode: boolean = false) {
+    //
+    return new Executor(async () => {
+      logger.info("\u2601  git clone '%s' # ref=%s", repoPath, ref);
+      logger.debug('cloning %s to %s', repoPath, localPath);
+
+      const git = await Git.Clone(repoPath, localPath, ref);
+
+      if (!offlineMode) {
+        git.pull();
+      }
+    });
   }
 }
 
@@ -182,9 +193,9 @@ export default Git;
 
 // const testTmp = path.join(os.tmpdir(), 'git-test');
 // Git.Clone('https://github.com/sobird/actions-test', testTmp, 'main');
-
-// const git = new Git('/Users/sobird/test/git-test');
-// await git.fetch('https://gitea.com/actions/checkout', 'v4', 'ddd');
+// console.log('testTmp', testTmp);
+// const git = new Git(testTmp);
+// await git.clone('https://github.com/sobird/actions-test.git', 'test');
 // // get short sha
 // // const ref = await git.revparse();
 // const sha = await git.revparse('refs/tags/v1.2.3');
