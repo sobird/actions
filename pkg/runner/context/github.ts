@@ -93,7 +93,7 @@ export class Github {
    * The webhooks for each GitHub Actions event is linked in "{@link https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows Events that trigger workflows}."
    * For example, for a workflow run triggered by the {@link https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#push `push` event}, this object contains the contents of the {@link https://docs.github.com/en/webhooks-and-events/webhooks/webhook-events-and-payloads#push push webhook payload}.
    */
-  event: object;
+  event: Record<string, any>;
 
   /**
    * The name of the event that triggered the workflow run.
@@ -162,7 +162,7 @@ export class Github {
   /**
    * The type of ref that triggered the workflow run. Valid values are `branch` or `tag`.
    */
-  ref_type: 'branch' | 'tag';
+  ref_type: 'branch' | 'tag' | '';
 
   /**
    * The owner and repository name. For example, `octocat/Hello-World`.
@@ -314,5 +314,42 @@ export class Github {
     this.workflow_ref = github.workflow_ref;
     this.workflow_sha = github.workflow_sha;
     this.workspace = github.workspace;
+
+    this.setRef();
+  }
+
+  setRef() {
+    if (this.event_name === 'pull_request' || this.event_name === 'pull_request_target') {
+      if (!this.base_ref) {
+        this.base_ref = this.event?.pull_request?.base?.ref;
+      }
+      if (!this.head_ref) {
+        this.head_ref = this.event?.pull_request?.head?.ref;
+      }
+    }
+  }
+
+  setRefTypeAndName() {
+    let refType: Github['ref_type'] = '';
+    let refName = '';
+
+    if (this.ref.startsWith('refs/tags/')) {
+      refType = 'tag';
+      refName = this.ref.substring('refs/tags/'.length);
+    } else if (this.ref.startsWith('refs/heads/')) {
+      refType = 'branch';
+      refName = this.ref.substring('refs/heads/'.length);
+    } else if (this.ref.startsWith('refs/pull/')) {
+      // refType = 'pull';
+      refName = this.ref.substring('refs/pull/'.length);
+    }
+
+    if (!this.ref_type) {
+      this.ref_type = refType;
+    }
+
+    if (!this.ref_name) {
+      this.ref_name = refName;
+    }
   }
 }

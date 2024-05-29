@@ -28,6 +28,7 @@ class Runner {
     // this.setupEnvs();
     // this.setupGiteaEnv();
     // this.setupCacheEnv();
+    this.context = new Context();
   }
 
   executor() {

@@ -7,4 +7,5 @@ export { asyncFunction } from './asyncFunction';
 export { isEmptyDeep } from './isEmptyObject';
 export { Pen } from './printer';
 export { appendEnvs } from './appendEnvs';
+export { generateId } from './generateId';
 export { default as lodash } from './lodash';
