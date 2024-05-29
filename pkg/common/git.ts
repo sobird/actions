@@ -5,7 +5,7 @@
  */
 
 import fs from 'node:fs';
-import os from 'node:os';
+// import os from 'node:os';
 import path from 'node:path';
 
 import GitUrlParse from 'git-url-parse';
@@ -57,13 +57,17 @@ class Git {
     return sha;
   }
 
-  async clone(repoPath: string) {
+  async clone(repoPath: string, refName: string) {
+    const { git } = this;
     try {
-      const options = ['--recurse-submodules'];
-      await this.git.clone(repoPath, options);
-    } catch (error) {
-      // logger.Errorf('Unable to clone %v %s: %v', input.URL, refName, err);
+      await git.status();
+      // logger.info(`Repository already exists at ${localPath}`);
+    } catch (err) {
+      const options = ['--recurse-submodules', '--branch', refName];
+      await git.clone(repoPath, options);
     }
+
+    await git.checkout(refName);
   }
 
   async revision() {
@@ -158,13 +162,9 @@ class Git {
     return current;
   }
 
-  static async Clone(repoPath: string, localPath: string, refName: string, token?: string) {
+  static async Clone(repoPath: string, localPath: string, refName: string) {
     fs.mkdirSync(localPath, { recursive: true });
     const git = simpleGit(localPath);
-
-    // git.checkIsRepo().then((isRepo) => {
-    //   console.log('isRepo', isRepo);
-    // });
 
     try {
       await git.status();
@@ -174,18 +174,14 @@ class Git {
       await git.clone(repoPath, localPath, options);
     }
 
-    // await git.addRemote('origin', `${repoPath}`, {
-    //   'x-access-token': 122,
-    // });
-
     await git.checkout(refName);
   }
 }
 
 export default Git;
 
-const testTmp = path.join(os.tmpdir(), 'git-test');
-Git.Clone('https://github.com/sobird/actions-test', testTmp, 'main');
+// const testTmp = path.join(os.tmpdir(), 'git-test');
+// Git.Clone('https://github.com/sobird/actions-test', testTmp, 'main');
 
 // const git = new Git('/Users/sobird/test/git-test');
 // await git.fetch('https://gitea.com/actions/checkout', 'v4', 'ddd');

@@ -135,6 +135,11 @@ describe('Test Git', () => {
   });
 
   it('git Clone test case', async () => {
-    Git.Clone('https://github.com/sobird/actions-test', testTmp);
+    const dir = path.join(testTmp, 'actions-test');
+    const git = new Git(dir);
+    await Git.Clone('https://github.com/sobird/actions-test', dir, 'master');
+
+    const isRepo = await git.git.checkIsRepo();
+    expect(isRepo).toBe(true);
   });
 });
