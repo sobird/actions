@@ -315,10 +315,10 @@ export class Github {
     this.workflow_sha = github.workflow_sha;
     this.workspace = github.workspace;
 
-    this.setRef();
+    this.setBaseAndHeadRef();
   }
 
-  setRef() {
+  setBaseAndHeadRef() {
     if (this.event_name === 'pull_request' || this.event_name === 'pull_request_target') {
       if (!this.base_ref) {
         this.base_ref = this.event?.pull_request?.base?.ref;

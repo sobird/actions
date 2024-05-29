@@ -50,8 +50,8 @@ describe('Test Git', () => {
       await git.git.init();
       await git.git.addRemote('origin', url);
 
-      const repository = await git.repository();
-      expect(repository).toBe(slug);
+      const repoInfo = await git.repoInfo();
+      expect(repoInfo.slug).toBe(slug);
     }
   });
 
@@ -125,12 +125,16 @@ describe('Test Git', () => {
 
       await item.prepare(git.git);
       try {
-        const refname = await git.refname();
+        const refname = await git.ref();
         await item.assert(refname);
       } catch (err) {
         await item.assert('', err as Error);
       }
       // console.log('ref', ref);
     }
+  });
+
+  it('git Clone test case', async () => {
+    Git.Clone('https://github.com/sobird/actions-test', testTmp);
   });
 });

@@ -5,6 +5,8 @@
  */
 
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 import GitUrlParse from 'git-url-parse';
 import simpleGit from 'simple-git';
@@ -14,8 +16,11 @@ export { GitError } from 'simple-git';
 class Git {
   git;
 
+  name: string;
+
   constructor(public base: string) {
     fs.mkdirSync(base, { recursive: true });
+    this.name = path.basename(path.resolve(base));
 
     this.git = simpleGit(base, {
       progress({ method, stage, progress }) {
@@ -117,23 +122,34 @@ class Git {
 
   /**
    * 获取本地仓库名称，形如： user/repo
-   *
-   * @param remoteName
-   * @returns
    */
-  async repository(remoteName?: string) {
+  async repoInfo(remoteName?: string) {
     const remoteURL = await this.remoteURL(remoteName);
     if (!remoteURL) {
-      return '';
+      // 认为第一条提交的用户为owner
+      const { latest } = await this.firstLog();
+      const owner = latest?.author_name;
+      const { name } = this;
+      return {
+        owner,
+        name,
+        slug: `${owner}/${name}`,
+        url: '',
+      };
     }
-    const info = GitUrlParse(remoteURL.refs.fetch);
 
-    return info.full_name;
+    const { owner, name, full_name: slug } = GitUrlParse(remoteURL.refs.fetch);
+
+    return {
+      owner,
+      name,
+      slug,
+      url: remoteURL.refs.fetch,
+    };
   }
 
   async remoteURL(remoteName: string = 'origin') {
-    const remotes = await this.git.getRemotes(true);
-    return remotes.find((item) => { return item.name === remoteName; });
+    return (await this.git.getRemotes(true)).find((remote) => { return remote.name === remoteName; });
   }
 
   static async Ref(gitDir: string) {
@@ -142,14 +158,34 @@ class Git {
     return current;
   }
 
-  static async Clone(repoPath: string, localPath: string) {
-    const git = simpleGit();
-    const options = ['--recurse-submodules'];
-    await git.clone(repoPath, localPath, options);
+  static async Clone(repoPath: string, localPath: string, refName: string, token?: string) {
+    fs.mkdirSync(localPath, { recursive: true });
+    const git = simpleGit(localPath);
+
+    // git.checkIsRepo().then((isRepo) => {
+    //   console.log('isRepo', isRepo);
+    // });
+
+    try {
+      await git.status();
+      // logger.info(`Repository already exists at ${localPath}`);
+    } catch (err) {
+      const options = ['--recurse-submodules', '--branch', refName];
+      await git.clone(repoPath, localPath, options);
+    }
+
+    // await git.addRemote('origin', `${repoPath}`, {
+    //   'x-access-token': 122,
+    // });
+
+    await git.checkout(refName);
   }
 }
 
 export default Git;
+
+const testTmp = path.join(os.tmpdir(), 'git-test');
+Git.Clone('https://github.com/sobird/actions-test', testTmp, 'main');
 
 // const git = new Git('/Users/sobird/test/git-test');
 // await git.fetch('https://gitea.com/actions/checkout', 'v4', 'ddd');

@@ -19,6 +19,7 @@ import Artifact from '@/pkg/artifact';
 import ArtifactCache from '@/pkg/artifact/cache';
 import Git from '@/pkg/common/git';
 import { getSocketAndHost } from '@/pkg/docker';
+import Context from '@/pkg/runner/context';
 import WorkflowPlanner from '@/pkg/workflow/planner';
 import { appendEnvs, generateId } from '@/utils';
 
@@ -229,20 +230,35 @@ export const runCommand = new Command('run')
 
     // run the plan
     const username = await git.username();
-    const repository = await git.repository();
-    console.log('repository', repository);
+    const repoInfo = await git.repoInfo();
+
     const actor = options.actor || username || 'actor';
     const actor_id = generateId(actor);
-    const repository_id = generateId(repository);
-    console.log('actor_id', actor_id);
-    console.log('repository_id', repository_id);
+
     const { sha } = await git.revision();
     console.log('sha', sha);
 
-    const repository_owner = (await git.firstLog()).latest?.author_name || 'owner';
+    const repository_owner = repoInfo.owner || 'owner';
+    const repository = `${repository_owner}/${repoInfo.name}`;
+    const repository_id = generateId(repository);
     const repository_owner_id = generateId(repository_owner);
-    console.log('repository_owner', repository_owner);
-    console.log('repository_owner_id', repository_owner_id);
+    const repositoryUrl = repoInfo.url;
+
+    const context: DeepPartial<Context> = {
+      github: {
+        actor,
+        actor_id,
+        repository,
+        repository_id,
+        repository_owner,
+        repository_owner_id,
+        repositoryUrl,
+
+        event_name: eventName,
+      },
+    };
+
+    console.log('context', context);
 
     // console.log('plan', plan.stages[0].runs[0].job.spread());
     console.log('options', options);

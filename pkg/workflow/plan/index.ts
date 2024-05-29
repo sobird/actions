@@ -74,7 +74,7 @@ export default class Plan {
               [jobId]: job,
             };
 
-            const runner = new Runner(new Run(jobId, workflow), workflow);
+            const runner = new Runner(new Run(jobId, workflow));
 
             return runner.executor();
           });
