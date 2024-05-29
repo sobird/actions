@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable no-param-reassign */
 /**
  * Run workflows
@@ -19,7 +20,7 @@ import ArtifactCache from '@/pkg/artifact/cache';
 import Git from '@/pkg/common/git';
 import { getSocketAndHost } from '@/pkg/docker';
 import WorkflowPlanner from '@/pkg/workflow/planner';
-import { appendEnvs } from '@/utils';
+import { appendEnvs, generateId } from '@/utils';
 
 import { bugReportOption } from './bugReportOption';
 import { graphOption } from './graphOption';
@@ -230,10 +231,18 @@ export const runCommand = new Command('run')
     const username = await git.username();
     const repository = await git.repository();
     console.log('repository', repository);
-    const actor = options.actor || username;
-    console.log('actor', actor);
+    const actor = options.actor || username || 'actor';
+    const actor_id = generateId(actor);
+    const repository_id = generateId(repository);
+    console.log('actor_id', actor_id);
+    console.log('repository_id', repository_id);
     const { sha } = await git.revision();
     console.log('sha', sha);
+
+    const repository_owner = (await git.firstLog()).latest?.author_name || 'owner';
+    const repository_owner_id = generateId(repository_owner);
+    console.log('repository_owner', repository_owner);
+    console.log('repository_owner_id', repository_owner_id);
 
     // console.log('plan', plan.stages[0].runs[0].job.spread());
     console.log('options', options);

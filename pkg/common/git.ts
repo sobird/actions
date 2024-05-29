@@ -24,6 +24,10 @@ class Git {
     });
   }
 
+  async firstLog() {
+    return this.git.log([await this.git.firstCommit()]);
+  }
+
   async username() {
     const { git } = this;
     const gitUsername = (await git.getConfig('user.name')).value;
