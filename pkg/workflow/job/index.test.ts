@@ -1,19 +1,22 @@
 /* eslint-disable no-template-curly-in-string */
-import Job from '.';
-import Strategy from './strategy';
+import Runner from '@/pkg/runner';
 
-const workflowJob = new Job({
-  name: 'job1',
-  strategy: new Strategy({
-    matrix: {
-      os: ['ubuntu-latest', 'macos-latest'],
-      node: [18, 20],
-    },
-  }),
-  'runs-on': '${{ matrix.platform }}',
+import Workflow from '..';
+import { Run } from '../plan';
+
+const workflow = Workflow.Read(`${__dirname}/__mocks__/workflow.yaml`);
+const runner = new Runner(new Run('job1', workflow), {
+  noSkipCheckout: true,
+});
+const workflowJob = workflow.jobs.job1;
+workflowJob.name = 'job1';
+workflowJob.uses = `${__dirname}/__mocks__/workflow-2.yml`;
+
+vi.setConfig({
+  testTimeout: 10000,
 });
 
-describe('test workflow job class', () => {
+describe('test workflow job', () => {
   it('parseMatrix', () => {
     const jobNames = workflowJob.spread().map((job) => {
       return job.name;
@@ -25,5 +28,10 @@ describe('test workflow job class', () => {
       'job1 (macos-latest, 18)',
       'job1 (macos-latest, 20)',
     ]);
+  });
+
+  it('localReusableWorkflowExecutor', async () => {
+    const executor = await workflowJob.localReusableWorkflowExecutor(runner);
+    await executor.execute();
   });
 });

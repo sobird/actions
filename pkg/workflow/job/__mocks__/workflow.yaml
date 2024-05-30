@@ -1,0 +1,40 @@
+name: Actions Workflow Test
+run-name: ${{ github.actor }} is testing out Actions  
+on: 
+  pull_request:
+  push:
+      branches:
+        - main
+  release:
+    types: [published]
+  label:
+    types:
+      - created
+  schedule:
+    - cron: '30 5 * * 1,3'
+    - cron: '30 5 * * 2,4'
+
+permissions:
+  contents: read
+
+jobs:
+  job1:
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      matrix:
+        os: ['ubuntu-latest', 'macos-latest']
+        node: [18, 20]
+      fail-fast: false
+    uses: ./.github/workflows/wf.yaml
+    steps:
+      - run: echo "The job was automatically triggered by a ${{ github.event_name }} ddd dsdsd dd event."
+      - run: echo "This job is now running on a ${{ runner.os }} server hosted by !"
+      - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "The workflow is now ready to test your code on the runner."
+      - name: List files in the repository
+        run: |
+          ls ${{ github.workspace }}
+      - run: echo "This job's status is ${{ job.status }}."

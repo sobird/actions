@@ -578,7 +578,8 @@ class Job {
       uses = uses.substring(2);
     }
     if (runner.config.noSkipCheckout) {
-      return (await WorkflowPlanner.Collect(uses)).planEvent('workflow_call').executor();
+      const workflow = await WorkflowPlanner.Collect(uses);
+      return workflow.planEvent('workflow_call').executor();
     }
 
     const { repository, sha } = runner.context.github;

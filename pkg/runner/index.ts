@@ -28,6 +28,8 @@ class Runner {
     return new Executor(async () => {
       await asyncFunction(2000);
       // todo
+      console.log('jobId', this.run.jobId);
+      console.log('jobName', this.run.name);
       console.log('workflow file:', this.run.workflow.file);
       this.run.workflow.on.push = 123;
       console.log('workflow sha:', this.run.workflow.sha);

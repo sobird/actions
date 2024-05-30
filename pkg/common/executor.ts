@@ -30,10 +30,10 @@ class Executor {
   }
 
   // Executor 的 Then 方法用于链式调用执行器
-  then(then: Executor) {
+  next(next: Executor) {
     return new Executor(async (ctx) => {
       await this.execute(ctx);
-      await then.execute(ctx);
+      await next.execute(ctx);
     });
   }
 
