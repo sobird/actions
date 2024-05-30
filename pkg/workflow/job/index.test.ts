@@ -6,7 +6,7 @@ import { Run } from '../plan';
 
 const workflow = Workflow.Read(`${__dirname}/__mocks__/workflow.yaml`);
 const runner = new Runner(new Run('job1', workflow), {
-  noSkipCheckout: true,
+  skipCheckout: true,
 });
 const workflowJob = workflow.jobs.job1;
 workflowJob.name = 'job1';

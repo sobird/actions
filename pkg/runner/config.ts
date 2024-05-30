@@ -26,6 +26,16 @@ export interface Config {
   workdir: string;
 
   /**
+   * Bind the workdir to the job container.
+   */
+  bindWorkdir: boolean;
+
+  /**
+   * Use a custom ActionCache Implementation.
+   */
+  actionCache: ActionCache;
+
+  /**
    * Path used for caching action contents.
    */
   actionCacheDir: string;
@@ -36,19 +46,24 @@ export interface Config {
   actionOfflineMode: boolean;
 
   /**
-   * Bind the workdir to the job container.
-   */
-  bindWorkdir: boolean;
-
-  /**
    * Name of the event to run.
    */
   eventName: string;
 
   /**
+   * The content of JSON file to use for event.json in containers, overrides EventPath.
+   */
+  eventJSON: string;
+
+  /**
    * Path to the JSON file to use for event.json in containers.
    */
   eventPath: string;
+
+  /**
+   * Remote name in local git repo config.
+   */
+  remoteName: string;
 
   /**
    * Name of the main branch for this repository.
@@ -146,6 +161,37 @@ export interface Config {
   containerOptions: string;
 
   /**
+   * List of kernel capabilities to add to the containers.
+   */
+  containerCapAdd: string[];
+
+  /**
+    * List of kernel capabilities to remove from the containers.
+    */
+  containerCapDrop: string[];
+
+  /**
+   * The prefix of container name.
+   */
+  containerNamePrefix: string;
+
+  /**
+   * The max lifetime of job containers in milliseconds.
+   */
+  containerMaxLifetime: number;
+
+  /**
+   * The network mode of job containers (the value of --network).
+   * @type {NetworkMode}
+   */
+  containerNetworkMode: HostConfig['NetworkMode'];
+
+  /**
+    * Controls if the container is automatically removed upon workflow completion.
+    */
+  autoRemove: boolean;
+
+  /**
    * Controls if paths in .gitignore should not be copied into container, default true.
    */
   useGitIgnore: boolean;
@@ -156,44 +202,14 @@ export interface Config {
   githubInstance: string;
 
   /**
-   * List of kernel capabilities to add to the containers.
+   * artifact server address
    */
-  containerCapAdd: string[];
+  artifactServerAddress: string;
 
   /**
-   * List of kernel capabilities to remove from the containers.
+   * skip local actions/checkout.
    */
-  containerCapDrop: string[];
-
-  /**
-   * Controls if the container is automatically removed upon workflow completion.
-   */
-  autoRemove: boolean;
-
-  /**
-   * The path where the artifact server stores uploads.
-   */
-  artifactServerPath: string;
-
-  /**
-   * The address the artifact server binds to.
-   */
-  artifactServerAddr: string;
-
-  /**
-   * The port the artifact server binds to.
-   */
-  artifactServerPort: string;
-
-  /**
-   * Do not skip actions/checkout.
-   */
-  noSkipCheckout: boolean;
-
-  /**
-   * Remote name in local git repo config.
-   */
-  remoteName: string;
+  skipCheckout: boolean;
 
   /**
    * Use actions from GitHub Enterprise instance to GitHub.
@@ -211,37 +227,10 @@ export interface Config {
   matrix: { [key: string]: { [key: string]: boolean } };
 
   /**
-   * The network mode of job containers (the value of --network).
-   * @type {NetworkMode}
-   */
-  containerNetworkMode: HostConfig['NetworkMode'];
-
-  /**
-   * Use a custom ActionCache Implementation.
-   * @type {ActionCache}
-   */
-  actionCache: ActionCache;
-
-  /**
    * The preset github context, overrides some fields like DefaultBranch, Env, Secrets etc.
    * @type {GithubContext}
    */
   presetGitHubContext?: Github;
-
-  /**
-   * The content of JSON file to use for event.json in containers, overrides EventPath.
-   */
-  eventJSON: string;
-
-  /**
-   * The prefix of container name.
-   */
-  containerNamePrefix: string;
-
-  /**
-   * The max lifetime of job containers in milliseconds.
-   */
-  containerMaxLifetime: number;
 
   /**
    * The default actions web site.

@@ -406,7 +406,7 @@ class Job {
       const { name } = job;
 
       if (!name?.includes('${{') || !name.includes('}}')) {
-        job.name = `${name} (${Object.values(matrix).join(', ')})`;
+        job.name = `${name || this.#id} (${Object.values(matrix).join(', ')})`;
       }
 
       job.strategy.matrix = Object.entries(matrix).reduce((accu, [key, value]) => {
@@ -577,7 +577,7 @@ class Job {
     if (uses.startsWith('./')) {
       uses = uses.substring(2);
     }
-    if (runner.config.noSkipCheckout) {
+    if (runner.config.skipCheckout) {
       const workflow = await WorkflowPlanner.Collect(uses);
       return workflow.planEvent('workflow_call').executor();
     }
