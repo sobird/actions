@@ -4,15 +4,9 @@
  * sobird<i@sobird.me> at 2024/05/04 23:43:52 created.
  */
 
-import Executor, { Conditional } from './executor';
+import { asyncFunction } from '@/utils';
 
-function asyncFunction() {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve('1秒后执行');
-    }, 1000);
-  });
-}
+import Executor, { Conditional } from './executor';
 
 describe('Test Conditional', () => {
   it('evaluate() return true test case', () => {
@@ -191,7 +185,7 @@ describe('Parallel Executor', () => {
         maxCount = activeCount;
       }
 
-      await asyncFunction();
+      await asyncFunction(100);
       activeCount -= 1;
     });
 
@@ -211,7 +205,7 @@ describe('Parallel Executor', () => {
         maxCount = activeCount;
       }
 
-      await asyncFunction();
+      await asyncFunction(100);
       activeCount -= 1;
     });
 
@@ -238,5 +232,41 @@ describe('Parallel Executor', () => {
     await Executor.parallel(1).execute();
     expect(count).toBe(0);
     expect(maxCount).toBe(0);
+  });
+});
+
+describe('Mutex Executor', () => {
+  it('should complete executor', async () => {
+    let count = 0;
+    const executor = new Executor(async () => {
+      count += 1;
+    });
+
+    const mutexExecutor = Executor.Mutex(executor);
+    await mutexExecutor.execute();
+    expect(count).toBe(1);
+  });
+
+  it('should acquire and release the mutex lock', async () => {
+    let count = 0;
+    let activeCount = 0;
+    let maxCount = 0;
+    const executor = new Executor(async () => {
+      count += 1;
+      activeCount += 1;
+      if (activeCount > maxCount) {
+        maxCount = activeCount;
+      }
+
+      await asyncFunction(100);
+      activeCount -= 1;
+    });
+
+    const mutexExecutor = Executor.Mutex(executor);
+
+    await Executor.parallel(3, mutexExecutor, mutexExecutor, mutexExecutor, mutexExecutor).execute();
+    expect(count).toBe(4);
+    // 即便并行运行mutexExecutor，也会按顺序一个一个执行
+    expect(maxCount).toBe(1);
   });
 });

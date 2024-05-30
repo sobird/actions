@@ -159,7 +159,7 @@ class Executor {
   }
 
   // 创建一个互斥的执行器
-  static mutex(executor: Executor) {
+  static Mutex(executor: Executor) {
     return new Executor(async () => {
       const release = await mutex.acquire();
       try {

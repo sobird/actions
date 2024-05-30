@@ -16,7 +16,7 @@ async function dbQuery() {
 }
 
 function dbQueryExecutor() {
-  return Executor.mutex(new Executor(async () => {
+  return Executor.Mutex(new Executor(async () => {
     const result = await dbQuery();
     console.log('Result:', result);
   }));
