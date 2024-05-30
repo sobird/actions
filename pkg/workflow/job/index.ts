@@ -4,16 +4,22 @@
  *
  * sobird<i@sobird.me> at 2024/05/02 20:26:29 created.
  */
+
+import path from 'node:path';
+
 import log4js from 'log4js';
 
 import Executor from '@/pkg/common/executor';
+import Git from '@/pkg/common/git';
 import Reporter from '@/pkg/reporter';
-import { asyncFunction } from '@/utils';
+import Runner from '@/pkg/runner';
+import { asyncFunction, safeFilename } from '@/utils';
 
 import Container from './container';
 import Step from './step';
 import StepExecutorRun from './step/run';
 import Strategy from './strategy';
+import WorkflowPlanner from '../planner';
 import {
   WorkflowDispatchInputs, Permissions, Concurrency, Defaults,
 } from '../types';
@@ -560,6 +566,49 @@ class Job {
         },
       });
     }));
+  }
+
+  async localReusableWorkflowExecutor(runner: Runner) {
+    let { uses } = this;
+    if (!uses) {
+      return new Executor(() => {});
+    }
+    // ./.github/workflows/wf.yml -> .github/workflows/wf.yml
+    if (uses.startsWith('./')) {
+      uses = uses.substring(2);
+    }
+    if (runner.config.noSkipCheckout) {
+      return (await WorkflowPlanner.Collect(uses)).planEvent('workflow_call').executor();
+    }
+
+    const { repository, sha } = runner.context.github;
+    // const remoteUses = `${repository}/${uses}@${sha}`;
+    // const remoteReusableWorkflow = Job.RemoteReusableWorkflow(remoteUses);
+    // if (!remoteReusableWorkflow) {
+    //   return Executor.Error(Error(`Expected format {owner}/{repo}/.{platform}/workflows/{filename}@{ref}. Actual ${uses} Input string was not in a correct format`));
+    // }
+
+    const workflowDir = path.join(runner.actionCacheDir, safeFilename(uses));
+    const url = new URL(repository, 'https://github.com"');
+    url.username = 'token';
+    url.password = runner.token;
+
+    return Executor.pipeline(Git.CloneIfRequiredExecutor(url.toString(), workflowDir, sha), (await WorkflowPlanner.Collect(uses)).planEvent('workflow_call').executor());
+  }
+
+  static RemoteReusableWorkflow(uses: string) {
+    // remote reusable workflow format: {owner}/{repo}/.{platform}/workflows/{filename}@{ref}
+    const reg = /^(.+)\/([^/]+)\/\.([^/]+)\/workflows\/([^@]+)@(.*)$/;
+    const matches = reg.exec(uses);
+    if (matches && matches.length === 6) {
+      return {
+        owner: matches[1],
+        repo: matches[2],
+        platform: matches[3],
+        filename: matches[4],
+        ref: matches[5],
+      };
+    }
   }
 }
 

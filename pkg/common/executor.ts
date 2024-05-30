@@ -92,18 +92,18 @@ class Executor {
   }
 
   /** 于条件创建一个执行器 */
-  static conditional(conditional: Conditional, trueExecutor: Executor, falseExecutor: Executor) {
+  static conditional(conditional: Conditional, trueExecutor: Executor, falseExecutor?: Executor) {
     return new Executor(async (ctx) => {
       if (await conditional.evaluate(ctx)) {
         await trueExecutor.execute(ctx);
       } else {
-        await falseExecutor.execute(ctx);
+        await falseExecutor?.execute(ctx);
       }
     });
   }
 
   /** 创建一个总是返回错误的执行器 */
-  static error(err: unknown) {
+  static Error(err: unknown) {
     return new Executor(() => { return Promise.reject(err); });
   }
 

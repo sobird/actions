@@ -12,7 +12,7 @@ import GitUrlParse from 'git-url-parse';
 import log4js from 'log4js';
 import simpleGit, { CheckRepoActions } from 'simple-git';
 
-import Executor from './executor';
+import Executor, { Conditional } from './executor';
 
 export { GitError } from 'simple-git';
 
@@ -186,6 +186,12 @@ class Git {
         git.pull();
       }
     });
+  }
+
+  static CloneIfRequiredExecutor(repoPath: string, localPath: string, ref: string = 'HEAD', offlineMode: boolean = false) {
+    return Executor.conditional(new Conditional(() => {
+      return !fs.existsSync(localPath);
+    }), Git.CloneExecutor(repoPath, localPath, ref, offlineMode));
   }
 }
 
