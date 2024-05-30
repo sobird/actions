@@ -501,7 +501,7 @@ class Job {
     // todo 处理 Context, strategy 和 matrix
 
     // todo
-    return Executor.parallel(1, new Executor(async () => {
+    return Executor.Parallel(1, new Executor(async () => {
       const entry = {
         data: [this.name],
         startTime: new Date(),

@@ -41,7 +41,7 @@ describe('Test Conditional', () => {
 
 describe('Test Static Method', () => {
   it('Empty Pipeline', async () => {
-    const emptyWorkflow = Executor.pipeline();
+    const emptyWorkflow = Executor.Pipeline();
     await expect(emptyWorkflow.execute()).resolves.not.toThrow();
   });
 
@@ -52,7 +52,7 @@ describe('Test Static Method', () => {
 
   it('multiple success case', async () => {
     let runcount = 0;
-    const successWorkflow = Executor.pipeline(new Executor(() => {
+    const successWorkflow = Executor.Pipeline(new Executor(() => {
       runcount += 1;
     }), new Executor(() => {
       runcount += 1;
@@ -130,7 +130,7 @@ describe('Test Conditional Executor', () => {
   it('Conditional Executor: return true case', async () => {
     let trueCount = 0;
     let falseCount = 0;
-    const conditionalExecutor = Executor.conditional(new Conditional(() => {
+    const conditionalExecutor = Executor.Conditional(new Conditional(() => {
       return true;
     }), new Executor(() => {
       trueCount += 1;
@@ -145,7 +145,7 @@ describe('Test Conditional Executor', () => {
   it('Conditional Executor: return false case', async () => {
     let trueCount = 0;
     let falseCount = 0;
-    const conditionalExecutor = Executor.conditional(new Conditional(async () => {
+    const conditionalExecutor = Executor.Conditional(new Conditional(async () => {
       return false;
     }), new Executor(() => {
       trueCount += 1;
@@ -160,7 +160,7 @@ describe('Test Conditional Executor', () => {
   it('Conditional Executor: return false string case', async () => {
     let trueCount = 0;
     let falseCount = 0;
-    const conditionalExecutor = Executor.conditional(new Conditional(async () => {
+    const conditionalExecutor = Executor.Conditional(new Conditional(async () => {
       return !!'false';
     }), new Executor(() => {
       trueCount += 1;
@@ -189,7 +189,7 @@ describe('Parallel Executor', () => {
       activeCount -= 1;
     });
 
-    await Executor.parallel(2, executor, executor, executor, executor).execute();
+    await Executor.Parallel(2, executor, executor, executor, executor).execute();
     expect(count).toBe(4);
     expect(maxCount).toBe(2);
   });
@@ -209,7 +209,7 @@ describe('Parallel Executor', () => {
       activeCount -= 1;
     });
 
-    await Executor.parallel(0, executor, executor, executor).execute();
+    await Executor.Parallel(0, executor, executor, executor).execute();
     expect(count).toBe(3);
     expect(maxCount).toBe(1);
   });
@@ -229,7 +229,7 @@ describe('Parallel Executor', () => {
     //   activeCount -= 1;
     // });
 
-    await Executor.parallel(1).execute();
+    await Executor.Parallel(1).execute();
     expect(count).toBe(0);
     expect(maxCount).toBe(0);
   });
@@ -264,7 +264,7 @@ describe('Mutex Executor', () => {
 
     const mutexExecutor = Executor.Mutex(executor);
 
-    await Executor.parallel(3, mutexExecutor, mutexExecutor, mutexExecutor, mutexExecutor).execute();
+    await Executor.Parallel(3, mutexExecutor, mutexExecutor, mutexExecutor, mutexExecutor).execute();
     expect(count).toBe(4);
     // 即便并行运行mutexExecutor，也会按顺序一个一个执行
     expect(maxCount).toBe(1);

@@ -79,16 +79,16 @@ export default class Plan {
             return runner.executor();
           });
 
-          return Executor.parallel(maxParallel, ...jobsExecutor);
+          return Executor.Parallel(maxParallel, ...jobsExecutor);
         });
 
         const ncpu = os.cpus().length;
         logger.debug('Detected CPUs:', ncpu);
-        await Executor.parallel(ncpu, ...jobPipeline).execute();
+        await Executor.Parallel(ncpu, ...jobPipeline).execute();
       }));
     });
 
-    return Executor.pipeline(...stagePipeline);
+    return Executor.Pipeline(...stagePipeline);
     // .then(new Executor(() => {
     //   for (const stage of stages) {
     //     for (const run of stage.runs) {

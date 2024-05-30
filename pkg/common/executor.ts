@@ -71,21 +71,21 @@ class Executor {
   }
 
   /** 创建一个记录信息日志的执行器 */
-  static info(info: string) {
+  static Info(info: string) {
     return new Executor(() => {
       logger.info(info);
     });
   }
 
   /** 创建一个记录调试日志的执行器 */
-  static debug(info: string) {
+  static Debug(info: string) {
     return new Executor(() => {
       logger.debug(info);
     });
   }
 
   /** 创建一个按顺序执行多个执行器的执行器 */
-  static pipeline(...executors: Executor[]) {
+  static Pipeline(...executors: Executor[]) {
     return new Executor(async (ctx) => {
       for (const executor of executors) {
         // eslint-disable-next-line no-await-in-loop
@@ -95,7 +95,7 @@ class Executor {
   }
 
   /** 于条件创建一个执行器 */
-  static conditional(conditional: Conditional, trueExecutor: Executor, falseExecutor?: Executor) {
+  static Conditional(conditional: Conditional, trueExecutor: Executor, falseExecutor?: Executor) {
     return new Executor(async (ctx) => {
       if (await conditional.evaluate(ctx)) {
         await trueExecutor.execute(ctx);
@@ -112,7 +112,7 @@ class Executor {
 
   /** 创建一个并行执行多个执行器的执行器 */
   // todo executors.length === 0 时的容错处理
-  static parallel(size: number, ...executors: Executor[]) {
+  static Parallel(size: number, ...executors: Executor[]) {
     let parallel = Math.max(1, size);
     parallel = Math.min(parallel, executors.length);
     if (executors.length === 0) {

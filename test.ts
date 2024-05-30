@@ -43,4 +43,4 @@ async function someAsyncTask() {
   }
 }
 
-await Executor.parallel(2, dbQueryExecutor(), dbQueryExecutor(), dbQueryExecutor(), dbQueryExecutor()).execute();
+await Executor.Parallel(2, dbQueryExecutor(), dbQueryExecutor(), dbQueryExecutor(), dbQueryExecutor()).execute();
