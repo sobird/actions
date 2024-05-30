@@ -4,8 +4,11 @@
  *
  * sobird<i@sobird.me> at 2024/05/04 21:32:57 created.
  */
-
+import { Mutex } from 'async-mutex';
 import log4js from 'log4js';
+
+// 创建一个新的互斥锁
+const mutex = new Mutex();
 
 const logger = log4js.getLogger();
 logger.level = 'debug';
@@ -151,6 +154,20 @@ class Executor {
         if (result instanceof Error) {
           throw result;
         }
+      }
+    });
+  }
+
+  // 创建一个互斥的执行器
+  static mutex(executor: Executor) {
+    return new Executor(async () => {
+      const release = await mutex.acquire();
+      try {
+        await executor.execute();
+      } catch (err) {
+        //
+      } finally {
+        release();
       }
     });
   }

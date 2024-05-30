@@ -189,7 +189,6 @@ class Git {
   }
 
   static CloneIfRequiredExecutor(repoPath: string, localPath: string, ref: string = 'HEAD', offlineMode: boolean = false) {
-    console.log('localPath', localPath);
     return Executor.conditional(new Conditional(() => {
       return !fs.existsSync(localPath);
     }), Git.CloneExecutor(repoPath, localPath, ref, offlineMode));

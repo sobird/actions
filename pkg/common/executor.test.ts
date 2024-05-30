@@ -52,7 +52,7 @@ describe('Test Static Method', () => {
   });
 
   it('Error Executor', async () => {
-    const emptyWorkflow = Executor.error('error 123');
+    const emptyWorkflow = Executor.Error('error 123');
     await expect(emptyWorkflow.execute()).rejects.toBe('error 123');
   });
 
@@ -75,10 +75,10 @@ describe('Test Member Method', () => {
     // 链式调佣，支持异步
     await new Executor(() => {
       trueCount += 1;
-    }).then(new Executor(async () => {
+    }).next(new Executor(async () => {
       await asyncFunction();
       trueCount += 1;
-    })).then(new Executor(() => {
+    })).next(new Executor(() => {
       trueCount += 1;
     })).execute();
 
