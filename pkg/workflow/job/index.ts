@@ -573,28 +573,35 @@ class Job {
     if (!uses) {
       return new Executor(() => {});
     }
+
     // ./.github/workflows/wf.yml -> .github/workflows/wf.yml
     if (uses.startsWith('./')) {
       uses = uses.substring(2);
     }
     if (runner.config.skipCheckout) {
-      const workflow = await WorkflowPlanner.Collect(uses);
-      return workflow.planEvent('workflow_call').executor();
+      return (await WorkflowPlanner.Collect(uses)).planEvent('workflow_call').executor();
     }
 
     const { repository, sha } = runner.context.github;
-    // const remoteUses = `${repository}/${uses}@${sha}`;
-    // const remoteReusableWorkflow = Job.RemoteReusableWorkflow(remoteUses);
-    // if (!remoteReusableWorkflow) {
-    //   return Executor.Error(Error(`Expected format {owner}/{repo}/.{platform}/workflows/{filename}@{ref}. Actual ${uses} Input string was not in a correct format`));
-    // }
 
-    const workflowDir = path.join(runner.actionCacheDir, safeFilename(uses));
-    const url = new URL(repository, 'https://github.com"');
-    url.username = 'token';
-    url.password = runner.token;
+    const repositoryDir = path.join(runner.actionCacheDir, repository, sha);
+    const url = new URL(repository, 'https://github.com');
 
-    return Executor.pipeline(Git.CloneIfRequiredExecutor(url.toString(), workflowDir, sha), (await WorkflowPlanner.Collect(uses)).planEvent('workflow_call').executor());
+    if (runner.token) {
+      url.username = 'token';
+      url.password = runner.token;
+    }
+
+    const workflowpath = path.join(repositoryDir, uses);
+    // todo pull sha
+    return Git.CloneIfRequiredExecutor(url.toString(), repositoryDir, sha).next(Job.ReusableWorkflowExecutor(workflowpath));
+  }
+
+  static ReusableWorkflowExecutor(workflowpath: string) {
+    return new Executor(async () => {
+      const workflow = await WorkflowPlanner.Collect(workflowpath);
+      await workflow.planEvent('workflow_call').executor().execute();
+    });
   }
 
   static RemoteReusableWorkflow(uses: string) {

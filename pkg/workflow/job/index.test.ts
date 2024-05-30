@@ -30,8 +30,19 @@ describe('test workflow job', () => {
     ]);
   });
 
-  it('localReusableWorkflowExecutor', async () => {
-    const executor = await workflowJob.localReusableWorkflowExecutor(runner);
+  // it('localReusableWorkflowExecutor', async () => {
+  //   const executor = await workflowJob.localReusableWorkflowExecutor(runner);
+  //   await executor.execute();
+  // });
+
+  it('localReusableWorkflowExecutor noSkipCheckout', async () => {
+    workflowJob.uses = './.gitea/workflows/reusable-workflow.yaml';
+    const runnerCase = new Runner(new Run('job1', workflow), {
+      skipCheckout: false,
+    });
+    runnerCase.context.github.repository = 'sobird/actions-test';
+    runnerCase.context.github.sha = '531aeeb9a2443705d9154fb543c4d6685a4e996e';
+    const executor = await workflowJob.localReusableWorkflowExecutor(runnerCase);
     await executor.execute();
   });
 });
