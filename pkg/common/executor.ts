@@ -7,7 +7,6 @@
 import { Mutex } from 'async-mutex';
 import log4js from 'log4js';
 
-// 创建一个新的互斥锁
 const mutex = new Mutex();
 
 const logger = log4js.getLogger();

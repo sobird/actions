@@ -4,7 +4,11 @@
  * sobird<i@sobird.me> at 2024/05/07 18:10:39 created.
  */
 
+import fs from 'node:fs';
 import os from 'node:os';
+import path from 'node:path';
+
+import * as tar from 'tar';
 
 import ActionCache from './cache';
 
@@ -12,53 +16,68 @@ vi.setConfig({
   testTimeout: 10000,
 });
 
-// const assert = require('assert');
-// const fs = require('fs');
-// const tar = require('tar');
-// const { pipeline } = require('stream');
-// const zlib = require('zlib');
+const testTmp = path.join(os.tmpdir(), 'actions');
+
+console.log('testTmp', testTmp);
+
+beforeEach(() => {
+  fs.mkdirSync(testTmp, { recursive: true });
+});
+afterEach(() => {
+  // fs.rmdirSync(testTmp, { recursive: true });
+});
 
 describe('ActionCache Tests', () => {
-  let cache: ActionCache;
+  const actionCache = new ActionCache(testTmp);
 
-  beforeEach(() => {
-    cache = new ActionCache(os.tmpdir());
-  });
-
+  const repository = 'sobird/actions-test';
+  const repo = 'https://gitea.com/sobird/actions-test';
   const refs = [
     {
       name: 'Fetch Branch Name',
-      cacheDir: 'gitea/git',
-      repo: 'https://gitea.com/gitea/git',
+      repository,
+      repo,
       ref: 'master',
     },
     {
       name: 'Fetch Branch Name Absolutely',
-      cacheDir: 'gitea/git',
-      repo: 'https://gitea.com/gitea/git',
+      repository,
+      repo,
       ref: 'refs/heads/master',
     },
     {
       name: 'Fetch HEAD',
-      cacheDir: 'gitea/git',
-      repo: 'https://gitea.com/gitea/git',
+      repository,
+      repo,
       ref: 'HEAD',
     },
     {
       name: 'Fetch Sha',
-      cacheDir: 'gitea/git',
-      repo: 'https://gitea.com/gitea/git',
-      ref: '74d7c14dd4a3ed9c5def0dc3c1aeede399ddc5c5',
+      repository,
+      repo,
+      ref: '62f365c5242878ab2a5ff76c047724548ea56664',
     },
   ];
 
   refs.forEach((ref) => {
     it(ref.name, async () => {
-      const sha = await cache.fetch(ref.cacheDir, ref.repo, ref.ref);
+      const sha = await actionCache.fetch(ref.repo, ref.repository, ref.ref);
       assert.notEqual(sha, '', 'SHA should not be empty');
 
-      const tarStream = await cache.archive(ref.cacheDir, sha, 'js');
-      assert.ok(tarStream, 'tarStream should not be empty');
+      const stream = await actionCache.archive(ref.repository, sha, 'package.json');
+
+      const tarStream = tar.t({});
+      stream?.pipe(tarStream);
+
+      tarStream.on('entry', (entry) => {
+        let content = '';
+        entry.on('data', (chunk: Buffer) => {
+          content += chunk;
+        });
+        entry.on('end', () => {
+          assert.ok(content, 'content should not be empty');
+        });
+      });
     });
   });
 });

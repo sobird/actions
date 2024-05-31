@@ -1,62 +1,50 @@
-import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
-import { join } from 'node:path';
+import path from 'node:path';
 
-import simpleGit, { GitError } from 'simple-git';
-
-import { safeFilename } from '@/utils';
+import simpleGit from 'simple-git';
+import * as tar from 'tar';
 
 class ActionCache {
-  git;
+  constructor(public dir: string) {}
 
-  constructor(public base: string) {
-    const gitPath = join(this.base, `${safeFilename(base)}.git`);
-    fs.mkdirSync(gitPath, { recursive: true });
-    this.git = simpleGit(gitPath);
-  }
-
-  async fetch(url: string, ref: string, token?: string) {
-    const { git } = this;
-
-    const commit = await git.revparse([ref]);
+  async fetch(url: string, repository: string, ref: string) {
+    const repoPath = path.join(this.dir, repository);
+    fs.mkdirSync(repoPath, { recursive: true });
+    const git = simpleGit(repoPath);
 
     try {
-      await git.init();
-      await git.addRemote('origin', url);
+      await git.status();
+      await git.fetch();
     } catch (err) {
-      if ((err as GitError).message.includes('already exists')) {
-        // 忽略已存在的仓库错误
-      } else {
-        // throw err;
-      }
+      const options = ['--recurse-submodules'];
+      await git.clone(url, repoPath, options);
     }
 
-    const auth = token ? `token:${token}` : '';
-    await git.fetch(auth);
+    await git.checkout(ref);
 
-    const branchName = randomBytes(16).toString('hex');
-    await git.checkout(['-b', branchName, commit]);
-
-    return commit;
+    return git.revparse(ref);
   }
 
-  async archive(path: string, sha: string, prefix?: string) {
-    const gitPath = join(this.base, `${safeFilename(path)}.git`);
-    const git = simpleGit({ baseDir: gitPath });
-    const commit = await git.revparse([sha]);
+  async archive(repository: string, ref: string, includePrefix: string = '') {
+    const repoPath = path.join(this.dir, repository);
+    fs.mkdirSync(repoPath, { recursive: true });
+    const git = simpleGit(repoPath);
 
-    const tarballPath = join(gitPath, 'tarball.tar.gz');
+    const commit = await git.revparse(ref);
+    const files = (await git.raw(['ls-tree', '-r', '--name-only', commit])).split('\n').filter((file) => {
+      return file.startsWith(includePrefix);
+    });
 
-    const args = ['archive', '--output', tarballPath, commit];
+    const pack = tar.c({ cwd: repoPath }, files);
 
-    if (prefix) {
-      args.push(`--prefix=${prefix}`);
-    }
-
-    await git.raw(args);
-
-    return fs.createReadStream(tarballPath);
+    return pack;
   }
+
+  // git(repository: string) {
+  //   const repoPath = path.join(this.dir, repository);
+  //   fs.mkdirSync(repoPath, { recursive: true });
+  //   return simpleGit(repoPath);
+  // }
 }
 
 export default ActionCache;
