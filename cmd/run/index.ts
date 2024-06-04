@@ -236,7 +236,6 @@ export const runCommand = new Command('run')
     const actor_id = generateId(actor);
 
     const { sha } = await git.revision();
-    console.log('sha', sha);
 
     const repository_owner = repoInfo.owner || 'owner';
     const repository = `${repository_owner}/${repoInfo.name}`;
@@ -255,12 +254,12 @@ export const runCommand = new Command('run')
         repositoryUrl,
 
         event_name: eventName,
+        sha,
       },
     };
 
     console.log('context', context);
 
-    // console.log('plan', plan.stages[0].runs[0].job.spread());
     console.log('options', options);
     await plan.executor().execute();
 

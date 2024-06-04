@@ -66,18 +66,21 @@ describe('ActionCache Tests', () => {
 
       const stream = await actionCache.archive(ref.repository, sha, 'package.json');
 
-      const tarStream = tar.t({});
-      stream?.pipe(tarStream);
+      const parser = new tar.Parser();
+      stream.pipe(parser);
 
-      tarStream.on('entry', (entry) => {
-        let content = '';
+      parser.on('entry', (entry) => {
+        const content: Buffer[] = [];
         entry.on('data', (chunk: Buffer) => {
-          content += chunk;
+          content.push(chunk);
         });
         entry.on('end', () => {
+          // console.log('content', Buffer.concat(content).toString());
           assert.ok(content, 'content should not be empty');
         });
       });
+      parser.on('end', () => {});
+      parser.on('close', () => {});
     });
   });
 });

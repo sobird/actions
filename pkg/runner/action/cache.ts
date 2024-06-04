@@ -1,11 +1,12 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 import simpleGit from 'simple-git';
 import * as tar from 'tar';
 
 class ActionCache {
-  constructor(public dir: string) {}
+  constructor(public dir: string = path.join(os.tmpdir(), 'actions')) {}
 
   async fetch(url: string, repository: string, ref: string) {
     const repoPath = path.join(this.dir, repository);

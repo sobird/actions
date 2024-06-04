@@ -5,12 +5,11 @@
  */
 
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 
 import GitUrlParse from 'git-url-parse';
 import log4js from 'log4js';
-import simpleGit, { CheckRepoActions } from 'simple-git';
+import simpleGit from 'simple-git';
 
 import Executor, { Conditional } from './executor';
 

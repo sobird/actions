@@ -18,9 +18,12 @@ import { Run } from '../workflow/plan';
 class Runner {
   context: Context;
 
+  /**
+   * the job calling this runner (caller of a reusable workflow)
+   */
   caller?: Runner;
 
-  constructor(public run: Run, public config: Config) {
+  constructor(public run: Run, public config: Readonly<Config>) {
     this.context = new Context();
   }
 
@@ -43,6 +46,11 @@ class Runner {
 
   get actionCacheDir() {
     return this.config.actionCacheDir || path.join(os.tmpdir(), 'actions');
+  }
+
+  clone() {
+    const cloned = structuredClone(this);
+    console.log('this', this);
   }
 }
 

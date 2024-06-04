@@ -41,6 +41,7 @@ describe('test workflow job', () => {
       skipCheckout: false,
     });
     runnerCase.context.github.repository = 'sobird/actions-test';
+    runnerCase.context.github.repositoryUrl = 'https://gitea.com/sobird/actions-test';
     runnerCase.context.github.sha = '531aeeb9a2443705d9154fb543c4d6685a4e996e';
     const executor = await workflowJob.localReusableWorkflowExecutor(runnerCase);
     await executor.execute();

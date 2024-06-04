@@ -4,6 +4,7 @@ import log4js from 'log4js';
 
 import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
+import { Config } from '@/pkg/runner/config';
 
 import Run from './run';
 import Stage from './stage';
@@ -56,7 +57,7 @@ export default class Plan {
     this.stages = newStages;
   }
 
-  executor() {
+  executor(config: Config, caller?: Runner) {
     const { stages } = this;
     const stagePipeline: Executor[] = [];
 
@@ -74,7 +75,8 @@ export default class Plan {
               [jobId]: job,
             };
 
-            const runner = new Runner(new Run(jobId, workflow));
+            const runner = new Runner(new Run(jobId, workflow), config);
+            runner.caller = caller;
 
             return runner.executor();
           });

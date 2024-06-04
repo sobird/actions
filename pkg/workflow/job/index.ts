@@ -13,7 +13,7 @@ import Executor from '@/pkg/common/executor';
 import Git from '@/pkg/common/git';
 import Reporter from '@/pkg/reporter';
 import Runner from '@/pkg/runner';
-import { asyncFunction, safeFilename } from '@/utils';
+import { asyncFunction } from '@/utils';
 
 import Container from './container';
 import Step from './step';
@@ -582,10 +582,10 @@ class Job {
       return (await WorkflowPlanner.Collect(uses)).planEvent('workflow_call').executor();
     }
 
-    const { repository, sha } = runner.context.github;
+    const { repository, sha, repositoryUrl } = runner.context.github;
 
     const repositoryDir = path.join(runner.actionCacheDir, repository, sha);
-    const url = new URL(repository, 'https://github.com');
+    const url = new URL(repositoryUrl);
 
     if (runner.token) {
       url.username = 'token';
@@ -593,14 +593,14 @@ class Job {
     }
 
     const workflowpath = path.join(repositoryDir, uses);
-    // todo pull sha
-    return Git.CloneIfRequiredExecutor(url.toString(), repositoryDir, sha).next(Job.ReusableWorkflowExecutor(workflowpath));
+
+    return Git.CloneIfRequiredExecutor(url.toString(), repositoryDir, sha).next(Job.ReusableWorkflowExecutor(runner, workflowpath));
   }
 
-  static ReusableWorkflowExecutor(workflowpath: string) {
+  static ReusableWorkflowExecutor(runner: Runner, workflowpath: string) {
     return new Executor(async () => {
       const workflow = await WorkflowPlanner.Collect(workflowpath);
-      await workflow.planEvent('workflow_call').executor().execute();
+      await workflow.planEvent('workflow_call').executor(runner.config, runner).execute();
     });
   }
 

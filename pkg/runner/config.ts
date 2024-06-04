@@ -36,11 +36,6 @@ export interface Config {
   actionCache: ActionCache;
 
   /**
-   * Path used for caching action contents.
-   */
-  actionCacheDir: string;
-
-  /**
    * When offline, use caching action contents.
    */
   actionOfflineMode: boolean;
