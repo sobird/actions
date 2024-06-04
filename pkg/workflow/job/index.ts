@@ -19,6 +19,7 @@ import Container from './container';
 import Step from './step';
 import StepExecutorRun from './step/run';
 import Strategy from './strategy';
+import Uses from './uses';
 import WorkflowPlanner from '../planner';
 import {
   WorkflowDispatchInputs, Permissions, Concurrency, Defaults,
@@ -322,7 +323,7 @@ class Job {
    * If you use the second syntax option (without `{owner}/{repo}` and `@{ref}`) the called workflow is from the same commit as the caller workflow.
    * Ref prefixes such as `refs/heads` and `refs/tags` are not allowed.
    */
-  uses?: string;
+  uses?: Uses;
 
   /**
    * When a job is used to call a reusable workflow,
@@ -376,7 +377,7 @@ class Job {
     this['continue-on-error'] = job['continue-on-error'];
     this.container = new Container(job.container);
     this.services = job.services;
-    this.uses = job.uses;
+    this.uses = new Uses(job.uses);
     this.with = job.with;
     this.secrets = job.secrets;
   }
@@ -568,7 +569,7 @@ class Job {
     }));
   }
 
-  async localReusableWorkflowExecutor(runner: Runner) {
+  localReusableWorkflowExecutor(runner: Runner) {
     let { uses } = this;
     if (!uses) {
       return new Executor(() => {});
@@ -579,7 +580,7 @@ class Job {
       uses = uses.substring(2);
     }
     if (runner.config.skipCheckout) {
-      return (await WorkflowPlanner.Collect(uses)).planEvent('workflow_call').executor();
+      return Job.ReusableWorkflowExecutor(runner, uses);
     }
 
     const { repository, sha, repositoryUrl } = runner.context.github;
@@ -597,7 +598,11 @@ class Job {
     return Git.CloneIfRequiredExecutor(url.toString(), repositoryDir, sha).next(Job.ReusableWorkflowExecutor(runner, workflowpath));
   }
 
-  static ReusableWorkflowExecutor(runner: Runner, workflowpath: string) {
+  private static RemoteReusableWorkflowExecutor() {
+
+  }
+
+  private static ReusableWorkflowExecutor(runner: Runner, workflowpath: string) {
     return new Executor(async () => {
       const workflow = await WorkflowPlanner.Collect(workflowpath);
       await workflow.planEvent('workflow_call').executor(runner.config, runner).execute();

@@ -40,12 +40,6 @@ class ActionCache {
 
     return pack;
   }
-
-  // git(repository: string) {
-  //   const repoPath = path.join(this.dir, repository);
-  //   fs.mkdirSync(repoPath, { recursive: true });
-  //   return simpleGit(repoPath);
-  // }
 }
 
 export default ActionCache;
