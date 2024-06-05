@@ -56,12 +56,15 @@ class Uses {
         this.#ref = ref;
       }
 
-      // const localWorkflow = /^(.+)\/([^/]+)\/\.([^/]+)\/workflows\/([^@]+)@(.*)$/;
-      // const localMatches = localWorkflow.exec(uses);
-      // if (localMatches && localMatches.length === 6) {
-      //   [,this.#owner, this.#repo, this.#platform, this.#filename, this.#ref] = localMatches;
-      //   this.#repository = path.join(this.#owner, this.#repo);
-      // }
+      const localWorkflow = /^(.+)\/([^/]+)\/\.([^/]+)\/workflows\/([^@]+)@(.*)$/;
+      const localMatches = localWorkflow.exec(uses);
+      if (localMatches && localMatches.length === 6) {
+        const [,owner, repo, platform, filename, ref] = localMatches;
+        this.#url = runner.context.github.server_url;
+        this.#repository = path.join(owner, repo);
+        this.#filename = filename;
+        this.#ref = ref;
+      }
 
       // local reusable workflow
       if (uses.startsWith('./')) {
@@ -77,6 +80,7 @@ class Uses {
       }
 
       const repositoryDir = path.join(runner.actionCacheDir, this.#repository, this.#ref);
+      console.log('first123', this.#repository, this.#url);
       const url = new URL(this.#repository, this.#url);
 
       if (runner.token) {

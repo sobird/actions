@@ -1,4 +1,4 @@
-import fs from 'node:fs';
+// import fs from 'node:fs';
 
 import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
@@ -38,5 +38,22 @@ describe('test workflow job uses', () => {
     afterEach(() => {
       // fs.rmdirSync(runner.actionCacheDir, { recursive: true });
     });
+  });
+
+  it('remote reusable workflow test case', async () => {
+    const runner = new Runner(new Run('job1', workflow), {});
+    runner.context.github.server_url = 'https://gitea.com';
+    const uses = new Uses('sobird/actions-test/.gitea/workflows/reusable-workflow.yaml@531aeeb9a2443705d9154fb543c4d6685a4e996e');
+    const executor = uses.executor(runner);
+    // await executor?.execute();
+    expect(executor instanceof Executor).toBe(true);
+  });
+
+  it('remote reusable workflow with https test case', async () => {
+    const runner = new Runner(new Run('job1', workflow), {});
+    const uses = new Uses('https://gitea.com/sobird/actions-test/.gitea/workflows/reusable-workflow.yaml@531aeeb9a2443705d9154fb543c4d6685a4e996e');
+    const executor = uses.executor(runner);
+    // await executor?.execute();
+    expect(executor instanceof Executor).toBe(true);
   });
 });
