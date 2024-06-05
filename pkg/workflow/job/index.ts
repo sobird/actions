@@ -5,12 +5,9 @@
  * sobird<i@sobird.me> at 2024/05/02 20:26:29 created.
  */
 
-import path from 'node:path';
-
 import log4js from 'log4js';
 
 import Executor from '@/pkg/common/executor';
-import Git from '@/pkg/common/git';
 import Reporter from '@/pkg/reporter';
 import Runner from '@/pkg/runner';
 import { asyncFunction } from '@/utils';
@@ -20,7 +17,6 @@ import Step from './step';
 import StepExecutorRun from './step/run';
 import Strategy from './strategy';
 import Uses from './uses';
-import WorkflowPlanner from '../planner';
 import {
   WorkflowDispatchInputs, Permissions, Concurrency, Defaults,
 } from '../types';
@@ -57,6 +53,20 @@ export enum JobType {
  */
 class Job {
   #id?: string;
+
+  /**
+   * The index of the current job in the matrix.
+   * Note: This number is a zero-based number.
+   * The first job's index in the matrix is 0.
+   */
+  #index: number = 0;
+
+  /**
+   * The total number of jobs in the matrix.
+   * Note: This number is not a zero-based number.
+   * For example, for a matrix with four jobs, the value of job-total is 4.
+   */
+  #total: number = 0;
 
   /**
    * Use `jobs.<job_id>.name` to set a name for the job, which is displayed in the GitHub UI.
@@ -402,9 +412,12 @@ class Job {
     if (matrices.length === 0) {
       return [this];
     }
-    return matrices.map((matrix) => {
+    return matrices.map((matrix, index) => {
       const job = this.clone();
       const { name } = job;
+
+      job.#index = index;
+      job.#total = matrices.length;
 
       if (!name?.includes('${{') || !name.includes('}}')) {
         job.name = `${name || this.#id} (${Object.values(matrix).join(', ')})`;
@@ -453,34 +466,16 @@ class Job {
     return results;
   }
 
-  get type() {
-    if (this.uses) {
-      // 检查是否为YAML文件
-      const isYaml = this.uses.match(/\.(ya?ml)(?:$|@)/);
-
-      if (isYaml) {
-        // 检查是否为本地工作流路径
-        const isLocalPath = this.uses.startsWith('./');
-        // 检查是否为远程工作流路径
-        const isRemotePath = this.uses.match(/^[^.](.+?\/){2,}\S*\.ya?ml@/);
-        // 检查是否包含版本信息
-        const hasVersion = this.uses.match('.ya?ml@');
-
-        if (isLocalPath) {
-          return JobType.ReusableWorkflowLocal;
-        } if (isRemotePath && hasVersion) {
-          return JobType.ReusableWorkflowRemote;
-        }
-      }
-
-      // 如果不是有效的工作流路径，返回无效类型
-      // throw new Error(`\`uses\` key references invalid workflow path '${this.uses}'. Must start with './' if it's a local workflow, or must start with '<org>/<repo>/' and include an '@' if it's a remote workflow`);
-
-      return JobType.Invalid;
+  jobExecutor() {
+    if (!this.steps || this.steps.length === 0) {
+      return Executor.Debug('No steps found');
     }
 
-    // 如果不是可复用的工作流，则返回默认类型
-    return JobType.Default;
+    const preStepsExecutor: Executor[] = [];
+    const stepsExecutor: Executor[] = [];
+    stepsExecutor.push(new Executor(() => {
+      //
+    }));
   }
 
   executor(reporter: Reporter) {
@@ -567,61 +562,6 @@ class Job {
         },
       });
     }));
-  }
-
-  localReusableWorkflowExecutor(runner: Runner) {
-    let { uses } = this;
-    if (!uses) {
-      return new Executor(() => {});
-    }
-
-    // ./.github/workflows/wf.yml -> .github/workflows/wf.yml
-    if (uses.startsWith('./')) {
-      uses = uses.substring(2);
-    }
-    if (runner.config.skipCheckout) {
-      return Job.ReusableWorkflowExecutor(runner, uses);
-    }
-
-    const { repository, sha, repositoryUrl } = runner.context.github;
-
-    const repositoryDir = path.join(runner.actionCacheDir, repository, sha);
-    const url = new URL(repositoryUrl);
-
-    if (runner.token) {
-      url.username = 'token';
-      url.password = runner.token;
-    }
-
-    const workflowpath = path.join(repositoryDir, uses);
-
-    return Git.CloneIfRequiredExecutor(url.toString(), repositoryDir, sha).next(Job.ReusableWorkflowExecutor(runner, workflowpath));
-  }
-
-  private static RemoteReusableWorkflowExecutor() {
-
-  }
-
-  private static ReusableWorkflowExecutor(runner: Runner, workflowpath: string) {
-    return new Executor(async () => {
-      const workflow = await WorkflowPlanner.Collect(workflowpath);
-      await workflow.planEvent('workflow_call').executor(runner.config, runner).execute();
-    });
-  }
-
-  static RemoteReusableWorkflow(uses: string) {
-    // remote reusable workflow format: {owner}/{repo}/.{platform}/workflows/{filename}@{ref}
-    const reg = /^(.+)\/([^/]+)\/\.([^/]+)\/workflows\/([^@]+)@(.*)$/;
-    const matches = reg.exec(uses);
-    if (matches && matches.length === 6) {
-      return {
-        owner: matches[1],
-        repo: matches[2],
-        platform: matches[3],
-        filename: matches[4],
-        ref: matches[5],
-      };
-    }
   }
 }
 
