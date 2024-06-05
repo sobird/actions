@@ -9,7 +9,7 @@ import path from 'node:path';
 
 import GitUrlParse from 'git-url-parse';
 import log4js from 'log4js';
-import simpleGit from 'simple-git';
+import simpleGit, { SimpleGitOptions } from 'simple-git';
 
 import Executor, { Conditional } from './executor';
 
@@ -23,10 +23,8 @@ class Git {
   name: string;
 
   constructor(public base: string) {
-    fs.mkdirSync(base, { recursive: true });
-    this.name = path.basename(path.resolve(base));
-
-    this.git = simpleGit(base, {
+    this.name = path.basename(base);
+    this.git = Git.SimpleGit(base, {
       progress({ method, stage, progress }) {
         console.log(`git ${method} ${stage} stage ${progress}% complete`);
       },
@@ -78,17 +76,18 @@ class Git {
    * @returns
    */
   async ref() {
+    const { git } = this;
     let refTag;
     let refBranch;
 
-    const raw = await this.git.raw(['for-each-ref', '--format', '%(refname)']);
+    const raw = await git.raw(['for-each-ref', '--format', '%(refname)']);
     const refnames = raw.trim().split('\n');
 
-    const headSha = await this.git.revparse('HEAD');
+    const headSha = await git.revparse('HEAD');
 
     for (const ref of refnames) {
       // eslint-disable-next-line no-await-in-loop
-      const sha = await this.git.revparse(ref);
+      const sha = await git.revparse(ref);
       /* tags and branches will have the same hash
        * when a user checks out a tag, it is not mentioned explicitly
        * in the go-git package, we must identify the revision
@@ -149,23 +148,61 @@ class Git {
     return (await this.git.getRemotes(true)).find((remote) => { return remote.name === remoteName; });
   }
 
+  static SimpleGit(basePath: string, options?: Partial<SimpleGitOptions>) {
+    const baseDir = path.resolve(basePath);
+    fs.mkdirSync(baseDir, { recursive: true });
+    return simpleGit(baseDir, options);
+  }
+
   static async Ref(gitDir: string) {
-    const git = simpleGit(gitDir);
-    const { current } = await git.branchLocal();
-    return current;
+    const git = Git.SimpleGit(gitDir);
+
+    let refTag;
+    let refBranch;
+
+    const raw = await git.raw(['for-each-ref', '--format', '%(refname)']);
+    const refnames = raw.trim().split('\n');
+
+    const headSha = await git.revparse('HEAD');
+
+    for (const ref of refnames) {
+      // eslint-disable-next-line no-await-in-loop
+      const sha = await git.revparse(ref);
+      /* tags and branches will have the same hash
+       * when a user checks out a tag, it is not mentioned explicitly
+       * in the go-git package, we must identify the revision
+       * then check if any tag matches that revision,
+       * if so then we checked out a tag
+       * else we look for branches and if matches,
+       * it means we checked out a branch
+       *
+       * If a branches matches first we must continue and check all tags (all references)
+       * in case we match with a tag later in the interation
+       */
+      if (sha === headSha) {
+        if (ref.startsWith('refs/tags')) {
+          refTag = ref;
+        }
+        if (ref.startsWith('refs/heads')) {
+          refBranch = ref;
+        }
+      }
+
+      if (!refTag && !refBranch) {
+        throw Error('');
+      }
+    }
+
+    return refTag || refBranch;
   }
 
   static async Clone(repoPath: string, localPath: string, ref: string) {
-    fs.mkdirSync(localPath, { recursive: true });
-    const git = simpleGit(localPath);
+    const git = Git.SimpleGit(localPath);
 
     try {
-      await git.status();
       await git.fetch();
-      // logger.info(`Repository already exists at ${localPath}`);
     } catch (err) {
-      const options = ['--recurse-submodules'];
-      await git.clone(repoPath, localPath, options);
+      await git.clone(repoPath, localPath);
     }
 
     await git.checkout(ref);
@@ -175,7 +212,7 @@ class Git {
 
   static CloneExecutor(repoPath: string, localPath: string, ref: string = 'HEAD', offlineMode: boolean = false) {
     //
-    return new Executor(async () => {
+    return Executor.Mutex(new Executor(async () => {
       logger.info("\u2601  git clone '%s' # ref=%s", repoPath, ref);
       logger.debug('cloning %s to %s', repoPath, localPath);
 
@@ -184,7 +221,7 @@ class Git {
       if (!offlineMode) {
         git.pull();
       }
-    });
+    }));
   }
 
   static CloneIfRequiredExecutor(repoPath: string, localPath: string, ref: string = 'HEAD', offlineMode: boolean = false) {

@@ -84,14 +84,16 @@ class Uses {
         url.password = runner.token;
       }
       const workflowpath = path.join(repositoryDir, this.#filename);
-      return Git.CloneIfRequiredExecutor(url.toString(), repositoryDir, this.#ref).next(Uses.ReusableWorkflowExecutor(runner, workflowpath));
+      return Git.CloneExecutor(url.toString(), repositoryDir, this.#ref).next(Uses.ReusableWorkflowExecutor(runner, workflowpath));
     }
   }
 
   private static ReusableWorkflowExecutor(runner: Runner, workflowPath: string) {
     return new Executor(async () => {
       const workflow = await WorkflowPlanner.Collect(workflowPath);
-      await workflow.planEvent('workflow_call').executor(runner.config, runner).execute();
+      const plan = workflow.planEvent('workflow_call');
+      console.log('plan', plan);
+      await plan.executor(runner.config, runner).execute();
     });
   }
 

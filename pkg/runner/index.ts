@@ -29,7 +29,7 @@ class Runner {
 
   executor() {
     return new Executor(async () => {
-      await asyncFunction(2000);
+      await asyncFunction(500);
       // todo
       console.log('jobId', this.run.jobId);
       console.log('jobName', this.run.name);
@@ -45,7 +45,7 @@ class Runner {
   }
 
   get actionCacheDir() {
-    return this.config.actionCacheDir || path.join(os.tmpdir(), 'actions');
+    return this.config.actionCache?.dir || path.join(os.tmpdir(), 'actions');
   }
 
   clone() {
