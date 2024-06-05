@@ -16,19 +16,9 @@ import ActionCache from './action/cache';
  */
 export interface Config {
   /**
-   * The user that triggered the event.
+   * Bind the workspace to the job container.
    */
-  actor: string;
-
-  /**
-   * Path to the working directory.
-   */
-  workdir: string;
-
-  /**
-   * Bind the workdir to the job container.
-   */
-  bindWorkdir: boolean;
+  bind: boolean;
 
   /**
    * Use a custom ActionCache Implementation.

@@ -64,7 +64,7 @@ export const runCommand = new Command('run')
   .option('-a, --actor <actor>', 'The username of the user that triggered the initial workflow run')
 
   .option('-W, --workflows <path>', 'path to workflow file(s)', './.github/workflows/')
-  .option('-C, --workdir <directory>', 'working directory', '.')
+  .option('-C, --workspace <directory>', 'the default working directory on the runner for steps', '.')
   .option('--no-workflowRecurse', "Flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
   .option('--defaultbranch', 'the name of the main branch')
   // .option('-E, --event <event>', 'run a event name')
