@@ -400,6 +400,22 @@ class Job {
     this.#id = id;
   }
 
+  get index() {
+    return this.#index;
+  }
+
+  set index(index) {
+    this.#index = index;
+  }
+
+  get total() {
+    return this.#total;
+  }
+
+  set total(total) {
+    this.#total = total;
+  }
+
   clone() {
     const cloned = structuredClone(this);
     cloned.id = this.#id;
@@ -416,8 +432,8 @@ class Job {
       const job = this.clone();
       const { name } = job;
 
-      job.#index = index;
-      job.#total = matrices.length;
+      job.index = index;
+      job.total = matrices.length;
 
       if (!name?.includes('${{') || !name.includes('}}')) {
         job.name = `${name || this.#id} (${Object.values(matrix).join(', ')})`;

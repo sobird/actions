@@ -24,14 +24,26 @@ class Runner {
   caller?: Runner;
 
   constructor(public run: Run, public config: Readonly<Config>) {
+    const { job } = run;
     this.context = new Context();
+    // strategy context
+    this.context.strategy['fail-fast'] = job.strategy['fail-fast'];
+    this.context.strategy['max-parallel'] = job.strategy['max-parallel'];
+    this.context.strategy['job-index'] = job.index;
+    this.context.strategy['job-total'] = job.total;
+
+    // matrix context
+    const matrix = job.strategy.getMatrices()[0];
+    if (matrix) {
+      this.context.matrix = matrix as Context['matrix'];
+    }
   }
 
   executor() {
     return new Executor(async () => {
       await asyncFunction(500);
       // todo
-      console.log('jobId', this.run.jobId);
+      console.log('context', this.context);
       console.log('jobName', this.run.name);
       console.log('workflow file:', this.run.workflow.file);
       this.run.workflow.on.push = 123;

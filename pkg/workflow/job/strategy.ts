@@ -6,8 +6,6 @@
  * sobird<i@sobird.me> at 2024/05/06 3:18:36 created.
  */
 
-import os from 'node:os';
-
 import { cartesianProduct, lodash } from '@/utils';
 
 export default class Strategy {

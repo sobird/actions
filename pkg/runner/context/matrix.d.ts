@@ -18,4 +18,4 @@
  * }
  * ```
  */
-export type Matrix = Record<string, string[]>;
+export type Matrix = Record<string, string>;

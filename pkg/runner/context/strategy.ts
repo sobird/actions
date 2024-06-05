@@ -22,7 +22,7 @@ export class Strategy {
    * When this evaluates to true, all in-progress jobs are canceled if any job in a matrix fails.
    * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategyfail-fast Workflow syntax for GitHub Actions}."
    */
-  'fail-fast': boolean;
+  'fail-fast'?: boolean;
 
   /**
    * The index of the current job in the matrix.
@@ -41,7 +41,7 @@ export class Strategy {
    * The maximum number of jobs that can run simultaneously when using a matrix job strategy.
    * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategymax-parallel Workflow syntax for GitHub Actions}."
    */
-  'max-parallel': number;
+  'max-parallel'?: number;
 
   constructor(strategy: Strategy) {
     this['fail-fast'] = strategy['fail-fast'];
