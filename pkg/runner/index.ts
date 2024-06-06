@@ -26,6 +26,7 @@ class Runner {
   constructor(public run: Run, public config: Readonly<Config>) {
     const { job } = run;
     this.context = new Context();
+
     // strategy context
     this.context.strategy['fail-fast'] = job.strategy['fail-fast'];
     this.context.strategy['max-parallel'] = job.strategy['max-parallel'];

@@ -8,4 +8,5 @@ export { isEmptyDeep } from './isEmptyObject';
 export { Pen } from './printer';
 export { appendEnvs } from './appendEnvs';
 export { generateId } from './generateId';
+export { createSafeName } from './createSafeName';
 export { default as lodash } from './lodash';

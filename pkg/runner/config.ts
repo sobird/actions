@@ -121,6 +121,12 @@ export interface Config {
   platforms: { [key: string]: string };
 
   /**
+   * Platform picker, it will take precedence over Platforms if isn't nil.
+   * @returns {string} The selected platform.
+   */
+  platformPicker?: (labels: string[]) => string;
+
+  /**
    * Use privileged mode.
    */
   privileged: boolean;
@@ -221,12 +227,6 @@ export interface Config {
    * The default actions web site.
    */
   defaultActionInstance: string;
-
-  /**
-   * Platform picker, it will take precedence over Platforms if isn't nil.
-   * @returns {string} The selected platform.
-   */
-  platformPicker?: (labels: string[]) => string;
 
   /**
    * The level of job logger.
