@@ -77,4 +77,9 @@ describe('test hosted class', () => {
     const containerPath = hosted.toContainerPath('/opt/workspace/test.txt');
     expect(containerPath).toBe(path.join(hosted.cwdPath, 'test.txt'));
   });
+
+  it('exec test case', async () => {
+    const hosted = new Hosted(tmp, '/opt/workspace');
+    const containerPath = await hosted.exec('echo Hello, World! $sobird');
+  });
 });

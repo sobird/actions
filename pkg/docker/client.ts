@@ -6,7 +6,7 @@ export async function parseEnvFile(container: Container, path: string) {
   const stream = await container.getArchive({ path });
 
   const tarStream = tar.t({});
-  stream?.pipe(tarStream);
+  stream.pipe(tarStream);
 
   tarStream.on('entry', (entry) => {
     let content = '';

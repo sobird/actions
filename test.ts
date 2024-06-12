@@ -1,17 +1,15 @@
-import fs from 'node:fs';
+import { spawn } from 'child_process';
 
-import * as tar from 'tar';
+const ls = spawn('bash', ['--noprofile', '--norc', '-e', '-o', 'pipefail', '/Users/sobird/.cache/act/8e75c911cd618d86/act/workflow/2.sh'], { env: process.env });
 
-const test = fs.createReadStream('pkg/runner/__mocks__/tarStream.tar').pipe(
-  tar.extract({
-    // strip: 1,
-    cwd: 'test', // alias for cwd:'some-dir', also ok
-  }),
-);
-
-test.on('finish', () => {
-  console.log('123', 123);
+ls.stdout.on('data', (data) => {
+  console.log(`stdout: ${data}`);
 });
 
-const files = fs.readdirSync('test');
-console.log('files', files);
+ls.stderr.on('data', (data) => {
+  console.error(`stderr: ${data}`);
+});
+
+ls.on('close', (code) => {
+  console.log(`child process exited with code ${code}`);
+});

@@ -9,4 +9,5 @@ export { Pen } from './printer';
 export { appendEnvs } from './appendEnvs';
 export { generateId } from './generateId';
 export { createSafeName } from './createSafeName';
+export { sleep } from './sleep';
 export { default as lodash } from './lodash';

@@ -1,8 +1,10 @@
 /* eslint-disable no-await-in-loop */
+import { spawn } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs, { CopyOptions, ReadStream } from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
+import util from 'node:util';
 
 import simpleGit from 'simple-git';
 import * as tar from 'tar';
@@ -72,6 +74,22 @@ class Hosted {
       }
     }
     return fsPromises.cp(source, this.cwdPath, copyOptions);
+  }
+
+  async spawn(command: string, args: string[]) {
+    const options = {
+      cwd: this.cwdPath,
+      env: { ...process.env, sobird: '123' },
+    };
+    return spawn(command, args, options);
+  }
+
+  archive(files: string[]) {
+    return tar.create({ cwd: this.base }, files);
+  }
+
+  remove() {
+    fs.rmSync(this.cwdPath, { recursive: true, force: true });
   }
 
   copyTarStream(readStream: ReadStream) {
