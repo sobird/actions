@@ -1,11 +1,11 @@
 /* eslint-disable no-await-in-loop */
 import crypto from 'node:crypto';
-import fs, { CopyOptions } from 'node:fs';
+import fs, { CopyOptions, ReadStream } from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 
 import simpleGit from 'simple-git';
-import tar from 'tar';
+import * as tar from 'tar';
 
 interface FileEntry {
   name: string;
@@ -74,14 +74,22 @@ class Hosted {
     return fsPromises.cp(source, this.cwdPath, copyOptions);
   }
 
-  async copyTarStream(tarStream: tar.Pack) {
-    fs.rmSync(this.cwdPath, { recursive: true, force: true });
-    fs.mkdirSync(this.cwdPath, { recursive: true });
+  copyTarStream(readStream: ReadStream) {
+    // fs.rmSync(this.cwdPath, { recursive: true, force: true });
+    // fs.mkdirSync(this.cwdPath, { recursive: true });
 
-    tarStream.pipe(tar.extract({
-      // strip: 1,
+    const pipeline = readStream.pipe(tar.extract({
       cwd: this.cwdPath,
     }));
+
+    return new Promise<void>((resolve, reject) => {
+      pipeline.on('error', (err) => {
+        reject(err);
+      });
+      pipeline.on('finish', () => {
+        resolve();
+      });
+    });
   }
 
   toContainerPath(rawPath: string) {
