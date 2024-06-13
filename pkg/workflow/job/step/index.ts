@@ -159,8 +159,6 @@ class Step {
    */
   'timeout-minutes': boolean;
 
-  #context: object;
-
   constructor(step: Step) {
     this.id = step.id;
     this.if = step.if;
@@ -173,14 +171,6 @@ class Step {
     this.env = step.env;
     this['continue-on-error'] = step['continue-on-error'];
     this['timeout-minutes'] = step['timeout-minutes'];
-  }
-
-  get context() {
-    return this.#context;
-  }
-
-  set context(context) {
-    this.#context = context;
   }
 
   getName(): string {

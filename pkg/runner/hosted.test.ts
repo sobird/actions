@@ -80,6 +80,9 @@ describe('test hosted class', () => {
 
   it('exec test case', async () => {
     const hosted = new Hosted(tmp, '/opt/workspace');
-    const containerPath = await hosted.exec('echo Hello, World! $sobird');
+    const spawn = await hosted.spawn('echo', ['Hello, World! $sobird']);
+    spawn.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`);
+    });
   });
 });

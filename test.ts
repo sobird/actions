@@ -1,15 +1,13 @@
-import { spawn } from 'child_process';
+import Yaml from './pkg/common/yaml';
 
-const ls = spawn('bash', ['--noprofile', '--norc', '-e', '-o', 'pipefail', '/Users/sobird/.cache/act/8e75c911cd618d86/act/workflow/2.sh'], { env: process.env });
+class Test extends Yaml {
+  name: string;
 
-ls.stdout.on('data', (data) => {
-  console.log(`stdout: ${data}`);
-});
+  constructor(test: Test) {
+    super(test);
+    this.name = test.name;
+  }
+}
 
-ls.stderr.on('data', (data) => {
-  console.error(`stderr: ${data}`);
-});
-
-ls.on('close', (code) => {
-  console.log(`child process exited with code ${code}`);
-});
+const test = Test.Read('.github/workflows/ci.yml');
+console.log('test', test.dump());
