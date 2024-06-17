@@ -1,4 +1,4 @@
-class Output {
+export class Output {
   /**
    * Required A string description of the output parameter.
    */
@@ -17,4 +17,11 @@ class Output {
   }
 }
 
-export default Output;
+export function outputs(nodes?: Record<string, Output>) {
+  if (!nodes) {
+    return;
+  }
+  return Object.fromEntries(Object.entries(nodes).map(([inputId, input]) => {
+    return [inputId, new Output(input)];
+  }));
+}

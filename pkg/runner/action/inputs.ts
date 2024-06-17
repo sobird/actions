@@ -1,4 +1,4 @@
-class Input {
+export class Input {
   /**
    * **Required** A string description of the input parameter.
    */
@@ -29,4 +29,11 @@ class Input {
   }
 }
 
-export default Input;
+export function inputs(nodes?: Record<string, Input>) {
+  if (!nodes) {
+    return;
+  }
+  return Object.fromEntries(Object.entries(nodes).map(([inputId, input]) => {
+    return [inputId, new Input(input)];
+  }));
+}

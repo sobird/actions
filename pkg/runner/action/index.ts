@@ -8,16 +8,14 @@
  *
  * sobird<i@sobird.me> at 2024/06/13 10:55:22 created.
  */
-import fs from 'node:fs';
 
-import { parse, stringify } from 'yaml';
+import Yaml from '@/pkg/common/yaml';
 
-import { isEmptyDeep } from '@/utils';
+import { inputs } from './inputs';
+import { outputs } from './outputs';
+import Runs from './runs';
 
-import Input from './input';
-import Output from './output';
-
-class Action {
+class Action extends Yaml {
   /**
    * **Required** The name of your action.
    * GitHub displays the name in the Actions tab to help visually identify actions in each input.
@@ -40,50 +38,25 @@ class Action {
    * Input ids with uppercase letters are converted to lowercase during runtime.
    * We recommend using lowercase input ids.
    */
-  inputs?: Record<string, Input>;
+  inputs?;
 
-  outputs?: Record<string, Output>;
+  outputs?;
 
-  runs;
+  runs: Runs;
 
-  branding;
+  branding?: {
+    icon: string;
+    color: 'white' | 'yello' | 'blue' | 'green' | 'orange' | 'red' | 'purple' | 'gray-dark';
+  };
 
   constructor(action: Action) {
+    super(action);
     this.name = action.name;
     this.author = action.author;
     this.description = action.description;
-    this.inputs = Object.fromEntries(Object.entries(action.inputs).map(([inputId, input]) => {
-      return [inputId, new Input(input)];
-    }));
-    this.outputs = Object.fromEntries(Object.entries(action.outputs).map(([outputId, output]) => {
-      return [outputId, new Output(output)];
-    }));
-  }
-
-  save(path: string, options?: Parameters<typeof stringify>[1]) {
-    fs.writeFileSync(path, this.dump(options));
-  }
-
-  dump<T extends Parameters<typeof stringify>[1]>(options?: T) {
-    return stringify(JSON.parse(JSON.stringify(this, (key, value) => {
-      if (isEmptyDeep(value)) {
-        return undefined;
-      }
-      return value;
-    })), {
-      lineWidth: 150,
-      ...options,
-    } as unknown as T);
-  }
-
-  static Read(path: string, options?: Parameters<typeof parse>[2]) {
-    const doc = parse(fs.readFileSync(path, 'utf8'), options);
-    return new this(doc as Action);
-  }
-
-  static Load(str: string, options?: Parameters<typeof parse>[2]) {
-    const doc = parse(str, options);
-    return new Action(doc as Action);
+    this.inputs = inputs(action.inputs);
+    this.outputs = outputs(action.outputs);
+    this.runs = new Runs(action.runs);
   }
 }
 
