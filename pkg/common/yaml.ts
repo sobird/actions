@@ -7,12 +7,12 @@ import { isEmptyDeep } from '@/utils';
 class Yaml {
   #yaml;
 
-  constructor(yaml: Yaml) {
+  constructor(yaml: Omit<Yaml, 'save' | 'dump'>) {
     this.#yaml = yaml;
   }
 
-  save(path: string, options?: Parameters<typeof stringify>[1]) {
-    fs.writeFileSync(path, this.dump(options));
+  save(file: string, options?: Parameters<typeof stringify>[1]) {
+    fs.writeFileSync(file, this.dump(options));
   }
 
   dump<T extends Parameters<typeof stringify>[1]>(options?: T) {
@@ -27,8 +27,8 @@ class Yaml {
     } as unknown as T);
   }
 
-  static Read(path: string, options?: Parameters<typeof parse>[2]) {
-    const doc = parse(fs.readFileSync(path, 'utf8'), options);
+  static Read(file: string, options?: Parameters<typeof parse>[2]) {
+    const doc = parse(fs.readFileSync(file, 'utf8'), options);
     return new this(doc as Yaml);
   }
 
@@ -38,4 +38,4 @@ class Yaml {
   }
 }
 
-export default Yaml;
+export default Yaml satisfies any;

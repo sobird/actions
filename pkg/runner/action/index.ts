@@ -9,6 +9,8 @@
  * sobird<i@sobird.me> at 2024/06/13 10:55:22 created.
  */
 
+import fs from 'node:fs';
+
 import Yaml from '@/pkg/common/yaml';
 
 import { inputs } from './inputs';
@@ -49,7 +51,7 @@ class Action extends Yaml {
     color: 'white' | 'yello' | 'blue' | 'green' | 'orange' | 'red' | 'purple' | 'gray-dark';
   };
 
-  constructor(action: Action) {
+  constructor(action: Omit<Action, 'save' | 'dump'>) {
     super(action);
     this.name = action.name;
     this.author = action.author;
@@ -57,6 +59,15 @@ class Action extends Yaml {
     this.inputs = inputs(action.inputs);
     this.outputs = outputs(action.outputs);
     this.runs = new Runs(action.runs);
+  }
+
+  static Read(actionPath: string) {
+    const stat = fs.statSync(actionPath);
+    let actionFile = '';
+    if (stat.isFile()) {
+      actionFile = actionPath;
+    }
+    return super.Read(actionFile);
   }
 }
 

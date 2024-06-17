@@ -7,11 +7,7 @@
  * sobird<i@sobird.me> at 2024/05/02 21:27:38 created.
  */
 
-import fs from 'fs';
-
-import { parse, stringify } from 'yaml';
-
-import { isEmptyDeep } from '@/utils';
+import Yaml from '@/pkg/common/yaml';
 
 import Job from './job';
 import Plan, { Stage, Run } from './plan';
@@ -19,7 +15,7 @@ import {
   Concurrency, Defaults, On, OnEvents, Permissions,
 } from './types';
 
-class Workflow {
+class Workflow extends Yaml {
   #file?: string;
 
   #sha?: string;
@@ -129,6 +125,8 @@ class Workflow {
   public jobs: Record<string, Job>;
 
   constructor(workflow: Workflow) {
+    super(workflow);
+
     this.#file = workflow.file;
     this.#sha = workflow.sha;
 
@@ -361,32 +359,6 @@ class Workflow {
     cloned.file = this.#file;
     cloned.sha = this.#sha;
     return new Workflow(cloned);
-  }
-
-  save(path: string, options?: Parameters<typeof stringify>[1]) {
-    fs.writeFileSync(path, this.dump(options));
-  }
-
-  dump<T extends Parameters<typeof stringify>[1]>(options?: T) {
-    return stringify(JSON.parse(JSON.stringify(this, (key, value) => {
-      if (isEmptyDeep(value)) {
-        return undefined;
-      }
-      return value;
-    })), {
-      lineWidth: 150,
-      ...options,
-    } as unknown as T);
-  }
-
-  static Read(path: string, options?: Parameters<typeof parse>[2]) {
-    const doc = parse(fs.readFileSync(path, 'utf8'), options);
-    return new Workflow(doc as Workflow);
-  }
-
-  static Load(str: string, options?: Parameters<typeof parse>[2]) {
-    const doc = parse(str, options);
-    return new Workflow(doc as Workflow);
   }
 }
 

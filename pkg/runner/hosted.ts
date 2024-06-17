@@ -4,7 +4,6 @@ import crypto from 'node:crypto';
 import fs, { CopyOptions, ReadStream } from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
-import util from 'node:util';
 
 import simpleGit from 'simple-git';
 import * as tar from 'tar';
