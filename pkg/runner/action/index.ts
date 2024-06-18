@@ -62,14 +62,22 @@ class Action extends Yaml {
     this.runs = new Runs(action.runs);
   }
 
-  static Read(actionPath: string) {
-    const actionFile = actionPath;
+  static Scan(actionPath: string) {
     const stat = fs.statSync(actionPath);
 
     if (stat.isDirectory()) {
       const yml = path.join(actionPath, 'action.yml');
+      if (fs.existsSync(yml)) {
+        return this.Read(yml);
+      }
+
+      const yaml = path.join(actionPath, 'action.yaml');
+      if (fs.existsSync(yaml)) {
+        return this.Read(yaml);
+      }
     }
-    return super.Read(actionFile);
+
+    return this.Read(actionPath);
   }
 }
 
