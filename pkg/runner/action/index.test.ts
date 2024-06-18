@@ -3,7 +3,7 @@ import Action from '.';
 describe('test action Reader', () => {
   const yaml = `
   name: 'name'
-  description: 'description',
+  description: 'description'
   runs:
     using: 'node16'
     main: 'main.js'
@@ -28,7 +28,7 @@ describe('test action Reader', () => {
   for (const item of cases) {
     it(item.name, () => {
       //
-      console.log('item', item.expected);
+      console.log('item', item.expected, Action.Load(item.yaml));
     });
   }
 });

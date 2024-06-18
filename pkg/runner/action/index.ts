@@ -10,6 +10,7 @@
  */
 
 import fs from 'node:fs';
+import path from 'node:path';
 
 import Yaml from '@/pkg/common/yaml';
 
@@ -62,10 +63,11 @@ class Action extends Yaml {
   }
 
   static Read(actionPath: string) {
+    const actionFile = actionPath;
     const stat = fs.statSync(actionPath);
-    let actionFile = '';
-    if (stat.isFile()) {
-      actionFile = actionPath;
+
+    if (stat.isDirectory()) {
+      const yml = path.join(actionPath, 'action.yml');
     }
     return super.Read(actionFile);
   }

@@ -27,14 +27,14 @@ class Yaml {
     } as unknown as T);
   }
 
-  static Read(file: string, options?: Parameters<typeof parse>[2]) {
+  static Read<T extends typeof Yaml>(this: T, file: string, options?: Parameters<typeof parse>[2]) {
     const doc = parse(fs.readFileSync(file, 'utf8'), options);
-    return new this(doc as Yaml);
+    return new this(doc) as InstanceType<T>;
   }
 
-  static Load(str: string, options?: Parameters<typeof parse>[2]) {
+  static Load<T extends { new (...args: any[]): Yaml }>(this: T, str: string, options?: Parameters<typeof parse>[2]) {
     const doc = parse(str, options);
-    return new this(doc as Yaml);
+    return new this(doc) as InstanceType<T>;
   }
 }
 
