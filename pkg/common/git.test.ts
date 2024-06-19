@@ -13,11 +13,12 @@ beforeEach(() => {
   fs.mkdirSync(testTmp, { recursive: true });
 });
 afterEach(() => {
+  console.log('testTmp', testTmp);
   fs.rmdirSync(testTmp, { recursive: true });
 });
 
 describe('Test Git', () => {
-  it('get remote url test case', async () => {
+  it('remote url test case', async () => {
     const wantRemoteURL = 'https://git-codecommit.us-east-1.amazonaws.com/v1/repos/my-repo-name';
     const dir = path.join(testTmp, 'remote-url');
     fs.mkdirSync(dir, { recursive: true });
@@ -134,10 +135,30 @@ describe('Test Git', () => {
     }
   });
 
-  it('git Clone test case', async () => {
-    const dir = path.join(testTmp, 'actions-test');
+  it('git clone test case', async () => {
+    const dir = path.join(testTmp, 'git-clone-test');
     const git = new Git(dir);
-    await Git.Clone('https://github.com/sobird/actions-test', dir, 'master');
+    await git.clone('https://gitea.com/sobird/actions-test');
+
+    const isRepo = await git.git.checkIsRepo();
+    expect(isRepo).toBe(true);
+  });
+
+  it('git Clone test case', async () => {
+    const dir = path.join(testTmp, 'git-Clone-test');
+    const git = new Git(dir);
+    await Git.Clone('https://gitea.com/sobird/actions-test', dir, 'master');
+
+    const isRepo = await git.git.checkIsRepo();
+    expect(isRepo).toBe(true);
+  });
+
+  it('git Clone Executor test case', async () => {
+    const dir = path.join(testTmp, 'git-Clone-Executor-test');
+    const git = new Git(dir);
+    const executor = Git.CloneExecutor('https://gitea.com/sobird/actions-test', dir, 'master');
+
+    await executor.execute();
 
     const isRepo = await git.git.checkIsRepo();
     expect(isRepo).toBe(true);

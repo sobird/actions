@@ -14,7 +14,6 @@ class ActionCache {
     const git = simpleGit(repoPath);
 
     try {
-      await git.status();
       await git.fetch();
     } catch (err) {
       const options = ['--recurse-submodules'];

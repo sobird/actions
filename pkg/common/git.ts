@@ -11,7 +11,7 @@ import GitUrlParse from 'git-url-parse';
 import log4js from 'log4js';
 import simpleGit, { SimpleGitOptions } from 'simple-git';
 
-import Executor, { Conditional } from './executor';
+import Executor from './executor';
 
 export { GitError } from 'simple-git';
 
@@ -25,9 +25,9 @@ class Git {
   constructor(public base: string) {
     this.name = path.basename(base);
     this.git = Git.SimpleGit(base, {
-      progress({ method, stage, progress }) {
-        console.log(`git ${method} ${stage} stage ${progress}% complete`);
-      },
+      // progress({ method, stage, progress }) {
+      //   console.log(`git ${method} ${stage} stage ${progress}% complete`);
+      // },
     });
   }
 
@@ -47,25 +47,24 @@ class Git {
     return (await this.git.log(['--pretty=%H', '-1', filename])).latest?.hash;
   }
 
-  async clone(repoPath: string, ref: string = 'HEAD') {
+  async clone(url: string, ref: string = 'HEAD') {
     const { git } = this;
     try {
-      await git.status();
       await git.fetch();
-      // logger.info(`Repository already exists at ${localPath}`);
     } catch (err) {
-      const options = ['--recurse-submodules'];
-      await git.clone(repoPath, this.base, options);
+      await git.clone(url, this.base);
     }
 
     await git.checkout(ref);
+
+    return git;
   }
 
   async revision() {
-    const shortSha = await this.git.revparse(['--short', 'HEAD']);
+    const shortsha = await this.git.revparse(['--short', 'HEAD']);
     const sha = await this.git.revparse(['HEAD']);
     return {
-      shortSha,
+      shortsha,
       sha,
     };
   }
@@ -196,13 +195,13 @@ class Git {
     return refTag || refBranch;
   }
 
-  static async Clone(repoPath: string, localPath: string, ref: string) {
-    const git = Git.SimpleGit(localPath);
+  static async Clone(url: string, localPath: string, ref: string) {
+    const git = this.SimpleGit(localPath);
 
     try {
       await git.fetch();
     } catch (err) {
-      await git.clone(repoPath, localPath);
+      await git.clone(url, localPath);
     }
 
     await git.checkout(ref);
@@ -210,24 +209,17 @@ class Git {
     return git;
   }
 
-  static CloneExecutor(repoPath: string, localPath: string, ref: string = 'HEAD', offlineMode: boolean = false) {
-    //
+  static CloneExecutor(url: string, localPath: string, ref: string = 'HEAD', offlineMode: boolean = false) {
     return Executor.Mutex(new Executor(async () => {
-      logger.info("\u2601  git clone '%s' # ref=%s", repoPath, ref);
-      logger.debug('cloning %s to %s', repoPath, localPath);
+      logger.info("\u2601  git clone '%s' # ref=%s", url, ref);
+      logger.debug('cloning %s to %s', url, localPath);
 
-      const git = await Git.Clone(repoPath, localPath, ref);
+      const git = await this.Clone(url, localPath, ref);
 
       if (!offlineMode) {
         git.pull();
       }
     }));
-  }
-
-  static CloneIfRequiredExecutor(repoPath: string, localPath: string, ref: string = 'HEAD', offlineMode: boolean = false) {
-    return Executor.Conditional(new Conditional(() => {
-      return !fs.existsSync(localPath);
-    }), Git.CloneExecutor(repoPath, localPath, ref, offlineMode));
   }
 }
 
