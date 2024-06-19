@@ -84,9 +84,9 @@ class Action extends Yaml {
     this.runs = new Runs(action.runs);
   }
 
-  run() {
-    // run action
-  }
+  // run() {
+  //   // run action
+  // }
 
   static Scan(actionPath: string) {
     const stat = fs.statSync(actionPath);

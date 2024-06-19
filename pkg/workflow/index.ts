@@ -137,11 +137,19 @@ class Workflow extends Yaml {
     this.env = workflow.env;
     this.defaults = workflow.defaults;
     this.concurrency = workflow.concurrency;
-    this.jobs = Object.fromEntries(Object.entries(workflow.jobs).map(([jobId, job]) => {
+    this.jobs = this.setupJobs(workflow.jobs);
+  }
+
+  private setupJobs(jobs: this['jobs']) {
+    if (!jobs) {
+      return {};
+    }
+
+    return Object.fromEntries(Object.entries(jobs).map(([jobId, job]) => {
       this.validateJobId(jobId);
-      // eslint-disable-next-line no-param-reassign
-      job.id = jobId;
-      return [jobId, new Job(job)];
+      const newJob = new Job(job);
+      newJob.id = jobId;
+      return [jobId, newJob];
     }));
   }
 
@@ -297,19 +305,20 @@ class Workflow extends Yaml {
   }
 
   plan(...jobIds: string[]) {
+    const { jobs } = this;
     const jobNeeds: Record<string, string[]> = {};
 
     let jobIdsClone = [...jobIds];
 
     if (jobIds.length === 0) {
-      jobIdsClone = Object.keys(this.jobs);
+      jobIdsClone = Object.keys(jobs);
     }
 
     while (jobIdsClone.length > 0) {
       const newjobIds: string[] = [];
       jobIdsClone.forEach((jobId) => {
         if (!jobNeeds[jobId]) {
-          const job = this.jobs[jobId];
+          const job = jobs[jobId];
           if (job) {
             jobNeeds[jobId] = job.getNeeds();
             newjobIds.push(...job.getNeeds());

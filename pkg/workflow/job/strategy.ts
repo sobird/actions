@@ -8,6 +8,8 @@
 
 import { cartesianProduct, lodash } from '@/utils';
 
+export type StrategyProps = Pick<Strategy, 'matrix' | 'fail-fast' | 'max-parallel'>;
+
 export default class Strategy {
   /**
    * Use `jobs.<job_id>.strategy.matrix` to define a matrix of different job configurations.
@@ -112,7 +114,7 @@ export default class Strategy {
  */
   'max-parallel'?: number;
 
-  constructor(strategy?: Partial<Strategy>) {
+  constructor(strategy?: StrategyProps) {
     if (!strategy) {
       return;
     }

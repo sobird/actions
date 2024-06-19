@@ -5,18 +5,21 @@
  * sobird<i@sobird.me> at 2024/05/02 20:26:29 created.
  */
 
+import path from 'node:path';
+
 import log4js from 'log4js';
 
 import Executor from '@/pkg/common/executor';
+import Git from '@/pkg/common/git';
 import Reporter from '@/pkg/reporter';
 import Runner from '@/pkg/runner';
+import WorkflowPlanner from '@/pkg/workflow/planner';
 import { asyncFunction } from '@/utils';
 
 import Container from './container';
 import Step from './step';
 import StepExecutorRun from './step/run';
-import Strategy from './strategy';
-import Uses from './uses';
+import Strategy, { StrategyProps } from './strategy';
 import {
   WorkflowDispatchInputs, Permissions, Concurrency, Defaults,
 } from '../types';
@@ -332,8 +335,19 @@ class Job {
    *
    * If you use the second syntax option (without `{owner}/{repo}` and `@{ref}`) the called workflow is from the same commit as the caller workflow.
    * Ref prefixes such as `refs/heads` and `refs/tags` are not allowed.
+   *
+   * Example of jobs.<job_id>.uses
+   * ```yaml
+   * jobs:
+   *    call-workflow-1-in-local-repo:
+   *     uses: octo-org/this-repo/.github/workflows/workflow-1.yml@172239021f7ba04fe7327647b213799853a9eb89
+   *   call-workflow-2-in-local-repo:
+   *     uses: ./.github/workflows/workflow-2.yml
+   *   call-workflow-in-another-repo:
+   *     uses: octo-org/another-repo/.github/workflows/workflow.yml@v1
+   * ```
    */
-  uses?: Uses;
+  uses?: string;
 
   /**
    * When a job is used to call a reusable workflow,
@@ -387,7 +401,7 @@ class Job {
     this['continue-on-error'] = job['continue-on-error'];
     this.container = new Container(job.container);
     this.services = job.services;
-    this.uses = new Uses(job.uses);
+    this.uses = job.uses;
     this.with = job.with;
     this.secrets = job.secrets;
   }
@@ -495,7 +509,7 @@ class Job {
     }));
   }
 
-  executor(reporter: Reporter) {
+  executor(runner: Runner) {
     const { strategy } = this;
     const stageExecutor: Executor[] = [];
 
@@ -579,6 +593,92 @@ class Job {
         },
       });
     }));
+  }
+
+  usesExecutor(runner: Runner) {
+    let { uses = '' } = this;
+    // 无效的job uses
+    if (!/\.(ya?ml)(?:$|@)/.exec(uses)) {
+      return;
+    }
+
+    const reusable = {
+      url: '',
+      repository: '',
+      filename: '',
+      ref: '',
+    };
+
+    const matches = /^(https?:\/\/[^/?#]+\/)?([^/@]+)(?:\/([^/@]+))?(?:\/([^@]*))?(?:@(.*))?$/.exec(uses);
+    if (matches) {
+      const { server_url: serverUrl, sha } = runner.context.github;
+      const [,url = serverUrl, owner, repo, filename, ref = sha] = matches;
+      reusable.url = url;
+      reusable.repository = `${owner}/${repo}`;
+      reusable.filename = filename;
+      reusable.ref = ref;
+    }
+
+    // local reusable workflow
+    if (uses.startsWith('./')) {
+      uses = uses.substring(2);
+      if (runner.config.skipCheckout) {
+        return Job.ReusableWorkflowExecutor(runner, uses);
+      }
+      const { repository, sha, server_url: serverUrl } = runner.context.github;
+      reusable.url = serverUrl;
+      reusable.repository = repository;
+      reusable.filename = uses;
+      reusable.ref = sha;
+    }
+
+    const repositoryDir = path.join(runner.actionCacheDir, reusable.repository, reusable.ref);
+    const url = new URL(reusable.repository, reusable.url);
+
+    if (runner.token) {
+      url.username = 'token';
+      url.password = runner.token;
+    }
+    const workflowpath = path.join(repositoryDir, reusable.filename);
+    return Git.CloneExecutor(url.toString(), repositoryDir, reusable.ref).next(Job.ReusableWorkflowExecutor(runner, workflowpath));
+  }
+
+  // 保留该方法，获取任务类型
+  get type() {
+    const { uses } = this;
+    if (uses) {
+      // 检查是否为YAML文件
+      const isYaml = uses.match(/\.(ya?ml)(?:$|@)/);
+
+      if (isYaml) {
+        const isLocalPath = uses.startsWith('./');
+        const isRemotePath = uses.match(/^[^.](.+?\/){2,}\S*\.ya?ml@/);
+        // 检查是否包含版本信息
+        const hasVersion = uses.match('.ya?ml@');
+
+        if (isLocalPath) {
+          return JobType.ReusableWorkflowLocal;
+        } if (isRemotePath && hasVersion) {
+          return JobType.ReusableWorkflowRemote;
+        }
+      }
+
+      // 如果不是有效的工作流路径，返回无效类型
+      // throw new Error(`\`uses\` key references invalid workflow path '${this.uses}'. Must start with './' if it's a local workflow, or must start with '<org>/<repo>/' and include an '@' if it's a remote workflow`);
+
+      return JobType.Invalid;
+    }
+
+    // 如果不是可复用的工作流，则返回默认类型
+    return JobType.Default;
+  }
+
+  private static ReusableWorkflowExecutor(runner: Runner, workflowPath: string) {
+    return new Executor(async () => {
+      const workflowPlanner = await WorkflowPlanner.Collect(workflowPath);
+      const plan = workflowPlanner.planEvent('workflow_call');
+      await plan.executor(runner.config, runner).execute();
+    });
   }
 }
 

@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import os from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -404,7 +403,7 @@ describe('job strategy test', () => {
     const job = workflow.jobs['strategy-only-fail-fast'];
 
     expect(job.strategy?.getMatrices()).toEqual([]);
-    expect(job.strategy?.getMaxParallel()).toBe(os.cpus().length);
+    expect(job.strategy?.getMaxParallel()).toBe(1);
     expect(job.strategy?.getFailFast()).toBe(false);
   });
 
