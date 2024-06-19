@@ -7,7 +7,7 @@ permissions:
   contents: read
 
 jobs:
-  job1:
+  job-resuable:
     runs-on: ${{ matrix.platform }}
     strategy:
       matrix:

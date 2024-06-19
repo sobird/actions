@@ -8,7 +8,7 @@ class Runs {
    * Required The file that contains your action code.
    * The runtime specified in using executes this file.
    */
-  main: string;
+  main?: string;
 
   /**
    * Optional Allows you to run a script at the start of a job, before the main: action begins.

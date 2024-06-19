@@ -18,14 +18,14 @@ permissions:
   contents: read
 
 jobs:
-  job1:
+  job-uses:
     runs-on: ${{ matrix.platform }}
     strategy:
       matrix:
-        os: ['ubuntu-latest', 'macos-latest']
+        os: ['ubuntu-latest']
         node: [18, 20]
       fail-fast: false
-    uses: ./.github/workflows/reusable-workflow.yaml
+    uses: ./.actions/workflows/reusable-workflow.yaml
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} ddd dsdsd dd event."
       - run: echo "This job is now running on a ${{ runner.os }} server hosted by !"

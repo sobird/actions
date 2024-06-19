@@ -18,6 +18,28 @@ import { inputs } from './inputs';
 import { outputs } from './outputs';
 import Runs from './runs';
 
+/**
+ * You can create actions by writing custom code that interacts with your repository in any way you'd like,
+ * including integrating with GitHub's APIs and any publicly available third-party API.
+ * For example, an action can publish npm modules, send SMS alerts when urgent issues are created, or deploy production-ready code.
+ *
+ * You can write your own actions to use in your workflow or share the actions you build with the GitHub community.
+ * To share actions you've built with everyone, your repository must be public.
+ *
+ * Actions can run directly on a machine or in a Docker container.
+ * You can define an action's inputs, outputs, and environment variables.
+ *
+ * Types of actions
+ *
+ * You can build Docker container, JavaScript, and composite actions.
+ * Actions require a metadata file to define the inputs, outputs and main entrypoint for your action.
+ * The metadata filename must be either `action.yml` or `action.yaml`.
+ *
+ * * Docker container
+ * * JavaScript
+ * * Composite Actions
+ *
+ */
 class Action extends Yaml {
   /**
    * **Required** The name of your action.
@@ -62,6 +84,10 @@ class Action extends Yaml {
     this.runs = new Runs(action.runs);
   }
 
+  run() {
+    // run action
+  }
+
   static Scan(actionPath: string) {
     const stat = fs.statSync(actionPath);
 
@@ -75,9 +101,21 @@ class Action extends Yaml {
       if (fs.existsSync(yaml)) {
         return this.Read(yaml);
       }
+
+      const dockerfile = path.join(actionPath, 'Dockerfile');
+      if (fs.existsSync(dockerfile)) {
+        return new this({
+          name: '(Synthetic)',
+          description: 'docker file action',
+          runs: {
+            using: 'docker',
+            image: 'Dockerfile',
+          },
+        });
+      }
     }
 
-    return this.Read(actionPath);
+    // return this.Read(actionPath);
   }
 }
 

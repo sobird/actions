@@ -423,6 +423,7 @@ class Job {
     return new Job(cloned);
   }
 
+  // 展开作业矩阵
   spread() {
     const matrices = this.strategy.getMatrices();
     if (matrices.length === 0) {

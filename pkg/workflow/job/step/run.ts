@@ -1,10 +1,9 @@
-import StepExecutor from './executor';
 import Step from '.';
 
-class StepExecutorRun extends Step {
+class StepRun extends Step {
   main() {
     // return this.setup();
   }
 }
 
-export default StepExecutorRun;
+export default StepRun;

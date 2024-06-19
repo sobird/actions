@@ -59,7 +59,7 @@ class Uses {
       const localWorkflow = /^(.+)\/([^/]+)\/\.([^/]+)\/workflows\/([^@]+)@(.*)$/;
       const localMatches = localWorkflow.exec(uses);
       if (localMatches && localMatches.length === 6) {
-        const [,owner, repo, platform, filename, ref] = localMatches;
+        const [,owner, repo, , filename, ref] = localMatches;
         this.#url = runner.context.github.server_url;
         this.#repository = path.join(owner, repo);
         this.#filename = filename;
@@ -69,6 +69,7 @@ class Uses {
       // local reusable workflow
       if (uses.startsWith('./')) {
         uses = uses.substring(2);
+        // 本地命令行运行，还是通过服务运行
         if (runner.config.skipCheckout) {
           return Uses.ReusableWorkflowExecutor(runner, uses);
         }
@@ -80,7 +81,6 @@ class Uses {
       }
 
       const repositoryDir = path.join(runner.actionCacheDir, this.#repository, this.#ref);
-      console.log('first123', this.#repository, this.#url);
       const url = new URL(this.#repository, this.#url);
 
       if (runner.token) {
@@ -94,9 +94,8 @@ class Uses {
 
   private static ReusableWorkflowExecutor(runner: Runner, workflowPath: string) {
     return new Executor(async () => {
-      const workflow = await WorkflowPlanner.Collect(workflowPath);
-      const plan = workflow.planEvent('workflow_call');
-      console.log('plan', plan);
+      const workflowPlanner = await WorkflowPlanner.Collect(workflowPath);
+      const plan = workflowPlanner.planEvent('workflow_call');
       await plan.executor(runner.config, runner).execute();
     });
   }
