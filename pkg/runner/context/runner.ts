@@ -17,7 +17,7 @@ export class Runner {
    * The name of the runner executing the job.
    * This name may not be unique in a workflow run as runners at the repository and organization levels could use the same name.
    */
-  name: string;
+  name: string = '';
 
   /**
    * The operating system of the runner executing the job. Possible values are `Linux`, `Windows`, or `macOS`.
@@ -34,19 +34,19 @@ export class Runner {
    * This directory is emptied at the beginning and end of each job.
    * Note that files will not be removed if the runner's user account does not have permission to delete them.
    */
-  temp: string;
+  temp: string = '';
 
   /**
    * The path to the directory containing preinstalled tools for GitHub-hosted runners.
    * For more information, see "{@link https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-software Using GitHub-hosted runners}".
    */
-  tool_cache: string;
+  tool_cache: string = '';
 
   /**
    * This is set only if {@link https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/enabling-debug-logging debug logging} is enabled, and always has the value of 1.
    * It can be useful as an indicator to enable additional debugging or verbose logging in your own job steps.
    */
-  debug: string;
+  debug: string = '';
 
   /**
    * The environment of the runner executing the job.

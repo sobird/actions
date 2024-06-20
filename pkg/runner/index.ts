@@ -43,8 +43,6 @@ class Runner {
     if (matrix) {
       this.context.matrix = matrix as Context['matrix'];
     }
-
-    console.log('context', this, context);
   }
 
   executor() {

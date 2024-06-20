@@ -232,6 +232,7 @@ export const runCommand = new Command('run')
     // run the plan
     const username = await git.username();
     const repoInfo = await git.repoInfo();
+    const ref = await git.ref();
 
     const actor = options.actor || username || 'actor';
     const actor_id = generateId(actor);
@@ -249,7 +250,7 @@ export const runCommand = new Command('run')
 
     const userInfo = os.userInfo();
 
-    const context = new Context({
+    const context: Context = {
       github: {
         actor,
         actor_id,
@@ -268,14 +269,18 @@ export const runCommand = new Command('run')
         event_path: options.eventFile,
         event,
         sha,
+        ref: ref ?? '',
         triggering_actor: userInfo.username,
         token: options.token,
       },
       env: options.env,
       vars: options.vars,
-      secrets: options.secrets,
+      secrets: {
+        ...options.secrets,
+        GITHUB_TOKEN: options.token,
+      },
       inputs: options.inputs,
-    });
+    };
 
     console.log('options', options);
     await plan.executor().execute();

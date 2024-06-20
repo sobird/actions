@@ -10,14 +10,25 @@
 
 import _ from 'lodash';
 
-_.templateSettings.interpolate = /\${{([\s\S]+?)}}/g;
-_.templateSettings.imports = {
-  getName(name) {
-    return `ddd${name}`;
-  },
-  test: 'ddd111',
-};
+import Context from '../runner/context';
 
+_.templateSettings.interpolate = /\${{([\s\S]+?)}}/g;
+// _.templateSettings.imports = {
+//   getName(name) {
+//     return `ddd${name}`;
+//   },
+//   test: 'ddd111',
+// };
+
+const context = new Context({
+  github: {
+    actor: 'actor',
+  },
+});
+
+context.test?.();
+
+console.log('context', context);
 class Test {
   list = [
     { name: 'test' },
@@ -33,6 +44,6 @@ class Test {
 }
 const test = new Test('hello');
 
-const compiled = _.template('The ${{test}} job was automatically triggered by a ${{ getName() }} event.');
-const result = compiled();
+const compiled = _.template('The ${{github.actor}} job was automatically triggered by a ${{ test() }} event.');
+const result = compiled(context);
 console.log('result:', result);

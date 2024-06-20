@@ -1,29 +1,46 @@
 /* eslint-disable max-classes-per-file */
-import fs from 'node:fs';
-import path from 'node:path';
+import Context from './pkg/runner/context';
 
-import Action from './pkg/runner/action';
-
-const action = new Action({
-  name: 'name',
-  description: 'description',
-  runs: {
-    using: 'docker',
+const context = new Context({
+  github: {
+    action: 'action',
   },
 });
-action.dump();
+console.log('context', context);
 
-console.log('path', path.resolve('/usr', 'bin1'));
-const stat = fs.accessSync(path.resolve('/usr', 'bin'));
-console.log('stat', stat);
+class Parent {
+  name: string;
 
-class Uses {
-  constructor(private uses: string) {}
-
-  toString() {
-    return this.uses;
+  constructor(parent: Parent) {
+    this.name = parent.name;
   }
 }
 
-const uses = new Uses('uses test');
-console.log('uses', JSON.stringify(uses));
+class Child {
+  name: string;
+
+  parent: Parent;
+
+  constructor(child: Child) {
+    this.name = child.name;
+    this.parent = child.parent;
+    Object.assign(this, child);
+  }
+
+  getName() {
+    return this.name;
+  }
+}
+
+const child = new Child({
+  name: 'child',
+  parent: {
+    name: 'parent',
+  },
+
+  getAge() {
+    return this.parent;
+  },
+});
+
+console.log('child', child.getAge());

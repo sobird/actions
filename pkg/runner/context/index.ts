@@ -78,7 +78,7 @@ export default class Context {
     this.inputs = context.inputs ?? {};
   }
 
-  test() {
+  test?() {
     return this.env;
   }
 }

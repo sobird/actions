@@ -19,14 +19,14 @@ export class Github {
    * For example, the first script you run will have the name __run, and the second script will be named __run_2. Similarly,
    * the second invocation of actions/checkout will be actionscheckout2.
    */
-  action: string;
+  action: string = '';
 
   /**
    * The path where an action is located. This property is only supported in composite actions.
    *
    * You can use this path to access files located in the same repository as the action, for example by changing directories to the path: cd ${{ github.action_path }} .
    */
-  action_path: string;
+  action_path: string = '';
 
   /**
    * For a step executing an action, this is the ref of the action being executed. For example, v2.
@@ -34,7 +34,7 @@ export class Github {
    * Do not use in the run keyword.
    * To make this context work with composite actions, reference it within the env context of the composite action.
    */
-  action_ref: string;
+  action_ref: string = '';
 
   /**
    * For a step executing an action, this is the owner and repository name of the action. For example, actions/checkout.
@@ -42,12 +42,12 @@ export class Github {
    * Do not use in the run keyword.
    * To make this context work with composite actions, reference it within the env context of the composite action.
    */
-  action_repository: string;
+  action_repository: string = '';
 
   /**
    * For a composite action, the current result of the composite action.
    */
-  action_status: string;
+  action_status: string = '';
 
   /**
    * The username of the user that triggered the initial workflow run.
@@ -56,26 +56,26 @@ export class Github {
    * Any workflow re-runs will use the privileges of github.actor,
    * even if the actor initiating the re-run (github.triggering_actor) has different privileges.
    */
-  actor: string;
+  actor: string = '';
 
   /**
    * The account ID of the person or app that triggered the initial workflow run. For example, 1234567.
    *
    * Note that this is different from the actor username.
    */
-  actor_id: string;
+  actor_id: string = '';
 
   /**
    * The URL of the GitHub REST API.
    */
-  api_url: string;
+  api_url: string = '';
 
   /**
    * The base_ref or target branch of the pull request in a workflow run.
    *
    * This property is only available when the event that triggers a workflow run is either pull_request or pull_request_target.
    */
-  base_ref: string;
+  base_ref: string = '';
 
   /**
    * Path on the runner to the file that sets environment variables from workflow commands.
@@ -83,7 +83,7 @@ export class Github {
    * This file is unique to the current step and is a different file for each step in a job.
    * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable Workflow commands for GitHub Actions}."
    */
-  env: string;
+  env: string = '';
 
   /**
    * The full event webhook payload.
@@ -93,36 +93,36 @@ export class Github {
    * The webhooks for each GitHub Actions event is linked in "{@link https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows Events that trigger workflows}."
    * For example, for a workflow run triggered by the {@link https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#push `push` event}, this object contains the contents of the {@link https://docs.github.com/en/webhooks-and-events/webhooks/webhook-events-and-payloads#push push webhook payload}.
    */
-  event: Record<string, any>;
+  event: Record<string, any> = {};
 
   /**
    * The name of the event that triggered the workflow run.
    */
-  event_name: string;
+  event_name: string = '';
 
   /**
    * The path to the file on the runner that contains the full event webhook payload.
    */
-  event_path: string;
+  event_path: string = '';
 
   /**
    * The URL of the GitHub GraphQL API.
    */
-  graphql_url: string;
+  graphql_url: string = '';
 
   /**
    * The head_ref or source branch of the pull request in a workflow run.
    *
    * This property is only available when the event that triggers a workflow run is either pull_request or pull_request_target.
    */
-  head_ref: string;
+  head_ref: string = '';
 
   /**
    * The {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_id `job_id`} of the current job.
    *
    * Note: This context property is set by the Actions runner, and is only available within the execution steps of a job. Otherwise, the value of this property will be null.
    */
-  job: string;
+  job: string = '';
 
   /**
    * Path on the runner to the file that sets system PATH variables from workflow commands.
@@ -130,7 +130,7 @@ export class Github {
    * This file is unique to the current step and is a different file for each step in a job.
    * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#adding-a-system-path Workflow commands for GitHub Actions}."
    */
-  path: string;
+  path: string = '';
 
   /**
    * The fully-formed ref of the branch or tag that triggered the workflow run.
@@ -143,7 +143,7 @@ export class Github {
    * The ref given is fully-formed, meaning that for branches the format is `refs/heads/<branch_name>`, for pull requests it is `refs/pull/<pr_number>/merge`, and for tags it is `refs/tags/<tag_name>`.
    * For example, `refs/heads/feature-branch-1`.
    */
-  ref: string;
+  ref: string = '';
 
   /**
    * The short ref name of the branch or tag that triggered the workflow run.
@@ -152,76 +152,76 @@ export class Github {
    *
    * For pull requests, the format is `<pr_number>/merge`.
    */
-  ref_name: string;
+  ref_name: string = '';
 
   /**
    * `true` if branch protections or {@link https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/managing-rulesets-for-a-repository rulesets} are configured for the ref that triggered the workflow run.
    */
-  ref_protected: boolean;
+  ref_protected: boolean = false;
 
   /**
    * The type of ref that triggered the workflow run. Valid values are `branch` or `tag`.
    */
-  ref_type: 'branch' | 'tag' | '';
+  ref_type: 'branch' | 'tag' | '' = '';
 
   /**
    * The owner and repository name. For example, `octocat/Hello-World`.
    */
-  repository: string;
+  repository: string = '';
 
   /**
    * The ID of the repository. For example, `123456789`. Note that this is different from the repository name.
    */
-  repository_id: string;
+  repository_id: string = '';
 
   /**
    * The repository owner's username. For example, `octocat`.
    */
-  repository_owner: string;
+  repository_owner: string = '';
 
   /**
    * The repository owner's account ID. For example, `1234567`. Note that this is different from the owner's name.
    */
-  repository_owner_id: string;
+  repository_owner_id: string = '';
 
   /**
    * The Git URL to the repository. For example, `git://github.com/octocat/hello-world.git`.
    */
-  repositoryUrl: string;
+  repositoryUrl: string = '';
 
   /**
    * The number of days that workflow run logs and artifacts are kept.
    */
-  retention_days: string;
+  retention_days: string = '';
 
   /**
    * A unique number for each workflow run within a repository.
    * This number does not change if you re-run the workflow run.
    */
-  run_id: string;
+  run_id: string = '';
 
   /**
    * A unique number for each run of a particular workflow in a repository.
    * This number begins at 1 for the workflow's first run, and increments with each new run.
    * This number does not change if you re-run the workflow run.
    */
-  run_number: string;
+  run_number: string = '';
 
   /**
    * A unique number for each attempt of a particular workflow run in a repository.
    * This number begins at 1 for the workflow run's first attempt, and increments with each re-run.
    */
-  run_attempt: string;
+  run_attempt: string = '';
 
   /**
    * The source of a secret used in a workflow. Possible values are `None`, `Actions`, `Codespaces`, or `Dependabot`.
    */
-  secret_source: 'None' | 'Actions' | 'Codespaces' | 'Dependabot';
+  secret_source: 'None' | 'Actions' | 'Codespaces' | 'Dependabot' = 'Actions';
 
   /**
    * The URL of the GitHub server. For example: `https://github.com`.
    */
-  server_url: string;
+  server_url: string = 'https://github.com';
 
   /**
    * The commit SHA that triggered the workflow.
@@ -230,7 +230,7 @@ export class Github {
    * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows Events that trigger workflows}."
    * For example, `ffac537e6cbbf934b08745a378932722df287a53`.
    */
-  sha: string;
+  sha: string = '';
 
   /**
    * A token to authenticate on behalf of the GitHub App installed on your repository.
@@ -240,7 +240,7 @@ export class Github {
    * Note: This context property is set by the Actions runner, and is only available within the execution steps of a job.
    * Otherwise, the value of this property will be null.
    */
-  token: string;
+  token: string = '';
 
   /**
    * The username of the user that initiated the workflow run.
@@ -248,75 +248,37 @@ export class Github {
    * If the workflow run is a re-run, this value may differ from `github.actor`.
    * Any workflow re-runs will use the privileges of `github.actor`, even if the actor initiating the re-run (`github.triggering_actor`) has different privileges.
    */
-  triggering_actor: string;
+  triggering_actor: string = '';
 
   /**
    * The name of the workflow.
    *
    * If the workflow file doesn't specify a name, the value of this property is the full path of the workflow file in the repository.
    */
-  workflow: string;
+  workflow: string = '';
 
   /**
    * The ref path to the workflow.
    *
    * For example, `octocat/hello-world/.github/workflows/my-workflow.yml@refs/heads/my_branch`.
    */
-  workflow_ref: string;
+  workflow_ref: string = '';
 
   /**
    * The commit SHA for the workflow file.
    */
-  workflow_sha: string;
+  workflow_sha: string = '';
 
   /**
    * The default working directory on the runner for steps, and the default location of your repository when using the {@link https://github.com/actions/checkout checkout} action.
    */
-  workspace: string;
+  workspace: string = '';
 
-  constructor(github: Github) {
-    this.action = github.action;
-    this.action_path = github.action_path;
-    this.action_ref = github.action_ref;
-    this.action_repository = github.action_repository;
-    this.action_status = github.action_status;
-    this.actor = github.actor;
-    this.actor_id = github.actor_id;
-    this.api_url = github.api_url;
-    this.base_ref = github.base_ref;
-    this.env = github.env ?? '';
-    this.event = github.event ?? {};
-    this.event_name = github.event_name;
-    this.event_path = github.event_path;
-    this.graphql_url = github.graphql_url;
-    this.head_ref = github.head_ref;
-    this.job = github.job;
-    this.path = github.path;
-    this.ref = github.ref;
-    this.ref_name = github.ref_name;
-    this.ref_protected = github.ref_protected;
-    this.ref_type = github.ref_type;
-    this.repository = github.repository;
-    this.repository_id = github.repository_id;
-    this.repository_owner = github.repository_owner;
-    this.repository_owner_id = github.repository_owner_id;
-    this.repositoryUrl = github.repositoryUrl;
-    this.retention_days = github.retention_days;
-    this.run_id = github.run_id;
-    this.run_number = github.run_number;
-    this.run_attempt = github.run_attempt;
-    this.secret_source = github.secret_source;
-    this.server_url = github.server_url;
-    this.sha = github.sha;
-    this.token = github.token;
-    this.triggering_actor = github.triggering_actor;
-    this.workflow = github.workflow;
-    this.workflow_ref = github.workflow_ref;
-    this.workflow_sha = github.workflow_sha;
-    this.workspace = github.workspace;
+  constructor(github: Partial<Github>) {
+    Object.assign(this, github);
 
     this.setBaseAndHeadRef();
-    // this.setRefTypeAndName();
+    this.setRefTypeAndName();
   }
 
   setBaseAndHeadRef() {
