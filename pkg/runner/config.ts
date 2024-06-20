@@ -4,20 +4,25 @@
  * sobird<i@sobird.me> at 2024/05/07 16:01:08 created.
  */
 
-import type { Github } from '@/pkg/runner/context/github';
+import { HostConfig } from 'dockerode';
+import { Level } from 'log4js';
 
-import type ActionCache from './action/cache';
-import type { HostConfig } from 'dockerode';
-import type { Level } from 'log4js';
+import ActionCache from '@/pkg/runner/action/cache';
+import Context from '@/pkg/runner/context';
 
 /**
  * The configuration interface for the runner.
  */
 export interface Config {
   /**
+   * The preset github context, overrides some fields like DefaultBranch, Env, Secrets etc.
+   */
+  context: Context;
+
+  /**
    * Bind the workspace to the job container.
    */
-  bind: boolean;
+  bind: Readonly<boolean>;
 
   /**
    * Use a custom ActionCache Implementation.
@@ -28,11 +33,6 @@ export interface Config {
    * When offline, use caching action contents.
    */
   actionOfflineMode: boolean;
-
-  /**
-   * Name of the event to run.
-   */
-  eventName: string;
 
   /**
    * The content of JSON file to use for event.json in containers, overrides EventPath.
@@ -217,12 +217,6 @@ export interface Config {
   matrix: { [key: string]: { [key: string]: boolean } };
 
   /**
-   * The preset github context, overrides some fields like DefaultBranch, Env, Secrets etc.
-   * @type {GithubContext}
-   */
-  presetGitHubContext?: Github;
-
-  /**
    * The default actions web site.
    */
   defaultActionInstance: string;
@@ -231,7 +225,7 @@ export interface Config {
    * The level of job logger.
    * @type {LogLevel}
    */
-  jobLoggerLevel?: Level;
+  loggerLevel?: Level;
 
   /**
    * Only volumes (and bind mounts) in this slice can be mounted on the job container or service containers.

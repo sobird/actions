@@ -153,6 +153,17 @@ class Git {
     return simpleGit(baseDir, options);
   }
 
+  static async Revision(repoPath: string) {
+    const git = Git.SimpleGit(repoPath);
+
+    const shortsha = await git.revparse(['--short', 'HEAD']);
+    const sha = await git.revparse(['HEAD']);
+    return {
+      shortsha,
+      sha,
+    };
+  }
+
   static async Ref(gitDir: string) {
     const git = Git.SimpleGit(gitDir);
 

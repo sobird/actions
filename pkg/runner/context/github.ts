@@ -1,3 +1,5 @@
+import Git from '@/pkg/common/git';
+
 /**
  * The top-level context available during any job or step in a workflow.
  *
@@ -313,6 +315,43 @@ export class Github {
 
     if (!this.ref_name) {
       this.ref_name = refName;
+    }
+  }
+
+  async setSha(repoPath: string) {
+    let sha;
+
+    // 根据事件类型设置SHA
+    switch (this.event_name) {
+      case 'pull_request_target':
+        sha = this.event?.pull_request?.base?.sha;
+        break;
+      case 'deployment':
+      case 'deployment_status':
+        sha = this.event?.deployment?.sha;
+        break;
+      case 'push':
+      case 'create':
+      case 'workflow_dispatch': {
+        const deleted = this.event?.deleted === undefined ? false : this.event.deleted;
+        if (!deleted) {
+          sha = this.event?.after;
+        }
+        break;
+      }
+      default:
+        // 默认行为
+        break;
+    }
+
+    // 如果没有设置SHA，尝试查找Git修订版本
+    if (!sha) {
+      try {
+        const revision = await Git.Revision(repoPath);
+        this.sha = revision.sha;
+      } catch (err) {
+        // logger.warning(`unable to get git revision: ${err}`);
+      }
     }
   }
 }

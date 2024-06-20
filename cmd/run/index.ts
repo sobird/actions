@@ -64,6 +64,8 @@ export const runCommand = new Command('run')
   .option('-W, --workflows <path>', 'path to workflow file(s)', './.github/workflows/')
   .option('-C, --workspace <path>', 'the default working directory on the runner for steps', '.')
   .option('--no-workflowRecurse', "Flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
+
+  .option('--remote-name', 'git remote name that will be used to retrieve url of git repo', 'origin')
   .option('--defaultbranch', 'the name of the main branch')
   // .option('-E, --event <event>', 'run a event name')
   .option('-e --event-file <event path>', 'path to event JSON file', 'event.json')
@@ -136,7 +138,6 @@ export const runCommand = new Command('run')
 
     logger.debug('Loading secrets from %s', options.secretsFile);
     Object.assign(options.secrets, readConfSync(options.secretsFile));
-    options.secrets.GITHUB_TOKEN = options.token;
 
     logger.debug('Loading action inputs from %s', options.inputsFile);
     Object.assign(options.inputs, readConfSync(options.inputsFile));
