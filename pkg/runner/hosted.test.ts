@@ -74,8 +74,7 @@ describe('test hosted class', () => {
 
   it('toContainerPath test case', () => {
     const hosted = new Hosted(tmp, '/opt/workspace');
-    const containerPath = hosted.toContainerPath('/opt/workspace/');
-    console.log('containerPath', containerPath);
+    const containerPath = hosted.toContainerPath('/opt/workspace/test.txt');
     expect(containerPath).toBe(path.join(hosted.cwdPath, 'test.txt'));
   });
 

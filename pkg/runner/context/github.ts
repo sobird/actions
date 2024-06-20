@@ -316,7 +316,7 @@ export class Github {
     this.workspace = github.workspace;
 
     this.setBaseAndHeadRef();
-    this.setRefTypeAndName();
+    // this.setRefTypeAndName();
   }
 
   setBaseAndHeadRef() {

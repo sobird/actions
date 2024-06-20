@@ -21,7 +21,7 @@ import Git from '@/pkg/common/git';
 import { getSocketAndHost } from '@/pkg/docker';
 import Context from '@/pkg/runner/context';
 import WorkflowPlanner from '@/pkg/workflow/planner';
-import { appendEnvs, generateId, readJsonSync } from '@/utils';
+import { readConfSync, generateId, readJsonSync } from '@/utils';
 
 import { bugReportOption } from './bugReportOption';
 import { graphOption } from './graphOption';
@@ -71,14 +71,14 @@ export const runCommand = new Command('run')
   .option('-p, --pull', 'pull docker image(s) even if already present')
   .option('--rebuild', 'rebuild local action docker image(s) even if already present')
   .option('--json', 'Output logs in json format')
-  .option('--input <input>', 'action input to make available to actions (e.g. --input myinput=foo)', collectObject, {})
-  .option('--input-file <input file>', 'input file to read and use as action input', '.input')
+  .option('--inputs <inputs>', 'action inputs to make available to actions (e.g. --inputs myinput=foo)', collectObject, {})
+  .option('--inputs-file <inputs file>', 'inputs file to read and use as action inputs', '.inputs')
   .option('--env <env>', 'env to make available to actions with optional value (e.g. --env myenv=foo,other=bar)', collectObject, {})
   .option('--env-file <env file>', 'environment file to read and use as env in the containers', '.env')
-  .option('--var <var>', 'variable to make available to actions with optional value (e.g. --var myvar=foo or --var myvar)', collectObject, {})
-  .option('--var-file <var file>', 'file with list of vars to read from (e.g. --var-file .vars)', '.var')
-  .option('-s --secret <secret>', 'secret to make available to actions with optional value (e.g. --secret mysecret=foo,toke=bar)', collectObject, {})
-  .option('--secret-file <secretfile>', 'file with list of secrets to read from (e.g. --secret-file .secrets)', '.secrets')
+  .option('--vars <var>', 'variable to make available to actions with optional value (e.g. --vars myvar=foo or --var myvar)', collectObject, {})
+  .option('--vars-file <var file>', 'file with list of vars to read from (e.g. --vars-file .vars)', '.vars')
+  .option('-s --secrets <secret>', 'secret to make available to actions with optional value (e.g. --secrets mysecret=foo,toke=bar)', collectObject, {})
+  .option('--secrets-file <secretfile>', 'file with list of secrets to read from (e.g. --secret-file .secrets)', '.secrets')
   .option('--matrix', 'specify which matrix configuration to include (e.g. --matrix java:13')
   .option('--insecure-secrets', "NOT RECOMMENDED! Doesn't hide secrets while printing logs")
   .option('--privileged', 'use privileged mode')
@@ -108,6 +108,7 @@ export const runCommand = new Command('run')
   .option('--action-offline-mode', 'If action contents exists, it will not be fetch and pull again. If turn on this, will turn off force pull', false)
   .option('--action-cache-path <path>', 'Defines the path where the actions get cached and host workspaces created.', path.join(HOME_CACHE_DIR, 'actions'))
   .option('--local-repository <local repository>', 'Replaces the specified repository and ref with a local folder (e.g. https://github.com/test/test@v0=/home/act/test or test/test@v0=/home/act/test, the latter matches any hosts or protocols)', collectArray, [])
+  .option('--token <token>', 'If you want to use private actions on GitHub, you have to set personal access token', '')
   .action(async (eventName, options, program) => {
     const version = program.parent?.version();
     if (options.bugReport) {
@@ -128,20 +129,17 @@ export const runCommand = new Command('run')
     }
 
     logger.debug('Loading environment from %s', options.envFile);
-    appendEnvs(options.envFile, options.env);
-    console.log('options.env', options.env);
+    Object.assign(options.env, readConfSync(options.envFile));
 
-    logger.debug('Loading action inputs from %s', options.inputFile);
-    appendEnvs(options.inputFile, options.input);
-    console.log('options.input', options.input);
+    logger.debug('Loading vars from %s', options.varsFile);
+    Object.assign(options.vars, readConfSync(options.varsFile));
 
-    logger.debug('Loading secrets from %s', options.secretFile);
-    appendEnvs(options.secretFile, options.secret);
-    console.log('options.secret', options.secret);
+    logger.debug('Loading secrets from %s', options.secretsFile);
+    Object.assign(options.secrets, readConfSync(options.secretsFile));
+    options.secrets.GITHUB_TOKEN = options.token;
 
-    logger.debug('Loading vars from %s', options.varFile);
-    appendEnvs(options.varFile, options.var);
-    console.log('options.secret', options.var);
+    logger.debug('Loading action inputs from %s', options.inputsFile);
+    Object.assign(options.inputs, readConfSync(options.inputsFile));
 
     // @todo matrix
 
@@ -271,7 +269,12 @@ export const runCommand = new Command('run')
         event,
         sha,
         triggering_actor: userInfo.username,
+        token: options.token,
       },
+      env: options.env,
+      vars: options.vars,
+      secrets: options.secrets,
+      inputs: options.inputs,
     });
 
     console.log('options', options);
