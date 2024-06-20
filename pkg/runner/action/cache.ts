@@ -16,8 +16,7 @@ class ActionCache {
     try {
       await git.fetch();
     } catch (err) {
-      const options = ['--recurse-submodules'];
-      await git.clone(url, repoPath, options);
+      await git.clone(url, repoPath);
     }
 
     await git.checkout(ref);
@@ -35,9 +34,7 @@ class ActionCache {
       return file.startsWith(includePrefix);
     });
 
-    const pack = tar.c({ cwd: repoPath }, files);
-
-    return pack;
+    return tar.create({ cwd: repoPath }, files);
   }
 }
 

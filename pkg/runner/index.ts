@@ -23,9 +23,14 @@ class Runner {
    */
   caller?: Runner;
 
-  constructor(public run: Run, public config: Readonly<Config>) {
-    const { job } = run;
-    this.context = new Context();
+  constructor(public run: Run, context: Context, public config: Readonly<Config>) {
+    const { jobId, job, workflow } = run;
+    this.context = new Context(context);
+
+    // github context
+    this.context.github.job = jobId;
+    this.context.github.workflow = workflow.name || workflow.file || '';
+    this.context.github.workflow_sha = workflow.sha || '';
 
     // strategy context
     this.context.strategy['fail-fast'] = job.strategy['fail-fast'];
@@ -38,15 +43,22 @@ class Runner {
     if (matrix) {
       this.context.matrix = matrix as Context['matrix'];
     }
+
+    console.log('context', this, context);
   }
 
   executor() {
+    const { job } = this.run;
+    const jobExecutor = job.executor(this);
+
     return new Executor(async () => {
       await asyncFunction(500);
       // todo
       console.log('job name', this.run.name);
       console.log('workflow file:', this.run.workflow.file);
       console.log('workflow sha:', this.run.workflow.sha);
+
+      jobExecutor.execute();
     });
   }
 

@@ -284,7 +284,7 @@ export class Github {
     this.actor_id = github.actor_id;
     this.api_url = github.api_url;
     this.base_ref = github.base_ref;
-    this.env = github.env;
+    this.env = github.env ?? '';
     this.event = github.event ?? {};
     this.event_name = github.event_name;
     this.event_path = github.event_path;
@@ -316,6 +316,7 @@ export class Github {
     this.workspace = github.workspace;
 
     this.setBaseAndHeadRef();
+    this.setRefTypeAndName();
   }
 
   setBaseAndHeadRef() {

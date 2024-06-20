@@ -1,15 +1,14 @@
 /**
- * config.ts
+ * Runner Config
  *
  * sobird<i@sobird.me> at 2024/05/07 16:01:08 created.
  */
 
-import { HostConfig } from 'dockerode';
-import { Level } from 'log4js';
+import type { Github } from '@/pkg/runner/context/github';
 
-import { Github } from '@/pkg/runner/context/github';
-
-import ActionCache from './action/cache';
+import type ActionCache from './action/cache';
+import type { HostConfig } from 'dockerode';
+import type { Level } from 'log4js';
 
 /**
  * The configuration interface for the runner.

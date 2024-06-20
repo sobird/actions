@@ -21,7 +21,7 @@ import Git from '@/pkg/common/git';
 import { getSocketAndHost } from '@/pkg/docker';
 import Context from '@/pkg/runner/context';
 import WorkflowPlanner from '@/pkg/workflow/planner';
-import { appendEnvs, generateId } from '@/utils';
+import { appendEnvs, generateId, readJsonSync } from '@/utils';
 
 import { bugReportOption } from './bugReportOption';
 import { graphOption } from './graphOption';
@@ -31,8 +31,6 @@ const logger = log4js.getLogger();
 
 const HOME_DIR = os.homedir();
 const HOME_CACHE_DIR = process.env.XDG_CACHE_HOME || path.join(HOME_DIR, '.cache');
-
-const git = new Git('.');
 
 function collectArray(value: string, prev: string[]) {
   return prev.concat(value.split(','));
@@ -64,7 +62,7 @@ export const runCommand = new Command('run')
   .option('-a, --actor <actor>', 'The username of the user that triggered the initial workflow run')
 
   .option('-W, --workflows <path>', 'path to workflow file(s)', './.github/workflows/')
-  .option('-C, --workspace <directory>', 'the default working directory on the runner for steps', '.')
+  .option('-C, --workspace <path>', 'the default working directory on the runner for steps', '.')
   .option('--no-workflowRecurse', "Flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
   .option('--defaultbranch', 'the name of the main branch')
   // .option('-E, --event <event>', 'run a event name')
@@ -164,6 +162,9 @@ export const runCommand = new Command('run')
       // this way user dont have to specify the event.
       logger.info('Using first detected workflow event for filtering: %s', events[0]);
       [eventName] = events;
+    } else {
+      logger.debug('Using default workflow event: push');
+      eventName = 'push';
     }
 
     if (options.job) {
@@ -228,6 +229,8 @@ export const runCommand = new Command('run')
       options.env[cacheURLKey] = artifactCacheServeURL;
     }
 
+    const git = new Git('.');
+
     // run the plan
     const username = await git.username();
     const repoInfo = await git.repoInfo();
@@ -243,22 +246,33 @@ export const runCommand = new Command('run')
     const repository_owner_id = generateId(repository_owner);
     const repositoryUrl = repoInfo.url;
 
-    const context: DeepPartial<Context> = {
+    // event
+    const event = readJsonSync(options.eventFile);
+
+    const userInfo = os.userInfo();
+
+    const context = new Context({
       github: {
         actor,
         actor_id,
+        api_url: 'https://api.github.com/',
+        graphql_url: 'https://api.github.com/graphql',
         repository,
         repository_id,
         repository_owner,
         repository_owner_id,
         repositoryUrl,
+        retention_days: '0',
+
+        server_url: 'https://github.com',
 
         event_name: eventName,
+        event_path: options.eventFile,
+        event,
         sha,
+        triggering_actor: userInfo.username,
       },
-    };
-
-    console.log('context', context);
+    });
 
     console.log('options', options);
     await plan.executor().execute();

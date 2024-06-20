@@ -10,4 +10,6 @@ export { appendEnvs } from './appendEnvs';
 export { generateId } from './generateId';
 export { createSafeName } from './createSafeName';
 export { sleep } from './sleep';
+export { readJsonSync } from './readJsonSync';
+export { readConfSync } from './readConfSync';
 export { default as lodash } from './lodash';
