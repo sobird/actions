@@ -19,6 +19,8 @@ export interface Config {
    */
   readonly context: Context;
 
+  readonly workspace: string;
+
   /**
    * Bind the workspace to the job container.
    */
@@ -35,11 +37,6 @@ export interface Config {
   actionOfflineMode: boolean;
 
   /**
-   * The content of JSON file to use for event.json in containers, overrides EventPath.
-   */
-  eventJSON: string;
-
-  /**
    * Path to the JSON file to use for event.json in containers.
    */
   eventPath: string;
@@ -48,11 +45,6 @@ export interface Config {
    * Remote name in local git repo config.
    */
   remoteName: string;
-
-  /**
-   * Name of the main branch for this repository.
-   */
-  defaultBranch: string;
 
   /**
    * Reuse containers to maintain state.

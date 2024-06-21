@@ -56,7 +56,7 @@ class Runner {
       console.log('workflow file:', this.run.workflow.file);
       console.log('workflow sha:', this.run.workflow.sha);
 
-      jobExecutor.execute();
+      await jobExecutor.execute();
     });
   }
 
@@ -69,7 +69,7 @@ class Runner {
   }
 
   clone() {
-    const cloned = structuredClone(this);
+    // const cloned = structuredClone(this);
     console.log('this', this);
   }
 }

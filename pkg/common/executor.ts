@@ -34,9 +34,7 @@ class Executor {
   // Executor 的 Then 方法用于链式调用执行器
   next(next: Executor) {
     return new Executor(async (ctx) => {
-      console.log('1212', 1212);
       await this.execute(ctx);
-      console.log('1212', 2345);
       await next.execute(ctx);
     });
   }

@@ -1,5 +1,3 @@
-import Git from '@/pkg/common/git';
-
 /**
  * The top-level context available during any job or step in a workflow.
  *
@@ -281,21 +279,20 @@ export class Github {
     Object.assign(this, github);
 
     this.setBaseAndHeadRef();
+    this.setRef(github.ref || '');
     this.setRefTypeAndName();
+    this.setSha(github.sha || '');
+    this.setRepository();
   }
 
   setBaseAndHeadRef() {
     if (this.event_name === 'pull_request' || this.event_name === 'pull_request_target') {
-      if (!this.base_ref) {
-        this.base_ref = this.event?.pull_request?.base?.ref;
-      }
-      if (!this.head_ref) {
-        this.head_ref = this.event?.pull_request?.head?.ref;
-      }
+      this.base_ref = this.base_ref || this.event?.pull_request?.base?.ref || '';
+      this.head_ref = this.head_ref || this.event?.pull_request?.head?.ref || '';
     }
   }
 
-  async setRef(defaultBranch: string, repoPath: string) {
+  setRef(ref: string) {
     switch (this.event_name) {
       case 'pull_request_target':
         this.ref = `refs/heads/${this.base_ref}`;
@@ -318,24 +315,12 @@ export class Github {
         this.ref = this.event?.ref;
         break;
       default: {
-        this.ref = `refs/heads/${this.event?.repository?.default_branch || defaultBranch || 'master'}`;
+        this.ref = `refs/heads/${this.event?.repository?.default_branch}`;
         break;
       }
     }
 
-    if (!this.ref) {
-      try {
-        const ref = await Git.Ref(repoPath);
-        // logger.debug(`using git ref: ${ref}`);
-        this.ref = ref;
-      } catch (err) {
-        // logger.warn(`unable to get git ref: ${err}`);
-      }
-
-      if (this.event?.repository && !this.event.repository.default_branch) {
-        this.event.repository.default_branch = defaultBranch || 'master';
-      }
-    }
+    this.ref = this.ref || ref;
   }
 
   setRefTypeAndName() {
@@ -353,16 +338,11 @@ export class Github {
       refName = this.ref.substring('refs/pull/'.length);
     }
 
-    if (!this.ref_type) {
-      this.ref_type = refType;
-    }
-
-    if (!this.ref_name) {
-      this.ref_name = refName;
-    }
+    this.ref_type = this.ref_type || refType;
+    this.ref_name = this.ref_name || refName;
   }
 
-  async setSha(repoPath: string) {
+  setSha(sha: string) {
     switch (this.event_name) {
       case 'pull_request_target':
         this.sha = this.event?.pull_request?.base?.sha;
@@ -381,26 +361,17 @@ export class Github {
         break;
       }
       default:
-        // 默认行为
         break;
     }
 
-    if (!this.sha) {
-      try {
-        const revision = await Git.Revision(repoPath);
-        this.sha = revision.sha;
-      } catch (err) {
-        // logger.warning(`unable to get git revision: ${err}`);
-      }
-    }
+    this.sha = this.sha || sha;
   }
 
-  async setRepository(remoteName: string) {
-    if (this.event.repository) {
-      this.repository = this.event.repository?.full_name;
-      this.repository_id = this.event.repository.id;
-      this.repository_owner = this.event.repository?.owner?.username;
-      this.repository_owner_id = this.event.repository?.owner?.id;
-    }
+  setRepository() {
+    this.repository = this.event.repository?.full_name || this.repository || '';
+    this.repository_id = this.event.repository?.id || this.repository_id || '';
+    this.repository_owner = this.event.repository?.owner?.username || this.repository_owner || '';
+    this.repository_owner_id = this.event.repository?.owner?.id || this.repository_owner_id || '';
+    this.repositoryUrl = this.event.repository?.clone_url || '';
   }
 }

@@ -20,6 +20,7 @@ import ArtifactCache from '@/pkg/artifact/cache';
 import Git from '@/pkg/common/git';
 import { getSocketAndHost } from '@/pkg/docker';
 import { Config } from '@/pkg/runner/config';
+import { Github } from '@/pkg/runner/context/github';
 import WorkflowPlanner from '@/pkg/workflow/planner';
 import { readConfSync, generateId, readJsonSync } from '@/utils';
 
@@ -66,7 +67,7 @@ export const runCommand = new Command('run')
   .option('--no-workflowRecurse', "Flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
 
   .option('--remote-name', 'git remote name that will be used to retrieve url of git repo', 'origin')
-  .option('--default-branch', 'the name of the main branch', '')
+  .option('--default-branch', 'the name of the main branch', 'master')
   // .option('-E, --event <event>', 'run a event name')
   .option('-e --event-file <event path>', 'path to event JSON file', 'event.json')
   .option('--detect-event', 'Use first event type from workflow as event that triggered the workflow')
@@ -228,12 +229,11 @@ export const runCommand = new Command('run')
       options.env[cacheURLKey] = artifactCacheServeURL;
     }
 
+    // run plan
     const git = new Git(options.workspace);
-
-    // run the plan
     const username = await git.username();
     const repoInfo = await git.repoInfo();
-    const ref = await git.ref();
+    const ref = await git.ref() || '';
 
     const actor = options.actor || username || 'actor';
     const actor_id = generateId(actor);
@@ -248,41 +248,39 @@ export const runCommand = new Command('run')
 
     // event
     const event = readJsonSync(options.eventFile);
-
-    Object.assign(event, {
-      repository: {
-        default_branch: options.defaultBranch,
-      },
-    });
-
-    console.log('event', event);
+    if (!event?.repository?.default_branch) {
+      event.repository = event.repository || {};
+      event.repository.default_branch = options.defaultBranch;
+    }
 
     const userInfo = os.userInfo();
 
+    const github = new Github({
+      actor,
+      actor_id,
+      api_url: 'https://api.github.com/',
+      graphql_url: 'https://api.github.com/graphql',
+      repository,
+      repository_id,
+      repository_owner,
+      repository_owner_id,
+      repositoryUrl,
+      retention_days: '0',
+
+      server_url: 'https://github.com',
+
+      event_name: eventName,
+      event_path: options.eventFile,
+      event,
+      sha,
+      ref,
+      triggering_actor: userInfo.username,
+      token: options.token,
+      workspace: options.workspace,
+    });
+
     const context = {
-      github: {
-        actor,
-        actor_id,
-        api_url: 'https://api.github.com/',
-        graphql_url: 'https://api.github.com/graphql',
-        repository,
-        repository_id,
-        repository_owner,
-        repository_owner_id,
-        repositoryUrl,
-        retention_days: '0',
-
-        server_url: 'https://github.com',
-
-        event_name: eventName,
-        event_path: options.eventFile,
-        event,
-        sha,
-        ref: ref ?? '',
-        triggering_actor: userInfo.username,
-        token: options.token,
-        workspace: options.workspace,
-      },
+      github,
       env: options.env,
       vars: options.vars,
       secrets: {

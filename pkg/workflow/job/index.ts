@@ -510,7 +510,6 @@ class Job {
   }
 
   executor(runner: Runner) {
-    console.log('runner', runner);
     const usesExecutor = this.usesExecutor(runner);
     console.log('usesExecutor', usesExecutor);
     if (usesExecutor) {
