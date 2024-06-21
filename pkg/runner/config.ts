@@ -79,7 +79,7 @@ export interface Config {
   /**
    * Environment for containers.
    */
-  env: { [key: string]: string };
+  env: Record<string, string>;
 
   /**
    * Manually passed action inputs.
@@ -206,7 +206,7 @@ export interface Config {
   /**
    * Matrix config to run.
    */
-  matrix: { [key: string]: { [key: string]: boolean } };
+  matrix: Record<string, unknown[]>;
 
   /**
    * The default actions web site.

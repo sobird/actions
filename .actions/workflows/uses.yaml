@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   job-uses:
-    runs-on: ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: ['ubuntu-latest']

@@ -69,20 +69,19 @@ export default class Plan {
           const jobs = run.job.spread();
           const maxParallel = run.job.strategy.getMaxParallel();
 
-          const jobsExecutor = jobs.map((job) => {
+          const runnerPipeline = jobs.map((job) => {
             const workflow = run.workflow.clone();
             workflow.jobs = {
               [jobId]: job,
             };
 
             const runner = new Runner(new Run(jobId, workflow), config);
-            runner.run = new Run(jobId, workflow);
             runner.caller = caller;
 
             return runner.executor();
           });
 
-          return Executor.Parallel(maxParallel, ...jobsExecutor);
+          return Executor.Parallel(maxParallel, ...runnerPipeline);
         });
 
         const ncpu = os.cpus().length;

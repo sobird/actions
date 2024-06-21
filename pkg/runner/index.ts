@@ -52,7 +52,7 @@ class Runner {
     return new Executor(async () => {
       await asyncFunction(500);
       // todo
-      console.log('job name', this.run.name);
+      console.log('job name', job['runs-on'], this.context.matrix);
       console.log('workflow file:', this.run.workflow.file);
       console.log('workflow sha:', this.run.workflow.sha);
 
@@ -71,6 +71,12 @@ class Runner {
   clone() {
     // const cloned = structuredClone(this);
     console.log('this', this);
+  }
+
+  get env() {
+    const { job, workflow } = this.run;
+
+    return { ...this.config.env, ...workflow.env, ...job.env };
   }
 }
 

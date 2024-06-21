@@ -430,6 +430,8 @@ class Job {
     this.#total = total;
   }
 
+  // interpret
+
   clone() {
     const cloned = structuredClone(this);
     cloned.id = this.#id;
@@ -497,107 +499,88 @@ class Job {
     return results;
   }
 
-  jobExecutor() {
+  executor(runner: Runner) {
+    const usesExecutor = this.usesExecutor(runner);
+    if (usesExecutor) {
+      return usesExecutor;
+    }
+    // job executor
     if (!this.steps || this.steps.length === 0) {
       return Executor.Debug('No steps found');
     }
 
     const preStepsExecutor: Executor[] = [];
     const stepsExecutor: Executor[] = [];
+
     stepsExecutor.push(new Executor(() => {
-      //
+      logger.info('u0001F9EA  Matrix: %v', runner.config.matrix);
     }));
-  }
 
-  executor(runner: Runner) {
-    const usesExecutor = this.usesExecutor(runner);
-    console.log('usesExecutor', usesExecutor);
-    if (usesExecutor) {
-      return usesExecutor;
-    }
-    const { strategy } = this;
-    const stageExecutor: Executor[] = [];
+    // return Executor.Parallel(1, new Executor(async () => {
+    //   const entry = {
+    //     data: [this.name],
+    //     startTime: new Date(),
+    //     context: {
+    //       stage: '',
+    //       jobResult: '',
+    //       stepNumber: 0,
+    //       raw_output: true,
+    //       stepResult: '',
+    //     },
+    //   };
 
-    const matrices = strategy.selectMatrices({});
-    logger.debug('Final matrix after applying user inclusions', matrices);
+    //   reporter.resetSteps(this.steps.length);
 
-    const maxParallel = Math.min(strategy.getMaxParallel(), matrices.length);
-    console.log('maxParallel', maxParallel);
+    //   reporter.fire(entry);
+    //   await asyncFunction(1000);
 
-    matrices.forEach((matrix) => {
-      logger.debug('matrix: %v', matrix);
-    });
+    //   for (const [index, step] of this.steps.entries()) {
+    //     const entry = {
+    //       data: [this.name, '-', step.name],
+    //       startTime: new Date(),
+    //       context: {
+    //         stage: 'Main',
+    //         jobResult: '',
+    //         stepNumber: index,
+    //         raw_output: true,
+    //         stepResult: '',
+    //       },
+    //     };
 
-    // mock job 执行过程
+    //     reporter.fire(entry);
+    //     reporter.log(this.name, '-', step.name);
+    //     // eslint-disable-next-line no-await-in-loop
+    //     await asyncFunction(500);
+    //     reporter.log(this.name, '-', step.name);
+    //     await asyncFunction(500);
+    //     console.log('index', index);
+    //     reporter.fire({
+    //       data: [this.name, '-', step.name],
+    //       startTime: new Date(),
+    //       context: {
+    //         stage: 'Main',
+    //         jobResult: '',
+    //         stepNumber: index,
+    //         raw_output: true,
+    //         stepResult: 'success',
+    //       },
+    //     });
+    //     await asyncFunction(500);
+    //   }
 
-    // todo 处理 Context, strategy 和 matrix
-
-    // todo
-    return Executor.Parallel(1, new Executor(async () => {
-      const entry = {
-        data: [this.name],
-        startTime: new Date(),
-        context: {
-          stage: '',
-          jobResult: '',
-          stepNumber: 0,
-          raw_output: true,
-          stepResult: '',
-        },
-      };
-
-      reporter.resetSteps(this.steps.length);
-
-      reporter.fire(entry);
-      await asyncFunction(1000);
-
-      for (const [index, step] of this.steps.entries()) {
-        const entry = {
-          data: [this.name, '-', step.name],
-          startTime: new Date(),
-          context: {
-            stage: 'Main',
-            jobResult: '',
-            stepNumber: index,
-            raw_output: true,
-            stepResult: '',
-          },
-        };
-
-        reporter.fire(entry);
-        reporter.log(this.name, '-', step.name);
-        // eslint-disable-next-line no-await-in-loop
-        await asyncFunction(500);
-        reporter.log(this.name, '-', step.name);
-        await asyncFunction(500);
-        console.log('index', index);
-        reporter.fire({
-          data: [this.name, '-', step.name],
-          startTime: new Date(),
-          context: {
-            stage: 'Main',
-            jobResult: '',
-            stepNumber: index,
-            raw_output: true,
-            stepResult: 'success',
-          },
-        });
-        await asyncFunction(500);
-      }
-
-      await asyncFunction(1000);
-      reporter.fire({
-        data: [this.name, 'post'],
-        startTime: new Date(),
-        context: {
-          stage: 'Post',
-          jobResult: 'success',
-          // stepNumber: index,
-          raw_output: true,
-          stepResult: 'success',
-        },
-      });
-    }));
+    //   await asyncFunction(1000);
+    //   reporter.fire({
+    //     data: [this.name, 'post'],
+    //     startTime: new Date(),
+    //     context: {
+    //       stage: 'Post',
+    //       jobResult: 'success',
+    //       // stepNumber: index,
+    //       raw_output: true,
+    //       stepResult: 'success',
+    //     },
+    //   });
+    // }));
   }
 
   usesExecutor(runner: Runner) {
