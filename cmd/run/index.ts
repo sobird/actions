@@ -19,7 +19,7 @@ import Artifact from '@/pkg/artifact';
 import ArtifactCache from '@/pkg/artifact/cache';
 import Git from '@/pkg/common/git';
 import { getSocketAndHost } from '@/pkg/docker';
-import Context from '@/pkg/runner/context';
+import { Config } from '@/pkg/runner/config';
 import WorkflowPlanner from '@/pkg/workflow/planner';
 import { readConfSync, generateId, readJsonSync } from '@/utils';
 
@@ -66,7 +66,7 @@ export const runCommand = new Command('run')
   .option('--no-workflowRecurse', "Flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
 
   .option('--remote-name', 'git remote name that will be used to retrieve url of git repo', 'origin')
-  .option('--defaultbranch', 'the name of the main branch')
+  .option('--default-branch', 'the name of the main branch', '')
   // .option('-E, --event <event>', 'run a event name')
   .option('-e --event-file <event path>', 'path to event JSON file', 'event.json')
   .option('--detect-event', 'Use first event type from workflow as event that triggered the workflow')
@@ -228,7 +228,7 @@ export const runCommand = new Command('run')
       options.env[cacheURLKey] = artifactCacheServeURL;
     }
 
-    const git = new Git('.');
+    const git = new Git(options.workspace);
 
     // run the plan
     const username = await git.username();
@@ -249,9 +249,17 @@ export const runCommand = new Command('run')
     // event
     const event = readJsonSync(options.eventFile);
 
+    Object.assign(event, {
+      repository: {
+        default_branch: options.defaultBranch,
+      },
+    });
+
+    console.log('event', event);
+
     const userInfo = os.userInfo();
 
-    const context: Context = {
+    const context = {
       github: {
         actor,
         actor_id,
@@ -273,6 +281,7 @@ export const runCommand = new Command('run')
         ref: ref ?? '',
         triggering_actor: userInfo.username,
         token: options.token,
+        workspace: options.workspace,
       },
       env: options.env,
       vars: options.vars,
@@ -284,7 +293,11 @@ export const runCommand = new Command('run')
     };
 
     console.log('options', options);
-    await plan.executor().execute();
 
+    const config = {
+      context,
+    };
+
+    await plan.executor(config as Config).execute();
     process.exit();
   });

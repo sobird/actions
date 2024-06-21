@@ -76,6 +76,7 @@ export default class Plan {
             };
 
             const runner = new Runner(new Run(jobId, workflow), config);
+            runner.run = new Run(jobId, workflow);
             runner.caller = caller;
 
             return runner.executor();

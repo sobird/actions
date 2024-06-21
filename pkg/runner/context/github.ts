@@ -39,7 +39,8 @@ export class Github {
   action_ref: string = '';
 
   /**
-   * For a step executing an action, this is the owner and repository name of the action. For example, actions/checkout.
+   * For a step executing an action, this is the owner and repository name of the action.
+   * For example, actions/checkout.
    *
    * Do not use in the run keyword.
    * To make this context work with composite actions, reference it within the env context of the composite action.
@@ -294,6 +295,49 @@ export class Github {
     }
   }
 
+  async setRef(defaultBranch: string, repoPath: string) {
+    switch (this.event_name) {
+      case 'pull_request_target':
+        this.ref = `refs/heads/${this.base_ref}`;
+        break;
+      case 'pull_request':
+      case 'pull_request_review':
+      case 'pull_request_review_comment':
+        this.ref = `refs/pull/${this.event.number}/merge`;
+        break;
+      case 'deployment':
+      case 'deployment_status':
+        this.ref = this.event?.deployment?.ref;
+        break;
+      case 'release':
+        this.ref = `refs/tags/${this.event?.release?.tag_name}`;
+        break;
+      case 'push':
+      case 'create':
+      case 'workflow_dispatch':
+        this.ref = this.event?.ref;
+        break;
+      default: {
+        this.ref = `refs/heads/${this.event?.repository?.default_branch || defaultBranch || 'master'}`;
+        break;
+      }
+    }
+
+    if (!this.ref) {
+      try {
+        const ref = await Git.Ref(repoPath);
+        // logger.debug(`using git ref: ${ref}`);
+        this.ref = ref;
+      } catch (err) {
+        // logger.warn(`unable to get git ref: ${err}`);
+      }
+
+      if (this.event?.repository && !this.event.repository.default_branch) {
+        this.event.repository.default_branch = defaultBranch || 'master';
+      }
+    }
+  }
+
   setRefTypeAndName() {
     let refType: Github['ref_type'] = '';
     let refName = '';
@@ -319,23 +363,20 @@ export class Github {
   }
 
   async setSha(repoPath: string) {
-    let sha;
-
-    // 根据事件类型设置SHA
     switch (this.event_name) {
       case 'pull_request_target':
-        sha = this.event?.pull_request?.base?.sha;
+        this.sha = this.event?.pull_request?.base?.sha;
         break;
       case 'deployment':
       case 'deployment_status':
-        sha = this.event?.deployment?.sha;
+        this.sha = this.event?.deployment?.sha;
         break;
       case 'push':
       case 'create':
       case 'workflow_dispatch': {
         const deleted = this.event?.deleted === undefined ? false : this.event.deleted;
         if (!deleted) {
-          sha = this.event?.after;
+          this.sha = this.event?.after;
         }
         break;
       }
@@ -344,14 +385,22 @@ export class Github {
         break;
     }
 
-    // 如果没有设置SHA，尝试查找Git修订版本
-    if (!sha) {
+    if (!this.sha) {
       try {
         const revision = await Git.Revision(repoPath);
         this.sha = revision.sha;
       } catch (err) {
         // logger.warning(`unable to get git revision: ${err}`);
       }
+    }
+  }
+
+  async setRepository(remoteName: string) {
+    if (this.event.repository) {
+      this.repository = this.event.repository?.full_name;
+      this.repository_id = this.event.repository.id;
+      this.repository_owner = this.event.repository?.owner?.username;
+      this.repository_owner_id = this.event.repository?.owner?.id;
     }
   }
 }

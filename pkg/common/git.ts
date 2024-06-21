@@ -203,7 +203,7 @@ class Git {
       }
     }
 
-    return refTag || refBranch;
+    return refTag || refBranch || '';
   }
 
   static async Clone(url: string, localPath: string, ref: string) {

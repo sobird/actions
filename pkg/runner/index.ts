@@ -23,9 +23,9 @@ class Runner {
    */
   caller?: Runner;
 
-  constructor(public run: Run, context: Context, public config: Readonly<Config>) {
+  constructor(public run: Run, public config: Readonly<Config>) {
     const { jobId, job, workflow } = run;
-    this.context = new Context(context);
+    this.context = new Context(config.context);
 
     // github context
     this.context.github.job = jobId;

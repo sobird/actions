@@ -17,12 +17,12 @@ export interface Config {
   /**
    * The preset github context, overrides some fields like DefaultBranch, Env, Secrets etc.
    */
-  context: Context;
+  readonly context: Context;
 
   /**
    * Bind the workspace to the job container.
    */
-  bind: Readonly<boolean>;
+  readonly bind: boolean;
 
   /**
    * Use a custom ActionCache Implementation.
