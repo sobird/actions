@@ -12,8 +12,6 @@ export enum StepType {
   UsesDockerURL, // 所有具有形如 'docker://...' 的 'uses' 的步骤
   UsesActionLocal, // 所有具有指向子目录中本地Action的 'uses' 的步骤
   UsesActionRemote, // 所有具有指向GitHub仓库中Action的 'uses' 的步骤
-  ReusableWorkflowLocal, // 所有具有指向 '.github/workflows' 目录中本地工作流的 'uses' 的步骤
-  ReusableWorkflowRemote, // 所有具有指向GitHub仓库中工作流文件的 'uses' 的步骤
   Invalid, // 所有具有无效步骤动作的步骤
 }
 
@@ -159,6 +157,8 @@ class Step {
    */
   'timeout-minutes': boolean;
 
+  #number: number = 0;
+
   constructor(step: Step) {
     this.id = step.id;
     this.if = step.if;
@@ -171,6 +171,14 @@ class Step {
     this.env = step.env;
     this['continue-on-error'] = step['continue-on-error'];
     this['timeout-minutes'] = step['timeout-minutes'];
+  }
+
+  set number(number: number) {
+    this.#number = number;
+  }
+
+  get number() {
+    return this.#number;
   }
 
   getName(): string {
@@ -238,25 +246,10 @@ class Step {
       return StepType.Run;
     } if (this.uses.startsWith('docker://')) {
       return StepType.UsesDockerURL;
-    } if (
-      this.uses.startsWith('./.github/workflows')
-      && (this.uses.endsWith('.yml') || this.uses.endsWith('.yaml'))
-    ) {
-      return StepType.ReusableWorkflowLocal;
-    } if (
-      !this.uses.startsWith('./')
-      && this.uses.includes('.github/workflows')
-      && (this.uses.includes('.yml@') || this.uses.includes('.yaml@'))
-    ) {
-      return StepType.ReusableWorkflowRemote;
     } if (this.uses.startsWith('./')) {
       return StepType.UsesActionLocal;
     }
     return StepType.UsesActionRemote;
-  }
-
-  static Factory(step: Step) {
-    console.log('step', step);
   }
 }
 
