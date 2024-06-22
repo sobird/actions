@@ -450,7 +450,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.getWorkflowDispatch()).toBeUndefined();
+    expect(workflow.workflowDispatch()).toBeUndefined();
   });
 
   it('dispatch config empty test case', () => {
@@ -460,7 +460,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.getWorkflowDispatch()).toBeUndefined();
+    expect(workflow.workflowDispatch()).toBeUndefined();
   });
 
   it('dispatch config string test case', () => {
@@ -470,7 +470,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.getWorkflowDispatch()).toEqual({});
+    expect(workflow.workflowDispatch()).toEqual({});
   });
 
   it('dispatch config empty array test case', () => {
@@ -480,7 +480,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.getWorkflowDispatch()).toBeUndefined();
+    expect(workflow.workflowDispatch()).toBeUndefined();
   });
 
   it('dispatch config array include test case', () => {
@@ -490,7 +490,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.getWorkflowDispatch()).toEqual({});
+    expect(workflow.workflowDispatch()).toEqual({});
   });
 
   it('dispatch config array include test case', () => {
@@ -502,7 +502,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.getWorkflowDispatch()).toEqual({});
+    expect(workflow.workflowDispatch()).toEqual({});
   });
 
   it('dispatch config array include test case', () => {
@@ -514,7 +514,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.getWorkflowDispatch()).toBeUndefined();
+    expect(workflow.workflowDispatch()).toBeUndefined();
   });
 
   it('dispatch config array include test case', () => {
@@ -537,7 +537,7 @@ describe('workflow dispatch config', () => {
     `;
     const workflow = Workflow.Load(yaml);
 
-    expect(workflow.getWorkflowDispatch()?.inputs.logLevel).toEqual({
+    expect(workflow.workflowDispatch()?.inputs.logLevel).toEqual({
       description: 'Log level',
       required: true,
       default: 'warning',

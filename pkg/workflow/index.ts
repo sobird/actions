@@ -208,27 +208,6 @@ class Workflow extends Yaml {
     return on[eventName] as OnEvents[K];
   }
 
-  getWorkflowDispatch(): Record<string, OnEvents['workflow_dispatch']['inputs']> | undefined | OnEvents['workflow_dispatch'] {
-    const { on } = this;
-    if (typeof on === 'string') {
-      if (on === 'workflow_dispatch') {
-        return {};
-      }
-      return;
-    }
-
-    if (Array.isArray(on)) {
-      if (on.includes('workflow_dispatch')) {
-        return {};
-      }
-      return;
-    }
-
-    if (typeof on === 'object') {
-      return on.workflow_dispatch;
-    }
-  }
-
   validateJobId(jobId: string) {
     const jobIdRegex = /^[A-Za-z_][A-Za-z0-9_-]*$/;
 
@@ -368,6 +347,48 @@ class Workflow extends Yaml {
     cloned.file = this.#file;
     cloned.sha = this.#sha;
     return new Workflow(cloned);
+  }
+
+  workflowDispatch(): Record<string, OnEvents['workflow_dispatch']['inputs']> | undefined | OnEvents['workflow_dispatch'] {
+    const { on } = this;
+    if (typeof on === 'string') {
+      if (on === 'workflow_dispatch') {
+        return {};
+      }
+      return;
+    }
+
+    if (Array.isArray(on)) {
+      if (on.includes('workflow_dispatch')) {
+        return {};
+      }
+      return;
+    }
+
+    if (typeof on === 'object') {
+      return on.workflow_dispatch;
+    }
+  }
+
+  workflowCall(): Record<string, OnEvents['workflow_call']['inputs']> | undefined | OnEvents['workflow_call'] {
+    const { on } = this;
+    if (typeof on === 'string') {
+      if (on === 'workflow_call') {
+        return {};
+      }
+      return;
+    }
+
+    if (Array.isArray(on)) {
+      if (on.includes('workflow_call')) {
+        return {};
+      }
+      return;
+    }
+
+    if (typeof on === 'object') {
+      return on.workflow_call;
+    }
   }
 }
 

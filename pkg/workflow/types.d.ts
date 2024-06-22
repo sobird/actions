@@ -5,7 +5,20 @@
  * * inputs 的顶级属性的最大数目为 10。
  * * inputs 的最大有效负载为 65,535 个字符。
  */
-export interface WorkflowDispatchInputs {
+
+export interface WorkflowCallInput {
+  description: string;
+  required: boolean;
+  default?: string;
+  type: 'boolean' | 'number' | 'string'
+}
+
+export interface WorkflowCallOutput {
+  description: string;
+  value: string;
+}
+
+export interface WorkflowDispatchInput {
   description: string;
   required: boolean;
   default?: string;
@@ -15,10 +28,10 @@ export interface WorkflowDispatchInputs {
 
 export interface OnEvents {
   branch_protection_rule: {
-    types: Array<'created', 'edited', 'deleted'>;
+    types: Array<'created' | 'edited' | 'deleted'>;
   };
   check_run: {
-    types: Array<'rerequested', 'completed'>;
+    types: Array<'created' | 'rerequested' | 'completed' | 'requested_action'>;
   };
   check_suite: {
     types: Array<'completed'>;
@@ -28,57 +41,41 @@ export interface OnEvents {
   deployment: string;
   deployment_status: string;
   discussion: {
-    types: Array<'created', 'edited', 'deleted', 'transferred', 'pinned', 'unpinned', 'labeled', 'unlabeled', 'locked', 'unlocked', 'category_changed', 'answered', 'unanswered'>;
+    types: Array<'created' | 'edited' | 'deleted' | 'transferred' | 'pinned' | 'unpinned' | 'labeled' | 'unlabeled' | 'locked' | 'unlocked' | 'category_changed' | 'answered' | 'unanswered'>;
   };
   discussion_comment: {
-    types: Array<'created', 'edited', 'deleted'>;
+    types: Array<'created' | 'edited' | 'deleted'>;
   };
-  /**
-   * 当有人复刻存储库时运行工作流程
-   *
-   * 注意：仅当工作流文件在默认分支上时，此事件才会触发工作流运行。
-   */
   fork: string;
-  /**
-   * 在有人创建或更新 Wiki 页面时运行工作流程
-   *
-   * 注意：仅当工作流文件在默认分支上时，此事件才会触发工作流运行。
-   */
   gollum: string;
-
-  /**
-   * 在创建、编辑或删除议题或拉取请求评论时运行工作流程。
-   *
-   * 注意：仅当工作流文件在默认分支上时，此事件才会触发工作流运行。
-   */
   issue_comment: {
-    types: Array<'created', 'edited', 'deleted'>;
+    types: Array<'created' | 'edited' | 'deleted'>;
   };
   issues: {
-    types: Array<'opened', 'edited', 'deleted', 'transferred', 'pinned', 'unpinned', 'closed', 'reopened', 'assigned', 'unassigned', 'labeled', 'unlabeled', 'locked', 'unlocked', 'milestoned', 'demilestoned'>
+    types: Array<'opened' | 'edited' | 'deleted' | 'transferred' | 'pinned' | 'unpinned' | 'closed' | 'reopened' | 'assigned' | 'unassigned' | 'labeled' | 'unlabeled' | 'locked' | 'unlocked' | 'milestoned' | 'demilestoned'>
   };
   label: {
-    types: Array<'created', 'edited', 'deleted'>;
+    types: Array<'created' | 'edited' | 'deleted'>;
   };
   merge_group:{
     types: Array<'checks_requested'>;
   };
   milestone: {
-    types: Array<'created', 'closed', 'opened', 'edited', 'deleted'>;
+    types: Array<'created' | 'closed' | 'opened' | 'edited' | 'deleted'>;
   };
   page_build: string;
   project: {
-    types: Array<'created', 'closed', 'reopened', 'edited', 'deleted'>;
+    types: Array<'created' | 'closed' | 'reopened' | 'edited' | 'deleted'>;
   };
   project_card: {
-    types: Array<'created', 'moved', 'converted', 'edited', 'deleted'>;
+    types: Array<'created' | 'moved' | 'converted' | 'edited' | 'deleted'>;
   };
   project_column: {
-    types: Array<'created', 'updated', 'moved', 'deleted'>;
+    types: Array<'created' | 'updated' | 'moved' | 'deleted'>;
   };
   public: string;
   pull_request: {
-    types: Array<'assigned', 'unassigned', 'labeled', 'unlabeled', 'opened', 'edited', 'closed', 'reopened', 'synchronize', 'converted_to_draft', 'locked', 'unlocked', 'enqueued', 'dequeued', 'milestoned', 'demilestoned', 'ready_for_review', 'review_requested', 'review_request_removed', 'auto_merge_enabled', 'auto_merge_disabled'>;
+    types: Array<'assigned' | 'unassigned' | 'labeled' | 'unlabeled' | 'opened' | 'edited' | 'closed' | 'reopened' | 'synchronize' | 'converted_to_draft' | 'locked' | 'unlocked' | 'enqueued' | 'dequeued' | 'milestoned' | 'demilestoned' | 'ready_for_review' | 'review_requested' | 'review_request_removed' | 'auto_merge_enabled' | 'auto_merge_disabled'>;
     branches: string[];
     'branches-ignore': string[];
     paths: string[];
@@ -86,13 +83,13 @@ export interface OnEvents {
   };
   pull_request_comment: string;
   pull_request_review: {
-    types: Array<'edited', 'edited', 'dismissed'>;
+    types: Array<'edited' | 'edited' | 'dismissed'>;
   };
   pull_request_review_comment: {
-    types: Array<'created', 'edited', 'deleted'>;
+    types: Array<'created' | 'edited' | 'deleted'>;
   };
   pull_request_target: {
-    types: Array<'assigned', 'unassigned', 'labeled', 'unlabeled', 'opened', 'edited', 'closed', 'reopened', 'synchronize', 'converted_to_draft', 'ready_for_review', 'locked', 'unlocked', 'review_requested', 'review_request_removed', 'auto_merge_enabled', 'auto_merge_disabled'>;
+    types: Array<'assigned' | 'unassigned' | 'labeled' | 'unlabeled' | 'opened' | 'edited' | 'closed' | 'reopened' | 'synchronize' | 'converted_to_draft' | 'ready_for_review' | 'locked' | 'unlocked' | 'review_requested' | 'review_request_removed' | 'auto_merge_enabled' | 'auto_merge_disabled'>;
     branches: string[];
     'branches-ignore': string[];
     paths: string[];
@@ -107,10 +104,10 @@ export interface OnEvents {
     'tags-ignore': string[];
   };
   registry_package: {
-    types: Array<'published', 'updated'>
+    types: Array<'published' | 'updated'>
   };
   release: {
-    types: Array<'published', 'unpublished', 'created', 'edited', 'deleted', 'prereleased', 'released'>;
+    types: Array<'published' | 'unpublished' | 'created' | 'edited' | 'deleted' | 'prereleased' | 'released'>;
   };
   repository_dispatch: {
     types: string[];
@@ -122,15 +119,17 @@ export interface OnEvents {
   watch: {
     types: Array<'started'>
   }
-  workflow_call: null;
+  workflow_call: {
+    inputs: Record<string, WorkflowCallInput>;
+    outputs: Record<string, WorkflowCallOutput>
+    secrets: Record<string, { description: string, required: boolean }>
+  };
   workflow_dispatch: {
-    inputs: {
-      [key in string]: WorkflowDispatchInputs;
-    };
+    inputs: Record<string, WorkflowDispatchInput>;
   };
   workflow_run: {
     workflows: string[];
-    types: Array<'completed', 'requested', 'in_progress'>;
+    types: Array<'completed' | 'requested' | 'in_progress'>;
   }
 }
 
