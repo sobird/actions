@@ -1,4 +1,4 @@
-name: workflow-2
+name: Reusable Workflow workflow_call Test
 run-name: ${{ github.actor }} is testing out Actions  
 on: 
   workflow_call:
@@ -19,10 +19,18 @@ jobs:
       - run: echo "This job is now running on a ${{ runner.os }} server hosted by !"
       - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "The workflow is now ready to test your code on the runner."
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}
       - run: echo "This job's status is ${{ job.status }}."
+      
+      - name: Hello world action step
+        id: hello
+        uses: ./.github/actions/hello-world-javascript-action@v1.1
+        with:
+          who-to-greet: 'Mona the Octocat'
+      - name: Get the output time
+        run: echo "The time was ${{ steps.hello.outputs.time }}"
