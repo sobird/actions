@@ -294,6 +294,7 @@ export const runCommand = new Command('run')
 
     const config = {
       context,
+      skipCheckout: true,
     };
 
     await plan.executor(config as Config).execute();

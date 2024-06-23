@@ -1,0 +1,18 @@
+{
+  "name": "hello-world-javascript-action",
+  "version": "0.0.1",
+  "description": "This action prints \"Hello World\" or \"Hello\" + the name of a person to greet to the log.",
+  "main": "index.js",
+  "scripts": {
+    "package": "ncc -m build index.ts --license licenses.txt"
+  },
+  "author": "sobird",
+  "license": "ISC",
+  "dependencies": {
+    "@actions/core": "^1.10.1",
+    "@actions/github": "^6.0.0"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.1"
+  }
+}
