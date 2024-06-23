@@ -16,4 +16,4 @@ jobs:
         node: [18, 20]
       fail-fast: false
     # Cannot define both `uses` and `steps` at the same time for the following jobs: job-uses
-    uses: ./.github/workflows/reusable-workflow.yaml
+    uses: ./.github/workflows/test-workflow_call.yaml
