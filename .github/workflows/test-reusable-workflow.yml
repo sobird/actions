@@ -7,7 +7,7 @@ permissions:
   contents: read
 
 jobs:
-  job-resuable:
+  test-reusable-workflow:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

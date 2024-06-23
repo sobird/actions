@@ -91,7 +91,7 @@ class Runner {
       step.number = index;
 
       return new Executor(async () => {
-        console.log('step:', step.getName());
+        console.log(`${this.run.name} - step:`, step.getName());
         console.log('step uses:', step.uses);
 
         await asyncFunction(250);
