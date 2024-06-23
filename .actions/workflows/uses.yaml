@@ -30,9 +30,18 @@ jobs:
           ls ${{ github.workspace }}
       - run: echo "This job's status is ${{ job.status }}."
       - name: Hello world action step
-        id: hello
+        id: hello_javascript
         uses: ./.github/actions/hello-world-javascript-action@v1.1
         with:
-          who-to-greet: 'Mona the Octocat'
+          who-to-greet: 'javascript'
       - name: Get the output time
-        run: echo "The time was ${{ steps.hello.outputs.time }}"
+        run: echo "The time was ${{ steps.hello_javascript.outputs.time }}"
+      
+      - name: Hello world docker action step
+        id: hello_docker
+        uses: actions/hello-world-docker-action@v2
+        with:
+          who-to-greet: 'docker'
+      # Use the output from the `hello` step
+      - name: Get the output time
+        run: echo "The time was ${{ steps.hello_docker.outputs.time }}"
