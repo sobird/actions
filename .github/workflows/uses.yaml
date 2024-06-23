@@ -3,7 +3,7 @@ run-name: reusable workflows in the same repository
 on: 
   push:
     branches:
-      - main
+      - master
 
 permissions:
   contents: read
@@ -16,7 +16,7 @@ jobs:
         os: ['ubuntu-latest']
         node: [18, 20]
       fail-fast: false
-    uses: ./.actions/workflows/reusable-workflow.yaml
+    uses: ./.github/workflows/reusable-workflow.yaml
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server hosted by !"

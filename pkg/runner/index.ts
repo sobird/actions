@@ -90,8 +90,12 @@ class Runner {
       // eslint-disable-next-line no-param-reassign
       step.number = index;
 
-      return new Executor(() => {
+      return new Executor(async () => {
         console.log('step:', step.getName());
+        console.log('step uses:', step.uses);
+
+        await asyncFunction(250);
+        console.log('');
       });
     });
 
