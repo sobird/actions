@@ -15,7 +15,7 @@ jobs:
         node: [18, 20]
       fail-fast: false
     steps:
-      - run: echo "The job was automatically triggered by a ${{ github.event_name }} ddd dsdsd dd event."
+      - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server hosted by !"
       - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Check out repository code
@@ -26,11 +26,30 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - run: echo "This job's status is ${{ job.status }}."
-      
+
       - name: Hello world action step
-        id: hello
+        id: hello_javascript
         uses: ./.github/actions/hello-world-javascript-action
         with:
-          who-to-greet: 'Mona the Octocat'
+          who-to-greet: 'javascript action step'
       - name: Get the output time
-        run: echo "The time was ${{ steps.hello.outputs.time }}"
+        run: echo "The time was ${{ steps.hello_javascript.outputs.time }}"
+      
+      - name: Hello world docker action step
+        id: hello_docker
+        uses: ./.github/actions/hello-world-docker-action
+        with:
+          who-to-greet: 'docker action step'
+      # Use the output from the `hello` step
+      - name: Get the output time
+        run: echo "The time was ${{ steps.hello_docker.outputs.time }}"
+
+      - name: Hello world composite action step
+        id: hello_composite
+        uses: ./.github/actions/hello-world-composite-action
+        with:
+          who-to-greet: 'composite action step'
+      - run: echo random-number "$RANDOM_NUMBER"
+        shell: bash
+        env:
+          RANDOM_NUMBER: ${{ steps.hello_composite.outputs.random-number }}
