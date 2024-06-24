@@ -10,40 +10,32 @@
 
 import _ from 'lodash';
 
-import Context from '../runner/context';
+import Context from '@/pkg/runner/context';
+
+import functions from './functions';
 
 _.templateSettings.interpolate = /\${{([\s\S]+?)}}/g;
-// _.templateSettings.imports = {
-//   getName(name) {
-//     return `ddd${name}`;
-//   },
-//   test: 'ddd111',
-// };
+_.templateSettings.imports = {
+  ...functions,
+};
 
-const context = new Context({
-  github: {
-    actor: 'actor',
-  },
-});
-
-context.test?.();
-
-console.log('context', context);
-class Test {
-  list = [
-    { name: 'test' },
-  ];
-
-  constructor(public name: string = 'test') {
+class Expression {
+  constructor(public expression: string, public scopes: string[]) {
 
   }
 
-  getName() {
-    return this.name;
+  evaluate(context: Context) {
+    const expression = this.expression.replace(/((\w+\.)+\*\.(\w+))/g, "objectFilter('$1')");
+    return _.template(expression)(_.pick(context, ...this.scopes));
+  }
+
+  toString() {
+    return this.expression;
+  }
+
+  toJSON() {
+    return this.expression;
   }
 }
-const test = new Test('hello');
 
-const compiled = _.template('The ${{github.actor}} job was automatically triggered by a ${{ test() }} event.');
-const result = compiled(context);
-console.log('result:', result);
+export default Expression;

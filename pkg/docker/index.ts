@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Dockerode, { Container } from 'dockerode';
+import Dockerode from 'dockerode';
 import log4js from 'log4js';
 
 import Executor from '@/pkg/common/executor';

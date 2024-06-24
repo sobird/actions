@@ -27,7 +27,7 @@ import _ from 'lodash';
  * @param item
  * @returns
  */
-export function contains(search: string | string[], item: string) {
+function contains(search: string | string[], item: string) {
   if (Array.isArray(search)) {
     return search.some((arrayItem) => {
       return arrayItem === item;
@@ -49,7 +49,7 @@ export function contains(search: string | string[], item: string) {
  * @param searchValue
  * @returns
  */
-export function startsWith(searchString: string, searchValue: string) {
+function startsWith(searchString: string, searchValue: string) {
   return searchString.toLowerCase().startsWith(searchValue.toLowerCase());
 }
 
@@ -60,7 +60,7 @@ export function startsWith(searchString: string, searchValue: string) {
  * @param searchString
  * @param searchValue
  */
-export function endsWith(searchString: string, searchValue: string) {
+function endsWith(searchString: string, searchValue: string) {
   return searchString.toLowerCase().endsWith(searchValue.toLowerCase());
 }
 
@@ -71,7 +71,7 @@ export function endsWith(searchString: string, searchValue: string) {
  * There is no maximum for the number of variables (replaceValueN) you can use.
  * Escape curly braces using double braces.
  */
-export function format(string: string, ...replaceValues: string[]) {
+function format(string: string, ...replaceValues: string[]) {
   let result = string;
   replaceValues.forEach((value) => {
     result = result.replace(/{\{(\d+)\}\}/g, () => { return value; });
@@ -93,7 +93,7 @@ export function format(string: string, ...replaceValues: string[]) {
  * @param array
  * @param optionalSeparator
  */
-export function join(array: string | string[], optionalSeparator: string = ',') {
+function join(array: string | string[], optionalSeparator: string = ',') {
   if (Array.isArray(array)) {
     return array.join(optionalSeparator);
   }
@@ -107,7 +107,7 @@ export function join(array: string | string[], optionalSeparator: string = ',') 
  * Returns a pretty-print JSON representation of value.
  * You can use this function to debug the information provided in contexts.
  */
-export function toJSON(value: JSON) {
+function toJSON(value: JSON) {
   return JSON.stringify(value);
 }
 
@@ -119,7 +119,7 @@ export function toJSON(value: JSON) {
  * @param value
  * @returns
  */
-export function fromJSON(value: string) {
+function fromJSON(value: string) {
   if (typeof value !== 'string') {
     throw new Error('Cannot parse non-string type as JSON');
   }
@@ -142,7 +142,7 @@ export function fromJSON(value: string) {
  * Pattern matching for hashFiles follows glob pattern matching and is case-insensitive on Windows.
  * For more information about supported pattern matching characters, see the Patterns section in the @actions/glob documentation.
  */
-export async function hashFiles(...patterns: string[]) {
+async function hashFiles(...patterns: string[]) {
   const hashes = [];
 
   for (const pattern of patterns) {
@@ -174,18 +174,18 @@ export async function hashFiles(...patterns: string[]) {
 /**
  * Returns true when all previous steps have succeeded.
  */
-export function success() {
+function success() {
   // todo
 }
 
-export function always() {
+function always() {
   return true;
 }
 
 /**
  * Returns true if the workflow was canceled.
  */
-export function cancelled() {
+function cancelled() {
 
 }
 
@@ -193,12 +193,12 @@ export function cancelled() {
  * Returns true when any previous step of a job fails.
  * If you have a chain of dependent jobs, failure() returns true if any ancestor job fails.
  */
-export function failure() {
+function failure() {
 
 }
 
 // const reg = /^(\w+\.)+\*\.(\w+)$/;
-export function objectFilter(path: string) {
+function objectFilter(path: string) {
   const parts = path.split('.*.');
   const [prefix, suffix] = parts;
   const result = _.result({}, prefix);
@@ -207,3 +207,19 @@ export function objectFilter(path: string) {
     return Object.keys(result).map((item: any) => { return item[suffix]; });
   }
 }
+
+export default {
+  contains,
+  startsWith,
+  endsWith,
+  format,
+  join,
+  toJSON,
+  fromJSON,
+  hashFiles,
+  success,
+  always,
+  cancelled,
+  failure,
+  objectFilter,
+};

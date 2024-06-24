@@ -8,7 +8,7 @@ const containerCreateOptions: ContainerCreateOptions = {
   Cmd: [],
   Entrypoint: ['/bin/sleep', '3600'],
   WorkingDir: '/',
-  Image: 'alpine',
+  Image: 'alpine:latest',
   name: 'alpine-test',
   Env,
   HostConfig: {
@@ -22,37 +22,43 @@ const containerCreateOptions: ContainerCreateOptions = {
 const docker = new Docker(containerCreateOptions);
 
 afterAll(async () => {
-  // const findExecutor = docker.find();
-  // await findExecutor.execute();
-  // docker.container?.remove();
+  const removeExecutor = docker.remove();
+  await removeExecutor.execute();
+});
+
+vi.setConfig({
+  testTimeout: 20000,
 });
 
 describe('test Docker Container', () => {
-  it('docker find container before create test case', async () => {
-    const findExecutor = docker.find();
-    await findExecutor.execute();
-    expect(docker.container?.id).toBeUndefined();
+  it('docker pull image test case', async () => {
+    const pullExecutor = docker.pull();
+    await pullExecutor.execute();
+    // expect(docker.container).not.toBeUndefined();
   });
 
-  // it('docker create container test case', async () => {
-  //   const createExecutor = docker.create([], []);
-  //   await createExecutor.execute();
-  //   // expect(docker.container).not.toBeUndefined();
-  // });
+  it('docker create container test case', async () => {
+    const createExecutor = docker.create([], []);
+    await createExecutor.execute();
+    const id = docker.container?.id;
+    expect(id).not.toBeUndefined();
+  });
 
-  // it('docker find container after create test case', async () => {
-  //   const findExecutor = docker.find();
-  //   await findExecutor.execute();
-  //   // expect(docker.container).not.toBeUndefined();
-  // });
+  it('docker start container test case', async () => {
+    const startExecutor = docker.start();
+    await startExecutor.execute();
 
-  // it('docker start container test case', async () => {
-  //   // const startExecutor = docker.start();
-  //   // await startExecutor.execute();
+    const id = docker.container?.id;
+    expect(id).not.toBeUndefined();
+  });
 
-  //   const findExecutor = docker.find();
-  //   await findExecutor.execute();
-  //   console.log('ddd', docker.container);
-  //   // expect(docker.container).not.toBeUndefined();
-  // });
+  it('docker stop container test case', async () => {
+    // const startExecutor = docker.start();
+    // await startExecutor.execute();
+
+    // const stopExecutor = docker.stop();
+    // await stopExecutor.execute();
+    // console.log('ddd', docker.container);
+    // expect(docker.container).not.toBeUndefined();
+  });
 });

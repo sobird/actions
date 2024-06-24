@@ -12,7 +12,7 @@ import Git from '@/pkg/common/git';
 import type { Config } from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
 import WorkflowPlanner from '@/pkg/workflow/planner';
-import { asyncFunction } from '@/utils';
+import { asyncFunction, createSafeName } from '@/utils';
 
 import Executor from '../common/executor';
 import { Run } from '../workflow/plan';
@@ -241,6 +241,24 @@ class Runner {
     const { job, workflow } = this.run;
 
     return { ...this.config.env, ...workflow.env, ...job.env };
+  }
+
+  private generateContainerName(id?: string) {
+    const { workflow } = this.run;
+    const parts = [`WORKFLOW-${workflow.name || workflow.file}`, `JOB-${this.run.name}`];
+    if (id) {
+      parts.push(`ID-${id}`);
+    }
+    return createSafeName(...parts);
+  }
+
+  private generateNetworkName(id?: string) {
+    const { jobId } = this.run;
+    if (this.config.containerNetworkMode) {
+      return [this.config.containerNetworkMode, false];
+    }
+    // 如未配置NetworkMode，则手动创建network
+    return [`${this.generateContainerName(id)}-${jobId}-network`, true];
   }
 }
 
