@@ -87,6 +87,7 @@ export class Docker extends Dockerode {
   }
 }
 
+// Docker Singleton
 export default new Docker();
 
 // 获取 Docker Host 路径

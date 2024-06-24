@@ -43,7 +43,7 @@ class Executor {
   if(conditional: Conditional) {
     return new Executor(async (ctx) => {
       if (await conditional.evaluate(ctx)) {
-        this.execute(ctx);
+        await this.execute(ctx);
       }
     });
   }
