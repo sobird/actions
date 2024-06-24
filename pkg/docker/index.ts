@@ -31,7 +31,7 @@ const socketPath = process.env.DOCKER_HOST || dockerSocketLocations.find((p) => 
   return fs.existsSync(p);
 });
 
-interface DockerPullExecutorInput {
+export interface DockerPullExecutorInput {
   image: string;
   force?: boolean;
   platform?: string;
@@ -46,8 +46,10 @@ export class Docker extends Dockerode {
 
   pullExecutor(input: DockerPullExecutorInput) {
     return new Executor(async () => {
+      logger.debug('\u{0001F433} docker pull %s', input.image);
+
       const {
-        image, force, platform, ...authconfig
+        image, force, platform, ...auth
       } = input;
 
       const img = this.getImage(image);
@@ -59,14 +61,13 @@ export class Docker extends Dockerode {
           return;
         }
       } catch (err) {
-        //
+        logger.error("unable to determine if image already exists for image '%s' (%s): %w", input.image, input.platform, err);
       }
 
       await new Promise((resolve, reject) => {
-        console.log("pulling image '%s' (%s)", image, platform);
+        logger.debug("pulling image '%s' (%s)", image, platform);
         this.pull(image, {
           platform,
-          authconfig,
         }, (err, stream) => {
           if (err) {
             reject(err);
@@ -80,7 +81,7 @@ export class Docker extends Dockerode {
               resolve(output);
             }
           });
-        });
+        }, auth);
       });
     });
   }
