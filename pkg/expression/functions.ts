@@ -108,7 +108,9 @@ function join(array: string | string[], optionalSeparator: string = ',') {
  * You can use this function to debug the information provided in contexts.
  */
 function toJSON(value: JSON) {
-  return JSON.stringify(value);
+  const res = JSON.stringify(value);
+  console.log('res', res);
+  return res;
 }
 
 /**
@@ -198,13 +200,14 @@ function failure() {
 }
 
 // const reg = /^(\w+\.)+\*\.(\w+)$/;
-function objectFilter(path: string) {
-  const parts = path.split('.*.');
-  const [prefix, suffix] = parts;
-  const result = _.result({}, prefix);
+function objectFilter(array: object, name: string) {
+  // const parts = path.split('.*.');
+  // const [prefix, suffix] = parts;
+  // const result = _.result({}, prefix);
 
-  if (_.isObject(result)) {
-    return Object.keys(result).map((item: any) => { return item[suffix]; });
+  if (_.isArray(array)) {
+    const res = array.map((item: any) => { return item[name]; });
+    return res;
   }
 }
 

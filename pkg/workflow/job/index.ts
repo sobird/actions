@@ -11,6 +11,7 @@ import log4js from 'log4js';
 
 import Executor from '@/pkg/common/executor';
 import Git from '@/pkg/common/git';
+import Expression from '@/pkg/expression';
 import Reporter from '@/pkg/reporter';
 import Runner from '@/pkg/runner';
 import WorkflowPlanner from '@/pkg/workflow/planner';
@@ -383,7 +384,7 @@ class Job {
     this.permissions = job.permissions;
     this.needs = job.needs;
     this.if = job.if;
-    this['runs-on'] = job['runs-on'];
+    this['runs-on'] = new Expression(job['runs-on'], ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
     this.environment = job.environment;
     this.concurrency = job.concurrency;
     this.outputs = job.outputs;

@@ -17,26 +17,47 @@ import functions from './functions';
 _.templateSettings.interpolate = /\${{([\s\S]+?)}}/g;
 _.templateSettings.imports = {
   ...functions,
+
+  test(val: unknown) {
+    console.log('val', val);
+    return val;
+  },
 };
 
-class Expression {
-  constructor(public expression: string, public scopes: string[]) {
-    this.expression = expression || '';
+class Expression<T> {
+  constructor(public source: T, public scopes: string[]) {
+    this.source = source;
   }
 
-  evaluate(context: Context) {
-    const expression = this.expression.replace(/((\w+\.)+\*\.(\w+))/g, "objectFilter('$1')");
+  evaluate(context: DeepPartial<Context> = {}): T {
+    const text = JSON.stringify(this.source);
+    const expression = text.replace(/((?:\w+\.)*?\w+)\.\*\.(\w+)/g, "objectFilter($1, '$2')");
 
-    return _.template(expression)(_.pick(context, ...this.scopes));
+    console.log('expression', expression, this.source);
+
+    const output = _.template(expression)(_.pick(context, ...this.scopes));
+
+    console.log('output', output);
+
+    try {
+      return JSON.parse(output);
+    } catch (err) {
+      return output as T;
+    }
   }
 
   toString() {
-    return this.expression;
+    return this.source;
   }
 
   toJSON() {
-    return this.expression;
+    return this.source;
   }
 }
 
 export default Expression;
+
+// const express = new Expression('${{ { status: "success" } }}', []);
+// const result = express.evaluate({});
+
+// console.log('ddd', result);

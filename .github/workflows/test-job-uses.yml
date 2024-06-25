@@ -1,5 +1,5 @@
 name: Reusable Workflow Test
-run-name: reusable workflows in the same repository
+run-name: reusable workflows in the same repository ${{ github.event }}
 on: 
   push:
     branches:
