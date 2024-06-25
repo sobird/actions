@@ -433,7 +433,7 @@ class Job {
   // interpret
 
   clone() {
-    const cloned = structuredClone(this);
+    const cloned = JSON.parse(JSON.stringify(this));
     cloned.id = this.#id;
 
     return new Job(cloned);

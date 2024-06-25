@@ -8,12 +8,17 @@
  */
 
 import Yaml from '@/pkg/common/yaml';
+import Expression from '@/pkg/expression';
 
 import Job from './job';
 import Plan, { Stage, Run } from './plan';
 import {
   Concurrency, Defaults, On, OnEvents, Permissions,
 } from './types';
+
+interface WorkflowProps extends Omit<Workflow, 'run-name'> {
+  'run-name': string;
+}
 
 class Workflow extends Yaml {
   #file?: string;
@@ -40,7 +45,7 @@ class Workflow extends Yaml {
    * run-name: Deploy to ${{ inputs.deploy_target }} by @${{ github.actor }}
    * ```
    */
-  public 'run-name'?: string;
+  public 'run-name': Expression;
 
   /**
    * To automatically trigger a workflow, use on to define which events can cause the workflow to run.
@@ -124,14 +129,14 @@ class Workflow extends Yaml {
    */
   public jobs: Record<string, Job>;
 
-  constructor(workflow: Workflow) {
+  constructor(workflow: WorkflowProps) {
     super(workflow);
 
     this.#file = workflow.file;
     this.#sha = workflow.sha;
 
     this.name = workflow.name;
-    this['run-name'] = workflow['run-name'];
+    this['run-name'] = new Expression(workflow['run-name'], ['github', 'inputs', 'vars']);
     this.on = workflow.on;
     this.permissions = workflow.permissions;
     this.env = workflow.env;
@@ -343,7 +348,8 @@ class Workflow extends Yaml {
   }
 
   clone() {
-    const cloned = structuredClone(this);
+    const cloned = JSON.parse(JSON.stringify(this));
+
     cloned.file = this.#file;
     cloned.sha = this.#sha;
     return new Workflow(cloned);

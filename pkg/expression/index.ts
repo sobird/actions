@@ -21,11 +21,12 @@ _.templateSettings.imports = {
 
 class Expression {
   constructor(public expression: string, public scopes: string[]) {
-
+    this.expression = expression || '';
   }
 
   evaluate(context: Context) {
     const expression = this.expression.replace(/((\w+\.)+\*\.(\w+))/g, "objectFilter('$1')");
+
     return _.template(expression)(_.pick(context, ...this.scopes));
   }
 

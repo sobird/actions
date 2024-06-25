@@ -54,6 +54,7 @@ class Runner {
     return new Executor(async () => {
       await asyncFunction(500);
       // todo
+      console.log('runs-on', this.run.workflow['run-name']?.evaluate(this.context));
       console.log('job name', job['runs-on'], this.context.matrix);
       console.log('workflow file:', this.run.workflow.file);
       console.log('workflow sha:', this.run.workflow.sha);
