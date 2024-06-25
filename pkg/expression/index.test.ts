@@ -143,8 +143,14 @@ describe('test Expression Functions', () => {
     it(`${item.source} - test case`, () => {
       const expression = new Expression(item.source, ['github']);
       const result = expression.evaluate(context);
-      console.log('result', result, item.expected);
       expect(result).toBe(item.expected);
     });
+  });
+
+  it('${{ hashFiles("**/package.json") }} - test case', () => {
+    const expression = new Expression('${{ hashFiles("**/package.json") }}', ['github']);
+    const result = expression.evaluate(context);
+    console.log('result', result);
+    // expect(result).toBe(item.expected);
   });
 });

@@ -108,9 +108,7 @@ function join(array: string | string[], optionalSeparator: string = ',') {
  * You can use this function to debug the information provided in contexts.
  */
 function toJSON(value: JSON) {
-  const res = JSON.stringify(value);
-  console.log('res', res);
-  return res;
+  return JSON.stringify(value);
 }
 
 /**
