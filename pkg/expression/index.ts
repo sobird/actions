@@ -30,20 +30,31 @@ class Expression<T> {
   }
 
   evaluate(context: DeepPartial<Context> = {}): T {
-    const text = JSON.stringify(this.source);
-    const expression = text.replace(/((?:\w+\.)*?\w+)\.\*\.(\w+)/g, "objectFilter($1, '$2')");
+    const interpret = (source: unknown): any => {
+      if (typeof source === 'string') {
+        const expression = source.replace(/((?:\w+\.)*?\w+)\.\*\.(\w+)/g, "objectFilter($1, '$2')");
+        const availability = _.pick(context, ...this.scopes);
 
-    console.log('expression', expression, this.source);
+        const template = _.template(expression);
+        const output = template(availability);
+        return output;
+      }
 
-    const output = _.template(expression)(_.pick(context, ...this.scopes));
+      if (Array.isArray(source)) {
+        return source.map((item) => {
+          return interpret(item);
+        });
+      }
 
-    console.log('output', output);
+      // object
+      const output: Record<string, unknown> = {};
+      _.forOwn(source, (item, key) => {
+        output[key] = interpret(item);
+      });
+      return output;
+    };
 
-    try {
-      return JSON.parse(output);
-    } catch (err) {
-      return output as T;
-    }
+    return interpret(this.source);
   }
 
   toString() {

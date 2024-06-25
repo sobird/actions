@@ -39,6 +39,9 @@ const literals = [{
 }, {
   source: '${{ 0xff }}',
   expected: '255',
+}, {
+  source: '${{ github.event }}',
+  expected: '[object Object]',
 }];
 
 const operators = [
@@ -118,8 +121,8 @@ const functions = [{
 describe('test Expression Literals', () => {
   literals.forEach((item) => {
     it(`${item.source} - test case`, () => {
-      const expression = new Expression(item.source, []);
-      const result = expression.evaluate({});
+      const expression = new Expression(item.source, ['github']);
+      const result = expression.evaluate(context);
       expect(result).toBe(item.expected);
     });
   });

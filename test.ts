@@ -17,4 +17,4 @@ console.log('str', str);
 const compile = _.template(expression);
 const output = compile({});
 
-console.log('output', output, compile.source);
+console.log('output', output);
