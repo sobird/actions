@@ -10,14 +10,18 @@
 import Yaml from '@/pkg/common/yaml';
 import Expression from '@/pkg/expression';
 
-import Job from './job';
+import Job, { JobProps } from './job';
 import Plan, { Stage, Run } from './plan';
 import {
   Concurrency, Defaults, On, OnEvents, Permissions,
 } from './types';
 
-interface WorkflowProps extends Omit<Workflow, 'run-name'> {
+interface WorkflowProps extends Pick<Workflow, 'name' | 'on' | 'permissions' | 'defaults' | 'jobs'> {
+  file?: string;
+  sha?: string;
   'run-name': string;
+  concurrency: Concurrency;
+  env: Record<string, string>;
 }
 
 class Workflow extends Yaml {
@@ -80,7 +84,7 @@ class Workflow extends Yaml {
    * For example, an environment variable defined in a step will override job and workflow environment variables with the same name,
    * while the step executes. An environment variable defined for a job will override a workflow variable with the same name, while the job executes.
    */
-  public env: object;
+  public env: Expression<Record<string, string>>;
 
   /**
    * Use defaults to create a map of default settings that will apply to all jobs in the workflow.
@@ -113,7 +117,7 @@ class Workflow extends Yaml {
    * * Ordering is not guaranteed for jobs or workflow runs using concurrency groups.
    * Jobs or workflow runs in the same concurrency group are handled in an arbitrary order.
    */
-  public concurrency: Concurrency;
+  public concurrency: Expression<Concurrency>;
 
   /**
    * A workflow run is made up of one or more `jobs`, which run in parallel by default.
@@ -139,9 +143,9 @@ class Workflow extends Yaml {
     this['run-name'] = new Expression(workflow['run-name'], ['github', 'inputs', 'vars']);
     this.on = workflow.on;
     this.permissions = workflow.permissions;
-    this.env = workflow.env;
+    this.env = new Expression(workflow.env, ['github', 'secrets', 'inputs', 'vars']);
     this.defaults = workflow.defaults;
-    this.concurrency = workflow.concurrency;
+    this.concurrency = new Expression(workflow.concurrency, ['github', 'inputs', 'vars']);
     this.jobs = this.setupJobs(workflow.jobs);
   }
 
@@ -152,7 +156,7 @@ class Workflow extends Yaml {
 
     return Object.fromEntries(Object.entries(jobs).map(([jobId, job]) => {
       this.validateJobId(jobId);
-      const newJob = new Job(job);
+      const newJob = new Job(job as unknown as JobProps);
       newJob.id = jobId;
       return [jobId, newJob];
     }));

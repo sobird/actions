@@ -38,10 +38,13 @@ export enum JobType {
   Invalid,
 }
 
-export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | 'if' | 'environment' | 'concurrency' | 'outputs' | 'env' | 'defaults' | 'steps' | 'timeout-minutes' | 'strategy' | 'continue-on-error' | 'container' | 'services' | 'uses' | 'with' | 'secrets'> {
+export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | 'if' | 'environment' | 'outputs' | 'env' | 'defaults' | 'steps' | 'timeout-minutes' | 'strategy' | 'continue-on-error' | 'container' | 'services' | 'uses' | 'with' | 'secrets'> {
   id?: string;
   'runs-on': string | string[] | { group: string;labels: string; };
+  concurrency: Concurrency;
 }
+
+const contextAvailability = ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs'];
 
 /**
  * Use `jobs.<job_id>` to give your job a unique identifier.
@@ -204,7 +207,7 @@ class Job {
    * To conditionally cancel currently running jobs or workflows in the same concurrency group,
    * you can specify `cancel-in-progress` as an expression with any of the allowed expression contexts.
    */
-  concurrency?: Concurrency;
+  concurrency: Expression<Concurrency>;
 
   /**
    * You can use `jobs.<job_id>.outputs` to create a `map` of outputs for a job.
@@ -378,9 +381,9 @@ class Job {
     this.permissions = job.permissions;
     this.needs = job.needs;
     this.if = job.if;
-    this['runs-on'] = new Expression(job['runs-on'], ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
+    this['runs-on'] = new Expression(job['runs-on'], contextAvailability);
     this.environment = job.environment;
-    this.concurrency = job.concurrency;
+    this.concurrency = new Expression(job.concurrency, contextAvailability);
     this.outputs = job.outputs;
     this.env = job.env;
     this.defaults = job.defaults;

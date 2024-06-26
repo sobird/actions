@@ -32,6 +32,15 @@ class Expression<T> {
 
   evaluate(context: DeepPartial<Context> = {}, runner?: Runner): T {
     const interpret = (source: unknown): any => {
+      if (source === null) {
+        return null;
+      }
+      if (source === undefined) {
+        return undefined;
+      }
+      if (typeof source === 'boolean') {
+        return source;
+      }
       if (typeof source === 'string') {
         const expression = source.replace(/((?:\w+\.)*?\w+)\.\*\.(\w+)/g, "objectFilter($1, '$2')");
         const availability = _.pick(context, ...this.scopes);

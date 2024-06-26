@@ -4,6 +4,17 @@
  * sobird<i@sobird.me> at 2024/05/02 21:41:14 created.
  */
 
+import Expression from '@/pkg/expression';
+
+export interface ContainerProps extends Pick<Container, 'ports' | 'volumes' | 'options'> {
+  image?: string;
+  credentials?: {
+    username?: string;
+    password?: string;
+  }
+  env?: Record<string, string>;
+}
+
 /**
  * **Note:** If your workflows use Docker container actions, job containers, or service containers, then you must use a Linux runner:
  *
@@ -26,22 +37,22 @@ export default class Container {
    * Use `jobs.<job_id>.container.image` to define the Docker image to use as the container to run the action.
    * The value can be the Docker Hub image name or a registry name.
    */
-  image?: string;
+  image: Expression<string | undefined>;
 
   /**
    * If the image's container registry requires authentication to pull the image,
    * you can use `jobs.<job_id>.container.credentials` to set a `map` of the `username` and `password`.
    * The credentials are the same values that you would provide to the {@link https://docs.docker.com/engine/reference/commandline/login/ `docker login`} command.
    */
-  credentials?: {
+  credentials?: Expression<{
     username?: string;
     password?: string;
-  };
+  } | undefined>;
 
   /**
    * Use `jobs.<job_id>.container.env` to set a `map` of environment variables in the container.
    */
-  env?: Record<string, string> = {};
+  env?: Expression<Record<string, string> | undefined>;
 
   /**
    * Use `jobs.<job_id>.container.ports` to set an array of ports to expose on the container.
@@ -69,28 +80,16 @@ export default class Container {
    */
   options?: string;
 
-  constructor(container?: Container | string) {
-    if (!container) {
-      return;
-    }
+  constructor(container: ContainerProps | string = {}) {
     if (typeof container === 'string') {
-      this.image = container;
+      this.image = new Expression(container, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
       return;
     }
-    this.image = container.image;
-    this.credentials = container.credentials;
-    this.env = container.env;
+    this.image = new Expression(container.image, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
+    this.credentials = new Expression(container.credentials, ['github', 'needs', 'strategy', 'matrix', 'env', 'vars', 'secrets', 'inputs']);
+    this.env = new Expression(container.env, ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'inputs']);
     this.ports = container.ports;
     this.volumes = container.volumes;
     this.options = container.options;
-  }
-
-  // 创建容器实例
-  create() {
-    console.log('create container: ', this);
-  }
-
-  start() {
-    console.log('start container: ', this);
   }
 }

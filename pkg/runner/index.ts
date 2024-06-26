@@ -48,16 +48,19 @@ class Runner {
   }
 
   executor() {
-    const { job } = this.run;
+    const { job, workflow } = this.run;
     const jobExecutor = this.jobExecutor();
 
     return new Executor(async () => {
       await asyncFunction(500);
       // todo
-      console.log('workflow run-name', this.run.workflow['run-name'].evaluate(this.context));
+      console.log('workflow run-name', workflow['run-name'].evaluate(this.context));
+      console.log('workflow concurrency', workflow.concurrency.evaluate(this.context));
       console.log('job runs-on', job['runs-on'].evaluate(this.context), job.runsOn(this.context));
       console.log('workflow file:', this.run.workflow.file);
       console.log('workflow sha:', this.run.workflow.sha);
+
+      console.log('job container image:', job.container.image.evaluate(this.context));
 
       await jobExecutor.execute();
     });
