@@ -78,30 +78,55 @@ class Expression<T> {
     //
   }
 
-  private jobSuccess(runner: Runner) {
+  private static JobSuccess(runner: Runner) {
     const { workflow, job } = runner.run;
-    const jobNeeds = this.getNeedsTransitive(job, runner);
+    const jobNeeds = this.JobNeedsTransitive(job, runner);
 
     for (const need of jobNeeds) {
       if (workflow.jobs[need].result !== 'success') {
-        return [false, null];
+        return false;
       }
     }
 
-    return [true, null];
+    return true;
   }
 
-  private getNeedsTransitive(job: Job, runner: Runner) {
+  private static JobNeedsTransitive(job: Job, runner: Runner) {
     const { workflow } = runner.run;
 
     let needs = job.getNeeds();
 
     for (const need of needs) {
-      const parentNeeds = this.getNeedsTransitive(workflow.jobs[need], runner);
+      const parentNeeds = this.JobNeedsTransitive(workflow.jobs[need], runner);
       needs = needs.concat(parentNeeds);
     }
 
     return needs;
+  }
+
+  static StepSuccess(runner: Runner) {
+    return runner.context.job.status === 'success';
+  }
+
+  static JobFailure(runner: Runner) {
+    const { workflow, job } = runner.run;
+    const jobNeeds = this.JobNeedsTransitive(job, runner);
+
+    for (const need of jobNeeds) {
+      if (workflow.jobs[need].result === 'failure') {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  static StepFailure(runner: Runner) {
+    return runner.context.job.status === 'failure';
+  }
+
+  static Cancelled(runner: Runner) {
+    return runner.context.job.status === 'cancelled';
   }
 }
 
