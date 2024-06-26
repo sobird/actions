@@ -45,7 +45,7 @@ class Workflow extends Yaml {
    * run-name: Deploy to ${{ inputs.deploy_target }} by @${{ github.actor }}
    * ```
    */
-  public 'run-name': Expression;
+  public 'run-name': Expression<string>;
 
   /**
    * To automatically trigger a workflow, use on to define which events can cause the workflow to run.

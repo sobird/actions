@@ -5,27 +5,16 @@
  * sobird<i@sobird.me> at 2024/05/02 20:26:29 created.
  */
 
-import path from 'node:path';
-
-import log4js from 'log4js';
-
-import Executor from '@/pkg/common/executor';
-import Git from '@/pkg/common/git';
 import Expression from '@/pkg/expression';
-import Reporter from '@/pkg/reporter';
-import Runner from '@/pkg/runner';
-import WorkflowPlanner from '@/pkg/workflow/planner';
-import { asyncFunction } from '@/utils';
+import Context from '@/pkg/runner/context';
 
 import Container from './container';
 import Step from './step';
 import StepExecutorRun from './step/run';
-import Strategy, { StrategyProps } from './strategy';
+import Strategy from './strategy';
 import {
-  WorkflowDispatchInputs, Permissions, Concurrency, Defaults,
+  WorkflowDispatchInput, Permissions, Concurrency, Defaults,
 } from '../types';
-
-const logger = log4js.getLogger();
 
 export enum JobType {
   /**
@@ -47,6 +36,11 @@ export enum JobType {
    * represents a job which is not configured correctly
    */
   Invalid,
+}
+
+export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | 'if' | 'environment' | 'concurrency' | 'outputs' | 'env' | 'defaults' | 'steps' | 'timeout-minutes' | 'strategy' | 'continue-on-error' | 'container' | 'services' | 'uses' | 'with' | 'secrets'> {
+  id?: string;
+  'runs-on': string | string[] | { group: string;labels: string; };
 }
 
 /**
@@ -145,7 +139,7 @@ class Job {
    *
    * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-self-hosted-runners Choosing self-hosted runners}."
    */
-  'runs-on'?: string | string[] | { group: string;labels: string; };
+  'runs-on': Expression<string | string[] | { group: string;labels: string; }>;
 
   /**
    * Use `jobs.<job_id>.environment` to define the environment that the job references.
@@ -359,7 +353,7 @@ class Job {
    * Unlike `jobs.<job_id>.steps[*].with`, the inputs you pass with `jobs.<job_id>.with` are not available as environment variables in the called workflow.
    * Instead, you can reference the inputs by using the inputs context.
    */
-  with?: Record<string, string | WorkflowDispatchInputs>;
+  with?: Record<string, string | WorkflowDispatchInput>;
 
   /**
    * When a job is used to call a reusable workflow,
@@ -377,7 +371,7 @@ class Job {
    */
   secrets?: Record<string, string> | 'inherit';
 
-  constructor(job: Partial<Job>) {
+  constructor(job: JobProps) {
     this.#id = job.id;
 
     this.name = job.name;
@@ -472,12 +466,12 @@ class Job {
     return typeof this.needs === 'string' ? [this.needs] : this.needs;
   }
 
-  getRunsOn() {
-    if (!this['runs-on']) {
+  runsOn(context: Context) {
+    const runsOn = this['runs-on'].evaluate(context);
+    if (!runsOn) {
       return [];
     }
 
-    const runsOn = this['runs-on'];
     if (typeof runsOn === 'string') {
       return [runsOn];
     }

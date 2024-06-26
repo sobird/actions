@@ -31,8 +31,6 @@ class Expression<T> {
   }
 
   evaluate(context: DeepPartial<Context> = {}, runner?: Runner): T {
-    console.log('runner', runner);
-
     const interpret = (source: unknown): any => {
       if (typeof source === 'string') {
         const expression = source.replace(/((?:\w+\.)*?\w+)\.\*\.(\w+)/g, "objectFilter($1, '$2')");
