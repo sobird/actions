@@ -1,20 +1,9 @@
-import _ from 'lodash';
+import glob from '@actions/glob';
 
-_.templateSettings.interpolate = /\${{([\s\S]+?)}}/g;
-_.templateSettings.imports = {
+import functions from '@/pkg/expression/functions';
 
-  test(val: unknown) {
-    console.log('val', val);
-    return val;
-  },
-};
+const hash1 = await glob.hashFiles('package.json');
 
-const expression = '${{ {name: "sobird"} }}';
-const str = JSON.stringify(expression);
+const hash2 = await functions.hashFiles('package.json');
 
-console.log('str', str);
-
-const compile = _.template(expression);
-const output = compile({});
-
-console.log('output', output);
+console.log('hash', hash1, hash2);

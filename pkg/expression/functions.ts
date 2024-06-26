@@ -141,6 +141,8 @@ function fromJSON(value: string) {
  * For more information about SHA-256, see "SHA-2." You can use pattern matching characters to match file names.
  * Pattern matching for hashFiles follows glob pattern matching and is case-insensitive on Windows.
  * For more information about supported pattern matching characters, see the Patterns section in the @actions/glob documentation.
+ *
+ * @see https://github.com/actions/toolkit/blob/main/packages/glob/src/internal-hash-files.ts
  */
 async function hashFiles(...patterns: string[]) {
   const hashes = [];

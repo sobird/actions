@@ -10,6 +10,7 @@
 
 import _ from 'lodash';
 
+import Runner from '@/pkg/runner';
 import Context from '@/pkg/runner/context';
 
 import functions from './functions';
@@ -29,7 +30,9 @@ class Expression<T> {
     this.source = source;
   }
 
-  evaluate(context: DeepPartial<Context> = {}): T {
+  evaluate(context: DeepPartial<Context> = {}, runner?: Runner): T {
+    console.log('runner', runner);
+
     const interpret = (source: unknown): any => {
       if (typeof source === 'string') {
         const expression = source.replace(/((?:\w+\.)*?\w+)\.\*\.(\w+)/g, "objectFilter($1, '$2')");
