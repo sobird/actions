@@ -8,12 +8,14 @@
 import Expression from '@/pkg/expression';
 import Context from '@/pkg/runner/context';
 
-import Container from './container';
+import Container, { ContainerProps } from './container';
+import Defaults, { DefaultsProps } from './defaults';
+import Environment, { EnvironmentOptions } from './environment';
 import Step from './step';
 import StepExecutorRun from './step/run';
 import Strategy from './strategy';
 import {
-  WorkflowDispatchInput, Permissions, Concurrency, Defaults,
+  WorkflowDispatchInput, Permissions, Concurrency,
 } from '../types';
 
 export enum JobType {
@@ -38,13 +40,16 @@ export enum JobType {
   Invalid,
 }
 
-export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | 'if' | 'environment' | 'outputs' | 'env' | 'defaults' | 'steps' | 'timeout-minutes' | 'strategy' | 'continue-on-error' | 'container' | 'services' | 'uses' | 'with' | 'secrets'> {
+export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | 'if' | 'outputs' | 'steps' | 'timeout-minutes' | 'strategy' | 'services' | 'uses' | 'with' | 'secrets'> {
   id?: string;
   'runs-on': string | string[] | { group: string;labels: string; };
   concurrency: Concurrency;
+  container: ContainerProps;
+  'continue-on-error': boolean;
+  defaults: DefaultsProps;
+  env: Record<string, string>;
+  environment: EnvironmentOptions
 }
-
-const contextAvailability = ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs'];
 
 /**
  * Use `jobs.<job_id>` to give your job a unique identifier.
@@ -184,10 +189,7 @@ class Job {
    *   name: ${{ github.ref_name }}
    * ```
    */
-  environment?: string | {
-    name?: string;
-    url?: string;
-  };
+  environment: Environment;
 
   /**
    * You can use `jobs.<job_id>.concurrency` to ensure that only a single job or workflow using the same concurrency group will run at a time.
@@ -242,7 +244,7 @@ class Job {
    * For example, an environment variable defined in a step will override job and workflow environment variables with the same name, while the step executes.
    * An environment variable defined for a job will override a workflow variable with the same name, while the job executes.
    */
-  env?: Record<string, string>;
+  env: Expression<Record<string, string>>;
 
   /**
    * Use `jobs.<job_id>.defaults` to create a map of default settings that will apply to all steps in the job.
@@ -253,7 +255,7 @@ class Job {
    * GitHub uses the most specific default setting.
    * For example, a default setting defined in a job will override a default setting that has the same name defined in a workflow.
    */
-  defaults?: Defaults;
+  defaults: Defaults;
 
   /**
    * A job contains a sequence of tasks called steps.
@@ -294,7 +296,7 @@ class Job {
    * Prevents a workflow run from failing when a job fails.
    * Set to `true` to allow a workflow run to pass when this job fails.
    */
-  'continue-on-error'?: boolean;
+  'continue-on-error': Expression<boolean>;
 
   container: Container;
 
@@ -381,12 +383,12 @@ class Job {
     this.permissions = job.permissions;
     this.needs = job.needs;
     this.if = job.if;
-    this['runs-on'] = new Expression(job['runs-on'], contextAvailability);
-    this.environment = job.environment;
-    this.concurrency = new Expression(job.concurrency, contextAvailability);
+    this['runs-on'] = new Expression(job['runs-on'], ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
+    this.environment = new Environment(job.environment);
+    this.concurrency = new Expression(job.concurrency, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
     this.outputs = job.outputs;
-    this.env = job.env;
-    this.defaults = job.defaults;
+    this.env = new Expression(job.env, ['github', 'needs', 'strategy', 'matrix', 'vars', 'secrets', 'inputs']);
+    this.defaults = new Defaults(job.defaults);
 
     if (Array.isArray(job.steps)) {
       this.steps = job.steps.map((step) => {
@@ -396,7 +398,7 @@ class Job {
 
     this['timeout-minutes'] = job['timeout-minutes'];
     this.strategy = new Strategy(job.strategy);
-    this['continue-on-error'] = job['continue-on-error'];
+    this['continue-on-error'] = new Expression(job['continue-on-error'], ['github', 'needs', 'strategy', 'vars', 'matrix', 'inputs']);
     this.container = new Container(job.container);
     this.services = job.services;
     this.uses = job.uses;

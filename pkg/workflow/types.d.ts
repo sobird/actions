@@ -140,10 +140,3 @@ type PermissionsValue = 'read' | 'write' | 'none' | 'read|write' | 'read|none' |
 export type Permissions = { [key in PermissionsKey]: PermissionsValue } | 'read-all' | 'write-all' | Record<string, never>;
 
 export type Concurrency = { group: string, 'cancel-in-progress': boolean };
-
-export type Defaults = {
-  run: {
-    shell: 'unspecified' | 'bash' | 'pwsh' | 'python' | 'sh' | 'cmd' | 'powershell';
-    'working-directory': string;
-  }
-};
