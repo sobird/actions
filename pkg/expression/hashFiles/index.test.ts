@@ -1,4 +1,9 @@
-import { exec } from 'child_process';
+import { exec } from 'node:child_process';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 function hashFiles() {
   const env = {
@@ -6,7 +11,7 @@ function hashFiles() {
     patterns: './package.json',
   };
 
-  const command = `node ${__dirname}/index.js`;
+  const command = `node ${__dirname}/index.cjs`;
 
   return new Promise((resolve) => {
     exec(command, { env }, (error, stdout, stderr) => {
@@ -27,7 +32,5 @@ function hashFiles() {
   });
 }
 
-it('hashFiles test case', async () => {
-  const hash = await hashFiles();
-  console.log('hash', hash);
-});
+const hash = await hashFiles();
+console.log('hash', hash);
