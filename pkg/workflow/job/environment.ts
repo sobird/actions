@@ -11,7 +11,7 @@ class Environment {
   url: Expression<string | undefined>;
 
   constructor(environment: EnvironmentOptions = {}) {
-    let env: EnvironmentOptions = { };
+    let env: EnvironmentOptions = {};
 
     if (typeof environment === 'string') {
       env.name = environment;

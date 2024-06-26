@@ -53,14 +53,16 @@ class Runner {
 
     return new Executor(async () => {
       await asyncFunction(500);
+
+      console.log('job', job === Object.entries(workflow.jobs)[0][1]);
       // todo
-      console.log('workflow run-name', workflow['run-name'].evaluate(this.context));
-      console.log('workflow concurrency', workflow.concurrency.evaluate(this.context));
-      console.log('job runs-on', job['runs-on'].evaluate(this.context), job.runsOn(this.context));
+      console.log('workflow run-name', workflow['run-name'].evaluate(this));
+      console.log('workflow concurrency', workflow.concurrency.evaluate(this));
+      console.log('job runs-on', job['runs-on'].evaluate(this), job.runsOn(this));
       console.log('workflow file:', this.run.workflow.file);
       console.log('workflow sha:', this.run.workflow.sha);
 
-      console.log('job container image:', job.container.image.evaluate(this.context));
+      console.log('job container image:', job.container.image.evaluate(this));
 
       await jobExecutor.execute();
     });
@@ -263,6 +265,10 @@ class Runner {
     }
     // 如未配置NetworkMode，则手动创建network
     return [`${this.generateContainerName(id)}-${jobId}-network`, true];
+  }
+
+  setJobContext(job: Context['job']) {
+    //
   }
 }
 

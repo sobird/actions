@@ -11,7 +11,7 @@
 import _ from 'lodash';
 
 import Runner from '@/pkg/runner';
-import Context from '@/pkg/runner/context';
+import Job from '@/pkg/workflow/job';
 
 import functions from './functions';
 
@@ -26,11 +26,10 @@ _.templateSettings.imports = {
 };
 
 class Expression<T> {
-  constructor(public source: T, public scopes: string[]) {
-    this.source = source;
-  }
+  constructor(public source: T, public scopes: string[], public specials: string[] = []) {}
 
-  evaluate(context: DeepPartial<Context> = {}, runner?: Runner): T {
+  evaluate(runner: Runner): T {
+    const { context } = runner;
     const interpret = (source: unknown): any => {
       if (source === null) {
         return null;
@@ -73,6 +72,36 @@ class Expression<T> {
 
   toJSON() {
     return this.source;
+  }
+
+  private hashFiles() {
+    //
+  }
+
+  private jobSuccess(runner: Runner) {
+    const { workflow, job } = runner.run;
+    const jobNeeds = this.getNeedsTransitive(job, runner);
+
+    for (const need of jobNeeds) {
+      if (workflow.jobs[need].result !== 'success') {
+        return [false, null];
+      }
+    }
+
+    return [true, null];
+  }
+
+  private getNeedsTransitive(job: Job, runner: Runner) {
+    const { workflow } = runner.run;
+
+    let needs = job.getNeeds();
+
+    for (const need of needs) {
+      const parentNeeds = this.getNeedsTransitive(workflow.jobs[need], runner);
+      needs = needs.concat(parentNeeds);
+    }
+
+    return needs;
   }
 }
 

@@ -144,7 +144,7 @@ function fromJSON(value: string) {
  *
  * @see https://github.com/actions/toolkit/blob/main/packages/glob/src/internal-hash-files.ts
  */
-async function hashFiles(...patterns: string[]) {
+export async function hashFiles(...patterns: string[]) {
   const hashes = [];
 
   for (const pattern of patterns) {
@@ -176,18 +176,18 @@ async function hashFiles(...patterns: string[]) {
 /**
  * Returns true when all previous steps have succeeded.
  */
-function success() {
+export function success() {
   // todo
 }
 
-function always() {
+export function always() {
   return true;
 }
 
 /**
  * Returns true if the workflow was canceled.
  */
-function cancelled() {
+export function cancelled() {
 
 }
 
@@ -195,7 +195,7 @@ function cancelled() {
  * Returns true when any previous step of a job fails.
  * If you have a chain of dependent jobs, failure() returns true if any ancestor job fails.
  */
-function failure() {
+export function failure() {
 
 }
 
@@ -219,10 +219,10 @@ export default {
   join,
   toJSON,
   fromJSON,
-  hashFiles,
-  success,
-  always,
-  cancelled,
-  failure,
+  // hashFiles,
+  // success,
+  // always,
+  // cancelled,
+  // failure,
   objectFilter,
 };

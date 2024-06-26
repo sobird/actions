@@ -6,7 +6,8 @@
  */
 
 import Expression from '@/pkg/expression';
-import Context from '@/pkg/runner/context';
+import Runner from '@/pkg/runner';
+import { Needs } from '@/pkg/runner/context/needs';
 
 import Container, { ContainerProps } from './container';
 import Defaults, { DefaultsProps } from './defaults';
@@ -73,6 +74,8 @@ class Job {
    * For example, for a matrix with four jobs, the value of job-total is 4.
    */
   #total: number = 0;
+
+  #result: Needs[string]['result'] = 'success';
 
   /**
    * Use `jobs.<job_id>.name` to set a name for the job, which is displayed in the GitHub UI.
@@ -430,6 +433,14 @@ class Job {
     this.#total = total;
   }
 
+  get result() {
+    return this.#result;
+  }
+
+  set result(result: Needs[string]['result']) {
+    this.#result = result;
+  }
+
   // interpret
 
   clone() {
@@ -471,8 +482,8 @@ class Job {
     return typeof this.needs === 'string' ? [this.needs] : this.needs;
   }
 
-  runsOn(context: Context) {
-    const runsOn = this['runs-on'].evaluate(context);
+  runsOn(runner: Runner) {
+    const runsOn = this['runs-on'].evaluate(runner);
     if (!runsOn) {
       return [];
     }
