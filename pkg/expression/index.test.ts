@@ -1,9 +1,10 @@
 /* eslint-disable no-template-curly-in-string */
-import Context from '@/pkg/runner/context';
+
+import Runner from '@/pkg/runner';
 
 import Expression from '.';
 
-const context: DeepPartial<Context> = {
+const context = {
   github: {
     actor: 'sobird',
     event_name: 'push',
@@ -21,6 +22,10 @@ const context: DeepPartial<Context> = {
     },
   },
 };
+
+const runner: Runner = {
+  context,
+} as unknown as Runner;
 
 const literals = [{
   source: '${{ false }}',
@@ -122,7 +127,7 @@ describe('test Expression Literals', () => {
   literals.forEach((item) => {
     it(`${item.source} - test case`, () => {
       const expression = new Expression(item.source, ['github']);
-      const result = expression.evaluate({ context });
+      const result = expression.evaluate(runner);
       expect(result).toBe(item.expected);
     });
   });
@@ -132,7 +137,7 @@ describe('test Expression Operators', () => {
   operators.forEach((item) => {
     it(`${item.source} - test case`, () => {
       const expression = new Expression(item.source, ['github']);
-      const result = expression.evaluate({ context });
+      const result = expression.evaluate(runner);
       expect(result).toBe(item.expected);
     });
   });
@@ -142,15 +147,15 @@ describe('test Expression Functions', () => {
   functions.forEach((item) => {
     it(`${item.source} - test case`, () => {
       const expression = new Expression(item.source, ['github']);
-      const result = expression.evaluate({ context });
+      const result = expression.evaluate(runner as unknown as Runner);
       expect(result).toBe(item.expected);
     });
   });
 
   it('${{ hashFiles("**/package.json") }} - test case', () => {
-    const expression = new Expression('${{ hashFiles("**/package.json") }}', ['github']);
-    const result = expression.evaluate({ context });
+    const expression = new Expression('${{ hashFiles("./package.json", "./README.md") }}', ['github']);
+    const result = expression.evaluate(runner);
     console.log('result', result);
-    // expect(result).toBe(item.expected);
+    expect(result.length).toBe(64);
   });
 });

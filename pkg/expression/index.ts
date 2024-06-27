@@ -14,7 +14,6 @@ import _ from 'lodash';
 
 import Runner from '@/pkg/runner';
 import Job from '@/pkg/workflow/job';
-import { replaceAllAsync } from '@/utils';
 
 import functions from './functions';
 
@@ -44,13 +43,16 @@ class Expression<T> {
         return source;
       }
       if (typeof source === 'string') {
-        let expression = source.replace(/((?:\w+\.)*?\w+)\.\*\.(\w+)/g, "objectFilter($1, '$2')");
+        const expression = source.replace(/((?:\w+\.)*?\w+)\.\*\.(\w+)/g, "objectFilter($1, '$2')");
         const availability = _.pick(context, ...this.scopes);
 
-        expression = this.getHashFilesFunction(expression);
+        // expression = this.getHashFilesFunction(expression);
 
         const template = _.template(expression);
-        const output = template(availability);
+        const output = template({
+          ...availability,
+          hashFiles: this.hashFiles,
+        });
         return output;
       }
 
@@ -85,7 +87,7 @@ class Expression<T> {
       const paramstr = match[1].replace(/'/g, '"');
       const patterns = JSON.parse(`[${paramstr}]`);
 
-      const hash = this.hashFiles(patterns);
+      const hash = this.hashFiles(...patterns);
 
       return JSON.stringify(hash);
     });
@@ -94,22 +96,14 @@ class Expression<T> {
   hashFiles(...patterns: string[]) {
     const env = {
       ...process.env,
-      patterns: './package.json',
+      patterns: patterns.join('\n'),
     };
 
     const command = '/Users/sobird/act-runner/pkg/expression/hashFiles/index.cjs';
-
-    const { stderr } = spawnSync('node', [command], { env });
-    const output = stderr.toString();
-    const guard = '__OUTPUT__';
-    const outstart = output.indexOf(guard);
-    if (outstart !== -1) {
-      const outstartAdjusted = outstart + guard.length;
-      const outend = output.indexOf(guard, outstartAdjusted);
-      if (outend !== -1) {
-        const hash = output.slice(outstartAdjusted, outend);
-        return hash;
-      }
+    const { stderr } = spawnSync('node', [command], { env, encoding: 'utf8' });
+    const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
+    if (matches && matches.length > 0) {
+      return matches[0].slice(10, -10);
     }
   }
 
