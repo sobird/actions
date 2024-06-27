@@ -12,4 +12,5 @@ export { createSafeName } from './createSafeName';
 export { sleep } from './sleep';
 export { readJsonSync } from './readJsonSync';
 export { readConfSync } from './readConfSync';
+export { replaceAllAsync } from './replaceAllAsync';
 export { default as lodash } from './lodash';

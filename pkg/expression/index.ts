@@ -8,10 +8,13 @@
  * sobird<i@sobird.me> at 2024/05/17 1:36:37 created.
  */
 
+import { spawnSync } from 'node:child_process';
+
 import _ from 'lodash';
 
 import Runner from '@/pkg/runner';
 import Job from '@/pkg/workflow/job';
+import { replaceAllAsync } from '@/utils';
 
 import functions from './functions';
 
@@ -41,8 +44,10 @@ class Expression<T> {
         return source;
       }
       if (typeof source === 'string') {
-        const expression = source.replace(/((?:\w+\.)*?\w+)\.\*\.(\w+)/g, "objectFilter($1, '$2')");
+        let expression = source.replace(/((?:\w+\.)*?\w+)\.\*\.(\w+)/g, "objectFilter($1, '$2')");
         const availability = _.pick(context, ...this.scopes);
+
+        expression = this.getHashFilesFunction(expression);
 
         const template = _.template(expression);
         const output = template(availability);
@@ -74,8 +79,38 @@ class Expression<T> {
     return this.source;
   }
 
-  private hashFiles() {
-    //
+  private getHashFilesFunction(source: string) {
+    const regexp = /\bhashFiles\s*\(([^)]*)\)/g;
+    return source.replaceAll(regexp, (...match) => {
+      const paramstr = match[1].replace(/'/g, '"');
+      const patterns = JSON.parse(`[${paramstr}]`);
+
+      const hash = this.hashFiles(patterns);
+
+      return JSON.stringify(hash);
+    });
+  }
+
+  hashFiles(...patterns: string[]) {
+    const env = {
+      ...process.env,
+      patterns: './package.json',
+    };
+
+    const command = '/Users/sobird/act-runner/pkg/expression/hashFiles/index.cjs';
+
+    const { stderr } = spawnSync('node', [command], { env });
+    const output = stderr.toString();
+    const guard = '__OUTPUT__';
+    const outstart = output.indexOf(guard);
+    if (outstart !== -1) {
+      const outstartAdjusted = outstart + guard.length;
+      const outend = output.indexOf(guard, outstartAdjusted);
+      if (outend !== -1) {
+        const hash = output.slice(outstartAdjusted, outend);
+        return hash;
+      }
+    }
   }
 
   private static JobSuccess(runner: Runner) {

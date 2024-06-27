@@ -1,9 +1,23 @@
-import glob from '@actions/glob';
+import Expression from './pkg/expression';
 
-import functions from '@/pkg/expression/functions';
-
-const hash1 = await glob.hashFiles('package.json');
-
-const hash2 = await functions.hashFiles('package.json');
-
-console.log('hash', hash1, hash2);
+const context = {
+  github: {
+    actor: 'sobird',
+    event_name: 'push',
+    event: {
+      issue: {
+        labels: [
+          {
+            name: 'bug',
+          },
+          {
+            name: 'error',
+          },
+        ],
+      },
+    },
+  },
+};
+const expression = new Expression('${{ hashFiles("**/package.json") + "-sobird" }}', ['github']);
+const result = await expression.evaluate({ context });
+console.log('result', result);
