@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Dockerode from 'dockerode';
+import Dockerode, { ContainerCreateOptions } from 'dockerode';
 import log4js from 'log4js';
 
 import Executor from '@/pkg/common/executor';
@@ -31,7 +31,7 @@ const socketPath = process.env.DOCKER_HOST || dockerSocketLocations.find((p) => 
   return fs.existsSync(p);
 });
 
-export interface DockerPullExecutorInput {
+export interface DockerPullImageInputs {
   image: string;
   force?: boolean;
   platform?: string;
@@ -44,7 +44,7 @@ export class Docker extends Dockerode {
     return 1212;
   }
 
-  pullExecutor(input: DockerPullExecutorInput) {
+  pullExecutor(input: DockerPullImageInputs) {
     return new Executor(async () => {
       logger.debug('\u{0001F433} docker pull %s', input.image);
 
@@ -83,6 +83,15 @@ export class Docker extends Dockerode {
           });
         }, auth);
       });
+    });
+  }
+
+  createContainerExecutor(options: ContainerCreateOptions) {
+    return new Executor(async () => {
+      const container = await this.createContainer(options);
+
+      logger.debug('Created container name=%s id=%s from image %s (platform: %s)', options.name, container.id, options.Image, options.platform);
+      logger.debug('ENV ==> %o', options.Env);
     });
   }
 }

@@ -100,7 +100,8 @@ class Expression<T> {
     };
 
     const command = '/Users/sobird/act-runner/pkg/expression/hashFiles/index.cjs';
-    const { stderr } = spawnSync('node', [command], { env, encoding: 'utf8' });
+    const { stdout, stderr } = spawnSync('node', [command], { env, encoding: 'utf8' });
+    console.log('stdout', stdout);
     const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
     if (matches && matches.length > 0) {
       return matches[0].slice(10, -10);

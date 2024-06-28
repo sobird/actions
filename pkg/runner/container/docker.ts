@@ -14,58 +14,41 @@ import docker from '@/pkg/docker';
 
 const logger = log4js.getLogger();
 
-interface ContainerInputs extends ContainerCreateOptions {
-  // image: string;
-  // username?: string;
-  // password?: string;
-  // entrypoint?: string[];
-  // cmd?: string[];
-  // workingDir?: string;
-  // env?: string[];
-  // binds?: string[];
-  // mounts?: { [key: string]: string };
-  // name?: string;
-  // stdout?: Writable;
-  // stderr?: Writable;
-  // networkMode?: string;
-  // privileged?: boolean;
-  // usernsMode?: string;
-  // platform?: string;
-  // options?: string;
-  // networkAliases?: string[];
-  // exposedPorts?: { [key: string]: any };
-  // portBindings?: { [key: string]: any };
-
-  // autoRemove?: boolean;
-  // validVolumes?: string[];
-}
-
 // const containers1 = await docker.listContainers({ all: true });
 // console.log('containers1', containers1);
 
+interface ContainerCreateInputs extends ContainerCreateOptions {
+  Image: string;
+  username?: string;
+  password?: string;
+}
+
 class Docker {
+  static docker = docker;
+
   container?: Container;
 
   network?: Network;
 
-  constructor(public inputs: ContainerInputs = {}) {
-
-  }
+  constructor(public containerCreateInputs: ContainerCreateInputs, public networkCreateInputs: NetworkCreateOptions) {}
 
   pull(force: boolean = false) {
-    const { inputs } = this;
+    const { containerCreateInputs } = this;
     return docker.pullExecutor({
-      image: inputs.Image,
+      image: containerCreateInputs.Image,
       force,
+      platform: containerCreateInputs.platform,
+      username: containerCreateInputs.username,
+      password: containerCreateInputs.password,
     });
   }
 
   create(capAdd: string[], capDrop: string[]) {
-    return Executor.Pipeline(this.findExecutor()).finally(this.createExecutor(capAdd, capDrop));
+    return Executor.Pipeline(this.findExecutor()).finally(this.createContainerExecutor(capAdd, capDrop));
   }
 
   start() {
-    return Executor.Pipeline(this.findExecutor()).finally(this.startExecutor());
+    return Executor.Pipeline(this.findExecutor(), this.startExecutor());
   }
 
   stop() {
@@ -102,8 +85,8 @@ class Docker {
   }
 
   removeNetwork(name: string) {
-    const { network } = this;
     return new Executor(async () => {
+      const { network } = this;
       if (!network) {
         return;
       }
@@ -117,20 +100,14 @@ class Docker {
     });
   }
 
-  private createExecutor(capAdd: string[], capDrop: string[]) {
-    const { inputs } = this;
+  private createContainerExecutor() {
     return new Executor(async () => {
-      if (!inputs.HostConfig) {
-        inputs.HostConfig = {};
-      }
+      const { containerCreateInputs: options } = this;
 
-      inputs.HostConfig.CapAdd = capAdd;
-      inputs.HostConfig.CapDrop = capDrop;
+      const container = await docker.createContainer(options);
 
-      const container = await docker.createContainer(inputs);
-
-      logger.debug('Created container name=%s id=%s from image %s (platform: %s)', inputs.name, container.id, inputs.Image, inputs.platform);
-      logger.debug('ENV ==> %o', inputs.Env);
+      logger.debug('Created container name=%s id=%s from image %s (platform: %s)', options.name, container.id, options.Image, options.platform);
+      logger.debug('ENV ==> %o', options.Env);
 
       this.container = container;
     }).if(new Conditional(() => {
@@ -139,26 +116,28 @@ class Docker {
   }
 
   private startExecutor() {
-    const { container } = this;
     return new Executor(async () => {
+      const { container } = this;
+
       if (!container) {
         return;
       }
 
-      logger.debug('Starting container: %v', container.id);
+      logger.debug('Starting container: %s', container.id);
 
       try {
         await container.start();
-        logger.debug('Started container: %v', container.id);
+        logger.debug('Started container: %s', container.id);
       } catch (err) {
-        logger.error('failed to start container: %s', (err as Error).message);
+        logger.error('Failed to start container: %s', (err as Error).message);
       }
     });
   }
 
   private findExecutor() {
-    const { inputs } = this;
     return new Executor(async () => {
+      const { inputs } = this;
+
       const containers = await docker.listContainers({ all: true });
 
       const containerInfo = containers.find((item) => {
@@ -179,8 +158,9 @@ class Docker {
   }
 
   private stopExecutor() {
-    const { container } = this;
     return new Executor(async () => {
+      const { container } = this;
+
       if (!container) {
         return;
       }
@@ -197,8 +177,9 @@ class Docker {
   }
 
   private removeExecutor() {
-    const { container } = this;
     return new Executor(async () => {
+      const { container } = this;
+
       if (!container) {
         return;
       }
@@ -218,8 +199,9 @@ class Docker {
   }
 
   wait() {
-    const { container } = this;
     return new Executor(async () => {
+      const { container } = this;
+
       const { StatusCode } = await container?.wait({
         condition: 'not-running',
       }) || {};

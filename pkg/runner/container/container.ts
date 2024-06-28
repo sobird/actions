@@ -1,3 +1,3 @@
-export class Container {
+export abstract class Container {
 
 }

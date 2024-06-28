@@ -12,7 +12,7 @@ name: release-please
 
 jobs:
   release-please:
-    runs-on: ubuntu-latest-${{ hashFiles('**/yarn.lock') }}
+    runs-on: ubuntu-latest
     steps:
       - uses: google-github-actions/release-please-action@v4
         id: release
@@ -24,7 +24,7 @@ jobs:
           # this is a built-in strategy in release-please, see "Action Inputs"
           # for more options
           release-type: node
-      - name: Checkout-${{ hashFiles('**/yarn.lock') }}
+      - name: Checkout
         if: ${{ steps.release.outputs.release_created }}
         uses: actions/checkout@v4
       - name: Use Node
