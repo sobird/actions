@@ -13,7 +13,7 @@ import Expression from '@/pkg/expression';
 import Job, { JobProps } from './job';
 import Plan, { Stage, Run } from './plan';
 import {
-  Concurrency, Defaults, On, OnEvents, Permissions,
+  Concurrency, Defaults, On, OnEvents, Permissions, // todo
 } from './types';
 
 interface WorkflowProps extends Pick<Workflow, 'name' | 'on' | 'permissions' | 'defaults' | 'jobs'> {

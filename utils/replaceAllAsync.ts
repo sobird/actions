@@ -18,22 +18,14 @@ export async function replaceAllAsync(
   });
 }
 
-const regex = /\bhashFiles\s*\(([^)]*)\)/g;
-const hashstr = "${{ hashFiles('**/package-lock.json', '**/Gemfile.lock') + hash1Files('**/package-lock.json')}}";
+// const regex = /\bhashFiles\s*\(([^)]*)\)/g;
+// const hashstr = "${{ hashFiles('**/package-lock.json', '**/Gemfile.lock') + hash1Files('**/package-lock.json')}}";
 
-const replacedString = await replaceAllAsync(hashstr, regex, async (match) => {
-  const paramstr = match[1].replace(/'/g, '"');
-  const patterns = JSON.parse(`[${paramstr}]`);
-  console.log(patterns);
+// const replacedString = await replaceAllAsync(hashstr, regex, async (match) => {
+//   const paramstr = match[1].replace(/'/g, '"');
+//   const patterns = JSON.parse(`[${paramstr}]`);
 
-  // try {
+//   return JSON.stringify('sdsd');
+// });
 
-  // } catch (error) {
-  //   //
-  //   console.log('error', error);
-  // }
-
-  return JSON.stringify('sdsd');
-});
-
-console.log('replacedString', replacedString);
+// console.log('replacedString', replacedString);

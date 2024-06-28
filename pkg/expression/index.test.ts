@@ -154,8 +154,7 @@ describe('test Expression Functions', () => {
 
   it('${{ hashFiles("**/package.json") }} - test case', () => {
     const expression = new Expression('${{ hashFiles("./package.json", "./README.md") }}', ['github']);
-    const result = expression.evaluate(runner);
-    console.log('result', result);
-    expect(result.length).toBe(64);
+    const hash = expression.evaluate(runner);
+    expect(hash.length).toBe(64);
   });
 });
