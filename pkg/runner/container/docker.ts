@@ -8,9 +8,12 @@ import {
   Container, ContainerCreateOptions, Network, NetworkCreateOptions, NetworkInspectInfo,
 } from 'dockerode';
 import log4js from 'log4js';
+import * as tar from 'tar';
 
 import Executor, { Conditional } from '@/pkg/common/executor';
 import docker from '@/pkg/docker';
+
+import AbstractContainer, { FileEntry } from './container';
 
 const logger = log4js.getLogger();
 
@@ -23,14 +26,16 @@ interface ContainerCreateInputs extends ContainerCreateOptions {
   password?: string;
 }
 
-class Docker {
+class Docker extends AbstractContainer {
   static docker = docker;
 
   container?: Container;
 
   network?: Network;
 
-  constructor(public containerCreateInputs: ContainerCreateInputs, public networkCreateInputs: NetworkCreateOptions) {}
+  constructor(public containerCreateInputs: ContainerCreateInputs, public networkCreateInputs: NetworkCreateOptions) {
+    super();
+  }
 
   pull(force: boolean = false) {
     const { containerCreateInputs } = this;
@@ -57,6 +62,45 @@ class Docker {
 
   remove() {
     return Executor.Pipeline(this.findContainer()).finally(this.removeContainer());
+  }
+
+  copy(...files: FileEntry[]) {
+    return new Executor(async () => {
+      const { container } = this;
+
+      if (!container) {
+        return;
+      }
+
+      const pack = new tar.Pack();
+      for (const file of files) {
+        const content = Buffer.from(file.body);
+
+        const header = new tar.Header({
+          path: file.name,
+          mode: 0o755,
+          uid: 0,
+          gid: 0,
+          size: content.byteLength,
+          mtime: new Date(),
+        });
+        header.encode();
+
+        const entry = new tar.ReadEntry(header);
+        entry.end(content);
+        pack.add(entry);
+      }
+      pack.end();
+
+      try {
+        logger.debug("Extracting content to '%s'", '');
+        await container.putArchive((pack as unknown as NodeJS.ReadableStream), {
+          path: '/root',
+        });
+      } catch (err) {
+        logger.error('Failed to copy content to container: %s', (err as Error).message);
+      }
+    });
   }
 
   findNetwork(name: string) {
