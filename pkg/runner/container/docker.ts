@@ -43,44 +43,83 @@ class Docker {
     });
   }
 
-  create(capAdd: string[], capDrop: string[]) {
-    return Executor.Pipeline(this.findExecutor()).finally(this.createContainerExecutor(capAdd, capDrop));
+  create() {
+    return Executor.Pipeline(this.findContainer()).finally(this.createContainer());
   }
 
   start() {
-    return Executor.Pipeline(this.findExecutor(), this.startExecutor());
+    return Executor.Pipeline(this.findContainer(), this.startContainer());
   }
 
   stop() {
-    return Executor.Pipeline(this.findExecutor()).finally(this.stopExecutor());
+    return Executor.Pipeline(this.findContainer()).finally(this.stopContainer());
   }
 
   remove() {
-    return Executor.Pipeline(this.findExecutor()).finally(this.removeExecutor());
+    return Executor.Pipeline(this.findContainer()).finally(this.removeContainer());
   }
 
   findNetwork(name: string) {
     return new Executor(async () => {
+      const { networkCreateInputs } = this;
+      const networkName = name || networkCreateInputs.Name;
+
       const networks = await docker.listNetworks();
       const networkInspectInfo = networks.find((item) => {
-        return item.Name === name;
+        return item.Name === networkName;
       });
       if (!networkInspectInfo?.Id) {
         delete this.network;
         return;
       }
-      logger.debug('Network %s exists', name);
+
       this.network = docker.getNetwork(networkInspectInfo.Id);
-    });
+    }).if(new Conditional(() => {
+      return !this.network;
+    }));
   }
 
   createNetwork(name: string) {
     return new Executor(async () => {
-      const network = await docker.createNetwork({
-        Name: name,
-        Driver: 'bridge', // docker 默认模式
-      });
+      const { networkCreateInputs: options } = this;
+      options.Name = name || options.Name;
+
+      const network = await docker.createNetwork(options);
       this.network = network;
+    });
+  }
+
+  connectNetwork(containerName: string, aliases: string[]) {
+    return new Executor(async () => {
+      const { network } = this;
+      if (!network) {
+        return;
+      }
+      const { containerCreateInputs } = this;
+
+      network.connect({
+        Container: containerName || containerCreateInputs.name,
+        EndpointConfig: {
+          Aliases: aliases,
+        },
+      });
+    });
+  }
+
+  disconnectNetwork() {
+    return new Executor(async () => {
+      const { network } = this;
+      if (!network) {
+        return;
+      }
+
+      try {
+        await network.disconnect();
+        logger.debug('Disconnect Network: %s', network.id);
+        delete this.container;
+      } catch (err) {
+        logger.error('Failed to Disconnect Network: %s', (err as Error).message);
+      }
     });
   }
 
@@ -100,7 +139,30 @@ class Docker {
     });
   }
 
-  private createContainerExecutor() {
+  private findContainer() {
+    return new Executor(async () => {
+      const { containerCreateInputs } = this;
+
+      const containers = await docker.listContainers({ all: true });
+
+      const containerInfo = containers.find((item) => {
+        return item.Names.some((name) => {
+          return name.substring(1) === containerCreateInputs.name;
+        });
+      });
+
+      if (!containerInfo?.Id) {
+        delete this.container;
+        return;
+      }
+
+      this.container = docker.getContainer(containerInfo?.Id);
+    }).if(new Conditional(() => {
+      return !this.container;
+    }));
+  }
+
+  private createContainer() {
     return new Executor(async () => {
       const { containerCreateInputs: options } = this;
 
@@ -115,7 +177,7 @@ class Docker {
     }));
   }
 
-  private startExecutor() {
+  private startContainer() {
     return new Executor(async () => {
       const { container } = this;
 
@@ -134,52 +196,26 @@ class Docker {
     });
   }
 
-  private findExecutor() {
-    return new Executor(async () => {
-      const { inputs } = this;
-
-      const containers = await docker.listContainers({ all: true });
-
-      const containerInfo = containers.find((item) => {
-        return item.Names.some((name) => {
-          return name.substring(1) === inputs.name;
-        });
-      });
-
-      if (!containerInfo?.Id) {
-        delete this.container;
-        return;
-      }
-
-      this.container = docker.getContainer(containerInfo?.Id);
-    }).if(new Conditional(() => {
-      return !this.container;
-    }));
-  }
-
-  private stopExecutor() {
+  private stopContainer() {
     return new Executor(async () => {
       const { container } = this;
-
       if (!container) {
         return;
       }
 
       try {
         await container.stop();
-
         logger.debug('Stoped container: %s', container.id);
         delete this.container;
       } catch (err) {
-        logger.error('failed to stop container: %w', err);
+        logger.error('Failed to stop container: %s', (err as Error).message);
       }
     });
   }
 
-  private removeExecutor() {
+  private removeContainer() {
     return new Executor(async () => {
       const { container } = this;
-
       if (!container) {
         return;
       }
@@ -193,16 +229,19 @@ class Docker {
         logger.debug('Removed container: %s', container.id);
         delete this.container;
       } catch (err) {
-        logger.error('failed to remove container: %w', err);
+        logger.error('Failed to remove container: %s', (err as Error).message);
       }
     });
   }
 
-  wait() {
+  waitContainer() {
     return new Executor(async () => {
       const { container } = this;
+      if (!container) {
+        return;
+      }
 
-      const { StatusCode } = await container?.wait({
+      const { StatusCode } = await container.wait({
         condition: 'not-running',
       }) || {};
 

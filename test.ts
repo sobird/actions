@@ -29,10 +29,13 @@ await pipeline.execute();
 const { container } = docker;
 
 // 拷贝文件到容器
+const pack1 = new tar.Pack();
+pack1.write('package.json');
 const pack = tar.create({ cwd: 'pkg/expression' }, ['hashFiles/index.cjs']) as any;
-container?.putArchive(pack, {
+const ss = await container?.putArchive(pack1, {
   path: '/root',
 });
+console.log('ss', ss);
 
 const exec = await container?.exec({
   Cmd: ['sh', '-c', 'node /root/hashFiles/index.cjs'], // 替换为你要执行的命令
