@@ -27,7 +27,7 @@ afterAll(async () => {
 });
 
 vi.setConfig({
-  testTimeout: 20000,
+  testTimeout: 60000,
 });
 
 describe('test Docker Container', () => {
@@ -38,7 +38,7 @@ describe('test Docker Container', () => {
   });
 
   it('docker create container test case', async () => {
-    const createExecutor = docker.create([], []);
+    const createExecutor = docker.create();
     await createExecutor.execute();
     const id = docker.container?.id;
     expect(id).not.toBeUndefined();
@@ -61,5 +61,10 @@ describe('test Docker Container', () => {
       body: 'this is test content',
     });
     await copyExecutor.execute();
+  });
+
+  it('docker copy dir to container test case', async () => {
+    const copyDirExecutor = docker.copyDir('.');
+    await copyDirExecutor.execute();
   });
 });

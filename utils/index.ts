@@ -13,4 +13,5 @@ export { sleep } from './sleep';
 export { readJsonSync } from './readJsonSync';
 export { readConfSync } from './readConfSync';
 export { replaceAllAsync } from './replaceAllAsync';
+export { readIgnoreSync } from './readIgnoreSync';
 export { default as lodash } from './lodash';

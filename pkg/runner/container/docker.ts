@@ -12,6 +12,7 @@ import * as tar from 'tar';
 
 import Executor, { Conditional } from '@/pkg/common/executor';
 import docker from '@/pkg/docker';
+import { readIgnoreSync } from '@/utils';
 
 import AbstractContainer, { FileEntry } from './container';
 
@@ -99,6 +100,41 @@ class Docker extends AbstractContainer {
         });
       } catch (err) {
         logger.error('Failed to copy content to container: %s', (err as Error).message);
+      }
+    });
+  }
+
+  copyDir(source: string, useGitIgnore: boolean = true) {
+    return new Executor(async () => {
+      const { container } = this;
+
+      if (!container) {
+        return;
+      }
+
+      const options: Parameters<typeof tar.create>[0] = {};
+
+      if (useGitIgnore) {
+        const ignorefiles = readIgnoreSync(source);
+        try {
+          options.filter = (src) => {
+            console.log('src', src, ignorefiles);
+            return true;
+          };
+        } catch (err) {
+          //
+        }
+      }
+
+      const pack = tar.create(options, [source]);
+
+      try {
+        logger.debug("Extracting content from '%s' to '%s'", source, '');
+        await container.putArchive((pack as unknown as NodeJS.ReadableStream), {
+          path: '/root',
+        });
+      } catch (err) {
+        logger.error('Failed to copy dir to container: %s', (err as Error).message);
       }
     });
   }
