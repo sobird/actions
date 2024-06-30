@@ -64,7 +64,7 @@ describe('test Docker Container', () => {
   });
 
   it('docker copy dir to container test case', async () => {
-    const copyDirExecutor = docker.copyDir('.');
+    const copyDirExecutor = docker.copyDir('/Users/sobird/mix');
     await copyDirExecutor.execute();
   });
 });

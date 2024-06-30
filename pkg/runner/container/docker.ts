@@ -4,15 +4,18 @@
  * sobird<i@sobird.me> at 2024/06/24 15:21:27 created.
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
+
 import {
   Container, ContainerCreateOptions, Network, NetworkCreateOptions, NetworkInspectInfo,
 } from 'dockerode';
+import ignore from 'ignore';
 import log4js from 'log4js';
 import * as tar from 'tar';
 
 import Executor, { Conditional } from '@/pkg/common/executor';
 import docker from '@/pkg/docker';
-import { readIgnoreSync } from '@/utils';
 
 import AbstractContainer, { FileEntry } from './container';
 
@@ -112,21 +115,23 @@ class Docker extends AbstractContainer {
         return;
       }
 
-      const options: Parameters<typeof tar.create>[0] = {};
+      const options: Parameters<typeof tar.create>[0] = {
+        cwd: source,
+      };
 
-      if (useGitIgnore) {
-        const ignorefiles = readIgnoreSync(source);
-        try {
-          options.filter = (src) => {
-            console.log('src', src, ignorefiles);
-            return true;
-          };
-        } catch (err) {
-          //
-        }
+      const ignorefile = path.join(source, '.gitignore');
+      if (useGitIgnore && fs.existsSync(ignorefile)) {
+        const ig = ignore().add(fs.readFileSync(ignorefile).toString());
+        options.filter = (src) => {
+          const relPath = path.relative(source, path.join(source, src));
+          if (relPath) {
+            return !ig.ignores(relPath);
+          }
+          return true;
+        };
       }
 
-      const pack = tar.create(options, [source]);
+      const pack = tar.create(options, ['.']);
 
       try {
         logger.debug("Extracting content from '%s' to '%s'", source, '');

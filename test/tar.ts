@@ -5,7 +5,7 @@ import * as tar from 'tar';
 const path = 'myTarBall.tar';
 const yourTarball = fs.createWriteStream(path);
 
-const pack = tar.create({ }, ['test']);
+const pack = tar.create({ cwd: '/Users/sobird/mix' }, ['package.json']);
 
 // const readd = new tar.ReadEntry(new tar.Header(Buffer.from('ddddddddd'), 512));
 
