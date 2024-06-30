@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { globSync } from 'glob';
 
+// use ignore npm
 export function readIgnoreSync(dir: string, ignoreName: string = '.gitignore') {
   const file = path.join(dir, ignoreName);
   const patterns = [];

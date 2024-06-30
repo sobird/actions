@@ -6,80 +6,70 @@ import * as tar from 'tar';
 
 import Hosted from './hosted';
 
-const tmp = path.join(os.tmpdir(), 'hosted');
+const tmp = path.join(os.tmpdir(), 'hosted-test');
+const hosted = new Hosted(tmp, '/opt/workspace');
 
-afterEach(() => {
-  fs.rmdirSync(tmp, { recursive: true });
+console.log('hosted', hosted);
+
+afterAll(() => {
+  // fs.rmdirSync(tmp, { recursive: true });
 });
 
 describe('test hosted class', () => {
-  const filename = 'copytest';
-  const filebody = 'copy test';
-  it('copy test case', () => {
-    const hosted = new Hosted(tmp, '/opt/workspace');
+  it('put content to container test case', async () => {
+    const files = [
+      {
+        name: 'test1.txt',
+        mode: '0700',
+        body: 'copy test content',
+      },
+      {
+        name: 'test2.txt',
+        mode: '0700',
+        body: 'copy test2 content',
+      },
+    ];
 
-    hosted.copy({
-      name: filename,
-      mode: '0700',
-      body: 'copy test',
-    });
+    const { tmpPath } = hosted;
 
-    const body = fs.readFileSync(path.join(hosted.cwdPath, filename), 'utf8');
-    expect(body).toBe(filebody);
+    await hosted.put(tmpPath, ...files);
+
+    for (const file of files) {
+      const body = fs.readFileSync(path.join(tmpPath, file.name), 'utf8');
+      expect(body).toBe(file.body);
+    }
   });
 
-  it('copyDir test case', async () => {
-    const hosted = new Hosted(tmp, '/opt/workspace');
-
-    const sourceDir = path.join(__dirname, '__mocks__/data');
+  it('put dir to container test case', async () => {
+    const sourceDir = hosted.tmpPath;
+    const destination = path.join(hosted.base, 'put-dir-test');
 
     const sourceFiles = fs.readdirSync(sourceDir);
-    await hosted.copyDir(sourceDir);
-    const destFiles = fs.readdirSync(hosted.cwdPath);
+    await hosted.putDir(destination, sourceDir);
+    const destFiles = fs.readdirSync(destination);
 
     expect(destFiles).toEqual(sourceFiles);
   });
 
-  it('copyTarStream test case', async () => {
-    const hosted = new Hosted(tmp, '/opt/workspace');
-    const tarFilePath = path.join(__dirname, '__mocks__/tarStream.tar');
-    const rs1 = fs.createReadStream(tarFilePath);
-    const rs2 = fs.createReadStream(tarFilePath);
+  it('put archive to container test case', async () => {
+    const sourceDir = hosted.tmpPath;
+    const destination = path.join(hosted.base, 'put-archive-test');
 
-    await hosted.copyTarStream(rs1);
-    const files = fs.readdirSync(hosted.cwdPath, { recursive: true });
+    const tarStream = tar.create({ cwd: hosted.tmpPath }, ['.']) as unknown as NodeJS.ReadableStream;
 
-    const tarList = new Promise<string[]>((resolve, reject) => {
-      const tarStream = tar.t({});
-      rs2.pipe(tarStream);
+    const sourceFiles = fs.readdirSync(sourceDir);
+    await hosted.putArchive(destination, tarStream);
+    const destFiles = fs.readdirSync(destination);
 
-      const tarFiles: string[] = [];
-      tarStream.on('entry', (entry) => {
-        entry.on('end', () => {
-          tarFiles.push(entry.path.replace(/\/$/g, ''));
-        });
-      });
-
-      tarStream.on('end', () => {
-        resolve(tarFiles);
-      });
-      tarStream.on('error', (err) => {
-        reject(err);
-      });
-    });
-
-    const tarFiles = await tarList;
-    expect(files.sort()).toEqual(tarFiles.sort());
+    expect(destFiles).toEqual(sourceFiles);
   });
 
   it('toContainerPath test case', () => {
-    const hosted = new Hosted(tmp, '/opt/workspace');
     const containerPath = hosted.toContainerPath('/opt/workspace/test.txt');
     expect(containerPath).toBe(path.join(hosted.cwdPath, 'test.txt'));
   });
 
   it('exec test case', async () => {
-    const hosted = new Hosted(tmp, '/opt/workspace');
     const spawn = await hosted.spawn('echo', ['Hello, World! $sobird']);
     spawn.stdout.on('data', (data) => {
       console.log(`stdout: ${data}`);

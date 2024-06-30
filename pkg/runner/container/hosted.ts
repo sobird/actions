@@ -6,12 +6,11 @@
 
 /* eslint-disable no-await-in-loop */
 import { spawn } from 'node:child_process';
-import crypto from 'node:crypto';
-import fs, { CopyOptions, ReadStream } from 'node:fs';
-import fsPromises from 'node:fs/promises';
+import { randomBytes } from 'node:crypto';
+import fs, { CopySyncOptions } from 'node:fs';
 import path from 'node:path';
 
-import simpleGit from 'simple-git';
+import ignore from 'ignore';
 import * as tar from 'tar';
 
 interface FileEntry {
@@ -22,21 +21,24 @@ interface FileEntry {
 class Hosted {
   #actPath: string;
 
+  work: string;
+
   tmpPath: string;
 
   cwdPath: string;
 
-  toolCache: string;
+  tool_cache: string;
 
   constructor(public base: string, public workspace: string) {
-    const randomPath = path.join(base, crypto.randomBytes(8).toString('hex'));
-    const toolCache = path.join(base, 'toolcache');
+    const work = path.join(base, randomBytes(8).toString('hex'));
+    const toolCache = path.join(base, 'tool_cache');
 
-    const actPath = path.join(randomPath, 'act');
-    const tmpPath = path.join(randomPath, 'tmp');
-    const cwdPath = path.join(randomPath, 'cwd');
+    const actPath = path.join(work, 'act');
+    const tmpPath = path.join(work, 'tmp');
+    const cwdPath = path.join(work, 'cwd');
 
-    this.toolCache = toolCache;
+    this.work = work;
+    this.tool_cache = toolCache;
     this.#actPath = actPath;
     this.tmpPath = tmpPath;
     this.cwdPath = cwdPath;
@@ -46,11 +48,11 @@ class Hosted {
     });
   }
 
-  copy(...files: FileEntry[]) {
+  async put(destination: string, ...files: FileEntry[]) {
+    const dir = path.resolve(this.work, destination);
     for (const file of files) {
-      const filename = path.join(this.cwdPath, file.name);
-      const dir = path.dirname(filename);
-      fs.mkdirSync(dir, { recursive: true });
+      const filename = path.join(dir, file.name);
+      fs.mkdirSync(path.dirname(filename), { recursive: true });
 
       fs.writeFileSync(
         filename,
@@ -62,23 +64,41 @@ class Hosted {
     }
   }
 
-  async copyDir(source: string, useGitIgnore: boolean = false) {
-    const copyOptions: CopyOptions = {
+  async putDir(destination: string, source: string, useGitIgnore: boolean = false) {
+    const dest = path.resolve(this.work, destination);
+
+    const copyOptions: CopySyncOptions = {
       dereference: true,
       recursive: true,
     };
-    if (useGitIgnore) {
-      try {
-        const git = simpleGit(source);
-        copyOptions.filter = async (src) => {
-          const result = await git.checkIgnore([src]);
-          return result.length === 0;
-        };
-      } catch (err) {
-        //
-      }
+
+    const ignorefile = path.join(source, '.gitignore');
+
+    if (useGitIgnore && fs.existsSync(ignorefile)) {
+      const ig = ignore().add(fs.readFileSync(ignorefile).toString());
+      copyOptions.filter = (src) => {
+        return !ig.ignores(src);
+      };
     }
-    return fsPromises.cp(source, this.cwdPath, copyOptions);
+    return fs.cpSync(source, dest, copyOptions);
+  }
+
+  putArchive(destination: string, readStream: NodeJS.ReadableStream) {
+    const dest = path.resolve(this.work, destination);
+    fs.mkdirSync(dest, { recursive: true });
+
+    const pipeline = readStream.pipe(tar.extract({
+      cwd: dest,
+    }));
+
+    return new Promise<void>((resolve, reject) => {
+      pipeline.on('error', (err) => {
+        reject(err);
+      });
+      pipeline.on('finish', () => {
+        resolve();
+      });
+    });
   }
 
   async spawn(command: string, args: string[]) {
@@ -95,24 +115,6 @@ class Hosted {
 
   remove() {
     fs.rmSync(this.cwdPath, { recursive: true, force: true });
-  }
-
-  copyTarStream(readStream: ReadStream) {
-    // fs.rmSync(this.cwdPath, { recursive: true, force: true });
-    // fs.mkdirSync(this.cwdPath, { recursive: true });
-
-    const pipeline = readStream.pipe(tar.extract({
-      cwd: this.cwdPath,
-    }));
-
-    return new Promise<void>((resolve, reject) => {
-      pipeline.on('error', (err) => {
-        reject(err);
-      });
-      pipeline.on('finish', () => {
-        resolve();
-      });
-    });
   }
 
   toContainerPath(rawPath: string) {
