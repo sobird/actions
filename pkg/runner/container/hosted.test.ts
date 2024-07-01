@@ -9,8 +9,6 @@ import Hosted from './hosted';
 const tmp = path.join(os.tmpdir(), 'hosted-test');
 const hosted = new Hosted(tmp, '/opt/workspace');
 
-console.log('hosted', hosted);
-
 afterAll(() => {
   // fs.rmdirSync(tmp, { recursive: true });
 });
@@ -64,15 +62,43 @@ describe('test hosted class', () => {
     expect(destFiles).toEqual(sourceFiles);
   });
 
+  it('get archive to container test case', async () => {
+    const sourceDir = hosted.tmpPath;
+    const destination = path.join(hosted.base, 'get-archive-test');
+    fs.mkdirSync(destination, { recursive: true });
+
+    const info = path.parse(sourceDir);
+
+    const sourceFiles = fs.readdirSync(sourceDir);
+    const tarStream = hosted.getArchive(sourceDir);
+    tarStream.pipe(tar.extract({
+      cwd: destination,
+    }));
+
+    await new Promise((resolve) => {
+      tarStream.on('finish', () => {
+        resolve(null);
+      });
+    });
+
+    const destFiles = fs.readdirSync(path.join(destination, info.base));
+
+    expect(destFiles).toEqual(sourceFiles);
+  });
+
   it('toContainerPath test case', () => {
     const containerPath = hosted.toContainerPath('/opt/workspace/test.txt');
     expect(containerPath).toBe(path.join(hosted.cwdPath, 'test.txt'));
   });
 
   it('exec test case', async () => {
-    const spawn = await hosted.spawn('echo', ['Hello, World! $sobird']);
-    spawn.stdout.on('data', (data) => {
-      console.log(`stdout: ${data}`);
+    const spawn = await hosted.exec('echo', ['Hello, World! $sobird'], {
+      stdio: ['pipe'],
     });
+
+    console.log('spawn', spawn);
+    // spawn.stdout.on('data', (data) => {
+    //   console.log(`stdout: ${data}`);
+    // });
   });
 });

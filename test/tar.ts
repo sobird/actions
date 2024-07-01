@@ -1,34 +1,11 @@
 import fs from 'node:fs';
+import path from 'node:path';
 
 import * as tar from 'tar';
 
-const path = 'myTarBall.tar';
-const yourTarball = fs.createWriteStream(path);
+const tarball = fs.createWriteStream('test.tar');
 
-const pack = tar.create({ cwd: '/Users/sobird/mix' }, ['package.json']);
+const info = path.parse('/var/folders/0g/085cjcx1231cqqknq0k8pbzh0000gn/T/hosted-test/9f40a36cd7316a60/tmp');
 
-// const readd = new tar.ReadEntry(new tar.Header(Buffer.from('ddddddddd'), 512));
-
-// pack.write(Buffer.from('sssss'));
-
-// pack.add('package.json');
-// pack.write(readd);
-
-// const readEntry = new tar.ReadEntry(
-//   new tar.Header({
-//     path: 'x',
-//     type: 'File',
-//     size: 1,
-//   }),
-// );
-// pack.end(readEntry);
-// const out = [];
-// pack.on('data', (c) => { return out.push(c); });
-// pack.on('end', (_) => {
-//   const data = Buffer.concat(out);
-// });
-// const buf = Buffer.alloc(512);
-// buf.write('x');
-// readEntry.end(buf);
-
-pack.pipe(yourTarball);
+const pack = tar.create({ cwd: info.dir }, [info.base]);
+pack.pipe(tarball);

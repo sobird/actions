@@ -5,7 +5,7 @@
  */
 
 /* eslint-disable no-await-in-loop */
-import { spawn } from 'node:child_process';
+import { spawn, SpawnOptionsWithoutStdio } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import fs, { CopySyncOptions } from 'node:fs';
 import path from 'node:path';
@@ -101,20 +101,44 @@ class Hosted {
     });
   }
 
-  async spawn(command: string, args: string[]) {
-    const options = {
-      cwd: this.cwdPath,
-      env: { ...process.env, sobird: '123' },
+  getArchive(destination: string) {
+    const dest = path.resolve(this.work, destination);
+    const info = path.parse(dest);
+    return tar.create({ cwd: info.dir }, [info.base]);
+  }
+
+  async exec(command: string, args: readonly string[], options: SpawnOptionsWithoutStdio = {}) {
+    // eslint-disable-next-line no-param-reassign
+    options.cwd = path.resolve(this.work, (options.cwd as string) || '');
+    // eslint-disable-next-line no-param-reassign
+    options.env = {
+      ...process.env,
+      ...options.env,
     };
-    return spawn(command, args, options);
-  }
 
-  archive(files: string[]) {
-    return tar.create({ cwd: this.base }, files);
-  }
+    const cp = spawn(command, args, options);
 
-  remove() {
-    fs.rmSync(this.cwdPath, { recursive: true, force: true });
+    // cp.stdout.pipe(process.stdout);
+    // cp.stderr.pipe(process.stdout);
+
+    cp.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`);
+    });
+
+    cp.stderr.on('data', (data) => {
+      console.log(`stderr: ${data}`);
+    });
+
+    return new Promise((resolve, reject) => {
+      cp.on('error', reject);
+      cp.on('exit', (code) => {
+        if (code === 0) {
+          resolve(code);
+        } else {
+          reject(new Error(`Command exited with code ${code}`));
+        }
+      });
+    });
   }
 
   toContainerPath(rawPath: string) {
@@ -135,6 +159,10 @@ class Hosted {
       actPath = actPath.replaceAll('\\', '/');
     }
     return actPath;
+  }
+
+  remove() {
+    fs.rmSync(this.work, { recursive: true, force: true });
   }
 
   static GetPathVariableName() {

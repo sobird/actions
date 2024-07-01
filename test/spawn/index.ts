@@ -1,0 +1,19 @@
+// index.js
+
+import { spawn } from 'child_process';
+
+// console.log('__dirname', __dirname);
+
+const child = spawn('node', ['test/spawn/child.ts']);
+
+const data = '';
+child.stdout.on('data', (chunk: Buffer) => {
+  // console.log('chunk', chunk.toString());
+  // data += chunk.toString();
+});
+
+// child.on('exit', () => {
+//   console.log('exit');
+//   // console.log('data', data);
+//   process.exit(0);
+// });
