@@ -12,6 +12,7 @@ dist
 coverage
 *.local
 .runner
+*.tar
 
 # Editor directories and files
 !.vscode/extensions.json
