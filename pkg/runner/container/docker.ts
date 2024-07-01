@@ -163,6 +163,44 @@ class Docker extends AbstractContainer {
     });
   }
 
+  putArchive(destination: string, readStream: NodeJS.ReadableStream) {
+    return new Executor(async () => {
+      const { container } = this;
+
+      if (!container) {
+        return;
+      }
+
+      const { containerCreateInputs: { WorkingDir = '' } } = this;
+      const dest = path.resolve(WorkingDir, destination);
+
+      const pack = new tar.Pack({});
+      const header = new tar.Header({
+        path: dest,
+        type: 'Directory',
+      });
+      header.encode();
+      const entry = new tar.ReadEntry(header);
+      entry.end();
+      pack.add(entry);
+      pack.end();
+
+      container.putArchive(pack as unknown as NodeJS.ReadableStream, {
+        path: '/',
+      }).catch((err) => {
+        logger.error('Failed to mkdir to copy content to container: %w', (err as Error).message);
+      });
+
+      try {
+        await container.putArchive(readStream as unknown as NodeJS.ReadableStream, {
+          path: dest,
+        });
+      } catch (err) {
+        logger.error('Failed to copy content to container: %w', (err as Error).message);
+      }
+    });
+  }
+
   findNetwork(name: string) {
     return new Executor(async () => {
       const { networkCreateInputs } = this;

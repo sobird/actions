@@ -1,4 +1,7 @@
+import fs from 'node:fs';
+
 import { ContainerCreateOptions } from 'dockerode';
+import * as tar from 'tar';
 
 import Docker from './docker';
 
@@ -66,5 +69,12 @@ describe('test Docker Container', () => {
   it('put dir to container test case', async () => {
     const copyDirExecutor = docker.putDir('mix-test', '/Users/sobird/mix');
     await copyDirExecutor.execute();
+  });
+
+  it('put archive to container test case', async () => {
+    const archive = tar.create({ cwd: __dirname }, ['.']) as unknown as NodeJS.ReadableStream;
+
+    const putArchiveExecutor = docker.putArchive('put-archive-test', archive);
+    await putArchiveExecutor.execute();
   });
 });

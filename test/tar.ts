@@ -5,7 +5,20 @@ import * as tar from 'tar';
 
 const tarball = fs.createWriteStream('test.tar');
 
-const info = path.parse('/var/folders/0g/085cjcx1231cqqknq0k8pbzh0000gn/T/hosted-test/9f40a36cd7316a60/tmp');
+const dest = '/sobird/test';
 
-const pack = tar.create({ cwd: info.dir, prefix: 'sobird' }, [info.base]);
+const pack = new tar.Pack({});
+const header = new tar.Header({
+  path: dest,
+  mode: 0o755,
+  // uid: 0,
+  // gid: 0,
+  type: 'Directory',
+  // mtime: new Date(),
+});
+header.encode();
+const entry = new tar.ReadEntry(header);
+pack.add(entry);
+// pack.end();
+
 pack.pipe(tarball);
