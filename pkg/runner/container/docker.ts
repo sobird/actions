@@ -162,41 +162,53 @@ class Docker extends AbstractContainer {
     });
   }
 
-  putArchive(destination: string, readStream: NodeJS.ReadableStream) {
-    return new Executor(async () => {
-      const { container } = this;
+  async putArchive(destination: string, readStream: NodeJS.ReadableStream) {
+    const { container } = this;
 
-      if (!container) {
-        return;
-      }
+    if (!container) {
+      return;
+    }
 
-      const { containerCreateInputs: { WorkingDir = '' } } = this;
-      const dest = path.resolve(WorkingDir, destination);
+    const { containerCreateInputs: { WorkingDir = '' } } = this;
+    const dest = path.resolve(WorkingDir, destination);
 
-      const pack = new tar.Pack({});
-      const header = new tar.Header({
+    const pack = new tar.Pack({});
+    const header = new tar.Header({
+      path: dest,
+      type: 'Directory',
+    });
+    header.encode();
+    const entry = new tar.ReadEntry(header);
+    entry.end();
+    pack.add(entry);
+    pack.end();
+
+    container.putArchive(pack as unknown as NodeJS.ReadableStream, {
+      path: '/',
+    }).catch((err) => {
+      logger.error('Failed to mkdir to copy content to container: %w', (err as Error).message);
+    });
+
+    try {
+      return await container.putArchive(readStream as unknown as NodeJS.ReadableStream, {
         path: dest,
-        type: 'Directory',
       });
-      header.encode();
-      const entry = new tar.ReadEntry(header);
-      entry.end();
-      pack.add(entry);
-      pack.end();
+    } catch (err) {
+      logger.error('Failed to copy content to container: %w', (err as Error).message);
+    }
+  }
 
-      container.putArchive(pack as unknown as NodeJS.ReadableStream, {
-        path: '/',
-      }).catch((err) => {
-        logger.error('Failed to mkdir to copy content to container: %w', (err as Error).message);
-      });
+  async getArchive(source: string) {
+    const { container } = this;
 
-      try {
-        await container.putArchive(readStream as unknown as NodeJS.ReadableStream, {
-          path: dest,
-        });
-      } catch (err) {
-        logger.error('Failed to copy content to container: %w', (err as Error).message);
-      }
+    if (!container) {
+      return;
+    }
+    const { containerCreateInputs: { WorkingDir = '' } } = this;
+    const dest = path.resolve(WorkingDir, source);
+
+    return container.getArchive({
+      path: dest,
     });
   }
 

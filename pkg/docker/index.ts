@@ -46,7 +46,7 @@ export class Docker extends Dockerode {
 
   pullExecutor(input: DockerPullImageInputs) {
     return new Executor(async () => {
-      logger.debug('\u{0001F433} docker pull %s', input.image);
+      logger.debug('\u{0001F433} Docker pull %s', input.image);
 
       const {
         image, force, platform, ...auth
@@ -56,16 +56,16 @@ export class Docker extends Dockerode {
       try {
         await img.inspect();
         if (force) {
-          img.remove({ force: true });
+          await img.remove({ force: true });
         } else {
           return;
         }
       } catch (err) {
-        logger.error("unable to determine if image already exists for image '%s' (%s): %w", input.image, input.platform, err);
+        logger.error("Unable to determine if image already exists for image '%s' (%s): %s", input.image, input.platform, (err as Error).message);
       }
 
       await new Promise((resolve, reject) => {
-        logger.debug("pulling image '%s' (%s)", image, platform);
+        logger.debug("Pulling image '%s' (%s)", image, platform);
         this.pull(image, {
           platform,
         }, (err, stream) => {

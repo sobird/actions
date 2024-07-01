@@ -14,8 +14,8 @@ const containerCreateOptions: ContainerCreateOptions = {
   Cmd: [],
   Entrypoint: ['/bin/sleep', '3600'],
   WorkingDir: '/root',
-  Image: 'node',
-  name: 'node-test',
+  Image: 'node:lts-slim',
+  name: 'node-lts-slim',
   Env,
   HostConfig: {
     AutoRemove: true,
@@ -93,7 +93,13 @@ describe('test Docker Container', () => {
   it('put archive to container test case', async () => {
     const archive = tar.create({ cwd: tmp }, ['.']) as unknown as NodeJS.ReadableStream;
 
-    const executor = docker.putArchive('put-archive-test', archive);
-    await executor.execute();
+    const res = await docker.putArchive('put-archive-test', archive);
+  });
+
+  it('get archive from container test case', async () => {
+    const tarball = await docker.getArchive('put-archive-test');
+
+    const ws = fs.createWriteStream('tarball.tar');
+    tarball?.pipe(ws);
   });
 });
