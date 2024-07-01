@@ -1,10 +1,8 @@
-import { Mode } from 'node:fs';
-
 import Executor from '@/pkg/common/executor';
 
 export interface FileEntry {
   name: string;
-  mode?: Mode;
+  mode?: number;
   body: string;
 }
 export default abstract class AbstractContainer {

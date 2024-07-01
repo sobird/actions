@@ -37,6 +37,10 @@ class Docker extends AbstractContainer {
 
   network?: Network;
 
+  uid: number = 0;
+
+  gid: number = 0;
+
   constructor(public containerCreateInputs: ContainerCreateInputs, public networkCreateInputs: NetworkCreateOptions) {
     super();
   }
@@ -61,7 +65,15 @@ class Docker extends AbstractContainer {
   }
 
   start() {
-    return Executor.Pipeline(this.findContainer(), this.startContainer());
+    return Executor.Pipeline(
+      this.findContainer(),
+      this.startContainer(),
+      this.tryReadUID(),
+      this.tryReadGID(),
+      new Executor(() => {
+        //
+      }),
+    );
   }
 
   stop() {
@@ -92,6 +104,8 @@ class Docker extends AbstractContainer {
       const options: Parameters<typeof tar.create>[0] = {
         cwd: info.dir,
         prefix: dest,
+        uid: this.uid,
+        gid: this.gid,
       };
 
       const ignorefile = path.join(source, '.gitignore');
@@ -137,9 +151,9 @@ class Docker extends AbstractContainer {
 
         const header = new tar.Header({
           path: file.name,
-          mode: 0o755,
-          uid: 0,
-          gid: 0,
+          mode: file.mode,
+          uid: this.uid,
+          gid: this.gid,
           size: content.byteLength,
           mtime: new Date(),
         });
@@ -175,6 +189,9 @@ class Docker extends AbstractContainer {
     const pack = new tar.Pack({});
     const header = new tar.Header({
       path: dest,
+      mode: 0o777,
+      uid: this.uid,
+      gid: this.gid,
       type: 'Directory',
     });
     header.encode();
@@ -292,7 +309,7 @@ class Docker extends AbstractContainer {
     });
   }
 
-  private findContainer() {
+  findContainer() {
     return new Executor(async () => {
       const { containerCreateInputs } = this;
 
@@ -404,6 +421,51 @@ class Docker extends AbstractContainer {
         return;
       }
       throw new Error(`Container exited with status code: ${StatusCode}`);
+    });
+  }
+
+  async tryReadID(arg: string): Promise<number> {
+    const { container } = this;
+    if (!container) {
+      return 0;
+    }
+    const exec = await container.exec({
+      Cmd: ['id', arg],
+      AttachStdout: true,
+      AttachStderr: true,
+      Tty: false,
+    });
+
+    const stream = await exec.start({});
+    let data = '';
+    stream.on('data', (chunk) => {
+      data += chunk.toString();
+    });
+    // stream.on('error', (err) => {
+    //   console.error('Error on exec stream:', err);
+    // });
+    return new Promise((resolve, reject) => {
+      stream.on('end', () => {
+        const match = data.match(/\d+\n/);
+        if (match) {
+          const id = parseInt(match[0], 10);
+          resolve(id);
+        } else {
+          reject(new Error(`Failed to parse ID from command output: ${data}`));
+        }
+      });
+    });
+  }
+
+  tryReadUID() {
+    return new Executor(async () => {
+      this.uid = await this.tryReadID('-u');
+    });
+  }
+
+  tryReadGID() {
+    return new Executor(async () => {
+      this.uid = await this.tryReadID('-g');
     });
   }
 }
