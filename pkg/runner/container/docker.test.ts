@@ -1,4 +1,7 @@
+import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 import { ContainerCreateOptions } from 'dockerode';
 import * as tar from 'tar';
@@ -24,7 +27,24 @@ const containerCreateOptions: ContainerCreateOptions = {
 
 const docker = new Docker(containerCreateOptions);
 
+const tmp = path.join(os.tmpdir(), `container-docker-${randomBytes(8).toString('hex')}`);
+const files = [{
+  name: 'test1.txt',
+  body: 'test1 content',
+}, {
+  name: 'test2.txt',
+  body: 'test2 content',
+}];
+beforeAll(() => {
+  fs.mkdirSync(tmp, { recursive: true });
+
+  for (const file of files) {
+    fs.writeFileSync(path.join(tmp, file.name), file.body);
+  }
+});
+
 afterAll(async () => {
+  fs.rmdirSync(tmp, { recursive: true });
   // const removeExecutor = docker.remove();
   // await removeExecutor.execute();
 });
@@ -35,46 +55,45 @@ vi.setConfig({
 
 describe('test Docker Container', () => {
   it('docker pull image test case', async () => {
-    const pullExecutor = docker.pull();
-    await pullExecutor.execute();
+    const executor = docker.pull();
+    await executor.execute();
     // expect(docker.container).not.toBeUndefined();
   });
 
   it('docker create container test case', async () => {
-    const createExecutor = docker.create();
-    await createExecutor.execute();
+    const executor = docker.create();
+    await executor.execute();
     const id = docker.container?.id;
     expect(id).not.toBeUndefined();
   });
 
   it('docker start container test case', async () => {
-    const startExecutor = docker.start();
-    await startExecutor.execute();
+    const executor = docker.start();
+    await executor.execute();
 
     const id = docker.container?.id;
     expect(id).not.toBeUndefined();
   });
 
-  it('docker put content to container test case', async () => {
-    const putExecutor = docker.put('test', {
-      name: 'test.txt',
-      body: 'this is test content',
-    }, {
-      name: 'sobird.txt',
-      body: 'this is sobird content',
-    });
-    await putExecutor.execute();
+  it('docker put file to container test case', async () => {
+    const executor = docker.put('put-file-test', path.join(tmp, files[0].name));
+    await executor.execute();
   });
 
-  it('put dir to container test case', async () => {
-    const copyDirExecutor = docker.putDir('mix-test', '/Users/sobird/mix');
-    await copyDirExecutor.execute();
+  it('docker put dir to container test case', async () => {
+    const executor = docker.put('put-dir-test', tmp);
+    await executor.execute();
+  });
+
+  it('docker put content to container test case', async () => {
+    const executor = docker.putContent('put-content-test', ...files);
+    await executor.execute();
   });
 
   it('put archive to container test case', async () => {
-    const archive = tar.create({ cwd: __dirname }, ['.']) as unknown as NodeJS.ReadableStream;
+    const archive = tar.create({ cwd: tmp }, ['.']) as unknown as NodeJS.ReadableStream;
 
-    const putArchiveExecutor = docker.putArchive('put-archive-test', archive);
-    await putArchiveExecutor.execute();
+    const executor = docker.putArchive('put-archive-test', archive);
+    await executor.execute();
   });
 });

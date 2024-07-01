@@ -8,5 +8,5 @@ export interface FileEntry {
   body: string;
 }
 export default abstract class AbstractContainer {
-  abstract put(destination: string, ...files: FileEntry[]): Executor;
+  abstract put(destination: string, source: string, useGitIgnore: boolean): Executor;
 }

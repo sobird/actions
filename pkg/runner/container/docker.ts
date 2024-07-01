@@ -72,51 +72,7 @@ class Docker extends AbstractContainer {
     return Executor.Pipeline(this.findContainer()).finally(this.removeContainer());
   }
 
-  put(destination: string, ...files: FileEntry[]) {
-    return new Executor(async () => {
-      const { container } = this;
-
-      if (!container) {
-        return;
-      }
-
-      const { containerCreateInputs: { WorkingDir = '' } } = this;
-
-      const dest = path.resolve(WorkingDir, destination);
-
-      const pack = new tar.Pack({ prefix: dest });
-      for (const file of files) {
-        const content = Buffer.from(file.body);
-
-        const header = new tar.Header({
-          path: file.name,
-          mode: 0o755,
-          uid: 0,
-          gid: 0,
-          size: content.byteLength,
-          mtime: new Date(),
-        });
-        header.encode();
-
-        const entry = new tar.ReadEntry(header);
-        entry.end(content);
-        pack.add(entry);
-      }
-      pack.end();
-
-      try {
-        logger.debug("Extracting content to '%s'", dest);
-        await container.putArchive((pack as unknown as NodeJS.ReadableStream), {
-          path: '/',
-        });
-      } catch (err) {
-        logger.error('Failed to copy content to container: %s', (err as Error).message);
-      }
-    });
-  }
-
-  // 支持目录和文件
-  putDir(destination: string, source: string, useGitIgnore: boolean = true) {
+  put(destination: string, source: string, useGitIgnore: boolean = true) {
     return new Executor(async () => {
       const { container } = this;
 
@@ -159,6 +115,49 @@ class Docker extends AbstractContainer {
         });
       } catch (err) {
         logger.error('Failed to copy dir to container: %s', (err as Error).message);
+      }
+    });
+  }
+
+  putContent(destination: string, ...files: FileEntry[]) {
+    return new Executor(async () => {
+      const { container } = this;
+
+      if (!container) {
+        return;
+      }
+
+      const { containerCreateInputs: { WorkingDir = '' } } = this;
+
+      const dest = path.resolve(WorkingDir, destination);
+
+      const pack = new tar.Pack({ prefix: dest });
+      for (const file of files) {
+        const content = Buffer.from(file.body);
+
+        const header = new tar.Header({
+          path: file.name,
+          mode: 0o755,
+          uid: 0,
+          gid: 0,
+          size: content.byteLength,
+          mtime: new Date(),
+        });
+        header.encode();
+
+        const entry = new tar.ReadEntry(header);
+        entry.end(content);
+        pack.add(entry);
+      }
+      pack.end();
+
+      try {
+        logger.debug("Extracting content to '%s'", dest);
+        await container.putArchive((pack as unknown as NodeJS.ReadableStream), {
+          path: '/',
+        });
+      } catch (err) {
+        logger.error('Failed to copy content to container: %s', (err as Error).message);
       }
     });
   }
