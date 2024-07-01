@@ -7,7 +7,7 @@ const Env = ['RUNNER_TOOL_CACHE=/opt/hostedtoolcache', 'RUNNER_OS=Linux', 'RUNNE
 const containerCreateOptions: ContainerCreateOptions = {
   Cmd: [],
   Entrypoint: ['/bin/sleep', '3600'],
-  WorkingDir: '/',
+  WorkingDir: '/root',
   Image: 'node',
   name: 'node-test',
   Env,
@@ -52,19 +52,19 @@ describe('test Docker Container', () => {
     expect(id).not.toBeUndefined();
   });
 
-  it('docker copy content to container test case', async () => {
-    const copyExecutor = docker.copy({
-      name: 'sobird.txt',
-      body: 'this is content',
-    }, {
+  it('docker put content to container test case', async () => {
+    const putExecutor = docker.put('test', {
       name: 'test.txt',
       body: 'this is test content',
+    }, {
+      name: 'sobird.txt',
+      body: 'this is sobird content',
     });
-    await copyExecutor.execute();
+    await putExecutor.execute();
   });
 
-  it('docker copy dir to container test case', async () => {
-    const copyDirExecutor = docker.copyDir('/Users/sobird/mix');
+  it('put dir to container test case', async () => {
+    const copyDirExecutor = docker.putDir('mix-test', '/Users/sobird/mix');
     await copyDirExecutor.execute();
   });
 });

@@ -8,5 +8,5 @@ export interface FileEntry {
   body: string;
 }
 export default abstract class AbstractContainer {
-  abstract copy(...files: FileEntry[]): Executor;
+  abstract put(destination: string, ...files: FileEntry[]): Executor;
 }

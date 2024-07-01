@@ -6,10 +6,8 @@ import { spawn } from 'child_process';
 
 const child = spawn('node', ['test/spawn/child.ts']);
 
-const data = '';
 child.stdout.on('data', (chunk: Buffer) => {
-  // console.log('chunk', chunk.toString());
-  // data += chunk.toString();
+  console.log('chunk', chunk.toString());
 });
 
 // child.on('exit', () => {

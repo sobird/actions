@@ -30,6 +30,7 @@ class Hosted {
   tool_cache: string;
 
   constructor(public base: string, public workspace: string) {
+    // like container id
     const work = path.join(base, randomBytes(8).toString('hex'));
     const toolCache = path.join(base, 'tool_cache');
 
@@ -208,8 +209,7 @@ class Hosted {
     return map[process.arch];
   }
 
-  // On windows PATH and Path are the same key
-  static Ignorease() {
+  isCaseInsensitive() {
     return process.platform === 'win32';
   }
 }

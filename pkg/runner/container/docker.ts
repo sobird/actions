@@ -42,13 +42,17 @@ class Docker extends AbstractContainer {
   }
 
   pull(force: boolean = false) {
-    const { containerCreateInputs } = this;
+    const {
+      containerCreateInputs: {
+        Image, platform, username, password,
+      },
+    } = this;
     return docker.pullExecutor({
-      image: containerCreateInputs.Image,
+      image: Image,
       force,
-      platform: containerCreateInputs.platform,
-      username: containerCreateInputs.username,
-      password: containerCreateInputs.password,
+      platform,
+      username,
+      password,
     });
   }
 
@@ -68,7 +72,7 @@ class Docker extends AbstractContainer {
     return Executor.Pipeline(this.findContainer()).finally(this.removeContainer());
   }
 
-  copy(...files: FileEntry[]) {
+  put(destination: string, ...files: FileEntry[]) {
     return new Executor(async () => {
       const { container } = this;
 
@@ -76,7 +80,11 @@ class Docker extends AbstractContainer {
         return;
       }
 
-      const pack = new tar.Pack();
+      const { containerCreateInputs: { WorkingDir = '' } } = this;
+
+      const dest = path.resolve(WorkingDir, destination);
+
+      const pack = new tar.Pack({ prefix: dest });
       for (const file of files) {
         const content = Buffer.from(file.body);
 
@@ -97,9 +105,9 @@ class Docker extends AbstractContainer {
       pack.end();
 
       try {
-        logger.debug("Extracting content to '%s'", '');
+        logger.debug("Extracting content to '%s'", dest);
         await container.putArchive((pack as unknown as NodeJS.ReadableStream), {
-          path: '/root',
+          path: '/',
         });
       } catch (err) {
         logger.error('Failed to copy content to container: %s', (err as Error).message);
@@ -107,16 +115,27 @@ class Docker extends AbstractContainer {
     });
   }
 
-  copyDir(source: string, useGitIgnore: boolean = true) {
+  // 支持目录和文件
+  putDir(destination: string, source: string, useGitIgnore: boolean = true) {
     return new Executor(async () => {
       const { container } = this;
 
       if (!container) {
         return;
       }
+      const { containerCreateInputs: { WorkingDir = '' } } = this;
+      const dest = path.resolve(WorkingDir, destination);
+
+      const info = path.parse(source);
+      const sourceStat = fs.statSync(source);
+      if (sourceStat.isDirectory()) {
+        info.dir = source;
+        info.base = '.';
+      }
 
       const options: Parameters<typeof tar.create>[0] = {
-        cwd: source,
+        cwd: info.dir,
+        prefix: dest,
       };
 
       const ignorefile = path.join(source, '.gitignore');
@@ -131,12 +150,12 @@ class Docker extends AbstractContainer {
         };
       }
 
-      const pack = tar.create(options, ['.']);
+      const pack = tar.create(options, [info.base]);
 
       try {
         logger.debug("Extracting content from '%s' to '%s'", source, '');
         await container.putArchive((pack as unknown as NodeJS.ReadableStream), {
-          path: '/root',
+          path: '/',
         });
       } catch (err) {
         logger.error('Failed to copy dir to container: %s', (err as Error).message);
