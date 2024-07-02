@@ -27,5 +27,5 @@ const docker = new Docker(containerCreateOptions);
 const executer = docker.findContainer();
 await executer.execute();
 
-const id = await docker.tryReadID('-u');
-console.log('id', id);
+// const id = await docker.tryReadID('-u');
+// console.log('id', id);

@@ -92,8 +92,7 @@ describe('test Docker Container', () => {
 
   it('put archive to container test case', async () => {
     const archive = tar.create({ cwd: tmp, portable: true }, ['.']) as unknown as NodeJS.ReadableStream;
-
-    const res = await docker.putArchive('put-archive-test', archive);
+    await docker.putArchive('put-archive-test', archive);
   });
 
   it('get archive from container test case', async () => {

@@ -21,9 +21,6 @@ import AbstractContainer, { FileEntry } from './container';
 
 const logger = log4js.getLogger();
 
-// const containers1 = await docker.listContainers({ all: true });
-// console.log('containers1', containers1);
-
 interface ContainerCreateInputs extends ContainerCreateOptions {
   Image: string;
   username?: string;
