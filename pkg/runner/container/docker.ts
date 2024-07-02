@@ -19,7 +19,7 @@ import * as tar from 'tar';
 import Executor, { Conditional } from '@/pkg/common/executor';
 import docker from '@/pkg/docker';
 
-import AbstractContainer, { FileEntry, ExecCreateInputs } from './container';
+import AbstractContainer, { FileEntry, ExecCreateInputs } from './abstract-container';
 
 const logger = log4js.getLogger();
 
@@ -233,8 +233,17 @@ class Docker extends AbstractContainer {
     });
 
     try {
-      return await container.putArchive(readStream as unknown as NodeJS.ReadableStream, {
+      const stream = await container.putArchive(readStream as unknown as NodeJS.ReadableStream, {
         path: dest,
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        stream.on('error', (err) => {
+          reject(err);
+        });
+        stream.on('finish', () => {
+          resolve();
+        });
       });
     } catch (err) {
       logger.error('Failed to copy content to container: %s', (err as Error).message);
@@ -244,13 +253,10 @@ class Docker extends AbstractContainer {
   async getArchive(source: string) {
     const { container } = this;
 
-    if (!container) {
-      return;
-    }
     const { containerCreateInputs: { WorkingDir = '' } } = this;
     const dest = path.resolve(WorkingDir, source);
 
-    return container.getArchive({
+    return container!.getArchive({
       path: dest,
     });
   }
@@ -459,13 +465,15 @@ class Docker extends AbstractContainer {
       const { containerCreateInputs: { WorkingDir = '' } } = this;
       const workdir = path.resolve(WorkingDir, inputs.workdir || '');
 
+      const Env = Object.entries(inputs.env || {}).map(([key, value]) => { return `${key}=${value}`; });
+
       const exec = await container.exec({
         Cmd: command,
         AttachStdout: true,
         AttachStderr: true,
         Tty: false,
         WorkingDir: workdir,
-        Env: inputs.env,
+        Env,
         User: inputs.user,
       });
 

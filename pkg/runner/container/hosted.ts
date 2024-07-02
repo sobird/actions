@@ -5,7 +5,7 @@
  */
 
 /* eslint-disable no-await-in-loop */
-import { spawn, SpawnOptionsWithoutStdio } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import fs, { CopySyncOptions } from 'node:fs';
 import path from 'node:path';
@@ -16,11 +16,7 @@ import * as tar from 'tar';
 
 import Executor from '@/pkg/common/executor';
 
-interface FileEntry {
-  name: string;
-  mode: number | string;
-  body: string;
-}
+import AbstractContainer, { FileEntry, ExecCreateInputs } from './abstract-container';
 
 interface HostedOptions {
   basedir: string;
@@ -28,7 +24,7 @@ interface HostedOptions {
   stdout?: Writable
 }
 
-class Hosted {
+class Hosted extends AbstractContainer {
   #actPath: string;
 
   rootdir: string;
@@ -40,6 +36,8 @@ class Hosted {
   tool_cache: string;
 
   constructor(public options: HostedOptions) {
+    super();
+
     const { basedir } = options;
     // like container root
     const rootdir = path.join(basedir, randomBytes(8).toString('hex'));
@@ -114,7 +112,7 @@ class Hosted {
       cwd: dest,
     }));
 
-    return new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       pipeline.on('error', (err) => {
         reject(err);
       });
@@ -127,49 +125,50 @@ class Hosted {
   async getArchive(destination: string) {
     const dest = path.resolve(this.rootdir, destination);
     const info = path.parse(dest);
-    return tar.create({ cwd: info.dir }, [info.base]);
+    return tar.create({ cwd: info.dir }, [info.base]) as unknown as NodeJS.ReadableStream;
   }
 
-  async exec(command: string[], options: SpawnOptionsWithoutStdio = {}) {
-    // eslint-disable-next-line no-param-reassign
-    options.cwd = this.resolve((options.cwd as string) || '');
-    console.log('options.cwd', options.cwd);
-    // eslint-disable-next-line no-param-reassign
-    options.env = {
-      ...process.env,
-      ...options.env,
-    };
+  exec(command: string[], options: ExecCreateInputs = {}) {
+    return new Executor(() => {
+      const workdir = this.resolve((options.workdir as string) || '');
 
-    const [cmd, ...args] = command;
+      const [cmd, ...args] = command;
+      const cp = spawn(cmd, args, {
+        cwd: workdir,
+        env: {
+          // ...process.env,
+          ...options.env,
+        },
+        stdio: 'pipe',
+      });
 
-    const cp = spawn(cmd, args, options);
+      // cp.stdout.pipe(process.stdout);
+      // cp.stderr.pipe(process.stdout);
 
-    // cp.stdout.pipe(process.stdout);
-    // cp.stderr.pipe(process.stdout);
+      cp.stdout.on('data', (data) => {
+        console.log(`stdout: ${data}`);
+      });
 
-    cp.stdout.on('data', (data) => {
-      console.log(`stdout: ${data}`);
-    });
+      cp.stderr.on('data', (data) => {
+        console.log(`stderr: ${data}`);
+      });
 
-    cp.stderr.on('data', (data) => {
-      console.log(`stderr: ${data}`);
-    });
-
-    return new Promise((resolve, reject) => {
-      cp.on('error', reject);
-      cp.on('exit', (code) => {
-        if (code === 0) {
-          resolve(code);
-        } else {
-          reject(new Error(`Command exited with code ${code}`));
-        }
+      return new Promise((resolve, reject) => {
+        cp.on('error', reject);
+        cp.on('exit', (code) => {
+          if (code === 0) {
+            resolve(code);
+          } else {
+            reject(new Error(`Command exited with code ${code}`));
+          }
+        });
       });
     });
   }
 
   toContainerPath(rawPath: string) {
     try {
-      const relativePath = path.relative(this.rootdirspace, rawPath);
+      const relativePath = path.relative(this.rootdir, rawPath);
       if (relativePath !== '') {
         return path.join(this.workdir, relativePath);
       }
@@ -189,18 +188,6 @@ class Hosted {
 
   remove() {
     fs.rmSync(this.rootdir, { recursive: true, force: true });
-  }
-
-  static GetPathVariableName() {
-    const { platform } = process;
-    if (platform === 'win32') {
-      return 'Path';
-    }
-    return 'PATH';
-  }
-
-  static DefaultPathVariable() {
-    return process.env[Hosted.GetPathVariableName()];
   }
 
   static Os() {
@@ -232,10 +219,6 @@ class Hosted {
       x64: 'X64',
     };
     return map[process.arch];
-  }
-
-  isCaseInsensitive() {
-    return process.platform === 'win32';
   }
 
   resolve(dir: string) {

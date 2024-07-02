@@ -49,3 +49,6 @@ await putContentExecutor.execute();
 
 const execExecutor = docker.exec(['./print_message.sh']);
 await execExecutor.execute();
+
+const info = await Docker.docker.info();
+console.log('info', info);
