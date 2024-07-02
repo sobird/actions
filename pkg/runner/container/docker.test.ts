@@ -101,4 +101,28 @@ describe('test Docker Container', () => {
     const ws = fs.createWriteStream('tarball.tar');
     tarball?.pipe(ws);
   });
+
+  it('container exec test case', async () => {
+    const putContentExecutor = docker.putContent('', {
+      name: 'print_message.sh',
+      mode: 0o777,
+      body: `#!/bin/bash
+    
+      # 定义要输出的内容
+      message="Hello, World!"
+    
+      # 循环五次
+      for i in {1..5}
+      do
+        echo $message $i
+        # 每次输出后休眠一秒
+        sleep 1
+      done
+      `,
+    });
+    await putContentExecutor.execute();
+
+    const execExecutor = docker.exec(['./print_message.sh']);
+    await execExecutor.execute();
+  });
 });

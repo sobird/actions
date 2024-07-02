@@ -6,10 +6,11 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { Writable } from 'node:stream';
 import tty from 'node:tty';
 
 import {
-  Container, ContainerCreateOptions, Network, NetworkCreateOptions, NetworkInspectInfo,
+  Container, ContainerCreateOptions, Network, NetworkCreateOptions, NetworkInspectInfo, AuthConfig,
 } from 'dockerode';
 import ignore from 'ignore';
 import log4js from 'log4js';
@@ -24,8 +25,7 @@ const logger = log4js.getLogger();
 
 interface ContainerCreateInputs extends ContainerCreateOptions {
   Image: string;
-  username?: string;
-  password?: string;
+  authconfig?: AuthConfig;
 }
 
 class Docker extends AbstractContainer {
@@ -47,28 +47,17 @@ class Docker extends AbstractContainer {
   }
 
   pull(force: boolean = false) {
-    // return docker.pullExecutor({
-    //   image: Image,
-    //   force,
-    //   platform,
-    //   username,
-    //   password,
-    // });
-
     return new Executor(async () => {
       const {
         containerCreateInputs: {
-          Image, platform, username, password,
+          Image, platform, authconfig,
         },
       } = this;
 
       const stream = await docker.pullImage(Image, {
         force,
         platform,
-        authconfig: {
-          username,
-          password,
-        },
+        authconfig,
       });
 
       if (!stream) {
@@ -461,11 +450,11 @@ class Docker extends AbstractContainer {
     });
   }
 
-  async exec(command: string[], inputs: ExecCreateInputs = {}) {
+  exec(command: string[], inputs: ExecCreateInputs = {}) {
     return new Executor(async () => {
       const { container } = this;
       if (!container) {
-        return 0;
+        return;
       }
       const { containerCreateInputs: { WorkingDir = '' } } = this;
       const workdir = path.resolve(WorkingDir, inputs.workdir || '');
@@ -480,23 +469,27 @@ class Docker extends AbstractContainer {
         User: inputs.user,
       });
 
-      const stream = await exec.start({ hijack: true });
-      let data = '';
-      stream.on('data', (chunk) => {
-        data += chunk.toString();
-      });
-      // stream.on('error', (err) => {
-      //   console.error('Error on exec stream:', err);
+      const stream = await exec.start({});
+
+      // stream.on('data', (chunk) => {
+      //   console.log('chunk', chunk.toString());
       // });
+
+      const out = new Writable({
+        write: (chunk, enc, next) => {
+          console.log('chunk', chunk.toString());
+
+          next();
+        },
+      });
+      stream.pipe(out);
+
       await new Promise((resolve, reject) => {
         stream.on('end', () => {
-          const match = data.match(/\d+\n/);
-          if (match) {
-            const id = parseInt(match[0], 10);
-            resolve(id);
-          } else {
-            reject(new Error(`Failed to parse ID from command output: ${data}`));
-          }
+          resolve(null);
+        });
+        stream.on('error', (err) => {
+          reject(err);
         });
       });
     });

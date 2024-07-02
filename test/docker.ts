@@ -9,11 +9,11 @@ import Docker from '@/pkg/runner/container/docker';
 const Env = ['RUNNER_TOOL_CACHE=/opt/hostedtoolcache', 'RUNNER_OS=Linux', 'RUNNER_ARCH=', 'RUNNER_TEMP=/tmp', 'LANG=C.UTF-8'];
 
 const containerCreateOptions: ContainerCreateOptions = {
+  Image: 'node:lts-slim',
+  name: 'node-lts-slim',
   Cmd: [],
   Entrypoint: ['/bin/sleep', '3600'],
   WorkingDir: '/root',
-  Image: 'node:lts-slim',
-  name: 'node-lts-slim',
   Env,
   HostConfig: {
     AutoRemove: true,
@@ -47,31 +47,5 @@ const putContentExecutor = docker.putContent('', {
 });
 await putContentExecutor.execute();
 
-const { container } = docker;
-console.log('container', container?.id);
-
-const exec = await container?.exec({
-  Cmd: ['./print_message.sh'],
-  WorkingDir: '/root',
-  AttachStdout: true,
-  AttachStderr: true,
-});
-
-const wrs = await exec?.start({});
-
-// wrs.on('data', (chunk) => {
-//   console.log('chunk', chunk);
-// });
-
-const out = new Writable({
-  write: (chunk, enc, next) => {
-    console.log('chunk', chunk, enc);
-
-    next();
-  },
-});
-
-wrs?.pipe(out);
-
-const inspect = await exec?.inspect();
-console.log('inspect', inspect);
+const execExecutor = docker.exec(['./print_message.sh']);
+await execExecutor.execute();
