@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Dockerode, { ContainerCreateOptions } from 'dockerode';
+import Dockerode, { ContainerCreateOptions, AuthConfig } from 'dockerode';
 import log4js from 'log4js';
 
 import Executor from '@/pkg/common/executor';
@@ -31,59 +31,32 @@ const socketPath = process.env.DOCKER_HOST || dockerSocketLocations.find((p) => 
   return fs.existsSync(p);
 });
 
-export interface DockerPullImageInputs {
-  image: string;
-  force?: boolean;
+export interface PullImageInputs {
+  force: boolean;
   platform?: string;
-  username?: string;
-  password?: string;
+  authconfig?: AuthConfig;
 }
 
 export class Docker extends Dockerode {
-  static get instance() {
-    return 1212;
-  }
+  async pullImage(repoTag: string, inputs: PullImageInputs) {
+    logger.debug('\u{0001F433} Docker pull %s', repoTag);
 
-  pullExecutor(input: DockerPullImageInputs) {
-    return new Executor(async () => {
-      logger.debug('\u{0001F433} Docker pull %s', input.image);
+    const { force, ...options } = inputs;
 
-      const {
-        image, force, platform, ...auth
-      } = input;
-
-      const img = this.getImage(image);
-      try {
-        await img.inspect();
-        if (force) {
-          await img.remove({ force: true });
-        } else {
-          return;
-        }
-      } catch (err) {
-        logger.error("Unable to determine if image already exists for image '%s' (%s): %s", input.image, input.platform, (err as Error).message);
+    const image = this.getImage(repoTag);
+    try {
+      await image.inspect();
+      if (force) {
+        await image.remove({ force: true });
+      } else {
+        return;
       }
+    } catch (err) {
+      logger.error("Unable to determine if image already exists for image '%s' (%s): %s", repoTag, inputs.platform, (err as Error).message);
+    }
 
-      await new Promise((resolve, reject) => {
-        logger.debug("Pulling image '%s' (%s)", image, platform);
-        this.pull(image, {
-          platform,
-        }, (err, stream) => {
-          if (err) {
-            reject(err);
-            return;
-          }
-
-          this.modem.followProgress(stream!, (err2, output) => {
-            if (err2) {
-              reject(err2);
-            } else {
-              resolve(output);
-            }
-          });
-        }, auth);
-      });
-    });
+    logger.debug("Pulling image '%s' (%s)", repoTag, inputs.platform);
+    return super.pull(repoTag, options);
   }
 
   createContainerExecutor(options: ContainerCreateOptions) {

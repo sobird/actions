@@ -6,6 +6,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import tty from 'node:tty';
 
 import {
   Container, ContainerCreateOptions, Network, NetworkCreateOptions, NetworkInspectInfo,
@@ -17,7 +18,7 @@ import * as tar from 'tar';
 import Executor, { Conditional } from '@/pkg/common/executor';
 import docker from '@/pkg/docker';
 
-import AbstractContainer, { FileEntry } from './container';
+import AbstractContainer, { FileEntry, ExecCreateInputs } from './container';
 
 const logger = log4js.getLogger();
 
@@ -38,22 +39,58 @@ class Docker extends AbstractContainer {
 
   // gid: number = 0;
 
-  constructor(public containerCreateInputs: ContainerCreateInputs, public networkCreateInputs: NetworkCreateOptions) {
+  constructor(
+    public containerCreateInputs: ContainerCreateInputs,
+    public networkCreateInputs: NetworkCreateOptions,
+  ) {
     super();
   }
 
   pull(force: boolean = false) {
-    const {
-      containerCreateInputs: {
-        Image, platform, username, password,
-      },
-    } = this;
-    return docker.pullExecutor({
-      image: Image,
-      force,
-      platform,
-      username,
-      password,
+    // return docker.pullExecutor({
+    //   image: Image,
+    //   force,
+    //   platform,
+    //   username,
+    //   password,
+    // });
+
+    return new Executor(async () => {
+      const {
+        containerCreateInputs: {
+          Image, platform, username, password,
+        },
+      } = this;
+
+      const stream = await docker.pullImage(Image, {
+        force,
+        platform,
+        authconfig: {
+          username,
+          password,
+        },
+      });
+
+      if (!stream) {
+        return;
+      }
+
+      // stream.on('data', (chunk) => {
+      //   console.log('chunk', chunk.toJSON());
+      // });
+      // stream.pipe(process.stdout);
+
+      await new Promise((resolve, reject) => {
+        docker.modem.followProgress(stream, (err, output) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(output);
+          }
+        }, (event) => {
+          console.log('event', event);
+        });
+      });
     });
   }
 
@@ -64,6 +101,8 @@ class Docker extends AbstractContainer {
   start() {
     return Executor.Pipeline(
       this.findContainer(),
+      this.pull(),
+      this.createContainer(),
       this.startContainer(),
       // this.tryReadUID(),
       // this.tryReadGID(),
@@ -353,9 +392,8 @@ class Docker extends AbstractContainer {
         return;
       }
 
-      logger.debug('Starting container: %s', container.id);
-
       try {
+        logger.debug('Starting container: %s', container.id);
         await container.start();
         logger.debug('Started container: %s', container.id);
       } catch (err) {
@@ -372,6 +410,7 @@ class Docker extends AbstractContainer {
       }
 
       try {
+        logger.debug('Stoping container: %s', container.id);
         await container.stop();
         logger.debug('Stoped container: %s', container.id);
         delete this.container;
@@ -422,38 +461,46 @@ class Docker extends AbstractContainer {
     });
   }
 
-  // async tryReadID(arg: string): Promise<number> {
-  //   const { container } = this;
-  //   if (!container) {
-  //     return 0;
-  //   }
-  //   const exec = await container.exec({
-  //     Cmd: ['id', arg],
-  //     AttachStdout: true,
-  //     AttachStderr: true,
-  //     Tty: false,
-  //   });
+  async exec(command: string[], inputs: ExecCreateInputs = {}) {
+    return new Executor(async () => {
+      const { container } = this;
+      if (!container) {
+        return 0;
+      }
+      const { containerCreateInputs: { WorkingDir = '' } } = this;
+      const workdir = path.resolve(WorkingDir, inputs.workdir || '');
 
-  //   const stream = await exec.start({});
-  //   let data = '';
-  //   stream.on('data', (chunk) => {
-  //     data += chunk.toString();
-  //   });
-  //   // stream.on('error', (err) => {
-  //   //   console.error('Error on exec stream:', err);
-  //   // });
-  //   return new Promise((resolve, reject) => {
-  //     stream.on('end', () => {
-  //       const match = data.match(/\d+\n/);
-  //       if (match) {
-  //         const id = parseInt(match[0], 10);
-  //         resolve(id);
-  //       } else {
-  //         reject(new Error(`Failed to parse ID from command output: ${data}`));
-  //       }
-  //     });
-  //   });
-  // }
+      const exec = await container.exec({
+        Cmd: command,
+        AttachStdout: true,
+        AttachStderr: true,
+        Tty: false,
+        WorkingDir: workdir,
+        Env: inputs.env,
+        User: inputs.user,
+      });
+
+      const stream = await exec.start({ hijack: true });
+      let data = '';
+      stream.on('data', (chunk) => {
+        data += chunk.toString();
+      });
+      // stream.on('error', (err) => {
+      //   console.error('Error on exec stream:', err);
+      // });
+      await new Promise((resolve, reject) => {
+        stream.on('end', () => {
+          const match = data.match(/\d+\n/);
+          if (match) {
+            const id = parseInt(match[0], 10);
+            resolve(id);
+          } else {
+            reject(new Error(`Failed to parse ID from command output: ${data}`));
+          }
+        });
+      });
+    });
+  }
 
   // tryReadUID() {
   //   return new Executor(async () => {
