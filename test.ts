@@ -1,40 +1,17 @@
-import fs from 'node:fs';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 
-import { ContainerCreateOptions } from 'dockerode';
+const cp = spawn('./print_message.sh', [], {
+  cwd: '/var/folders/0g/085cjcx1231cqqknq0k8pbzh0000gn/T/hosted-test/1d453285733f292f',
+});
 
-import Docker from '@/pkg/runner/container/docker';
+// cp.stdout.pipe(process.stdout);
+// cp.stderr.pipe(process.stdout);
 
-const Env = ['RUNNER_TOOL_CACHE=/opt/hostedtoolcache', 'RUNNER_OS=Linux', 'RUNNER_ARCH=', 'RUNNER_TEMP=/tmp', 'LANG=C.UTF-8'];
+cp.stdout.on('data', (data) => {
+  console.log(`stdout: ${data}`);
+});
 
-const containerCreateOptions: ContainerCreateOptions = {
-  Cmd: [],
-  Entrypoint: ['/bin/sleep', '3600'],
-  WorkingDir: '/',
-  Image: 'node',
-  name: 'node-test',
-  Env,
-  HostConfig: {
-    AutoRemove: true,
-    Privileged: true,
-    UsernsMode: '',
-  },
-  platform: '',
-};
-
-const docker = new Docker(containerCreateOptions);
-
-// const container = Docker.docker.getContainer('1c32aaddcb52ba4055e502c362b1ecb372704eeabe9222ed387a19b00d0a5ac0');
-
-// const tar = await container.getArchive({
-//   path: '/root/package.json',
-// });
-
-// const ws = fs.createWriteStream('test.tar');
-// tar.pipe(ws);
-
-// process.stdin.on('data', (data) => {
-//   console.log('data', data);
-// });
-
-process.stdout.write('ddd');
+cp.stderr.on('data', (data) => {
+  console.log(`stderr: ${data}`);
+});

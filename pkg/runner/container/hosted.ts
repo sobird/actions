@@ -9,83 +9,105 @@ import { spawn, SpawnOptionsWithoutStdio } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import fs, { CopySyncOptions } from 'node:fs';
 import path from 'node:path';
+import { Writable } from 'node:stream';
 
 import ignore from 'ignore';
 import * as tar from 'tar';
+
+import Executor from '@/pkg/common/executor';
 
 interface FileEntry {
   name: string;
   mode: number | string;
   body: string;
 }
+
+interface HostedOptions {
+  basedir: string;
+  workdir?: string;
+  stdout?: Writable
+}
+
 class Hosted {
   #actPath: string;
 
-  work: string;
+  rootdir: string;
+
+  workdir: string;
 
   tmpPath: string;
 
-  cwdPath: string;
-
   tool_cache: string;
 
-  constructor(public base: string, public workspace: string) {
-    // like container id
-    const work = path.join(base, randomBytes(8).toString('hex'));
-    const toolCache = path.join(base, 'tool_cache');
+  constructor(public options: HostedOptions) {
+    const { basedir } = options;
+    // like container root
+    const rootdir = path.join(basedir, randomBytes(8).toString('hex'));
+    const toolCache = path.join(basedir, 'tool_cache');
 
-    const actPath = path.join(work, 'act');
-    const tmpPath = path.join(work, 'tmp');
-    const cwdPath = path.join(work, 'cwd');
+    const actPath = path.join(rootdir, 'act');
+    const tmpPath = path.join(rootdir, 'tmp');
+    const workdir = path.join(rootdir, options.workdir || '');
 
-    this.work = work;
+    this.rootdir = rootdir;
     this.tool_cache = toolCache;
     this.#actPath = actPath;
     this.tmpPath = tmpPath;
-    this.cwdPath = cwdPath;
+    this.workdir = workdir;
 
-    [toolCache, actPath, tmpPath, cwdPath].forEach((dir) => {
+    [toolCache, actPath, tmpPath, workdir].forEach((dir) => {
       fs.mkdirSync(dir, { recursive: true });
     });
   }
 
-  async put(destination: string, ...files: FileEntry[]) {
-    const dir = path.resolve(this.work, destination);
-    for (const file of files) {
-      const filename = path.join(dir, file.name);
-      fs.mkdirSync(path.dirname(filename), { recursive: true });
+  put(destination: string, source: string, useGitIgnore: boolean = false) {
+    return new Executor(() => {
+      let dest = this.resolve(destination);
 
-      fs.writeFileSync(
-        filename,
-        Buffer.from(file.body, 'utf-8'),
-        {
-          mode: file.mode,
-        },
-      );
-    }
-  }
-
-  async putDir(destination: string, source: string, useGitIgnore: boolean = false) {
-    const dest = path.resolve(this.work, destination);
-
-    const copyOptions: CopySyncOptions = {
-      dereference: true,
-      recursive: true,
-    };
-
-    const ignorefile = path.join(source, '.gitignore');
-
-    if (useGitIgnore && fs.existsSync(ignorefile)) {
-      const ig = ignore().add(fs.readFileSync(ignorefile).toString());
-      copyOptions.filter = (src) => {
-        return !ig.ignores(src);
+      const copyOptions: CopySyncOptions = {
+        dereference: true,
+        recursive: true,
       };
-    }
-    return fs.cpSync(source, dest, copyOptions);
+
+      const ignorefile = path.join(source, '.gitignore');
+
+      if (useGitIgnore && fs.existsSync(ignorefile)) {
+        const ig = ignore().add(fs.readFileSync(ignorefile).toString());
+        copyOptions.filter = (src) => {
+          return !ig.ignores(src);
+        };
+      }
+
+      const info = path.parse(source);
+      const sourceStat = fs.statSync(source);
+      if (sourceStat.isFile()) {
+        dest = path.join(dest, info.base);
+      }
+
+      fs.cpSync(source, dest, copyOptions);
+    });
   }
 
-  putArchive(destination: string, readStream: NodeJS.ReadableStream) {
-    const dest = path.resolve(this.work, destination);
+  putContent(destination: string, ...files: FileEntry[]) {
+    return new Executor(() => {
+      const dest = this.resolve(destination);
+      for (const file of files) {
+        const filename = path.join(dest, file.name);
+        fs.mkdirSync(path.dirname(filename), { recursive: true });
+
+        fs.writeFileSync(
+          filename,
+          Buffer.from(file.body, 'utf-8'),
+          {
+            mode: file.mode,
+          },
+        );
+      }
+    });
+  }
+
+  async putArchive(destination: string, readStream: NodeJS.ReadableStream) {
+    const dest = this.resolve(destination);
     fs.mkdirSync(dest, { recursive: true });
 
     const pipeline = readStream.pipe(tar.extract({
@@ -102,22 +124,25 @@ class Hosted {
     });
   }
 
-  getArchive(destination: string) {
-    const dest = path.resolve(this.work, destination);
+  async getArchive(destination: string) {
+    const dest = path.resolve(this.rootdir, destination);
     const info = path.parse(dest);
     return tar.create({ cwd: info.dir }, [info.base]);
   }
 
-  async exec(command: string, args: readonly string[], options: SpawnOptionsWithoutStdio = {}) {
+  async exec(command: string[], options: SpawnOptionsWithoutStdio = {}) {
     // eslint-disable-next-line no-param-reassign
-    options.cwd = path.resolve(this.work, (options.cwd as string) || '');
+    options.cwd = this.resolve((options.cwd as string) || '');
+    console.log('options.cwd', options.cwd);
     // eslint-disable-next-line no-param-reassign
     options.env = {
       ...process.env,
       ...options.env,
     };
 
-    const cp = spawn(command, args, options);
+    const [cmd, ...args] = command;
+
+    const cp = spawn(cmd, args, options);
 
     // cp.stdout.pipe(process.stdout);
     // cp.stderr.pipe(process.stdout);
@@ -144,14 +169,14 @@ class Hosted {
 
   toContainerPath(rawPath: string) {
     try {
-      const relativePath = path.relative(this.workspace, rawPath);
+      const relativePath = path.relative(this.rootdirspace, rawPath);
       if (relativePath !== '') {
-        return path.join(this.cwdPath, relativePath);
+        return path.join(this.workdir, relativePath);
       }
     } catch (err) {
-      return path.join(this.cwdPath, path.basename(rawPath));
+      return path.join(this.workdir, path.basename(rawPath));
     }
-    return this.cwdPath;
+    return this.workdir;
   }
 
   get actPath() {
@@ -163,7 +188,7 @@ class Hosted {
   }
 
   remove() {
-    fs.rmSync(this.work, { recursive: true, force: true });
+    fs.rmSync(this.rootdir, { recursive: true, force: true });
   }
 
   static GetPathVariableName() {
@@ -211,6 +236,11 @@ class Hosted {
 
   isCaseInsensitive() {
     return process.platform === 'win32';
+  }
+
+  resolve(dir: string) {
+    const { rootdir, workdir } = this;
+    return path.isAbsolute(dir) ? path.join(rootdir, dir) : path.join(workdir, dir);
   }
 }
 
