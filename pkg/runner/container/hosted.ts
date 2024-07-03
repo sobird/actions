@@ -56,6 +56,9 @@ class Hosted extends AbstractContainer {
     [toolCache, actPath, tmpPath, workdir].forEach((dir) => {
       fs.mkdirSync(dir, { recursive: true });
     });
+
+    this.os = AbstractContainer.Os(process.platform);
+    this.arch = AbstractContainer.Arch(process.arch);
   }
 
   put(destination: string, source: string, useGitIgnore: boolean = false) {
@@ -188,37 +191,6 @@ class Hosted extends AbstractContainer {
 
   remove() {
     fs.rmSync(this.rootdir, { recursive: true, force: true });
-  }
-
-  static Os() {
-    const map: Record<string, string> = {
-      aix: 'Aix',
-      darwin: 'macOS',
-      freebsd: 'Freebsd',
-      linux: 'Linux',
-      openbsd: 'Openbsd',
-      sunos: 'Sunos',
-      win32: 'Windows',
-    };
-    return map[process.platform];
-  }
-
-  static Arch() {
-    const map: Record<string, string> = {
-      arm: 'ARM',
-      arm64: 'ARM64',
-      ia32: 'X86',
-      loong64: 'LOONG64',
-      mips: 'MIPS',
-      mipsel: 'MIPSEL',
-      ppc: 'PPC',
-      ppc64: 'PPC64',
-      riscv64: 'RISCV64',
-      s390: 'S390',
-      s390x: 'S390X',
-      x64: 'X64',
-    };
-    return map[process.arch];
   }
 
   resolve(dir: string) {

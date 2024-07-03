@@ -1,17 +1,38 @@
-import { spawn } from 'node:child_process';
-import path from 'node:path';
+import cp from 'node:child_process';
 
-const cp = spawn('./print_message.sh', [], {
-  cwd: '/var/folders/0g/085cjcx1231cqqknq0k8pbzh0000gn/T/hosted-test/1d453285733f292f',
-});
+import yaml from 'yaml';
 
-// cp.stdout.pipe(process.stdout);
-// cp.stderr.pipe(process.stdout);
+const buffer = cp.execSync('docker info');
+const info = buffer.toString();
 
-cp.stdout.on('data', (data) => {
-  console.log(`stdout: ${data}`);
-});
+function parseDockerInfo(infoText) {
+  const infoObject = {};
+  const lines = infoText.trim().split('\n');
 
-cp.stderr.on('data', (data) => {
-  console.log(`stderr: ${data}`);
-});
+  const last = null;
+  lines.forEach((line) => {
+    // 忽略空行
+    if (!line) return;
+
+    console.log('line', line);
+
+    const [key, value = ''] = line.split(':');
+    const ks = key.trimEnd();
+    const trimmedKey = key.trim();
+    const level = ks.length - trimmedKey.length;
+    console.log(trimmedKey, level);
+    const trimmedValue = value.trim();
+
+    // 检查值是否是嵌套结构的开始
+    if (trimmedValue.startsWith('{') && trimmedValue.endsWith('}')) {
+      // 将字符串解析为 JSON 对象
+      infoObject[trimmedKey] = JSON.parse(trimmedValue);
+    } else {
+      infoObject[trimmedKey] = trimmedValue;
+    }
+  });
+
+  return infoObject;
+}
+
+console.log('info', parseDockerInfo(info));

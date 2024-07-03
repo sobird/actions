@@ -114,4 +114,11 @@ describe('test Docker Container', () => {
     const execExecutor = docker.exec(['./print_message.sh']);
     await execExecutor.execute();
   });
+
+  it('container defaultPathVariable test case', async () => {
+    const { defaultPathVariable } = docker;
+    console.log('defaultPathVariable', docker);
+
+    expect(defaultPathVariable).toBeDefined();
+  });
 });

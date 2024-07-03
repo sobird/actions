@@ -4,6 +4,7 @@
  * sobird<i@sobird.me> at 2024/06/24 15:21:27 created.
  */
 
+import cp from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { Writable } from 'node:stream';
@@ -93,6 +94,7 @@ class Docker extends AbstractContainer {
       this.pull(),
       this.createContainer(),
       this.startContainer(),
+      this.processExecutor(),
       // this.tryReadUID(),
       // this.tryReadGID(),
       new Executor(() => {
@@ -503,17 +505,23 @@ class Docker extends AbstractContainer {
     });
   }
 
-  // tryReadUID() {
-  //   return new Executor(async () => {
-  //     this.uid = await this.tryReadID('-u');
-  //   });
-  // }
+  get defaultPathVariable() {
+    const { container } = this;
+    if (!container) {
+      return '';
+    }
 
-  // tryReadGID() {
-  //   return new Executor(async () => {
-  //     this.uid = await this.tryReadID('-g');
-  //   });
-  // }
+    const buffer = cp.execSync(`docker exec ${container.id} printenv ${this.pathVariableName}`);
+    return buffer.toString();
+  }
+
+  processExecutor() {
+    return new Executor(async () => {
+      const { OSType, Architecture } = await docker.info();
+      this.os = AbstractContainer.Os(OSType);
+      this.arch = AbstractContainer.Arch(Architecture);
+    });
+  }
 }
 
 export default Docker;
