@@ -1,5 +1,8 @@
 /* eslint-disable class-methods-use-this */
 
+import dotenv from 'dotenv';
+import * as tar from 'tar';
+
 import Executor from '@/pkg/common/executor';
 
 export interface FileEntry {
@@ -34,6 +37,29 @@ export default abstract class AbstractContainer {
   abstract putArchive(destination: string, readStream: NodeJS.ReadableStream): Promise<void>;
   abstract getArchive(destination: string): Promise<NodeJS.ReadableStream>;
   abstract exec(command: string[], options: ExecCreateOptions): Executor;
+
+  async parseEnvFile(filename: string) {
+    const archive = await this.getArchive(filename);
+
+    const stream = tar.list({});
+    archive.pipe(stream);
+
+    return new Promise((resolve, reject) => {
+      stream.on('entry', (entry) => {
+        let content = '';
+        entry.on('data', (chunk: Buffer) => {
+          content += chunk;
+        });
+        entry.on('error', (err: Error) => {
+          reject(err);
+        });
+        entry.on('end', () => {
+          const config = dotenv.parse(content);
+          resolve(config ?? {});
+        });
+      });
+    });
+  }
 
   get pathVariableName() {
     const { os } = this;

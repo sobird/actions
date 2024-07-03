@@ -115,10 +115,8 @@ describe('test Docker Container', () => {
     await execExecutor.execute();
   });
 
-  it('container defaultPathVariable test case', async () => {
-    const { defaultPathVariable } = docker;
-    console.log('defaultPathVariable', docker);
-
-    expect(defaultPathVariable).toBeDefined();
+  it('container parseEnvFile test case', async () => {
+    const envObj = await docker.parseEnvFile('print_message.sh');
+    console.log('envObj', envObj);
   });
 });
