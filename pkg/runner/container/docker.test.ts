@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { ContainerCreateOptions } from 'dockerode';
+import dotenv from 'dotenv';
 import * as tar from 'tar';
 
 import Docker from './docker';
@@ -118,5 +119,11 @@ describe('test Docker Container', () => {
   it('container parseEnvFile test case', async () => {
     const envObj = await docker.parseEnvFile('print_message.sh');
     console.log('envObj', envObj);
+
+    const image = Docker.docker.getImage('node:lts-slim');
+    const imageInspectInfo = await image.inspect();
+
+    const env = dotenv.parse(imageInspectInfo.Config.Env.join('\n'));
+    console.log('env', env);
   });
 });

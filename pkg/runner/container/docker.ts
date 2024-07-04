@@ -7,12 +7,14 @@
 import cp from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline';
 import { Writable } from 'node:stream';
 import tty from 'node:tty';
 
 import {
   Container, ContainerCreateOptions, Network, NetworkCreateOptions, NetworkInspectInfo, AuthConfig,
 } from 'dockerode';
+import dotenv from 'dotenv';
 import ignore from 'ignore';
 import log4js from 'log4js';
 import * as tar from 'tar';
@@ -487,12 +489,21 @@ class Docker extends AbstractContainer {
 
       const out = new Writable({
         write: (chunk, enc, next) => {
-          console.log('chunk', chunk.toString());
+          // console.log('chunk', chunk.toString());
 
           next();
         },
       });
       stream.pipe(out);
+
+      const rl = readline.createInterface({
+        input: stream,
+        crlfDelay: Infinity,
+      });
+
+      rl.on('line', (line) => {
+        console.log(`Line from file: ${line}`);
+      });
 
       await new Promise((resolve, reject) => {
         stream.on('end', () => {
@@ -521,6 +532,14 @@ class Docker extends AbstractContainer {
       this.os = AbstractContainer.Os(OSType);
       this.arch = AbstractContainer.Arch(Architecture);
     });
+  }
+
+  async extractFromImageEnv() {
+    const { Image } = this.containerCreateInputs;
+    const image = docker.getImage(Image);
+    const imageInspectInfo = await image.inspect();
+
+    const env = dotenv.parse(imageInspectInfo.Config.Env.join('\n'));
   }
 }
 
