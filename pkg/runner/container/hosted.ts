@@ -21,7 +21,7 @@ import AbstractContainer, { FileEntry, ExecCreateInputs } from './abstract-conta
 interface HostedOptions {
   basedir: string;
   workdir?: string;
-  stdout?: Writable
+  stdout?: NodeJS.WritableStream;
 }
 
 class Hosted extends AbstractContainer {

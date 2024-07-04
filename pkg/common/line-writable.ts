@@ -8,6 +8,7 @@ export default class LineWritable extends Writable {
     let data = chunk.toString();
     if (this._lastLine) {
       data = this._lastLine + data;
+      this._lastLine = '';
     }
 
     const lines = data.split('\n');

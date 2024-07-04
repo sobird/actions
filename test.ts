@@ -1,22 +1,21 @@
-class RunContext {
-  ExtraPath: string[] = [];
+import fs from 'node:fs';
 
-  addPath(arg: string) {
-    console.log(`::add-path:: ${arg}`);
-    const extraPath = [arg];
-    for (const v of this.ExtraPath) {
-      if (v !== arg) {
-        extraPath.push(v);
-      }
-    }
-    this.ExtraPath = extraPath;
-  }
-}
+import LineWritable from './pkg/common/line-writable';
 
-const runner = new RunContext();
+const lines: string[] = [];
 
-runner.addPath('abc');
-runner.addPath('123');
-runner.addPath('abc');
+const lineWriter = new LineWritable();
+lineWriter.on('line', (line: string) => {
+  console.log('line', line);
+  lines.push(line);
+});
 
-console.log('first', runner.ExtraPath);
+lineWriter.on('finish', () => {
+  // console.log('lines', lines);
+});
+
+const rs = fs.createReadStream('package.json', {
+  highWaterMark: 100,
+});
+
+rs.pipe(lineWriter);
