@@ -1,0 +1,13 @@
+name: Workflow Commands Test
+run-name: workflow commands test by ${{ github.actor }}
+on: 
+  push:
+    branches:
+      - master
+
+jobs:
+  commands-job-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create annotation for build error
+        run: echo "::error file=app.js,line=1::Missing semicolon"
