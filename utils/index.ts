@@ -14,4 +14,5 @@ export { readJsonSync } from './readJsonSync';
 export { readConfSync } from './readConfSync';
 export { replaceAllAsync } from './replaceAllAsync';
 export { readIgnoreSync } from './readIgnoreSync';
+export { assignIgnoreCase } from './assignIgnoreCase';
 export { default as lodash } from './lodash';

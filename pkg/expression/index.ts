@@ -93,6 +93,7 @@ class Expression<T> {
     });
   }
 
+  // todo
   hashFiles(...patterns: string[]) {
     const env = {
       ...process.env,

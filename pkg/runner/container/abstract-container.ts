@@ -76,8 +76,8 @@ export default abstract class AbstractContainer {
     return process.env[this.pathVariableName];
   }
 
-  get isCaseInsensitive() {
-    return this.os === 'Windows';
+  get isCaseSensitive() {
+    return this.os !== 'Windows';
   }
 
   static Os(platform: string) {

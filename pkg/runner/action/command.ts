@@ -3,6 +3,7 @@
  *
  * @see https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions
  * @see https://github.com/actions/runner/blob/main/src/Runner.Common/ActionCommand.cs
+ * @see https://github.com/actions/toolkit/blob/main/packages/core/src/command.ts
  *
  * sobird<i@sobird.me> at 2024/07/05 14:25:03 created.
  */
@@ -12,9 +13,7 @@ class ActionCommand {
 
   data: string = '';
 
-  constructor(public command: string) {
-
-  }
+  constructor(public command: string) {}
 
   static CommandKey = '::';
 

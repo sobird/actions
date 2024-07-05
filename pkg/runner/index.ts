@@ -25,6 +25,9 @@ class Runner {
    */
   caller?: Runner;
 
+  // addPath
+  prependPath: string[] = [];
+
   constructor(public run: Run, public config: Readonly<Config>) {
     const { jobId, job, workflow } = run;
     this.context = new Context(config.context);

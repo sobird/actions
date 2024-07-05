@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-loop-func */
 import ActionCommand from './command';
 
-describe('CommandParserV2Test', () => {
+describe('ActionCommand.Parser Test', () => {
   const commands = new Set(['do-something']);
   const arrange = [
     {
