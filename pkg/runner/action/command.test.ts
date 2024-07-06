@@ -72,18 +72,13 @@ describe('ActionCommand.Parser Test', () => {
     it(item.message, () => {
       let test = null;
       if (item.command) {
-        test = new ActionCommand(item.command);
-
-        if (item.data) {
-          test.data = item.data;
-        }
-
-        if (item.properties) {
-          test.properties = item.properties;
-        }
+        test = new ActionCommand(item.command, item.properties, item.data);
       }
 
-      expect(ActionCommand.Parse(item.message, item.commands)).toEqual(test);
+      const actionCommand = ActionCommand.Parse(item.message, item.commands);
+
+      expect(actionCommand).toEqual(test);
+      expect(ActionCommand.Parse(actionCommand?.toString(), item.commands)).toEqual(actionCommand);
     });
   }
 });
