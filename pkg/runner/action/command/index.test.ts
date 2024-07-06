@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-loop-func */
-import ActionCommand from './command';
+import ActionCommand from '.';
 
 describe('ActionCommand.Parser Test', () => {
   const commands = new Set(['do-something']);

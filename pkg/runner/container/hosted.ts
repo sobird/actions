@@ -9,14 +9,13 @@ import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import fs, { CopySyncOptions } from 'node:fs';
 import path from 'node:path';
-import { Writable } from 'node:stream';
 
 import ignore from 'ignore';
 import * as tar from 'tar';
 
 import Executor from '@/pkg/common/executor';
 
-import AbstractContainer, { FileEntry, ExecCreateInputs } from './abstract-container';
+import Container, { FileEntry, ExecOptions } from '.';
 
 interface HostedOptions {
   basedir: string;
@@ -24,7 +23,7 @@ interface HostedOptions {
   stdout?: NodeJS.WritableStream;
 }
 
-class Hosted extends AbstractContainer {
+class Hosted extends Container {
   #actPath: string;
 
   rootdir: string;
@@ -57,8 +56,8 @@ class Hosted extends AbstractContainer {
       fs.mkdirSync(dir, { recursive: true });
     });
 
-    this.os = AbstractContainer.Os(process.platform);
-    this.arch = AbstractContainer.Arch(process.arch);
+    this.os = Container.Os(process.platform);
+    this.arch = Container.Arch(process.arch);
   }
 
   put(destination: string, source: string, useGitIgnore: boolean = false) {
@@ -131,8 +130,8 @@ class Hosted extends AbstractContainer {
     return tar.create({ cwd: info.dir }, [info.base]) as unknown as NodeJS.ReadableStream;
   }
 
-  exec(command: string[], options: ExecCreateInputs = {}) {
-    return new Executor(() => {
+  exec(command: string[], options: ExecOptions = {}) {
+    return new Executor(async () => {
       const workdir = this.resolve((options.workdir as string) || '');
 
       const [cmd, ...args] = command;
@@ -156,7 +155,7 @@ class Hosted extends AbstractContainer {
         console.log(`stderr: ${data}`);
       });
 
-      return new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         cp.on('error', reject);
         cp.on('exit', (code) => {
           if (code === 0) {

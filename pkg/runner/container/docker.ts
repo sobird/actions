@@ -12,7 +12,7 @@ import { Writable } from 'node:stream';
 import tty from 'node:tty';
 
 import {
-  Container, ContainerCreateOptions, Network, NetworkCreateOptions, NetworkInspectInfo, AuthConfig,
+  Container as DockerContainer, ContainerCreateOptions, Network as DockerNetwork, NetworkCreateOptions, NetworkInspectInfo, AuthConfig,
 } from 'dockerode';
 import dotenv from 'dotenv';
 import ignore from 'ignore';
@@ -22,7 +22,7 @@ import * as tar from 'tar';
 import Executor, { Conditional } from '@/pkg/common/executor';
 import docker from '@/pkg/docker';
 
-import AbstractContainer, { FileEntry, ExecCreateInputs } from './abstract-container';
+import Container, { FileEntry, ExecOptions } from '.';
 
 const logger = log4js.getLogger();
 
@@ -31,12 +31,12 @@ interface ContainerCreateInputs extends ContainerCreateOptions {
   authconfig?: AuthConfig;
 }
 
-class Docker extends AbstractContainer {
+class Docker extends Container {
   static docker = docker;
 
-  container?: Container;
+  container?: DockerContainer;
 
-  network?: Network;
+  network?: DockerNetwork;
 
   // uid: number = 0;
 
@@ -460,7 +460,7 @@ class Docker extends AbstractContainer {
     });
   }
 
-  exec(command: string[], inputs: ExecCreateInputs = {}) {
+  exec(command: string[], inputs: ExecOptions = {}) {
     return new Executor(async () => {
       const { container } = this;
       if (!container) {
@@ -529,8 +529,8 @@ class Docker extends AbstractContainer {
   processExecutor() {
     return new Executor(async () => {
       const { OSType, Architecture } = await docker.info();
-      this.os = AbstractContainer.Os(OSType);
-      this.arch = AbstractContainer.Arch(Architecture);
+      this.os = Container.Os(OSType);
+      this.arch = Container.Arch(Architecture);
     });
   }
 

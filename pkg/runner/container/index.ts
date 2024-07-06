@@ -11,13 +11,13 @@ export interface FileEntry {
   body: string;
 }
 
-export interface ExecCreateOptions {
+export interface ExecOptions {
   env?: NodeJS.ProcessEnv;
   user?: string;
   workdir?: string;
 }
 
-export default abstract class AbstractContainer {
+export default abstract class Container {
   name = '';
 
   os = '';
@@ -36,7 +36,7 @@ export default abstract class AbstractContainer {
   abstract putContent(destination: string, ...files: FileEntry[]): Executor;
   abstract putArchive(destination: string, readStream: NodeJS.ReadableStream): Promise<void>;
   abstract getArchive(destination: string): Promise<NodeJS.ReadableStream>;
-  abstract exec(command: string[], options: ExecCreateOptions): Executor;
+  abstract exec(command: string[], options: ExecOptions): Executor;
 
   async parseEnvFile(filename: string) {
     const archive = await this.getArchive(filename);

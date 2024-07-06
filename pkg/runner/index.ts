@@ -14,6 +14,7 @@ import Context from '@/pkg/runner/context';
 import WorkflowPlanner from '@/pkg/workflow/planner';
 import { asyncFunction, createSafeName } from '@/utils';
 
+import Container from './container';
 import Executor from '../common/executor';
 import { Run } from '../workflow/plan';
 
@@ -27,6 +28,10 @@ class Runner {
 
   // addPath
   prependPath: string[] = [];
+
+  globalEnv: Record<string, string> = {};
+
+  container?: Container;
 
   constructor(public run: Run, public config: Readonly<Config>) {
     const { jobId, job, workflow } = run;
