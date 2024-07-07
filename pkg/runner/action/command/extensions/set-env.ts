@@ -26,6 +26,7 @@ const commandExtension: CommandExtension = {
     }
 
     const envKey = actionCommand.properties[ENV_KEY];
+
     if (!envKey) {
       throw new Error("Required field 'name' is missing in ##[set-env] command.");
     }
@@ -36,6 +37,7 @@ const commandExtension: CommandExtension = {
     }
 
     const assign = runner.container?.isCaseSensitive ? Object.assign : assignIgnoreCase;
+
     assign(runner.context.env, { [envKey]: actionCommand.data });
     assign(runner.globalEnv, { [envKey]: actionCommand.data });
   },

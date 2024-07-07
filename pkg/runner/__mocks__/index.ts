@@ -5,6 +5,7 @@ import Run from '@/pkg/workflow/plan/run';
 vi.mock('@/pkg/workflow');
 
 const workflow = Workflow.Read(`${__dirname}/anything.yaml`);
+// todo: Run 是否需要优化？
 const run = new Run(Object.keys(workflow.jobs)[0], workflow);
 
 const runner = new Runner(run, {});

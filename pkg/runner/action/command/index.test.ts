@@ -2,8 +2,8 @@
 import ActionCommand from '.';
 
 describe('ActionCommand.Parser Test', () => {
-  const commands = new Set(['do-something']);
-  const arrange = [
+  const commands = new Set(['do-something', 'set-env']);
+  const arrange: any = [
     {
       message: '::do-something k1=v1,::msg',
       commands,
@@ -65,6 +65,15 @@ describe('ActionCommand.Parser Test', () => {
     {
       message: '   >>>   ::do-something k1=v1,::msg',
       commands,
+    },
+    {
+      message: '::set-env name=name,::sobird',
+      commands,
+      command: 'set-env',
+      properties: {
+        name: 'name',
+      },
+      data: 'sobird',
     },
   ];
 

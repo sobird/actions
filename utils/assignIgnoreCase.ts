@@ -1,4 +1,4 @@
-export function assignIgnoreCase(...sources: Record<string, unknown>[]) {
+export function assignIgnoreCase(target: Record<string, unknown>, ...sources: Record<string, unknown>[]) {
   const foldKeys = new Map<string, string>();
 
   const toKey = (key: string) => {
@@ -11,9 +11,10 @@ export function assignIgnoreCase(...sources: Record<string, unknown>[]) {
     return key;
   };
 
-  const target: Record<string, unknown> = {};
+  // const target: Record<string, unknown> = {};
   sources.forEach((source) => {
     Object.keys(source).forEach((key) => {
+      // eslint-disable-next-line no-param-reassign
       target[toKey(key)] = source[key];
     });
   });

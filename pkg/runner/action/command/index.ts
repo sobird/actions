@@ -9,14 +9,10 @@
  */
 
 class ActionCommand {
-  // properties: Record<string, string> = {};
-
-  data: string = '';
-
   constructor(
     public readonly command: string,
     public readonly properties: Record<string, string> = {},
-    public readonly message: string = '',
+    public readonly data: string = '',
   ) {}
 
   toString(): string {
@@ -41,7 +37,7 @@ class ActionCommand {
       }
     }
 
-    cmdStr += `${ActionCommand.CommandKey}${ActionCommand.EscapeData(this.message)}`;
+    cmdStr += `${ActionCommand.CommandKey}${ActionCommand.EscapeData(this.data)}`;
     return cmdStr;
   }
 
