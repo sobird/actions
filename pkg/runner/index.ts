@@ -8,6 +8,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
+import Constants from '@/pkg/common/constants';
 import Git from '@/pkg/common/git';
 import type { Config } from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
@@ -33,26 +34,33 @@ class Runner {
 
   container?: Container;
 
+  echoOnActionCommand: boolean;
+
   constructor(public run: Run, public config: Readonly<Config>) {
     const { jobId, job, workflow } = run;
-    this.context = new Context(config.context);
+    const context = new Context(config.context);
 
     // github context
-    this.context.github.job = jobId;
-    this.context.github.workflow = workflow.name || workflow.file || '';
-    this.context.github.workflow_sha = workflow.sha || '';
+    context.github.job = jobId;
+    context.github.workflow = workflow.name || workflow.file || '';
+    context.github.workflow_sha = workflow.sha || '';
 
     // strategy context
-    this.context.strategy['fail-fast'] = job.strategy['fail-fast'];
-    this.context.strategy['max-parallel'] = job.strategy['max-parallel'];
-    this.context.strategy['job-index'] = job.index;
-    this.context.strategy['job-total'] = job.total;
+    context.strategy['fail-fast'] = job.strategy['fail-fast'];
+    context.strategy['max-parallel'] = job.strategy['max-parallel'];
+    context.strategy['job-index'] = job.index;
+    context.strategy['job-total'] = job.total;
 
     // matrix context
     const matrix = job.strategy.getMatrices()[0];
     if (matrix) {
-      this.context.matrix = matrix as Context['matrix'];
+      context.matrix = matrix as Context['matrix'];
     }
+
+    // Initialize 'echo on action command success' property, default to false, unless Step_Debug is set
+    this.echoOnActionCommand = context.secrets[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || context.vars[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || false;
+
+    this.context = context;
   }
 
   executor() {
@@ -277,6 +285,10 @@ class Runner {
 
   setJobContext(job: Context['job']) {
     //
+  }
+
+  output() {
+    // todo something
   }
 }
 

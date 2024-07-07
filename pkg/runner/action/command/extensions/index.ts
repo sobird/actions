@@ -5,7 +5,7 @@ import ActionCommand from '..';
 
 export interface CommandExtension {
   command: string;
-  omitEcho: boolean;
+  echo: boolean;
   main: (runner: Runner, actionCommand: ActionCommand) => void
 }
 

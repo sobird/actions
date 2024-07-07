@@ -54,14 +54,14 @@ class ActionCommandManager {
       return true;
     } else if (extensions[actionCommand.command]) {
       const extension = extensions[actionCommand.command];
-      if (this.runner.EchoOnActionCommand && !extension.omitEcho) {
+      if (this.runner.echoOnActionCommand && extension.echo) {
         // context.Output(input);
         console.log(line);
       }
       try {
         extension.main(this.runner, actionCommand);
       } catch (err) {
-        const commandInformation = extension.omitEcho ? extension.command : line;
+        const commandInformation = extension.echo ? line : extension.command;
         const message = `Unable to process command '${commandInformation}' successfully.`;
         console.error(message);
         console.error(err);
@@ -80,14 +80,9 @@ class ActionCommandManager {
 
   validateStopToken(stopToken: string) {
     const { AllowUnsupportedStopCommandTokens } = Constants.Variables.Actions;
-    let allowUnsecureStopCommandTokens = Boolean(process.env[AllowUnsupportedStopCommandTokens]);
-    if (!allowUnsecureStopCommandTokens && Object.hasOwnProperty.call(this.runner.context.env, AllowUnsupportedStopCommandTokens)) {
-      allowUnsecureStopCommandTokens = Boolean(this.runner.context.env[AllowUnsupportedStopCommandTokens]);
-    }
+    const allowUnsecureStopCommandTokens = process.env[AllowUnsupportedStopCommandTokens]?.toLowerCase() === 'true' || this.runner.context.env[AllowUnsupportedStopCommandTokens]?.toLowerCase() === 'true' || false;
 
-    const isTokenInvalid = this.registeredCommands.has(stopToken)
-                       || !stopToken
-                       || stopToken.toLowerCase() === 'pause-logging';
+    const isTokenInvalid = this.registeredCommands.has(stopToken) || !stopToken || stopToken.toLowerCase() === 'pause-logging';
 
     if (isTokenInvalid) {
       const message = `Invoked ::stopCommand:: with token: [${stopToken}]`;

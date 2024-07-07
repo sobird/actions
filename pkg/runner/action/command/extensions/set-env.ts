@@ -10,16 +10,10 @@ const SetEnvBlockList = ['NODE_OPTIONS'];
 
 const commandExtension: CommandExtension = {
   command: 'set-env',
-  omitEcho: false,
+  echo: true,
   main(runner, actionCommand) {
-    let allowUnsecureCommands = false;
-    if (process.env.ACTIONS_ALLOW_UNSECURE_COMMANDS === 'true') {
-      allowUnsecureCommands = true;
-    }
-
-    if (runner.context.env.ACTIONS_ALLOW_UNSECURE_COMMANDS === 'true') {
-      allowUnsecureCommands = true;
-    }
+    const { AllowUnsupportedCommands } = Constants.Variables.Actions;
+    const allowUnsecureCommands = process.env[AllowUnsupportedCommands]?.toLowerCase() === 'true' || runner.context.env[AllowUnsupportedCommands]?.toLowerCase() === 'true' || false;
 
     if (!allowUnsecureCommands) {
       throw new Error(util.format(Constants.Runner.UnsupportedCommandMessageDisabled, this.command));
@@ -33,6 +27,7 @@ const commandExtension: CommandExtension = {
 
     if (SetEnvBlockList.includes(envKey.toUpperCase())) {
       console.log(`Can't update ${envKey} environment variable using ::set-env:: command.`);
+      // AddIssue
       return;
     }
 

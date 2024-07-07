@@ -7,12 +7,36 @@ vi.mock('@/pkg/runner');
 const runner: Runner = new (Runner as any)();
 const commandManager = new ActionCommandManager(runner);
 
-process.env.ACTIONS_ALLOW_UNSECURE_COMMANDS = 'true';
+beforeEach(() => {
+  runner.context.env = {};
+});
 
-commandManager.process('::set-env name=name,::sobird');
+describe('action command manager ::set-env:: test', () => {
+  it('set-env (ACTIONS_ALLOW_UNSECURE_COMMANDS = false)', () => {
+    commandManager.process('::set-env name=name,::sobird');
 
-console.log('runner', runner.context.env);
+    expect(runner.context.env).toEqual({});
+  });
 
-describe('d', () => {
-  //
+  it('set-env (ACTIONS_ALLOW_UNSECURE_COMMANDS = true)', () => {
+    process.env.ACTIONS_ALLOW_UNSECURE_COMMANDS = 'true';
+    commandManager.process('::set-env name=name,::sobird');
+
+    expect(runner.context.env).toEqual({ name: 'sobird' });
+  });
+
+  it('set-env field name not provided', () => {
+    process.env.ACTIONS_ALLOW_UNSECURE_COMMANDS = 'true';
+    commandManager.process('::set-env unknown=name,::sobird');
+
+    expect(runner.context.env).toEqual({});
+  });
+
+  it('set-env BlockList ', () => {
+    process.env.ACTIONS_ALLOW_UNSECURE_COMMANDS = 'true';
+    runner.echoOnActionCommand = true;
+    commandManager.process('::set-env name=NODE_OPTIONS,::sobird');
+
+    expect(runner.context.env).toEqual({});
+  });
 });
