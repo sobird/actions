@@ -9,6 +9,7 @@ export interface CommandExtension {
   main: (runner: Runner, actionCommand: ActionCommand) => void
 }
 
+// todo add more
 export default {
   [SetEnv.command]: SetEnv,
 };

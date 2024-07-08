@@ -163,8 +163,8 @@ export const runCommand = new Command('run')
       logger.info('Using first detected workflow event for filtering: %s', events[0]);
       [eventName] = events;
     } else {
-      logger.debug('Using default workflow event: push');
-      eventName = 'push';
+      // logger.debug('Using default workflow event: push');
+      // eventName = 'push';
     }
 
     if (options.job) {
