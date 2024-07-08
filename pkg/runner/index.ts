@@ -115,6 +115,7 @@ class Runner {
       return new Executor(async () => {
         console.log(`${this.run.name} - step:`, step.getName());
         console.log('step uses:', step.uses);
+        console.log('step env:', step.getEnv());
 
         await asyncFunction(250);
         console.log('');
@@ -220,6 +221,7 @@ class Runner {
       if (this.config.skipCheckout) {
         return this.reusableWorkflowExecutor(uses);
       }
+      // remote resuable workflow
       const { repository, sha, server_url: serverUrl } = this.context.github;
       reusable.url = serverUrl;
       reusable.repository = repository;
@@ -287,8 +289,9 @@ class Runner {
     //
   }
 
-  output() {
+  output(message: string) {
     // todo something
+    process.stdout.write(message + os.EOL);
   }
 }
 

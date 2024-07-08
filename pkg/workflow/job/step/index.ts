@@ -167,8 +167,8 @@ class Step {
     this.run = step.run;
     this['working-directory'] = step['working-directory'];
     this.shell = step.shell;
-    this.with = step.with;
-    this.env = step.env;
+    this.with = step.with || {};
+    this.env = step.env || {};
     this['continue-on-error'] = step['continue-on-error'];
     this['timeout-minutes'] = step['timeout-minutes'];
   }

@@ -67,6 +67,8 @@ class Constants {
   public static readonly Runner = Runner;
 
   public static readonly Variables = Variables;
+
+  public static readonly CompositeActionsMaxDepth = 9;
 }
 
 export default Constants;
