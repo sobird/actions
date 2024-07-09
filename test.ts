@@ -1,3 +1,4 @@
+import { UUID, randomUUID } from 'node:crypto';
 import os from 'node:os';
 import util from 'node:util';
 
@@ -9,3 +10,5 @@ const message = util.format('Hello, %s! You are %d years old.', 'Alice', 30);
 
 process.stdin.write(message + os.EOL);
 process.stdout.write(message + os.EOL);
+
+console.log('UUID', randomUUID());

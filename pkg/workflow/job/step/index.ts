@@ -4,6 +4,8 @@
  * sobird<i@sobird.me> at 2024/05/02 18:29:27 created.
  */
 
+import { UUID, randomUUID } from 'node:crypto';
+
 /**
  * describes what type of step we are about to run
  */
@@ -16,6 +18,8 @@ export enum StepType {
 }
 
 class Step {
+  #uuid: UUID;
+
   /**
    * A unique identifier for the step.
    *
@@ -160,6 +164,7 @@ class Step {
   #number: number = 0;
 
   constructor(step: Step) {
+    this.#uuid = randomUUID();
     this.id = step.id;
     this.if = step.if;
     this.name = step.name;
@@ -171,6 +176,10 @@ class Step {
     this.env = step.env || {};
     this['continue-on-error'] = step['continue-on-error'];
     this['timeout-minutes'] = step['timeout-minutes'];
+  }
+
+  get uuid() {
+    return this.#uuid;
   }
 
   set number(number: number) {

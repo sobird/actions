@@ -1,0 +1,48 @@
+name: ubuntu-latest debug
+run-name: ubuntu-latest-${{ github.actor }}
+on:
+  workflow_dispatch:
+
+jobs:
+  debug-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: print env
+        run: env
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: docker (Docker Packages Container registry)
+        uses: docker://alpine:latest
+        with:
+          entrypoint: /bin/echo
+          args: The ${{ github.event_name }} event triggered this step.
+
+      # - name: github (Github Packages Container registry)
+      #   uses: docker://ghcr.io/alpinejs/alpine
+      
+      - name: Hello world action step
+        id: hello_javascript
+        uses: ./.github/actions/hello-world-javascript-action
+        with:
+          who-to-greet: 'javascript action step'
+      - name: Get the output time
+        run: echo "The time was ${{ steps.hello_javascript.outputs.time }}"
+
+      - name: Hello world docker action step
+        id: hello_docker
+        uses: ./.github/actions/hello-world-docker-action
+        with:
+          who-to-greet: 'docker action step'
+      - name: Get the output time
+        run: echo "The time was ${{ steps.hello_docker.outputs.time }}"
+      
+      - name: Hello world composite action step
+        id: hello_composite
+        uses: ./.github/actions/hello-world-composite-action
+        with:
+          who-to-greet: 'composite action step'
+      - run: echo random-number "$RANDOM_NUMBER"
+        shell: bash
+        env:
+          RANDOM_NUMBER: ${{ steps.hello_composite.outputs.random-number }}
