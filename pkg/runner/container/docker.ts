@@ -32,6 +32,7 @@ interface ContainerCreateInputs extends ContainerCreateOptions {
   authconfig?: AuthConfig;
 }
 
+const hashFilesDir = 'bin/hashFiles';
 class Docker extends Container {
   static docker = docker;
 
@@ -97,7 +98,7 @@ class Docker extends Container {
       new Executor(() => {
         //
       }),
-    ).finally(this.put('', 'pkg/expression/hashFiles/index.cjs'));
+    ).finally(this.put(hashFilesDir, 'pkg/expression/hashFiles/index.cjs'));
   }
 
   stop() {
@@ -572,11 +573,20 @@ class Docker extends Container {
   }
 
   hashFiles(...patterns: string[]) {
+    const followSymlink = patterns[0] === '--follow-symbolic-links';
+    if (followSymlink) {
+      patterns.shift();
+    }
+
     const env = {
       patterns: patterns.join('\n'),
     };
 
-    const { stderr } = this.spawnSync('node', ['spawnSync'], { env });
+    const { containerCreateInputs: { WorkingDir = '' } } = this;
+
+    const hashFilesScript = path.resolve(WorkingDir, hashFilesDir, 'index.cjs');
+
+    const { stderr } = this.spawnSync('node', [hashFilesScript], { env, workdir: WorkingDir });
 
     const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
     if (matches && matches.length > 0) {

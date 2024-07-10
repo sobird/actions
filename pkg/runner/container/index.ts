@@ -35,6 +35,7 @@ export default abstract class Container {
 
   environment = 'github-hosted';
 
+  /** 上传文件/目录 */
   abstract put(destination: string, source: string, useGitIgnore: boolean): Executor;
   abstract putContent(destination: string, ...files: FileEntry[]): Executor;
   abstract putArchive(destination: string, readStream: NodeJS.ReadableStream): Promise<void>;

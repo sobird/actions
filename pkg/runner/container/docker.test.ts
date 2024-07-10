@@ -14,7 +14,7 @@ const Env = ['RUNNER_TOOL_CACHE=/opt/hostedtoolcache', 'RUNNER_OS=Linux', 'RUNNE
 const containerCreateOptions: ContainerCreateOptions = {
   Cmd: [],
   Entrypoint: ['/bin/sleep', '3600'],
-  WorkingDir: '/root',
+  WorkingDir: '/home/runner',
   Image: 'node:lts-slim',
   name: 'node-lts-slim',
   Env,
@@ -24,6 +24,8 @@ const containerCreateOptions: ContainerCreateOptions = {
     UsernsMode: '',
   },
   platform: '',
+
+  // StopTimeout: 30,
 };
 
 const docker = new Docker(containerCreateOptions);
@@ -117,8 +119,12 @@ describe('test Docker Container', () => {
   });
 
   it('container spawnSync printenv test case', async () => {
-    const executor = docker.put('hashFiles', 'pkg/expression/hashFiles/index.cjs');
-    await executor.execute();
+    const { stdout } = docker.spawnSync('printenv', ['spawnSync'], { env: { spawnSync: 'sobird' } });
+
+    expect(stdout).toBe(`sobird${os.EOL}`);
+  });
+
+  it('container hashFiles test case', async () => {
     const putContentExecutor = docker.putContent('', {
       name: 'package.json',
       mode: 0o777,
@@ -126,14 +132,28 @@ describe('test Docker Container', () => {
     });
     await putContentExecutor.execute();
 
-    const { stdout } = docker.spawnSync('printenv', ['spawnSync'], { env: { spawnSync: 'sobird' } });
+    const hash = docker.hashFiles('package.json');
 
-    expect(stdout).toBe(`sobird${os.EOL}`);
+    expect(hash.length).toBe(64);
   });
 
   it('container parseEnvFile test case', async () => {
-    const envObj = await docker.parseEnvFile('print_message.sh');
-    console.log('envObj', envObj);
+    const putContentExecutor = docker.putContent('', {
+      name: 'env',
+      mode: 0o777,
+      body: `
+      name=sobird
+      hello=world
+      `,
+    });
+    await putContentExecutor.execute();
+
+    const envObj = await docker.parseEnvFile('env');
+
+    expect(envObj).toEqual({
+      name: 'sobird',
+      hello: 'world',
+    });
 
     const image = Docker.docker.getImage('node:lts-slim');
     const imageInspectInfo = await image.inspect();

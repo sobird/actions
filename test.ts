@@ -1,4 +1,5 @@
 import cp, { SpawnSyncOptions } from 'node:child_process';
+import path from 'node:path';
 
 import { ContainerExecOptions } from './pkg/runner/container';
 
@@ -29,6 +30,9 @@ export function spawnSync(command: string, args: string[], options: ContainerExe
   return cp.spawnSync('docker', dockerArgs);
 }
 
-const { stdout, stderr } = spawnSync('node', ['hashFiles/index.cjs'], { env: { sobird: 'sobird', patterns: 'print_message.sh' }, cwd: '/root' });
-console.log('result', stdout.toString());
-console.log('result', stderr.toString());
+// const { stdout, stderr } = spawnSync('node', ['hashFiles/index.cjs'], { env: { sobird: 'sobird', patterns: 'print_message.sh' }, cwd: '/root' });
+// console.log('result', stdout.toString());
+// console.log('result', stderr.toString());
+
+const info = path.parse('pkg/expression/hashFiles/index.cjs');
+console.log('info', info);
