@@ -53,6 +53,12 @@ class Expression<T> {
           ...availability,
           hashFiles: this.hashFiles,
         });
+        if (output === 'true') {
+          return true;
+        }
+        if (output === 'false') {
+          return false;
+        }
         return output;
       }
 

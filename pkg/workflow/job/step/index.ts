@@ -6,6 +6,8 @@
 
 import { UUID, randomUUID } from 'node:crypto';
 
+import Expression from '@/pkg/expression';
+
 /**
  * describes what type of step we are about to run
  */
@@ -15,6 +17,16 @@ export enum StepType {
   UsesActionLocal, // 所有具有指向子目录中本地Action的 'uses' 的步骤
   UsesActionRemote, // 所有具有指向GitHub仓库中Action的 'uses' 的步骤
   Invalid, // 所有具有无效步骤动作的步骤
+}
+
+export interface StepProps extends Pick<Step, 'id' | 'uses' | 'shell' | 'with'> {
+  if: string;
+  name: string;
+  run: string;
+  'working-directory': string;
+  env: Record<string, string>;
+  'continue-on-error': boolean;
+  'timeout-minutes': string;
 }
 
 class Step {
@@ -44,12 +56,12 @@ class Step {
    * if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
    * ```
    */
-  if: string;
+  if: Expression<StepProps['if']>;
 
   /**
    * A name for your step to display on GitHub.
    */
-  name: string;
+  name: Expression<StepProps['name']>;
 
   /**
    * Selects an action to run as part of a step in your job. An action is a reusable unit of code.
@@ -91,7 +103,7 @@ class Step {
    *       npm run build
    * ```
    */
-  run: string;
+  run: Expression<StepProps['run']>;
 
   /**
    * Using the `working-directory` keyword, you can specify the working directory of where to run the command.
@@ -99,7 +111,7 @@ class Step {
    * Alternatively, you can specify a default working directory for all run steps in a job, or for all run steps in the entire workflow.
    * For more information, see "${@link https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions#defaultsrunworking-directory `defaults.run.working-directory`}" and "{@link https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_iddefaultsrunworking-directory `jobs.<job_id>.defaults.run.working-directory`}."
    */
-  'working-directory': string;
+  'working-directory': Expression<StepProps['working-directory']>;
 
   /**
    * You can override the default shell settings in the runner's operating system and the job's default using the `shell` keyword.
@@ -149,33 +161,64 @@ class Step {
    * If you are setting a secret or sensitive value, such as a password or token,
    * you must set secrets using the secrets context. For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/contexts Contexts}."
    */
-  env: Record<string, string>;
+  env: Expression<StepProps['env']>;
 
   /**
    * Prevents a job from failing when a step fails. Set to true to allow a job to pass when this step fails.
    */
-  'continue-on-error': boolean;
+  'continue-on-error': Expression<StepProps['continue-on-error']>;
 
   /**
    * The maximum number of minutes to run the step before killing the process.
    */
-  'timeout-minutes': boolean;
+  'timeout-minutes': Expression<StepProps['timeout-minutes']>;
 
   #number: number = 0;
 
-  constructor(step: Step) {
+  constructor(step: StepProps) {
     this.#uuid = randomUUID();
     this.id = step.id;
-    this.if = step.if;
-    this.name = step.name;
+    this.if = new Expression(
+      step.if,
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'steps', 'inputs'],
+      ['always', 'cancelled', 'success', 'failure', 'hashFiles'],
+    );
+    this.name = new Expression(
+      step.name,
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
+      ['hashFiles'],
+    );
+
     this.uses = step.uses;
-    this.run = step.run;
-    this['working-directory'] = step['working-directory'];
+
+    this.run = new Expression(
+      step.run,
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
+      ['hashFiles'],
+    );
+
+    this['working-directory'] = new Expression(
+      step['working-directory'],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
+      ['hashFiles'],
+    );
     this.shell = step.shell;
     this.with = step.with || {};
-    this.env = step.env || {};
-    this['continue-on-error'] = step['continue-on-error'];
-    this['timeout-minutes'] = step['timeout-minutes'];
+    this.env = new Expression(
+      step.env || {},
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
+      ['hashFiles'],
+    );
+    this['continue-on-error'] = new Expression(
+      step['continue-on-error'],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
+      ['hashFiles'],
+    );
+    this['timeout-minutes'] = new Expression(
+      step['timeout-minutes'],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
+      ['hashFiles'],
+    );
   }
 
   get uuid() {

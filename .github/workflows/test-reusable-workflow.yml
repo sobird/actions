@@ -53,7 +53,8 @@ jobs:
         uses: ./.github/actions/hello-world-composite-action
         with:
           who-to-greet: 'composite action step'
-      - run: echo random-number "$RANDOM_NUMBER"
+      - if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        run: echo random-number "$RANDOM_NUMBER"
         shell: bash
         env:
           RANDOM_NUMBER: ${{ steps.hello_composite.outputs.random-number }}
