@@ -53,6 +53,7 @@ class Expression<T> {
           ...availability,
           hashFiles: this.hashFiles,
         });
+        console.log('output', output);
         if (output === 'true') {
           return true;
         }

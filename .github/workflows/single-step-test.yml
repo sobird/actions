@@ -1,0 +1,13 @@
+name: single-step-test
+run-name: single-step-test-${{ github.actor }}
+on:
+  push:
+
+jobs:
+  single-step-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: print env
+        run: env
+      - name: Checkout
+        uses: actions/checkout@v4

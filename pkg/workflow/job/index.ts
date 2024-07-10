@@ -41,8 +41,9 @@ export enum JobType {
   Invalid,
 }
 
-export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | 'if' | 'outputs' | 'steps' | 'timeout-minutes' | 'strategy' | 'services' | 'uses' | 'with' | 'secrets'> {
+export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | 'outputs' | 'steps' | 'timeout-minutes' | 'strategy' | 'services' | 'uses' | 'with' | 'secrets'> {
   id?: string;
+  if: string;
   'runs-on': string | string[] | { group: string;labels: string; };
   concurrency: Concurrency;
   container: ContainerProps;
@@ -125,7 +126,7 @@ class Job {
    * if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
    * ```
    */
-  if?: string | boolean;
+  if: Expression<JobProps['if']>;
 
   /**
    * Use `jobs.<job_id>.runs-on` to define the type of machine to run the job on.
@@ -385,7 +386,11 @@ class Job {
     this.name = job.name;
     this.permissions = job.permissions;
     this.needs = job.needs;
-    this.if = job.if;
+    this.if = new Expression(
+      job.if || 'success()',
+      ['github', 'needs', 'vars', 'inputs'],
+      ['always', 'cancelled', 'success', 'failure'],
+    );
     this['runs-on'] = new Expression(job['runs-on'], ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
     this.environment = new Environment(job.environment);
     this.concurrency = new Expression(job.concurrency, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);

@@ -67,7 +67,13 @@ class Runner {
     const { job, workflow } = this.run;
     const jobExecutor = this.jobExecutor();
 
+    console.log('runner executor start:');
+
     return new Executor(async () => {
+      if (!this.enabled) {
+        return;
+      }
+
       await asyncFunction(500);
 
       console.log('job', job === Object.entries(workflow.jobs)[0][1]);
@@ -229,6 +235,19 @@ class Runner {
   output(message: string) {
     // todo something
     process.stdout.write(message + os.EOL);
+  }
+
+  get enabled() {
+    const { job } = this.run;
+    const jobIf = job.if.evaluate(this);
+    console.log('jobIf', jobIf);
+
+    if (!jobIf) {
+      console.error(`Skipping job '${job.name}' due to '${job.if}'`);
+      return false;
+    }
+
+    return true;
   }
 }
 
