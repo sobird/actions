@@ -116,6 +116,21 @@ describe('test Docker Container', () => {
     await execExecutor.execute();
   });
 
+  it('container spawnSync printenv test case', async () => {
+    const executor = docker.put('hashFiles', 'pkg/expression/hashFiles/index.cjs');
+    await executor.execute();
+    const putContentExecutor = docker.putContent('', {
+      name: 'package.json',
+      mode: 0o777,
+      body: 'test content',
+    });
+    await putContentExecutor.execute();
+
+    const { stdout } = docker.spawnSync('printenv', ['spawnSync'], { env: { spawnSync: 'sobird' } });
+
+    expect(stdout).toBe(`sobird${os.EOL}`);
+  });
+
   it('container parseEnvFile test case', async () => {
     const envObj = await docker.parseEnvFile('print_message.sh');
     console.log('envObj', envObj);
@@ -125,5 +140,6 @@ describe('test Docker Container', () => {
 
     const env = dotenv.parse(imageInspectInfo.Config.Env.join('\n'));
     console.log('env', env);
+    console.log('container id:', docker.container?.id);
   });
 });

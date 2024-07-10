@@ -11,3 +11,5 @@ jobs:
         run: env
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          key: ${{ runner.os }}-yarn-${{ hashFiles('package.json') }}

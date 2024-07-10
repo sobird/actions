@@ -28,7 +28,15 @@ _.templateSettings.imports = {
 };
 
 class Expression<T> {
-  constructor(public source: T, public scopes: string[], public specials: string[] = []) {}
+  type: string = 'job';
+
+  constructor(
+    public source: T,
+    public scopes: string[],
+    public specials: string[] = [],
+    public defaultValue: unknown = undefined,
+    public isIf: boolean = false,
+  ) {}
 
   evaluate(runner: Runner): T {
     const { context } = runner;
@@ -43,7 +51,11 @@ class Expression<T> {
         return source;
       }
       if (typeof source === 'string') {
-        const expression = source.replace(/((?:\w+\.)*?\w+)\.\*\.(\w+)/g, "objectFilter($1, '$2')");
+        let expression = source;
+        if (this.isIf && (!source.includes('${{') || !source.includes('}}'))) {
+          expression = `\${{ ${source} }}`;
+        }
+        expression = expression.replace(/((?:\w+\.)*?\w+)\.\*\.(\w+)/g, "objectFilter($1, '$2')");
         const availability = _.pick(context, ...this.scopes);
 
         // expression = this.getHashFilesFunction(expression);
@@ -51,9 +63,9 @@ class Expression<T> {
         const template = _.template(expression);
         const output = template({
           ...availability,
-          hashFiles: this.hashFiles,
+          ...this.getSpecialFunctions(runner),
         });
-        console.log('output', output);
+
         if (output === 'true') {
           return true;
         }
@@ -77,7 +89,7 @@ class Expression<T> {
       return output;
     };
 
-    return interpret(this.source);
+    return interpret(this.source || this.defaultValue);
   }
 
   toString() {
@@ -88,45 +100,71 @@ class Expression<T> {
     return this.source;
   }
 
-  private getHashFilesFunction(source: string) {
-    const regexp = /\bhashFiles\s*\(([^)]*)\)/g;
-    return source.replaceAll(regexp, (...match) => {
-      const paramstr = match[1].replace(/'/g, '"');
-      const patterns = JSON.parse(`[${paramstr}]`);
-
-      const hash = this.hashFiles(...patterns);
-
-      return JSON.stringify(hash);
-    });
-  }
-
-  // todo
-  hashFiles(...patterns: string[]) {
-    const env = {
-      ...process.env,
-      patterns: patterns.join('\n'),
-    };
-
-    const command = '/Users/sobird/act-runner/pkg/expression/hashFiles/index.cjs';
-    const { stdout, stderr } = spawnSync('node', [command], { env, encoding: 'utf8' });
-    console.log('stdout', stdout);
-    const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
-    if (matches && matches.length > 0) {
-      return matches[0].slice(10, -10);
-    }
-  }
-
-  private static JobSuccess(runner: Runner) {
-    const { workflow, job } = runner.run;
-    const jobNeeds = this.JobNeedsTransitive(job, runner);
-
-    for (const need of jobNeeds) {
-      if (workflow.jobs[need].result !== 'success') {
-        return false;
+  getSpecialFunctions(runner: Runner) {
+    const fns: Record<string, Function> = {};
+    this.specials.forEach((name) => {
+      switch (name) {
+        case 'hashFiles':
+          fns.hashFiles = Expression.CreateHashFilesFunction(runner);
+          break;
+        case 'success':
+          if (this.type === 'job') {
+            fns.success = Expression.CreateJobSuccess(runner);
+          } else if (this.type === 'step') {
+            fns.success = Expression.CreateStepSuccess(runner);
+          }
+          break;
+        case 'failure':
+          if (this.type === 'job') {
+            fns.success = Expression.CreateJobFailure(runner);
+          } else if (this.type === 'step') {
+            fns.success = Expression.CreateStepFailure(runner);
+          }
+          break;
+        case 'cancelled':
+          fns.cancelled = Expression.CreateCancelled(runner);
+          break;
+        default:
       }
-    }
+    });
 
-    return true;
+    return fns;
+  }
+
+  // todo use container exec
+  static CreateHashFilesFunction(runner: Runner) {
+    const regexp = /\bhashFiles\s*\(([^)]*)\)/g;
+    return (...patterns: string[]) => {
+      const env = {
+        ...process.env,
+        patterns: patterns.join('\n'),
+      };
+
+      runner.container?.spawnSync('dd');
+
+      const command = '/Users/sobird/act-runner/pkg/expression/hashFiles/index.cjs';
+      const { stdout, stderr } = runner.container?.spawnSync('node', [command], { env, encoding: 'utf8' });
+      console.log('stdout', stdout);
+      const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
+      if (matches && matches.length > 0) {
+        return matches[0].slice(10, -10);
+      }
+    };
+  }
+
+  private static CreateJobSuccess(runner: Runner) {
+    return () => {
+      const { workflow, job } = runner.run;
+      const jobNeeds = this.JobNeedsTransitive(job, runner);
+
+      for (const need of jobNeeds) {
+        if (workflow.jobs[need].result !== 'success') {
+          return false;
+        }
+      }
+
+      return true;
+    };
   }
 
   private static JobNeedsTransitive(job: Job, runner: Runner) {
@@ -142,29 +180,37 @@ class Expression<T> {
     return needs;
   }
 
-  static StepSuccess(runner: Runner) {
-    return runner.context.job.status === 'success';
+  static CreateStepSuccess(runner: Runner) {
+    return () => {
+      return runner.context.job.status === 'success';
+    };
   }
 
-  static JobFailure(runner: Runner) {
-    const { workflow, job } = runner.run;
-    const jobNeeds = this.JobNeedsTransitive(job, runner);
+  static CreateJobFailure(runner: Runner) {
+    return () => {
+      const { workflow, job } = runner.run;
+      const jobNeeds = this.JobNeedsTransitive(job, runner);
 
-    for (const need of jobNeeds) {
-      if (workflow.jobs[need].result === 'failure') {
-        return true;
+      for (const need of jobNeeds) {
+        if (workflow.jobs[need].result === 'failure') {
+          return true;
+        }
       }
-    }
 
-    return false;
+      return false;
+    };
   }
 
-  static StepFailure(runner: Runner) {
-    return runner.context.job.status === 'failure';
+  static CreateStepFailure(runner: Runner) {
+    return () => {
+      return runner.context.job.status === 'failure';
+    };
   }
 
-  static Cancelled(runner: Runner) {
-    return runner.context.job.status === 'cancelled';
+  static CreateCancelled(runner: Runner) {
+    return () => {
+      return runner.context.job.status === 'cancelled';
+    };
   }
 }
 

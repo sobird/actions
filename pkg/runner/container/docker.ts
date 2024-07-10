@@ -4,7 +4,7 @@
  * sobird<i@sobird.me> at 2024/06/24 15:21:27 created.
  */
 
-import cp from 'node:child_process';
+import cp, { SpawnSyncOptions } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
@@ -17,12 +17,13 @@ import {
 import dotenv from 'dotenv';
 import ignore from 'ignore';
 import log4js from 'log4js';
+import shellQuote from 'shell-quote';
 import * as tar from 'tar';
 
 import Executor, { Conditional } from '@/pkg/common/executor';
 import docker from '@/pkg/docker';
 
-import Container, { FileEntry, ExecOptions } from '.';
+import Container, { FileEntry, ExecOptions, ContainerExecOptions } from '.';
 
 const logger = log4js.getLogger();
 
@@ -96,13 +97,11 @@ class Docker extends Container {
       this.pull(),
       this.createContainer(),
       this.startContainer(),
-      this.processExecutor(),
-      // this.tryReadUID(),
-      // this.tryReadGID(),
+      this.info(),
       new Executor(() => {
         //
       }),
-    );
+    ).finally(this.put('', 'pkg/expression/hashFiles/index.cjs'));
   }
 
   stop() {
@@ -526,7 +525,7 @@ class Docker extends Container {
     return buffer.toString();
   }
 
-  processExecutor() {
+  info() {
     return new Executor(async () => {
       const { OSType, Architecture } = await docker.info();
       this.os = Container.Os(OSType);
@@ -540,6 +539,55 @@ class Docker extends Container {
     const imageInspectInfo = await image.inspect();
 
     const env = dotenv.parse(imageInspectInfo.Config.Env.join('\n'));
+  }
+
+  spawnSync(command: string, args: string[], options: ContainerExecOptions = {}) {
+    const { container } = this;
+    // if (!container) {
+    //   return;
+    // }
+    const {
+      env, workdir, privileged, user,
+    } = options;
+    const dockerArgs = ['exec'];
+    if (env) {
+      Object.entries(env).forEach(([key, value]) => {
+        dockerArgs.push('-e', `${key}=${value}`);
+      });
+    }
+
+    if (workdir) {
+      dockerArgs.push('-w', workdir);
+    }
+
+    if (privileged) {
+      dockerArgs.push('--privileged');
+    }
+
+    if (user) {
+      dockerArgs.push('-u', user);
+    }
+
+    dockerArgs.push(container!.id);
+    dockerArgs.push(command);
+    dockerArgs.push(...args);
+
+    return cp.spawnSync('docker', dockerArgs, { encoding: 'utf8' });
+  }
+
+  hashFiles(...patterns: string[]) {
+    const env = {
+      patterns: patterns.join('\n'),
+    };
+
+    const { stderr } = this.spawnSync('node', ['spawnSync'], { env });
+
+    const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
+    if (matches && matches.length > 0) {
+      return matches[0].slice(10, -10);
+    }
+
+    return '';
   }
 }
 

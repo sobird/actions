@@ -9,6 +9,9 @@ jobs:
     steps:
       - name: print env
         run: env
+      - run: ls -a /home
+      - run: ls -a /home/runner
+      - run: ls -a /home/runner/work
       - name: Checkout
         uses: actions/checkout@v4
 

@@ -67,7 +67,7 @@ class Runner {
     const { job, workflow } = this.run;
     const jobExecutor = this.jobExecutor();
 
-    console.log('runner executor start:');
+    console.log('runner executor start:', process.argv[1]);
 
     return new Executor(async () => {
       if (!this.enabled) {

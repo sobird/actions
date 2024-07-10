@@ -387,9 +387,11 @@ class Job {
     this.permissions = job.permissions;
     this.needs = job.needs;
     this.if = new Expression(
-      job.if || 'success()',
+      job.if,
       ['github', 'needs', 'vars', 'inputs'],
       ['always', 'cancelled', 'success', 'failure'],
+      'success()',
+      true,
     );
     this['runs-on'] = new Expression(job['runs-on'], ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
     this.environment = new Environment(job.environment);

@@ -1,12 +1,12 @@
 name: self-hosted debug
 run-name: self-hosted-${{ github.actor }}
 on:
-  push:
+  workflow_dispatch:
 
 jobs:
   debug-job:
     runs-on: self-hosted
-    container: ubuntu-latest
+    # container: ubuntu-latest
     steps:
       - name: print env
         run: env

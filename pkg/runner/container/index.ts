@@ -1,5 +1,7 @@
 /* eslint-disable class-methods-use-this */
 
+import { SpawnSyncReturns } from 'node:child_process';
+
 import dotenv from 'dotenv';
 import * as tar from 'tar';
 
@@ -17,12 +19,19 @@ export interface ExecOptions {
   workdir?: string;
 }
 
+export interface ContainerExecOptions {
+  env?: NodeJS.ProcessEnv;
+  privileged?: boolean;
+  workdir?: string;
+  user?: string;
+}
+
 export default abstract class Container {
   name = '';
 
-  os = '';
+  abstract os: string;
 
-  arch = '';
+  abstract arch: string;
 
   temp = '';
 
@@ -36,7 +45,10 @@ export default abstract class Container {
   abstract putContent(destination: string, ...files: FileEntry[]): Executor;
   abstract putArchive(destination: string, readStream: NodeJS.ReadableStream): Promise<void>;
   abstract getArchive(destination: string): Promise<NodeJS.ReadableStream>;
-  abstract exec(command: string[], options: ExecOptions): Executor;
+  abstract exec(command: string[], options: ContainerExecOptions): Executor;
+  abstract spawnSync(command: string, args: string[], options: ContainerExecOptions): SpawnSyncReturns<string> | undefined;
+  // hashFiles功能应由所在容器提供
+  abstract hashFiles(...patterns: string[]): string;
 
   async parseEnvFile(filename: string) {
     const archive = await this.getArchive(filename);
