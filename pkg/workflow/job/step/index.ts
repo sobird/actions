@@ -24,6 +24,24 @@ export interface StepProps extends Pick<Step, 'id' | 'uses' | 'shell' | 'with'> 
   name: string;
   run: string;
   'working-directory': string;
+  with: {
+    /**
+     * A `string` that defines the inputs for a Docker container.
+     * GitHub passes the `args` to the container's `ENTRYPOINT` when the container starts up.
+     * An `array of strings` is not supported by this parameter. A single argument that includes spaces should be surrounded by double quotes `""`.
+     */
+    args: string;
+    /**
+     * Overrides the Docker `ENTRYPOINT` in the `Dockerfile`, or sets it if one wasn't already specified.
+     * Unlike the Docker `ENTRYPOINT` instruction which has a shell and exec form,
+     * `entrypoint` keyword accepts only a single string defining the executable to be run.
+     *
+     * The `entrypoint` keyword is meant to be used with Docker container actions,
+     * but you can also use it with JavaScript actions that don't define any inputs.
+     */
+    entrypoint: string;
+    [key: string]: string;
+  };
   env: Record<string, string>;
   'continue-on-error': boolean;
   'timeout-minutes': string;
@@ -129,24 +147,7 @@ class Step {
    * Input parameters defined for a Docker container must use args.
    * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepswithargs `jobs.<job_id>.steps[*].with.args`}."
    */
-  with: {
-    /**
-     * A `string` that defines the inputs for a Docker container.
-     * GitHub passes the `args` to the container's `ENTRYPOINT` when the container starts up.
-     * An `array of strings` is not supported by this parameter. A single argument that includes spaces should be surrounded by double quotes `""`.
-     */
-    args: string;
-    /**
-     * Overrides the Docker `ENTRYPOINT` in the `Dockerfile`, or sets it if one wasn't already specified.
-     * Unlike the Docker `ENTRYPOINT` instruction which has a shell and exec form,
-     * `entrypoint` keyword accepts only a single string defining the executable to be run.
-     *
-     * The `entrypoint` keyword is meant to be used with Docker container actions,
-     * but you can also use it with JavaScript actions that don't define any inputs.
-     */
-    entrypoint: string;
-    [key: string]: string;
-  };
+  with: Expression<StepProps['with']>;
 
   /**
    * Sets variables for steps to use in the runner environment.
@@ -203,7 +204,11 @@ class Step {
       ['hashFiles'],
     );
     this.shell = step.shell;
-    this.with = step.with || {};
+    this.with = new Expression(
+      step.with || {},
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
+      ['hashFiles'],
+    );
     this.env = new Expression(
       step.env || {},
       ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],

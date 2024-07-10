@@ -118,77 +118,12 @@ class Runner {
         console.log(`${this.run.name} - step:`, step.getName());
         console.log('step uses:', step.uses);
         console.log('step env:', step.getEnv());
+        console.log('step with:', step.with.evaluate(this));
 
         await asyncFunction(250);
         console.log('');
       });
     });
-
-    // return Executor.Parallel(1, new Executor(async () => {
-    //   const entry = {
-    //     data: [this.name],
-    //     startTime: new Date(),
-    //     context: {
-    //       stage: '',
-    //       jobResult: '',
-    //       stepNumber: 0,
-    //       raw_output: true,
-    //       stepResult: '',
-    //     },
-    //   };
-
-    //   reporter.resetSteps(this.steps.length);
-
-    //   reporter.fire(entry);
-    //   await asyncFunction(1000);
-
-    //   for (const [index, step] of this.steps.entries()) {
-    //     const entry = {
-    //       data: [this.name, '-', step.name],
-    //       startTime: new Date(),
-    //       context: {
-    //         stage: 'Main',
-    //         jobResult: '',
-    //         stepNumber: index,
-    //         raw_output: true,
-    //         stepResult: '',
-    //       },
-    //     };
-
-    //     reporter.fire(entry);
-    //     reporter.log(this.name, '-', step.name);
-    //     // eslint-disable-next-line no-await-in-loop
-    //     await asyncFunction(500);
-    //     reporter.log(this.name, '-', step.name);
-    //     await asyncFunction(500);
-    //     console.log('index', index);
-    //     reporter.fire({
-    //       data: [this.name, '-', step.name],
-    //       startTime: new Date(),
-    //       context: {
-    //         stage: 'Main',
-    //         jobResult: '',
-    //         stepNumber: index,
-    //         raw_output: true,
-    //         stepResult: 'success',
-    //       },
-    //     });
-    //     await asyncFunction(500);
-    //   }
-
-    //   await asyncFunction(1000);
-    //   reporter.fire({
-    //     data: [this.name, 'post'],
-    //     startTime: new Date(),
-    //     context: {
-    //       stage: 'Post',
-    //       jobResult: 'success',
-    //       // stepNumber: index,
-    //       raw_output: true,
-    //       stepResult: 'success',
-    //     },
-    //   });
-    // }));
 
     return Executor.Pipeline(...jobStepsPipeline);
   }

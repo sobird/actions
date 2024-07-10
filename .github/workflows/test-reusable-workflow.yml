@@ -53,6 +53,7 @@ jobs:
         uses: ./.github/actions/hello-world-composite-action
         with:
           who-to-greet: 'composite action step'
+          key: ${{ runner.os }}-yarn-${{ hashFiles('package.json') }}
       - if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         run: echo random-number "$RANDOM_NUMBER"
         shell: bash
