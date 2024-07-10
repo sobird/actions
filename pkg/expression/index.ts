@@ -133,22 +133,8 @@ class Expression<T> {
 
   // todo use container exec
   static CreateHashFilesFunction(runner: Runner) {
-    const regexp = /\bhashFiles\s*\(([^)]*)\)/g;
     return (...patterns: string[]) => {
-      const env = {
-        ...process.env,
-        patterns: patterns.join('\n'),
-      };
-
-      runner.container?.spawnSync('dd');
-
-      const command = '/Users/sobird/act-runner/pkg/expression/hashFiles/index.cjs';
-      const { stdout, stderr } = runner.container?.spawnSync('node', [command], { env, encoding: 'utf8' });
-      console.log('stdout', stdout);
-      const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
-      if (matches && matches.length > 0) {
-        return matches[0].slice(10, -10);
-      }
+      return runner.container?.hashFiles(...patterns);
     };
   }
 

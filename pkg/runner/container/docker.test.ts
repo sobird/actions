@@ -99,10 +99,34 @@ describe('test Docker Container', () => {
   });
 
   it('get archive from container test case', async () => {
-    const tarball = await docker.getArchive('put-archive-test');
+    const archive = await docker.getArchive('put-archive-test');
 
-    const ws = fs.createWriteStream('tarball.tar');
-    tarball?.pipe(ws);
+    const extract = tar.t({ });
+    archive.pipe(extract);
+
+    const archiveFiles: any = [];
+    extract.on('entry', (entry) => {
+      let body = '';
+      entry.on('data', (chunk: Buffer) => {
+        body += chunk;
+      });
+      entry.on('end', () => {
+        if (entry.type === 'File') {
+          archiveFiles.push({
+            name: path.basename(entry.path),
+            body,
+          });
+        }
+      });
+    });
+
+    await new Promise((resolve) => {
+      extract.on('finish', () => {
+        resolve('');
+      });
+    });
+
+    expect(archiveFiles).toEqual(files);
   });
 
   it('container exec test case', async () => {
@@ -134,6 +158,11 @@ describe('test Docker Container', () => {
 
     const hash = docker.hashFiles('package.json');
 
+    expect(hash.length).toBe(64);
+  });
+
+  it('container hashFiles with --follow-symbolic-links test case', async () => {
+    const hash = docker.hashFiles('--follow-symbolic-links', 'package.json');
     expect(hash.length).toBe(64);
   });
 

@@ -4,8 +4,7 @@
  * sobird<i@sobird.me> at 2024/06/06 21:49:44 created.
  */
 
-/* eslint-disable no-await-in-loop */
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import fs, { CopySyncOptions } from 'node:fs';
 import path from 'node:path';
@@ -15,13 +14,15 @@ import * as tar from 'tar';
 
 import Executor from '@/pkg/common/executor';
 
-import Container, { FileEntry, ExecOptions } from '.';
+import Container, { FileEntry, ContainerExecOptions } from '.';
 
 interface HostedOptions {
   basedir: string;
   workdir?: string;
   stdout?: NodeJS.WritableStream;
 }
+
+const hashFilesDir = 'bin/hashFiles';
 
 class Hosted extends Container {
   #actPath: string;
@@ -33,6 +34,10 @@ class Hosted extends Container {
   tmpPath: string;
 
   tool_cache: string;
+
+  os = Container.Os(process.platform);
+
+  arch = Container.Arch(process.arch);
 
   constructor(public options: HostedOptions) {
     super();
@@ -55,9 +60,6 @@ class Hosted extends Container {
     [toolCache, actPath, tmpPath, workdir].forEach((dir) => {
       fs.mkdirSync(dir, { recursive: true });
     });
-
-    this.os = Container.Os(process.platform);
-    this.arch = Container.Arch(process.arch);
   }
 
   put(destination: string, source: string, useGitIgnore: boolean = false) {
@@ -130,7 +132,13 @@ class Hosted extends Container {
     return tar.create({ cwd: info.dir }, [info.base]) as unknown as NodeJS.ReadableStream;
   }
 
-  exec(command: string[], options: ExecOptions = {}) {
+  start() {
+    return new Executor(() => {
+
+    }).finally(this.put(hashFilesDir, 'pkg/expression/hashFiles/index.cjs'));
+  }
+
+  exec(command: string[], options: ContainerExecOptions = {}) {
     return new Executor(async () => {
       const workdir = this.resolve((options.workdir as string) || '');
 
@@ -192,9 +200,38 @@ class Hosted extends Container {
     fs.rmSync(this.rootdir, { recursive: true, force: true });
   }
 
-  resolve(dir: string) {
+  resolve(dir: string = '') {
     const { rootdir, workdir } = this;
     return path.isAbsolute(dir) ? path.join(rootdir, dir) : path.join(workdir, dir);
+  }
+
+  // spawnSync(command: string, args: string[], options: ContainerExecOptions = {}) {
+  //   return spawnSync(command, args, { encoding: 'utf8' });
+  // }
+
+  hashFiles(...patterns: string[]) {
+    const followSymlink = patterns[0] === '--follow-symbolic-links';
+    if (followSymlink) {
+      patterns.shift();
+    }
+
+    const env = {
+      ...process.env,
+      patterns: patterns.join('\n'),
+    };
+
+    const cwd = this.resolve();
+
+    const hashFilesScript = path.resolve(cwd, hashFilesDir, 'index.cjs');
+
+    const { stderr } = spawnSync('node', [hashFilesScript], { env, cwd, encoding: 'utf8' });
+
+    const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
+    if (matches && matches.length > 0) {
+      return matches[0].slice(10, -10);
+    }
+
+    return '';
   }
 }
 

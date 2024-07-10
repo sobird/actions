@@ -40,8 +40,9 @@ export default abstract class Container {
   abstract putContent(destination: string, ...files: FileEntry[]): Executor;
   abstract putArchive(destination: string, readStream: NodeJS.ReadableStream): Promise<void>;
   abstract getArchive(destination: string): Promise<NodeJS.ReadableStream>;
+  abstract start(): Executor;
   abstract exec(command: string[], options: ContainerExecOptions): Executor;
-  abstract spawnSync(command: string, args: string[], options: ContainerExecOptions): SpawnSyncReturns<string> | undefined;
+  // abstract spawnSync(command: string, args: string[], options: ContainerExecOptions): SpawnSyncReturns<string> | undefined;
   // hashFiles功能应由所在容器提供
   abstract hashFiles(...patterns: string[]): string;
 

@@ -16,12 +16,12 @@ const hosted = new Hosted({
 const files = [
   {
     name: 'test1.txt',
-    mode: 0o700,
+    // mode: 0o700,
     body: 'test1 content',
   },
   {
     name: 'test2.txt',
-    mode: 0o700,
+    // mode: 0o700,
     body: 'test2 content',
   },
 ];
@@ -40,6 +40,14 @@ afterAll(() => {
 });
 
 describe('test hosted container class', () => {
+  it('docker start container test case', async () => {
+    const executor = hosted.start();
+    await executor.execute();
+
+    // const id = hosted.container?.id;
+    // expect(id).not.toBeUndefined();
+  });
+
   it('hosted put file to container test case', async () => {
     const destination = 'put-file-test';
     const file = files[0];
@@ -105,14 +113,40 @@ describe('test hosted container class', () => {
 
   it('get archive to container test case', async () => {
     const destination = 'put-archive-test';
-
     const archive = await hosted.getArchive(destination);
+
+    const extract = tar.t({ });
+    archive.pipe(extract);
+
+    const archiveFiles: any = [];
+    extract.on('entry', (entry) => {
+      let body = '';
+      entry.on('data', (chunk: Buffer) => {
+        body += chunk;
+      });
+      entry.on('end', () => {
+        if (entry.type === 'File') {
+          archiveFiles.push({
+            name: path.basename(entry.path),
+            body,
+          });
+        }
+      });
+    });
+
+    await new Promise((resolve) => {
+      extract.on('finish', () => {
+        resolve('');
+      });
+    });
+
+    expect(archiveFiles).toEqual(files);
   });
 
-  it('toContainerPath test case', () => {
-    const containerPath = hosted.toContainerPath('/opt/workspace/test.txt');
-    // expect(containerPath).toBe(path.join(hosted.cwdPath, 'test.txt'));
-  });
+  // it('toContainerPath test case', () => {
+  //   const containerPath = hosted.toContainerPath('/opt/workspace/test.txt');
+  //   // expect(containerPath).toBe(path.join(hosted.cwdPath, 'test.txt'));
+  // });
 
   it('container exec test case', async () => {
     const body = fs.readFileSync(path.join(__dirname, '__mocks__/print_message.sh'), 'utf8');
@@ -123,12 +157,29 @@ describe('test hosted container class', () => {
     });
     await putContentExecutor.execute();
 
-    await hosted.exec(['./print_message.sh'], {
-      stdio: ['pipe'],
-    });
+    const execExecutor = hosted.exec(['./print_message.sh']);
+    await execExecutor.execute();
 
     // spawn.stdout.on('data', (data) => {
     //   console.log(`stdout: ${data}`);
     // });
+  });
+
+  it('container hashFiles test case', async () => {
+    const putContentExecutor = hosted.putContent('', {
+      name: 'package.json',
+      mode: 0o777,
+      body: 'test content',
+    });
+    await putContentExecutor.execute();
+
+    const hash = hosted.hashFiles('package.json');
+
+    expect(hash.length).toBe(64);
+  });
+
+  it('container hashFiles with --follow-symbolic-links test case', async () => {
+    const hash = hosted.hashFiles('--follow-symbolic-links', 'package.json');
+    expect(hash.length).toBe(64);
   });
 });

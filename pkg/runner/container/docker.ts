@@ -40,6 +40,10 @@ class Docker extends Container {
 
   network?: DockerNetwork;
 
+  os: string = '';
+
+  arch: string = '';
+
   constructor(
     public containerCreateInputs: ContainerCreateInputs,
     public networkCreateInputs: NetworkCreateOptions,
