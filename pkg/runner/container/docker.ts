@@ -4,7 +4,7 @@
  * sobird<i@sobird.me> at 2024/06/24 15:21:27 created.
  */
 
-import cp, { SpawnSyncOptions } from 'node:child_process';
+import cp from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
@@ -23,7 +23,7 @@ import * as tar from 'tar';
 import Executor, { Conditional } from '@/pkg/common/executor';
 import docker from '@/pkg/docker';
 
-import Container, { FileEntry, ExecOptions, ContainerExecOptions } from '.';
+import Container, { FileEntry, ContainerExecOptions } from '.';
 
 const logger = log4js.getLogger();
 
@@ -38,10 +38,6 @@ class Docker extends Container {
   container?: DockerContainer;
 
   network?: DockerNetwork;
-
-  // uid: number = 0;
-
-  // gid: number = 0;
 
   constructor(
     public containerCreateInputs: ContainerCreateInputs,
@@ -459,7 +455,7 @@ class Docker extends Container {
     });
   }
 
-  exec(command: string[], inputs: ExecOptions = {}) {
+  exec(command: string[], inputs: ContainerExecOptions = {}) {
     return new Executor(async () => {
       const { container } = this;
       if (!container) {

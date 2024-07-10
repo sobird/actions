@@ -1,11 +1,11 @@
 {
-  "name": "@sobird/act-runner",
+  "name": "@sobird/actions",
   "version": "0.0.1",
   "description": "Impl act runner using typescript",
   "type": "module",
   "main": "index.js",
   "bin": {
-    "test_runner": "cmd/index.js"
+    "actions": "./cmd/index.ts"
   },
   "scripts": {
     "dev": "rollup -cw --environment NODE_ENV:development",

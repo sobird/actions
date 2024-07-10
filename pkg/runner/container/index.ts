@@ -13,12 +13,6 @@ export interface FileEntry {
   body: string;
 }
 
-export interface ExecOptions {
-  env?: NodeJS.ProcessEnv;
-  user?: string;
-  workdir?: string;
-}
-
 export interface ContainerExecOptions {
   env?: NodeJS.ProcessEnv;
   privileged?: boolean;
@@ -39,7 +33,7 @@ export default abstract class Container {
 
   debug = '';
 
-  environment = '';
+  environment = 'github-hosted';
 
   abstract put(destination: string, source: string, useGitIgnore: boolean): Executor;
   abstract putContent(destination: string, ...files: FileEntry[]): Executor;
