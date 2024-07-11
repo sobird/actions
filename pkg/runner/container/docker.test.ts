@@ -3,32 +3,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { ContainerCreateOptions } from 'dockerode';
-import dotenv from 'dotenv';
 import * as tar from 'tar';
 
 import Docker from './docker';
 
-const Env = ['RUNNER_TOOL_CACHE=/opt/hostedtoolcache', 'RUNNER_OS=Linux', 'RUNNER_ARCH=', 'RUNNER_TEMP=/tmp', 'LANG=C.UTF-8'];
+vi.mock('./docker');
 
-const containerCreateOptions: ContainerCreateOptions = {
-  Cmd: [],
-  Entrypoint: ['/bin/sleep', '3600'],
-  WorkingDir: '/home/runner',
-  Image: 'node:lts-slim',
-  name: 'node-lts-slim',
-  Env,
-  HostConfig: {
-    AutoRemove: true,
-    Privileged: true,
-    UsernsMode: '',
-  },
-  platform: '',
-
-  // StopTimeout: 30,
-};
-
-const docker = new Docker(containerCreateOptions);
+const docker = new (Docker as any)();
 
 const tmp = path.join(os.tmpdir(), `container-docker-${randomBytes(8).toString('hex')}`);
 const files = [{
@@ -183,12 +164,5 @@ describe('test Docker Container', () => {
       name: 'sobird',
       hello: 'world',
     });
-
-    const image = Docker.docker.getImage('node:lts-slim');
-    const imageInspectInfo = await image.inspect();
-
-    const env = dotenv.parse(imageInspectInfo.Config.Env.join('\n'));
-    console.log('env', env);
-    console.log('container id:', docker.container?.id);
   });
 });
