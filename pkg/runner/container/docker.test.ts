@@ -9,7 +9,7 @@ import Docker from './docker';
 
 vi.mock('./docker');
 
-const docker = new (Docker as any)();
+const docker = new Docker();
 
 const tmp = path.join(os.tmpdir(), `container-docker-${randomBytes(8).toString('hex')}`);
 const files = [{
@@ -159,6 +159,9 @@ describe('test Docker Container', () => {
     await putContentExecutor.execute();
 
     const envObj = await docker.parseEnvFile('env');
+
+    const dd = await Docker.docker.version();
+    console.log('dd', dd);
 
     expect(envObj).toEqual({
       name: 'sobird',

@@ -12,7 +12,7 @@ import { Writable } from 'node:stream';
 import tty from 'node:tty';
 
 import {
-  Container as DockerContainer, Network as DockerNetwork, NetworkInspectInfo, AuthConfig,
+  Container as DockerContainer, Network as DockerNetwork, NetworkInspectInfo, AuthConfig, MountConfig, EndpointSettings, EndpointsConfig,
 } from 'dockerode';
 import dotenv from 'dotenv';
 import ignore from 'ignore';
@@ -43,13 +43,14 @@ export interface DockerContainerOptions {
   // HostConfig
   autoRemove?: boolean;
   binds?: string[];
-  networkMode?: string;
+  networkMode?: 'default' | 'host' | 'bridge' | 'container' | 'none' | string;
   portBindings?: any;
   mounts?: Record<string, string>;
   capAdd?: string[];
   capDrop?: string[];
   privileged?: boolean;
   usernsMode?: string;
+  NetworkAliases?: string[];
 }
 
 const hashFilesDir = 'bin/hashFiles';
@@ -385,6 +386,27 @@ class Docker extends Container {
 
       const Env = Object.entries(options.env || {}).map(([key, value]) => { return `${key}=${value}`; });
 
+      const Mounts: MountConfig = Object.entries(options.mounts || {}).map(([Source, Target]) => {
+        return {
+          Type: 'volume',
+          Source,
+          Target,
+        };
+      });
+
+      const NetworkMode = options.networkMode || 'default';
+      const isNetworkMode = ['default', 'host', 'bridge', 'container', 'none'].includes(NetworkMode);
+      let endpointsConfig: EndpointsConfig = {};
+      if (!isNetworkMode && options.networkMode !== 'host' && (options.NetworkAliases || []).length > 0) {
+        const endpointSettings: EndpointSettings = {
+          Aliases: options.NetworkAliases,
+        };
+
+        endpointsConfig = {
+          [NetworkMode]: endpointSettings,
+        };
+      }
+
       const container = await docker.createContainer({
         name: options.name,
         Image: options.image,
@@ -398,13 +420,16 @@ class Docker extends Container {
         HostConfig: {
           AutoRemove: options.autoRemove,
           Binds: options.binds,
-          NetworkMode: options.networkMode,
+          NetworkMode,
           PortBindings: options.portBindings,
-          // Mounts: options.mounts,
+          Mounts,
           CapAdd: options.capAdd,
           CapDrop: options.capDrop,
           Privileged: options.privileged,
           UsernsMode: options.usernsMode,
+        },
+        NetworkingConfig: {
+          EndpointsConfig: endpointsConfig,
         },
       });
 

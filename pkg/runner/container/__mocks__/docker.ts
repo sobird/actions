@@ -17,9 +17,12 @@ const docker = new Docker({
   usernsMode: '',
   portBindings: {},
   exposedPorts: {},
+  platform: '',
 });
 
-const mockDocker = vi.fn().mockImplementation(() => {
+const fn = vi.fn();
+fn.docker = Docker.docker;
+const mockDocker = fn.mockImplementation(() => {
   return docker;
 });
 
