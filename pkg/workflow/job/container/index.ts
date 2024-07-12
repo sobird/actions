@@ -6,6 +6,8 @@
 
 import Expression from '@/pkg/expression';
 
+import Port from './port';
+
 export interface ContainerProps extends Pick<Container, 'ports' | 'volumes' | 'options'> {
   image?: string;
   credentials?: {
@@ -57,7 +59,7 @@ export default class Container {
   /**
    * Use `jobs.<job_id>.container.ports` to set an array of ports to expose on the container.
    */
-  ports?: string[];
+  ports: string[] = [];
 
   /**
    * Use `jobs.<job_id>.container.volumes` to set an `array` of volumes for the container to use.
@@ -80,7 +82,7 @@ export default class Container {
    */
   options?: string;
 
-  constructor(container: ContainerProps | string = {}) {
+  constructor(container: ContainerProps | string = '') {
     if (typeof container === 'string') {
       this.image = new Expression(container, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
       return;
@@ -88,8 +90,13 @@ export default class Container {
     this.image = new Expression(container.image, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
     this.credentials = new Expression(container.credentials, ['github', 'needs', 'strategy', 'matrix', 'env', 'vars', 'secrets', 'inputs']);
     this.env = new Expression(container.env, ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'inputs']);
-    this.ports = container.ports;
+    this.ports = container.ports || [];
     this.volumes = container.volumes;
     this.options = container.options;
+  }
+
+  parsePorts() {
+    const { ports } = this;
+    return Port.ParsePorts(ports);
   }
 }
