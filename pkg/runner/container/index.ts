@@ -1,7 +1,3 @@
-/* eslint-disable class-methods-use-this */
-
-import { SpawnSyncReturns } from 'node:child_process';
-
 import dotenv from 'dotenv';
 import * as tar from 'tar';
 
@@ -20,6 +16,14 @@ export interface ContainerExecOptions {
   user?: string;
 }
 
+export interface ContainerOptions {
+  name?: string;
+  workdir: string;
+  env: string[],
+  stdout: string;
+  stderr: string;
+}
+
 export default abstract class Container {
   name = '';
 
@@ -34,6 +38,8 @@ export default abstract class Container {
   debug = '';
 
   environment = 'github-hosted';
+
+  // constructor(public options: ContainerOptions) {}
 
   /** 上传文件/目录 */
   abstract put(destination: string, source: string, useGitIgnore: boolean): Executor;

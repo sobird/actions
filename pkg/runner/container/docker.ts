@@ -12,12 +12,11 @@ import { Writable } from 'node:stream';
 import tty from 'node:tty';
 
 import {
-  Container as DockerContainer, ContainerCreateOptions, Network as DockerNetwork, NetworkCreateOptions, NetworkInspectInfo, AuthConfig,
+  Container as DockerContainer, Network as DockerNetwork, NetworkInspectInfo, AuthConfig,
 } from 'dockerode';
 import dotenv from 'dotenv';
 import ignore from 'ignore';
 import log4js from 'log4js';
-import shellQuote from 'shell-quote';
 import * as tar from 'tar';
 
 import Executor, { Conditional } from '@/pkg/common/executor';
@@ -27,9 +26,30 @@ import Container, { FileEntry, ContainerExecOptions } from '.';
 
 const logger = log4js.getLogger();
 
-interface ContainerCreateInputs extends ContainerCreateOptions {
-  Image: string;
+export interface DockerContainerOptions {
+  name?: string;
+  image: string;
+  workdir: string;
+  platform?: string;
+  entrypoint?: string[];
   authconfig?: AuthConfig;
+  cmd?: string[];
+  env?: NodeJS.ProcessEnv;
+  exposedPorts?: { [port: string]: {} };
+
+  stdout?: string;
+  stderr?: string;
+
+  // HostConfig
+  autoRemove?: boolean;
+  binds?: string[];
+  networkMode?: string;
+  portBindings?: any;
+  mounts?: Record<string, string>;
+  capAdd?: string[];
+  capDrop?: string[];
+  privileged?: boolean;
+  usernsMode?: string;
 }
 
 const hashFilesDir = 'bin/hashFiles';
@@ -44,22 +64,15 @@ class Docker extends Container {
 
   arch: string = '';
 
-  constructor(
-    public containerCreateInputs: ContainerCreateInputs,
-    public networkCreateInputs: NetworkCreateOptions,
-  ) {
+  constructor(public options: DockerContainerOptions) {
     super();
   }
 
   pull(force: boolean = false) {
     return new Executor(async () => {
-      const {
-        containerCreateInputs: {
-          Image, platform, authconfig,
-        },
-      } = this;
+      const { image, platform, authconfig } = this.options;
 
-      const stream = await docker.pullImage(Image, {
+      const stream = await docker.pullImage(image, {
         force,
         platform,
         authconfig,
@@ -120,8 +133,8 @@ class Docker extends Container {
       if (!container) {
         return;
       }
-      const { containerCreateInputs: { WorkingDir = '' } } = this;
-      const dest = path.resolve(WorkingDir, destination);
+      const { workdir } = this.options;
+      const dest = path.resolve(workdir, destination);
 
       const info = path.parse(source);
       const sourceStat = fs.statSync(source);
@@ -133,8 +146,6 @@ class Docker extends Container {
       const options: Parameters<typeof tar.create>[0] = {
         cwd: info.dir,
         prefix: dest,
-        // uid: this.uid,
-        // gid: this.gid,
         portable: true,
       };
 
@@ -171,9 +182,8 @@ class Docker extends Container {
         return;
       }
 
-      const { containerCreateInputs: { WorkingDir = '' } } = this;
-
-      const dest = path.resolve(WorkingDir, destination);
+      const { workdir } = this.options;
+      const dest = path.resolve(workdir, destination);
 
       const pack = new tar.Pack({ prefix: dest, portable: true });
       for (const file of files) {
@@ -213,8 +223,8 @@ class Docker extends Container {
       return;
     }
 
-    const { containerCreateInputs: { WorkingDir = '' } } = this;
-    const dest = path.resolve(WorkingDir, destination);
+    const { workdir } = this.options;
+    const dest = path.resolve(workdir, destination);
 
     const pack = new tar.Pack({});
     const header = new tar.Header({
@@ -257,8 +267,8 @@ class Docker extends Container {
   async getArchive(source: string) {
     const { container } = this;
 
-    const { containerCreateInputs: { WorkingDir = '' } } = this;
-    const dest = path.resolve(WorkingDir, source);
+    const { workdir } = this.options;
+    const dest = path.resolve(workdir, source);
 
     return container!.getArchive({
       path: dest,
@@ -267,8 +277,7 @@ class Docker extends Container {
 
   findNetwork(name: string) {
     return new Executor(async () => {
-      const { networkCreateInputs } = this;
-      const networkName = name || networkCreateInputs.Name;
+      const networkName = name;
 
       const networks = await docker.listNetworks();
       const networkInspectInfo = networks.find((item) => {
@@ -287,10 +296,9 @@ class Docker extends Container {
 
   createNetwork(name: string) {
     return new Executor(async () => {
-      const { networkCreateInputs: options } = this;
-      options.Name = name || options.Name;
-
-      const network = await docker.createNetwork(options);
+      const network = await docker.createNetwork({
+        Name: name,
+      });
       this.network = network;
     });
   }
@@ -301,10 +309,10 @@ class Docker extends Container {
       if (!network) {
         return;
       }
-      const { containerCreateInputs } = this;
+      const { name } = this.options;
 
       network.connect({
-        Container: containerName || containerCreateInputs.name,
+        Container: containerName || name,
         EndpointConfig: {
           Aliases: aliases,
         },
@@ -347,13 +355,13 @@ class Docker extends Container {
 
   findContainer() {
     return new Executor(async () => {
-      const { containerCreateInputs } = this;
+      const { name: containerName } = this.options;
 
       const containers = await docker.listContainers({ all: true });
 
       const containerInfo = containers.find((item) => {
         return item.Names.some((name) => {
-          return name.substring(1) === containerCreateInputs.name;
+          return name.substring(1) === containerName;
         });
       });
 
@@ -368,14 +376,40 @@ class Docker extends Container {
     }));
   }
 
+  // todo update options
   private createContainer() {
     return new Executor(async () => {
-      const { containerCreateInputs: options } = this;
+      const { options } = this;
 
-      const container = await docker.createContainer(options);
+      const isatty = tty.isatty(process.stdout.fd);
 
-      logger.debug('Created container name=%s id=%s from image %s (platform: %s)', options.name, container.id, options.Image, options.platform);
-      logger.debug('ENV ==> %o', options.Env);
+      const Env = Object.entries(options.env || {}).map(([key, value]) => { return `${key}=${value}`; });
+
+      const container = await docker.createContainer({
+        name: options.name,
+        Image: options.image,
+        WorkingDir: options.workdir,
+        Entrypoint: options.entrypoint,
+        platform: options.platform,
+        Tty: isatty,
+        Cmd: options.cmd,
+        Env,
+        ExposedPorts: options.exposedPorts,
+        HostConfig: {
+          AutoRemove: options.autoRemove,
+          Binds: options.binds,
+          NetworkMode: options.networkMode,
+          PortBindings: options.portBindings,
+          // Mounts: options.mounts,
+          CapAdd: options.capAdd,
+          CapDrop: options.capDrop,
+          Privileged: options.privileged,
+          UsernsMode: options.usernsMode,
+        },
+      });
+
+      logger.debug('Created container name=%s id=%s from image %s (platform: %s)', options.name, container.id, options.image, options.platform);
+      logger.debug('ENV ==> %o', Env);
 
       this.container = container;
     }).if(new Conditional(() => {
@@ -466,8 +500,8 @@ class Docker extends Container {
       if (!container) {
         return;
       }
-      const { containerCreateInputs: { WorkingDir = '' } } = this;
-      const workdir = path.resolve(WorkingDir, inputs.workdir || '');
+      const { workdir } = this.options;
+      const WorkingDir = path.resolve(workdir, inputs.workdir || '');
 
       const Env = Object.entries(inputs.env || {}).map(([key, value]) => { return `${key}=${value}`; });
 
@@ -476,7 +510,7 @@ class Docker extends Container {
         AttachStdout: true,
         AttachStderr: true,
         Tty: false,
-        WorkingDir: workdir,
+        WorkingDir,
         Env,
         User: inputs.user,
       });
@@ -535,11 +569,12 @@ class Docker extends Container {
   }
 
   async extractFromImageEnv() {
-    const { Image } = this.containerCreateInputs;
-    const image = docker.getImage(Image);
-    const imageInspectInfo = await image.inspect();
+    const { image } = this.options;
+    const img = docker.getImage(image);
+    const imageInspectInfo = await img.inspect();
 
     const env = dotenv.parse(imageInspectInfo.Config.Env.join('\n'));
+    console.log('env', env);
   }
 
   spawnSync(command: string, args: string[], options: ContainerExecOptions = {}) {
@@ -586,11 +621,10 @@ class Docker extends Container {
       patterns: patterns.join('\n'),
     };
 
-    const { containerCreateInputs: { WorkingDir = '' } } = this;
+    const { workdir } = this.options;
+    const hashFilesScript = path.resolve(workdir, hashFilesDir, 'index.cjs');
 
-    const hashFilesScript = path.resolve(WorkingDir, hashFilesDir, 'index.cjs');
-
-    const { stderr } = this.spawnSync('node', [hashFilesScript], { env, workdir: WorkingDir });
+    const { stderr } = this.spawnSync('node', [hashFilesScript], { env, workdir });
 
     const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
     if (matches && matches.length > 0) {
