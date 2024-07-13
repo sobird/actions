@@ -9,7 +9,7 @@ import Docker from './docker';
 
 vi.mock('./docker');
 
-const docker = new Docker();
+const docker: Docker = new (Docker as any)();
 
 const tmp = path.join(os.tmpdir(), `container-docker-${randomBytes(8).toString('hex')}`);
 const files = [{

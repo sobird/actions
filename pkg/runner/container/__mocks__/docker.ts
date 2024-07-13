@@ -21,7 +21,7 @@ const docker = new Docker({
 });
 
 const fn = vi.fn();
-fn.docker = Docker.docker;
+(fn as any).docker = Docker.docker;
 const mockDocker = fn.mockImplementation(() => {
   return docker;
 });

@@ -6,12 +6,11 @@ import * as tar from 'tar';
 
 import Hosted from './hosted';
 
+vi.mock('./hosted');
+
 const testdir = path.join(os.tmpdir(), 'hosted-test');
 const filedir = path.join(testdir, 'file');
-const hosted = new Hosted({
-  basedir: testdir,
-  workdir: '',
-});
+const hosted: Hosted = new (Hosted as any)();
 
 const files = [
   {

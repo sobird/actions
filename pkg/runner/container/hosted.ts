@@ -16,7 +16,7 @@ import Executor from '@/pkg/common/executor';
 
 import Container, { FileEntry, ContainerExecOptions } from '.';
 
-interface HostedOptions {
+export interface HostedContainerOptions {
   basedir: string;
   workdir?: string;
   stdout?: NodeJS.WritableStream;
@@ -39,7 +39,7 @@ class Hosted extends Container {
 
   arch = Container.Arch(process.arch);
 
-  constructor(public options: HostedOptions) {
+  constructor(public options: HostedContainerOptions) {
     super();
 
     const { basedir } = options;
@@ -127,7 +127,7 @@ class Hosted extends Container {
   }
 
   async getArchive(destination: string) {
-    const dest = path.resolve(this.rootdir, destination);
+    const dest = this.resolve(destination);
     const info = path.parse(dest);
     return tar.create({ cwd: info.dir }, [info.base]) as unknown as NodeJS.ReadableStream;
   }
