@@ -8,8 +8,6 @@
  * sobird<i@sobird.me> at 2024/05/17 1:36:37 created.
  */
 
-import { spawnSync } from 'node:child_process';
-
 import _ from 'lodash';
 
 import Runner from '@/pkg/runner';
@@ -20,11 +18,6 @@ import functions from './functions';
 _.templateSettings.interpolate = /\${{([\s\S]+?)}}/g;
 _.templateSettings.imports = {
   ...functions,
-
-  test(val: unknown) {
-    console.log('val', val);
-    return val;
-  },
 };
 
 class Expression<T> {
@@ -116,9 +109,9 @@ class Expression<T> {
           break;
         case 'failure':
           if (this.type === 'job') {
-            fns.success = Expression.CreateJobFailure(runner);
+            fns.failure = Expression.CreateJobFailure(runner);
           } else if (this.type === 'step') {
-            fns.success = Expression.CreateStepFailure(runner);
+            fns.failure = Expression.CreateStepFailure(runner);
           }
           break;
         case 'cancelled':
@@ -145,7 +138,7 @@ class Expression<T> {
 
       for (const need of jobNeeds) {
         if (workflow.jobs[need].result !== 'success') {
-          return false;
+          return true;
         }
       }
 
@@ -154,8 +147,10 @@ class Expression<T> {
   }
 
   private static JobNeedsTransitive(job: Job, runner: Runner) {
+    if (!job) {
+      return [];
+    }
     const { workflow } = runner.run;
-
     let needs = job.getNeeds();
 
     for (const need of needs) {

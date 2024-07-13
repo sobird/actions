@@ -1,15 +1,15 @@
 /* eslint-disable no-template-curly-in-string */
 
 import Runner from '@/pkg/runner';
-import Docker from '@/pkg/runner/container/docker';
+import DockerContainer from '@/pkg/runner/container/docker';
 
 import Expression from '.';
 
 vi.mock('@/pkg/runner/container/docker');
 
-const docker = new (Docker as any)();
+const dockerContainer: DockerContainer = new (DockerContainer as any)();
 
-const startExecutor = docker.start();
+const startExecutor = dockerContainer.start();
 await startExecutor.execute();
 
 const context = {
@@ -33,7 +33,7 @@ const context = {
 
 const runner: Runner = {
   context,
-  container: docker,
+  container: dockerContainer,
 } as unknown as Runner;
 
 const literals = [{
@@ -132,6 +132,11 @@ const functions = [{
 },
 ];
 
+afterAll(async () => {
+  const removeExecutor = dockerContainer.remove();
+  await removeExecutor.execute();
+});
+
 describe('test Expression Literals', () => {
   literals.forEach((item) => {
     it(`${item.source} - test case`, () => {
@@ -166,9 +171,4 @@ describe('test Expression Functions', () => {
     const hash = expression.evaluate(runner);
     expect(hash.length).toBe(64);
   });
-});
-
-afterAll(async () => {
-  const removeExecutor = docker.remove();
-  await removeExecutor.execute();
 });

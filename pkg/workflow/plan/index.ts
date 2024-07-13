@@ -64,16 +64,13 @@ export default class Plan {
     stages.forEach((stage) => {
       stagePipeline.push(new Executor(async () => {
         const jobPipeline = stage.runs.map((run) => {
-          const { jobId } = run;
+          const { jobId, workflow } = run;
 
           const jobs = run.job.spread();
           const maxParallel = run.job.strategy.getMaxParallel();
 
           const runnerPipeline = jobs.map((job) => {
-            const workflow = run.workflow.clone();
-            workflow.jobs = {
-              [jobId]: job,
-            };
+            workflow.jobs[jobId] = job;
 
             const runner = new Runner(new Run(jobId, workflow), config);
             runner.caller = caller;

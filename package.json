@@ -13,6 +13,7 @@
     "build": "rollup -c --environment NODE_ENV:production",
     "eslint:fix": "eslint src --fix",
     "test": "vitest",
+    "export": "export NODE_OPTIONS=--import=./node_modules/@sobird/ts-node/register.js",
     "node": "NODE_OPTIONS=--import=./node_modules/@sobird/ts-node/register.js node",
     "cmd": "NODE_OPTIONS=--import=./node_modules/@sobird/ts-node/register.js node cmd",
     "lint:eslint": "eslint src --ext ts,js --report-unused-disable-directives --max-warnings 10",

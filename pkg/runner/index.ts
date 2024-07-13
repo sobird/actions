@@ -121,9 +121,9 @@ class Runner {
       return new Executor(async () => {
         console.log('step if:', step.if.evaluate(this));
 
-        console.log(`${this.run.name} - step:`, step.getName());
+        console.log(`${this.run.name} - step:`, step.getName(this));
         console.log('step uses:', step.uses);
-        console.log('step env:', step.getEnv());
+        console.log('step env:', step.getEnv(this));
         console.log('step with:', step.with.evaluate(this));
 
         await asyncFunction(250);
@@ -240,7 +240,6 @@ class Runner {
   get enabled() {
     const { job } = this.run;
     const jobIf = job.if.evaluate(this);
-    console.log('jobIf', jobIf);
 
     if (!jobIf) {
       console.error(`Skipping job '${job.name}' due to '${job.if}'`);

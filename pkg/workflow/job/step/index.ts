@@ -7,6 +7,7 @@
 import { UUID, randomUUID } from 'node:crypto';
 
 import Expression from '@/pkg/expression';
+import Runner from '@/pkg/runner';
 
 /**
  * describes what type of step we are about to run
@@ -238,15 +239,16 @@ class Step {
     return this.#number;
   }
 
-  getName(): string {
-    return this.name || this.uses || this.run || this.id;
+  getName(runner: Runner): string {
+    return this.name.evaluate(runner) || this.uses || this.run.evaluate(runner) || this.id;
   }
 
   // Merge variables from with into env
-  getEnv() {
-    const env = { ...this.env };
+  getEnv(runner: Runner) {
+    const env = { ...this.env.evaluate(runner) };
+    const stepWith = this.with.evaluate(runner);
 
-    Object.entries(this.with).forEach(([key, value]) => {
+    Object.entries(stepWith).forEach(([key, value]) => {
       let envKey = key.toUpperCase().replace(/[^A-Z0-9-]/g, '_');
       envKey = `INPUT_${envKey}`;
       env[envKey] = value;
