@@ -5,11 +5,11 @@ import path from 'node:path';
 
 import * as tar from 'tar';
 
-import Docker from './docker';
+import DockerContainer from './docker';
 
 vi.mock('./docker');
 
-const docker: Docker = new (Docker as any)();
+const docker: DockerContainer = new (DockerContainer as any)();
 
 const tmp = path.join(os.tmpdir(), `container-docker-${randomBytes(8).toString('hex')}`);
 const files = [{
@@ -160,7 +160,7 @@ describe('test Docker Container', () => {
 
     const envObj = await docker.parseEnvFile('env');
 
-    const dd = await Docker.docker.version();
+    const dd = await DockerContainer.docker.version();
     console.log('dd', dd);
 
     expect(envObj).toEqual({

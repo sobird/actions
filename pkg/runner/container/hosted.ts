@@ -24,7 +24,7 @@ export interface HostedContainerOptions {
 
 const hashFilesDir = 'bin/hashFiles';
 
-class Hosted extends Container {
+class HostedContainer extends Container {
   #actPath: string;
 
   rootdir: string;
@@ -235,4 +235,4 @@ class Hosted extends Container {
   }
 }
 
-export default Hosted;
+export default HostedContainer;

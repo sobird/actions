@@ -1,6 +1,6 @@
-import Docker from '../docker';
+import DockerContainer from '../docker';
 
-const docker = new Docker({
+const dockerContainer = new DockerContainer({
   name: 'node-lts-slim',
   image: 'node:lts-slim',
   entrypoint: ['/bin/sleep', '3600'],
@@ -21,9 +21,9 @@ const docker = new Docker({
 });
 
 const fn = vi.fn();
-(fn as any).docker = Docker.docker;
-const mockDocker = fn.mockImplementation(() => {
-  return docker;
+(fn as any).docker = DockerContainer.docker;
+const Mocker = fn.mockImplementation(() => {
+  return dockerContainer;
 });
 
-export default mockDocker;
+export default Mocker;

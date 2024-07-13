@@ -11,8 +11,8 @@ import readline from 'node:readline';
 import { Writable } from 'node:stream';
 import tty from 'node:tty';
 
-import {
-  Container as DockerContainer, Network as DockerNetwork, NetworkInspectInfo, AuthConfig, MountConfig, EndpointSettings, EndpointsConfig,
+import Dockerode, {
+  NetworkInspectInfo, AuthConfig, MountConfig, EndpointSettings, EndpointsConfig,
 } from 'dockerode';
 import dotenv from 'dotenv';
 import ignore from 'ignore';
@@ -27,10 +27,14 @@ import Container, { FileEntry, ContainerExecOptions } from '.';
 const logger = log4js.getLogger();
 
 export interface DockerContainerOptions {
+  /** container name */
   name?: string;
+  /** Name of the image as it was passed by the operator (e.g. could be symbolic) */
   image: string;
+  /** Current directory (PWD) in the command will be launched */
   workdir: string;
   platform?: string;
+  /** Entrypoint to run when starting the container */
   entrypoint?: string[];
   authconfig?: AuthConfig;
   cmd?: string[];
@@ -54,12 +58,13 @@ export interface DockerContainerOptions {
 }
 
 const hashFilesDir = 'bin/hashFiles';
-class Docker extends Container {
+const isatty = tty.isatty(process.stdout.fd);
+class DockerContainer extends Container {
   static docker = docker;
 
-  container?: DockerContainer;
+  container?: Dockerode.Container;
 
-  network?: DockerNetwork;
+  network?: Dockerode.Network;
 
   os: string = '';
 
@@ -382,8 +387,6 @@ class Docker extends Container {
     return new Executor(async () => {
       const { options } = this;
 
-      const isatty = tty.isatty(process.stdout.fd);
-
       const Env = Object.entries(options.env || {}).map(([key, value]) => { return `${key}=${value}`; });
 
       const Mounts: MountConfig = Object.entries(options.mounts || {}).map(([Source, Target]) => {
@@ -660,4 +663,4 @@ class Docker extends Container {
   }
 }
 
-export default Docker;
+export default DockerContainer;

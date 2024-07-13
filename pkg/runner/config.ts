@@ -118,62 +118,6 @@ export interface Config {
   platformPicker?: (labels: string[]) => string;
 
   /**
-   * Use privileged mode.
-   */
-  privileged: boolean;
-
-  /**
-   * User namespace to use.
-   */
-  usernsMode: string;
-
-  /**
-   * Desired OS/architecture platform for running containers.
-   */
-  containerArchitecture: string;
-
-  /**
-   * Path to Docker daemon socket.
-   */
-  containerDaemonSocket: string;
-
-  /**
-   * Options for the job container.
-   */
-  containerOptions: string;
-
-  /**
-   * List of kernel capabilities to add to the containers.
-   */
-  containerCapAdd: string[];
-
-  /**
-    * List of kernel capabilities to remove from the containers.
-    */
-  containerCapDrop: string[];
-
-  /**
-   * The prefix of container name.
-   */
-  containerNamePrefix: string;
-
-  /**
-   * The max lifetime of job containers in milliseconds.
-   */
-  containerMaxLifetime: number;
-
-  /**
-   * The network mode of job containers (the value of --network).
-   * @type {NetworkMode}
-   */
-  containerNetworkMode: HostConfig['NetworkMode'];
-
-  /**
-    * Controls if the container is automatically removed upon workflow completion.
-    */
-  autoRemove: boolean;
-
-  /**
    * Controls if paths in .gitignore should not be copied into container, default true.
    */
   useGitIgnore: boolean;
@@ -229,4 +173,61 @@ export interface Config {
    * @default false
    */
   insecureSkipTLS?: boolean;
+
+  container: {
+    /**
+     * Use privileged mode.
+     */
+    privileged: boolean;
+
+    /**
+     * User namespace to use.
+     */
+    usernsMode: string;
+
+    /**
+     * Desired OS/architecture platform for running containers.
+     */
+    platform: string;
+
+    /**
+     * Path to Docker daemon socket.
+     */
+    daemonSocket: string;
+
+    /**
+     * Options for the job container.
+     */
+    options: string;
+
+    /**
+     * List of kernel capabilities to add to the containers.
+     */
+    capAdd: string[];
+
+    /**
+     * List of kernel capabilities to remove from the containers.
+     */
+    capDrop: string[];
+
+    /**
+     * The prefix of container name.
+     */
+    namePrefix: string;
+
+    /**
+     * The max lifetime of job containers in seconds.
+     */
+    maxLifetime: number;
+
+    /**
+     * The network mode of job containers (the value of --network).
+     */
+    networkMode: HostConfig['NetworkMode'];
+
+    /**
+     * Controls if the container is automatically removed upon workflow completion.
+     */
+    autoRemove: boolean;
+  }
 }

@@ -1,11 +1,11 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import Hosted from '../hosted';
+import HostedContainer from '../hosted';
 
 const basedir = path.join(os.tmpdir(), 'hosted-test');
 
-const hosted = new Hosted({
+const hostedContainer = new HostedContainer({
   basedir,
   workdir: '/home/runner',
   cmd: [],
@@ -21,7 +21,7 @@ const hosted = new Hosted({
 
 const fn = vi.fn();
 const Mocker = fn.mockImplementation(() => {
-  return hosted;
+  return hostedContainer;
 });
 
 export default Mocker;
