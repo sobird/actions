@@ -54,18 +54,22 @@ class Expression<T> {
         // expression = this.getHashFilesFunction(expression);
 
         const template = _.template(expression);
-        const output = template({
-          ...availability,
-          ...this.getSpecialFunctions(runner),
-        });
 
-        if (output === 'true') {
-          return true;
+        try {
+          const output = template({
+            ...availability,
+            ...this.getSpecialFunctions(runner),
+          });
+          if (output === 'true') {
+            return true;
+          }
+          if (output === 'false') {
+            return false;
+          }
+          return output;
+        } catch (err) {
+          return '';
         }
-        if (output === 'false') {
-          return false;
-        }
-        return output;
       }
 
       if (Array.isArray(source)) {

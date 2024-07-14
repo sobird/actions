@@ -11,10 +11,11 @@ import Yaml from '@/pkg/common/yaml';
 import Expression from '@/pkg/expression';
 
 import Job, { JobProps } from './job';
+import Defaults from './job/defaults';
 import { JobFactory } from './job/factory';
 import Plan, { Stage, Run } from './plan';
 import {
-  Concurrency, Defaults, On, OnEvents, Permissions, // todo
+  Concurrency, On, OnEvents, Permissions, // todo
 } from './types';
 
 interface WorkflowProps extends Pick<Workflow, 'name' | 'on' | 'permissions' | 'defaults'> {

@@ -450,13 +450,10 @@ class Job {
     this.#result = result;
   }
 
-  // interpret
-
-  clone() {
+  clone<T extends InstanceType<typeof Job>>(this: T) {
     const cloned = JSON.parse(JSON.stringify(this));
     cloned.id = this.#id;
-    console.log('this', this.constructor);
-    return new (this.constructor as any)(cloned);
+    return new (this.constructor as any)(cloned) as T;
   }
 
   // 展开作业矩阵
