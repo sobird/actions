@@ -15,7 +15,7 @@ import Defaults, { DefaultsProps } from './defaults';
 import Environment, { EnvironmentOptions } from './environment';
 import Step, { StepProps } from './step';
 import { StepFactory } from './step/factory';
-import Strategy from './strategy';
+import Strategy, { StrategyProps } from './strategy';
 import {
   WorkflowDispatchInput, Permissions, Concurrency,
 } from '../types';
@@ -42,7 +42,7 @@ export enum JobType {
   Invalid,
 }
 
-export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | 'outputs' | 'timeout-minutes' | 'strategy' | 'services' | 'uses' | 'with' | 'secrets'> {
+export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | 'outputs' | 'timeout-minutes' | 'services' | 'uses' | 'with' | 'secrets'> {
   id?: string;
   if?: string;
   'runs-on': string | string[] | { group: string;labels: string; };
@@ -53,6 +53,7 @@ export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | '
   env?: Record<string, string>;
   environment?: EnvironmentOptions;
   steps?: StepProps[];
+  strategy?: StrategyProps;
 }
 
 /**

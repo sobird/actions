@@ -34,7 +34,7 @@ class Runner {
 
   echoOnActionCommand: boolean;
 
-  constructor(public run: Run, public config: Readonly<Config>) {
+  constructor(public run: Run, public config: Config) {
     const { jobId, job, workflow } = run;
     const context = new Context(config.context);
 
