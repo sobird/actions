@@ -13,8 +13,7 @@ import { asyncFunction } from '@/utils';
 import Container, { ContainerProps } from './container';
 import Defaults, { DefaultsProps } from './defaults';
 import Environment, { EnvironmentOptions } from './environment';
-import Step, { StepProps } from './step';
-import { StepFactory } from './step/factory';
+import { StepFactory, StepProps, Step } from './step';
 import Strategy, { StrategyProps } from './strategy';
 import {
   WorkflowDispatchInput, Permissions, Concurrency,

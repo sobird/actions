@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import Workflow from '.';
 import { JobType } from './job/job';
-import { StepType } from './job/step';
+import { StepType } from './job/step/step';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
