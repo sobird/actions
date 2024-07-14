@@ -1,12 +1,22 @@
-const hello = 'aa.bb.cc-dd.ee';
+class MyClass {
+  private static instance: MyClass | null = null;
 
-const parts = hello.split('.');
-console.log('parts', parts);
+  private constructor() {
+    // 构造函数逻辑
+    console.log('123', 123);
+  }
 
-const result = hello.replace(/((?:\w+\.)+\.*)/g, (a, b) => {
-  console.log('a', a, b);
+  public static getInstance(): MyClass {
+    if (!MyClass.instance) {
+      MyClass.instance = new MyClass();
+    }
+    return MyClass.instance;
+  }
+}
 
-  return 123;
-});
+const instance = MyClass.getInstance();
+console.log('instance', instance, new MyClass());
 
-console.log('result', result);
+const Test: Function = () => {};
+
+console.log('MyClass', MyClass);

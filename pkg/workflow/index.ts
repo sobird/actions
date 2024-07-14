@@ -155,7 +155,6 @@ class Workflow extends Yaml {
     if (!jobs) {
       return {};
     }
-
     return Object.fromEntries(Object.entries(jobs).map(([jobId, job]) => {
       this.validateJobId(jobId);
       const newJob = JobFactory(job);

@@ -8,13 +8,13 @@ import Executor from '@/pkg/common/executor';
 import Expression from '@/pkg/expression';
 import Runner from '@/pkg/runner';
 import { Needs } from '@/pkg/runner/context/needs';
-import { asyncFunction, createSafeName } from '@/utils';
+import { asyncFunction } from '@/utils';
 
 import Container, { ContainerProps } from './container';
 import Defaults, { DefaultsProps } from './defaults';
 import Environment, { EnvironmentOptions } from './environment';
-import Step from './step';
-import StepExecutorRun from './step/run';
+import Step, { StepProps } from './step';
+import { StepFactory } from './step/factory';
 import Strategy from './strategy';
 import {
   WorkflowDispatchInput, Permissions, Concurrency,
@@ -42,7 +42,7 @@ export enum JobType {
   Invalid,
 }
 
-export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | 'outputs' | 'steps' | 'timeout-minutes' | 'strategy' | 'services' | 'uses' | 'with' | 'secrets'> {
+export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | 'outputs' | 'timeout-minutes' | 'strategy' | 'services' | 'uses' | 'with' | 'secrets'> {
   id?: string;
   if: string;
   'runs-on': string | string[] | { group: string;labels: string; };
@@ -51,7 +51,8 @@ export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | '
   'continue-on-error': boolean;
   defaults: DefaultsProps;
   env: Record<string, string>;
-  environment: EnvironmentOptions
+  environment: EnvironmentOptions;
+  steps: StepProps[];
 }
 
 /**
@@ -403,7 +404,7 @@ class Job {
 
     if (Array.isArray(job.steps)) {
       this.steps = job.steps.map((step) => {
-        return new StepExecutorRun(step);
+        return StepFactory(step);
       });
     }
 
@@ -454,8 +455,8 @@ class Job {
   clone() {
     const cloned = JSON.parse(JSON.stringify(this));
     cloned.id = this.#id;
-
-    return new Job(cloned);
+    console.log('this', this.constructor);
+    return new (this.constructor as any)(cloned);
   }
 
   // 展开作业矩阵
@@ -572,6 +573,7 @@ class Job {
       step.number = index;
 
       return new Executor(async () => {
+        console.log('step', step.constructor.name);
         console.log('step if:', step.if.evaluate(runner));
 
         console.log(`${runner.run.name} - step:`, step.getName(runner));

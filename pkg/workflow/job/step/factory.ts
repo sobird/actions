@@ -1,21 +1,22 @@
-import type Step from '.';
-import StepRun from './run';
-import StepActionLocal from './uses-action-local';
+import Step, { StepProps } from '.';
+import StepActionLocal from './step-action';
+import StepDockerHub from './step-docker-hub';
 import StepActionRemote from './uses-action-remote';
-import StepDocker from './uses-docker-hub';
 
-export function StepFactory(step: Step) {
+export function StepFactory(step: StepProps) {
   if (step.run === '' && step.uses === '') {
-    throw Error(('Invalid run/uses syntax fot step'));
+    throw Error(('Invalid run/uses syntax for step'));
   }
 
   if (step.run) {
     if (step.uses) {
-      throw Error(('Invalid run/uses syntax fot step'));
+      throw Error(('Invalid run/uses syntax for step'));
     }
-    return new StepRun(step);
+    // step run script
+    return new Step(step);
   } if (step.uses.startsWith('docker://')) {
-    return new StepDocker(step);
+    // docker container
+    return new StepDockerHub(step);
   } if (step.uses.startsWith('./')) {
     return new StepActionLocal(step);
   }

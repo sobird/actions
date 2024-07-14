@@ -8,8 +8,6 @@ import WorkflowPlanner from '@/pkg/workflow/planner';
 import Job from '.';
 
 class ReusableWorkflowJob extends Job {
-  #runner?: Runner;
-
   executor(runner: Runner) {
     let { uses = '' } = this;
     const reusable = {
