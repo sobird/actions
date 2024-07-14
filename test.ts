@@ -1,22 +1,39 @@
-class MyClass {
-  private static instance: MyClass | null = null;
-
-  private constructor() {
-    // 构造函数逻辑
-    console.log('123', 123);
-  }
-
-  public static getInstance(): MyClass {
-    if (!MyClass.instance) {
-      MyClass.instance = new MyClass();
-    }
-    return MyClass.instance;
+/* eslint-disable max-classes-per-file */
+abstract class Vehicle {
+  abstract run(): void;
+}
+class SuperX01 extends Vehicle {
+  run(): void {
+    console.log('SuperX01 start');
   }
 }
 
-const instance = MyClass.getInstance();
-console.log('instance', instance, new MyClass());
+class SuperX02 extends Vehicle {
+  run(): void {
+    console.log('SuperX02 start');
+  }
+}
 
-const Test: Function = () => {};
+abstract class VehicleFactory {
+  abstract produceVehicle(): Vehicle;
+}
 
-console.log('MyClass', MyClass);
+class SuperX01Factory extends VehicleFactory {
+  produceVehicle(): Vehicle {
+    return new SuperX01();
+  }
+}
+class SuperX02Factory extends VehicleFactory {
+  produceVehicle(): Vehicle {
+    return new SuperX02();
+  }
+}
+
+const superX01Factory = new SuperX01Factory();
+const superX02Factory = new SuperX02Factory();
+
+const superX01Vehicle = superX01Factory.produceVehicle();
+const superX02Vehicle = superX02Factory.produceVehicle();
+
+superX01Vehicle.run();
+superX02Vehicle.run();

@@ -5,9 +5,9 @@ import Git from '@/pkg/common/git';
 import type Runner from '@/pkg/runner';
 import WorkflowPlanner from '@/pkg/workflow/planner';
 
-import Job from '.';
+import Job from './job';
 
-class ReusableWorkflowJob extends Job {
+class JobReusableWorkflow extends Job {
   executor(runner: Runner) {
     let { uses = '' } = this;
     const reusable = {
@@ -31,7 +31,7 @@ class ReusableWorkflowJob extends Job {
     if (uses.startsWith('./')) {
       uses = uses.substring(2);
       if (runner.config.skipCheckout) {
-        return ReusableWorkflowJob.ReusableWorkflowExecutor(uses, runner);
+        return JobReusableWorkflow.ReusableWorkflowExecutor(uses, runner);
       }
       // remote resuable workflow
       const { repository, sha, server_url: serverUrl } = runner.context.github;
@@ -49,7 +49,7 @@ class ReusableWorkflowJob extends Job {
       url.password = runner.token;
     }
     const workflowpath = path.join(repositoryDir, reusable.filename);
-    return Git.CloneExecutor(url.toString(), repositoryDir, reusable.ref).next(ReusableWorkflowJob.ReusableWorkflowExecutor(workflowpath, runner));
+    return Git.CloneExecutor(url.toString(), repositoryDir, reusable.ref).next(JobReusableWorkflow.ReusableWorkflowExecutor(workflowpath, runner));
   }
 
   static ReusableWorkflowExecutor(workflowPath: string, runner: Runner) {
@@ -61,4 +61,4 @@ class ReusableWorkflowJob extends Job {
   }
 }
 
-export default ReusableWorkflowJob;
+export default JobReusableWorkflow;

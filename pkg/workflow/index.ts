@@ -10,9 +10,9 @@
 import Yaml from '@/pkg/common/yaml';
 import Expression from '@/pkg/expression';
 
-import Job, { JobProps } from './job';
+import { JobFactory } from './job';
 import Defaults from './job/defaults';
-import { JobFactory } from './job/factory';
+import Job, { JobProps } from './job/job';
 import Plan, { Stage, Run } from './plan';
 import {
   Concurrency, On, OnEvents, Permissions, // todo

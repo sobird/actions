@@ -5,7 +5,7 @@ import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
 import Workflow from '@/pkg/workflow';
 
-import Job from '.';
+import Job from './job';
 import Strategy from './strategy';
 import { Run } from '../plan';
 
