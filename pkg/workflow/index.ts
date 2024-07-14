@@ -11,17 +11,19 @@ import Yaml from '@/pkg/common/yaml';
 import Expression from '@/pkg/expression';
 
 import Job, { JobProps } from './job';
+import { JobFactory } from './job/factory';
 import Plan, { Stage, Run } from './plan';
 import {
   Concurrency, Defaults, On, OnEvents, Permissions, // todo
 } from './types';
 
-interface WorkflowProps extends Pick<Workflow, 'name' | 'on' | 'permissions' | 'defaults' | 'jobs'> {
+interface WorkflowProps extends Pick<Workflow, 'name' | 'on' | 'permissions' | 'defaults'> {
   file?: string;
   sha?: string;
   'run-name': string;
   concurrency: Concurrency;
   env: Record<string, string>;
+  jobs: Record<string, JobProps>;
 }
 
 class Workflow extends Yaml {
@@ -149,14 +151,14 @@ class Workflow extends Yaml {
     this.jobs = this.setupJobs(workflow.jobs);
   }
 
-  private setupJobs(jobs: this['jobs']) {
+  private setupJobs(jobs: WorkflowProps['jobs']) {
     if (!jobs) {
       return {};
     }
 
     return Object.fromEntries(Object.entries(jobs).map(([jobId, job]) => {
       this.validateJobId(jobId);
-      const newJob = new Job(job as unknown as JobProps);
+      const newJob = JobFactory(job);
       newJob.id = jobId;
       return [jobId, newJob];
     }));

@@ -4,10 +4,11 @@
  *
  * sobird<i@sobird.me> at 2024/05/02 20:26:29 created.
  */
-
+import Executor from '@/pkg/common/executor';
 import Expression from '@/pkg/expression';
 import Runner from '@/pkg/runner';
 import { Needs } from '@/pkg/runner/context/needs';
+import { asyncFunction, createSafeName } from '@/utils';
 
 import Container, { ContainerProps } from './container';
 import Defaults, { DefaultsProps } from './defaults';
@@ -545,6 +546,45 @@ class Job {
 
     // 如果不是可复用的工作流，则返回默认类型
     return JobType.Default;
+  }
+
+  executor(runner: Runner) {
+    const { steps } = this;
+    if (!steps || steps.length === 0) {
+      return Executor.Debug('No steps found');
+    }
+
+    const preStepsExecutor: Executor[] = [];
+    const stepsExecutor: Executor[] = [];
+
+    stepsExecutor.push(new Executor(() => {
+      // logger.info('u0001F9EA  Matrix: %v', this.config.matrix);
+    }));
+
+    preStepsExecutor.push(new Executor(() => {
+      // logger.info('Todo:', 'Job env Interpolate');
+    }));
+
+    const jobStepsPipeline = steps.map((step, index) => {
+      // eslint-disable-next-line no-param-reassign
+      step.id = step.id || String(index);
+      // eslint-disable-next-line no-param-reassign
+      step.number = index;
+
+      return new Executor(async () => {
+        console.log('step if:', step.if.evaluate(runner));
+
+        console.log(`${runner.run.name} - step:`, step.getName(runner));
+        console.log('step uses:', step.uses);
+        console.log('step env:', step.getEnv(runner));
+        console.log('step with:', step.with.evaluate(runner));
+
+        await asyncFunction(250);
+        console.log('');
+      });
+    });
+
+    return Executor.Pipeline(...jobStepsPipeline);
   }
 }
 

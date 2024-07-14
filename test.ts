@@ -1,6 +1,12 @@
-import Port from './pkg/workflow/job/container/port';
+const hello = 'aa.bb.cc-dd.ee';
 
-const value = ['192.168.1.100: : '];
-const { exposedPorts, portBindings } = Port.ParsePorts(value);
-console.log('exposedPorts', exposedPorts);
-console.log('portBindings', portBindings);
+const parts = hello.split('.');
+console.log('parts', parts);
+
+const result = hello.replace(/((?:\w+\.)+\.*)/g, (a, b) => {
+  console.log('a', a, b);
+
+  return 123;
+});
+
+console.log('result', result);

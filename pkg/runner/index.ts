@@ -9,10 +9,8 @@ import os from 'node:os';
 import path from 'node:path';
 
 import Constants from '@/pkg/common/constants';
-import Git from '@/pkg/common/git';
 import type { Config } from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
-import WorkflowPlanner from '@/pkg/workflow/planner';
 import { asyncFunction, createSafeName } from '@/utils';
 
 import Container from './container';
@@ -65,7 +63,7 @@ class Runner {
 
   executor() {
     const { job, workflow } = this.run;
-    const jobExecutor = this.jobExecutor();
+    const jobExecutor = job.executor(this);
 
     console.log('runner executor start:', process.argv[1]);
 
@@ -87,107 +85,6 @@ class Runner {
       console.log('job container image:', job.container.image.evaluate(this));
 
       await jobExecutor.execute();
-    });
-  }
-
-  jobExecutor() {
-    const usesExecutor = this.usesExecutor();
-    if (usesExecutor) {
-      return usesExecutor;
-    }
-    const { job } = this.run;
-    // job executor
-    if (!job.steps || job.steps.length === 0) {
-      return Executor.Debug('No steps found');
-    }
-
-    const preStepsExecutor: Executor[] = [];
-    const stepsExecutor: Executor[] = [];
-
-    stepsExecutor.push(new Executor(() => {
-      // logger.info('u0001F9EA  Matrix: %v', this.config.matrix);
-    }));
-
-    preStepsExecutor.push(new Executor(() => {
-      // logger.info('Todo:', 'Job env Interpolate');
-    }));
-
-    const jobStepsPipeline = job.steps.map((step, index) => {
-      // eslint-disable-next-line no-param-reassign
-      step.id = step.id || String(index);
-      // eslint-disable-next-line no-param-reassign
-      step.number = index;
-
-      return new Executor(async () => {
-        console.log('step if:', step.if.evaluate(this));
-
-        console.log(`${this.run.name} - step:`, step.getName(this));
-        console.log('step uses:', step.uses);
-        console.log('step env:', step.getEnv(this));
-        console.log('step with:', step.with.evaluate(this));
-
-        await asyncFunction(250);
-        console.log('');
-      });
-    });
-
-    return Executor.Pipeline(...jobStepsPipeline);
-  }
-
-  usesExecutor() {
-    let { uses = '' } = this.run.job;
-    // 无效的job uses
-    if (!/\.(ya?ml)(?:$|@)/.exec(uses)) {
-      return;
-    }
-
-    const reusable = {
-      url: '',
-      repository: '',
-      filename: '',
-      ref: '',
-    };
-
-    const matches = /^(https?:\/\/[^/?#]+\/)?([^/@]+)(?:\/([^/@]+))?(?:\/([^@]*))?(?:@(.*))?$/.exec(uses);
-    if (matches) {
-      const { server_url: serverUrl, sha } = this.context.github;
-      const [,url = serverUrl, owner, repo, filename, ref = sha] = matches;
-      reusable.url = url;
-      reusable.repository = `${owner}/${repo}`;
-      reusable.filename = filename;
-      reusable.ref = ref;
-    }
-
-    // local reusable workflow
-    if (uses.startsWith('./')) {
-      uses = uses.substring(2);
-      if (this.config.skipCheckout) {
-        return this.reusableWorkflowExecutor(uses);
-      }
-      // remote resuable workflow
-      const { repository, sha, server_url: serverUrl } = this.context.github;
-      reusable.url = serverUrl;
-      reusable.repository = repository;
-      reusable.filename = uses;
-      reusable.ref = sha;
-    }
-
-    const repositoryDir = path.join(this.actionCacheDir, reusable.repository, reusable.ref);
-    const url = new URL(reusable.repository, reusable.url);
-
-    if (this.token) {
-      url.username = 'token';
-      url.password = this.token;
-    }
-    const workflowpath = path.join(repositoryDir, reusable.filename);
-    return Git.CloneExecutor(url.toString(), repositoryDir, reusable.ref).next(this.reusableWorkflowExecutor(workflowpath));
-  }
-
-  private reusableWorkflowExecutor(workflowPath: string) {
-    return new Executor(async () => {
-      const workflowPlanner = await WorkflowPlanner.Collect(workflowPath);
-      const plan = workflowPlanner.planEvent('workflow_call');
-      await plan.executor(this.config, this).execute();
     });
   }
 
@@ -221,8 +118,8 @@ class Runner {
 
   private generateNetworkName(id?: string) {
     const { jobId } = this.run;
-    if (this.config.containerNetworkMode) {
-      return [this.config.containerNetworkMode, false];
+    if (this.config.container.networkMode) {
+      return [this.config.container.networkMode, false];
     }
     // 如未配置NetworkMode，则手动创建network
     return [`${this.generateContainerName(id)}-${jobId}-network`, true];
