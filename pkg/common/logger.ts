@@ -14,7 +14,7 @@ export interface LoggerHook {
   fire(entry: LogEntry): void;
 }
 
-export function WithLoggerHook(hook: LoggerHook, category: string) {
+export function WithLoggerHook(hook: LoggerHook, category: string = 'default') {
   log4js.configure({
     appenders: {
       console: {

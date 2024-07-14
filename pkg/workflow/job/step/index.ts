@@ -14,10 +14,10 @@ export function StepFactory(step: StepProps) {
     }
     // step run script
     return new Step(step);
-  } if (step.uses.startsWith('docker://')) {
+  } if (step.uses?.startsWith('docker://')) {
     // docker container
     return new StepDockerHub(step);
-  } if (step.uses.startsWith('./')) {
+  } if (step.uses?.startsWith('./')) {
     return new StepActionLocal(step);
   }
   return new StepActionRemote(step);

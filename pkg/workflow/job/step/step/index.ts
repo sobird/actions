@@ -6,6 +6,7 @@
 
 import { UUID, randomUUID } from 'node:crypto';
 
+import Executor from '@/pkg/common/executor';
 import Expression from '@/pkg/expression';
 import Runner from '@/pkg/runner';
 
@@ -20,12 +21,12 @@ export enum StepType {
   Invalid, // 所有具有无效步骤动作的步骤
 }
 
-export interface StepProps extends Pick<Step, 'id' | 'uses' | 'shell' | 'with'> {
-  if: string;
-  name: string;
+export interface StepProps extends Pick<Step, 'id' | 'uses' | 'shell'> {
+  if?: string;
+  name?: string;
   run: string;
-  'working-directory': string;
-  with: {
+  'working-directory'?: string;
+  with?: {
     /**
      * A `string` that defines the inputs for a Docker container.
      * GitHub passes the `args` to the container's `ENTRYPOINT` when the container starts up.
@@ -43,9 +44,9 @@ export interface StepProps extends Pick<Step, 'id' | 'uses' | 'shell' | 'with'> 
     entrypoint: string;
     [key: string]: string;
   };
-  env: Record<string, string>;
-  'continue-on-error': boolean;
-  'timeout-minutes': string;
+  env?: Record<string, string>;
+  'continue-on-error'?: boolean;
+  'timeout-minutes'?: string;
 }
 
 class Step {
@@ -56,7 +57,7 @@ class Step {
    *
    * You can use the id to reference the step in contexts. For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/contexts Contexts}."
    */
-  id: string;
+  id?: string;
 
   /**
    * You can use the if conditional to prevent a step from running unless a condition is met.
@@ -96,7 +97,7 @@ class Step {
    *
    * Actions are either JavaScript files or Docker containers. If the action you're using is a Docker container you must run the job in a Linux environment. For more details, see {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idruns-on runs-on}.
    */
-  uses: string;
+  uses?: string;
 
   /**
    * Runs command-line programs that do not exceed 21,000 characters using the operating system's shell.
@@ -137,7 +138,7 @@ class Step {
    * You can use built-in `shell` keywords, or you can define a custom set of shell options.
    * The shell command that is run internally executes a temporary file that contains the commands specified in the `run` keyword.
    */
-  shell: string;
+  shell?: string;
 
   /**
    * A map of the input parameters defined by the action.
@@ -206,9 +207,10 @@ class Step {
     );
     this.shell = step.shell;
     this.with = new Expression(
-      step.with || {},
+      step.with,
       ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
       ['hashFiles'],
+      {},
     );
     this.env = new Expression(
       step.env || {},
@@ -239,7 +241,7 @@ class Step {
     return this.#number;
   }
 
-  getName(runner: Runner): string {
+  getName(runner: Runner) {
     return this.name.evaluate(runner) || this.uses || this.run.evaluate(runner) || this.id;
   }
 
@@ -248,7 +250,7 @@ class Step {
     const env = { ...this.env.evaluate(runner) };
     const stepWith = this.with.evaluate(runner);
 
-    Object.entries(stepWith).forEach(([key, value]) => {
+    Object.entries(stepWith || {}).forEach(([key, value]) => {
       let envKey = key.toUpperCase().replace(/[^A-Z0-9-]/g, '_');
       envKey = `INPUT_${envKey}`;
       env[envKey] = value;
@@ -261,7 +263,7 @@ class Step {
    * returns the Command run internally for the shell
    */
   getShellCommand() {
-    let shellCommand = '';
+    let shellCommand = this.shell;
 
     switch (this.shell) {
       case '':
@@ -284,17 +286,14 @@ class Step {
         shellCommand = "powershell -command . '{0}'";
         break;
       default:
-        shellCommand = this.shell;
+        // shellCommand = this.shell;
     }
 
     return shellCommand;
   }
 
-  /**
-   * returns the type of the step
-   */
-  get type() {
-    if (this.run === '' && this.uses === '') {
+  type(runner: Runner) {
+    if (this.run.evaluate(runner) === '' && this.uses === '') {
       return StepType.Invalid;
     }
 
@@ -303,12 +302,18 @@ class Step {
         return StepType.Invalid;
       }
       return StepType.Run;
-    } if (this.uses.startsWith('docker://')) {
+    } if (this.uses?.startsWith('docker://')) {
       return StepType.UsesDockerURL;
-    } if (this.uses.startsWith('./')) {
+    } if (this.uses?.startsWith('./')) {
       return StepType.UsesActionLocal;
     }
     return StepType.UsesActionRemote;
+  }
+
+  public pre() {
+    return new Executor(() => {
+      // todo nothing
+    });
   }
 }
 
