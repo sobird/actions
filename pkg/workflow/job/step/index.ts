@@ -1,10 +1,10 @@
-import Step, { StepProps } from './step';
+import Step, { type StepProps } from './step';
 // import StepActionLocal from './step-action';
 import StepActionDocker from './step-action-docker';
+import StepActionRemote from './step-action-remote';
 import StepActionScript from './step-action-script';
-import StepActionRemote from './uses-action-remote';
 
-export function StepFactory(step: StepProps) {
+function StepFactory(step: StepProps) {
   if (step.run === '' && step.uses === '') {
     throw Error('Invalid run/uses syntax for step');
   }
@@ -27,4 +27,5 @@ export function StepFactory(step: StepProps) {
 export {
   Step,
   StepProps,
+  StepFactory,
 };

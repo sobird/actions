@@ -54,7 +54,7 @@ export default class Container {
   /**
    * Use `jobs.<job_id>.container.env` to set a `map` of environment variables in the container.
    */
-  env?: Expression<Record<string, string> | undefined>;
+  env?: Expression<ContainerProps['env']>;
 
   /**
    * Use `jobs.<job_id>.container.ports` to set an array of ports to expose on the container.

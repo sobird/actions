@@ -57,7 +57,7 @@ class Step {
    *
    * You can use the id to reference the step in contexts. For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/contexts Contexts}."
    */
-  id?: string;
+  id: string;
 
   /**
    * You can use the if conditional to prevent a step from running unless a condition is met.

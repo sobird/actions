@@ -1,7 +1,6 @@
 import util from 'util';
 
 import Constants from '@/pkg/common/constants';
-import { assignIgnoreCase } from '@/utils';
 
 import type { CommandExtension } from '.';
 
@@ -31,10 +30,8 @@ const commandExtension: CommandExtension = {
       return;
     }
 
-    const assign = runner.container?.isCaseSensitive ? Object.assign : assignIgnoreCase;
-
-    assign(runner.context.env, { [envKey]: actionCommand.data });
-    assign(runner.globalEnv, { [envKey]: actionCommand.data });
+    runner.assign(runner.context.env, { [envKey]: actionCommand.data });
+    runner.assign(runner.globalEnv, { [envKey]: actionCommand.data });
   },
 };
 

@@ -11,7 +11,7 @@ import path from 'node:path';
 import Constants from '@/pkg/common/constants';
 import type { Config } from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
-import { asyncFunction, createSafeName } from '@/utils';
+import lodash, { asyncFunction, createSafeName, assignIgnoreCase } from '@/utils';
 
 import Container from './container';
 import Executor from '../common/executor';
@@ -101,10 +101,17 @@ class Runner {
     console.log('this', this);
   }
 
+  // get env() {
+  //   const { job, workflow } = this.run;
+
+  //   return { ...this.config.env, ...workflow.env, ...job.env };
+  // }
+
   get env() {
     const { job, workflow } = this.run;
-
-    return { ...this.config.env, ...workflow.env, ...job.env };
+    const env = { ...workflow.env.evaluate(this), ...job.env.evaluate(this), ...this.config.env };
+    this.context.env = env;
+    return env;
   }
 
   private generateContainerName(id?: string) {
@@ -144,6 +151,23 @@ class Runner {
     }
 
     return true;
+  }
+
+  get assign() {
+    return this.container?.isCaseSensitive ? Object.assign : assignIgnoreCase;
+  }
+
+  githubEnv() {
+    const { context } = this;
+    const env: Record<string, string> = {};
+    const github = lodash.omit(context.github, ['token', 'secret_source', 'repositoryUrl', 'event', 'action_status', 'action_ref']);
+    env.CI = 'true';
+    env.GITHUB_ACTIONS = 'true';
+
+    Object.keys(github).forEach((key) => {
+      env[`GITHUB_${key.toUpperCase()}`] = github[key];
+    });
+    return env;
   }
 }
 

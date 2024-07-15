@@ -18,6 +18,8 @@ export class Github {
    * If you use the same action more than once in the same job, the name will include a suffix with the sequence number with underscore before it.
    * For example, the first script you run will have the name __run, and the second script will be named __run_2. Similarly,
    * the second invocation of actions/checkout will be actionscheckout2.
+   *
+   * @alias GITHUB_ACTION
    */
   action: string = '';
 
@@ -25,6 +27,8 @@ export class Github {
    * The path where an action is located. This property is only supported in composite actions.
    *
    * You can use this path to access files located in the same repository as the action, for example by changing directories to the path: cd ${{ github.action_path }} .
+   *
+   * @alias GITHUB_ACTION_PATH
    */
   action_path: string = '';
 
@@ -42,6 +46,8 @@ export class Github {
    *
    * Do not use in the run keyword.
    * To make this context work with composite actions, reference it within the env context of the composite action.
+   *
+   * @alias GITHUB_ACTION_REPOSITORY
    */
   action_repository: string = '';
 
@@ -56,6 +62,8 @@ export class Github {
    * If the workflow run is a re-run, this value may differ from github.triggering_actor.
    * Any workflow re-runs will use the privileges of github.actor,
    * even if the actor initiating the re-run (github.triggering_actor) has different privileges.
+   *
+   * @alias GITHUB_ACTOR
    */
   actor: string = '';
 
@@ -63,11 +71,15 @@ export class Github {
    * The account ID of the person or app that triggered the initial workflow run. For example, 1234567.
    *
    * Note that this is different from the actor username.
+   *
+   * @alias GITHUB_ACTOR_ID
    */
   actor_id: string = '';
 
   /**
    * The URL of the GitHub REST API.
+   *
+   * @alias GITHUB_API_URL
    */
   api_url: string = '';
 
@@ -75,6 +87,8 @@ export class Github {
    * The base_ref or target branch of the pull request in a workflow run.
    *
    * This property is only available when the event that triggers a workflow run is either pull_request or pull_request_target.
+   *
+   * @alias GITHUB_BASE_REF
    */
   base_ref: string = '';
 
@@ -83,6 +97,8 @@ export class Github {
    *
    * This file is unique to the current step and is a different file for each step in a job.
    * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable Workflow commands for GitHub Actions}."
+   *
+   * @alias GITHUB_ENV
    */
   env: string = '';
 
@@ -98,16 +114,22 @@ export class Github {
 
   /**
    * The name of the event that triggered the workflow run.
+   *
+   * @alias GITHUB_EVENT_NAME
    */
   event_name: string = '';
 
   /**
    * The path to the file on the runner that contains the full event webhook payload.
+   *
+   * @alias GITHUB_EVENT_PATH
    */
   event_path: string = '';
 
   /**
    * The URL of the GitHub GraphQL API.
+   *
+   * @alias GITHUB_GRAPHQL_URL
    */
   graphql_url: string = '';
 
@@ -115,13 +137,18 @@ export class Github {
    * The head_ref or source branch of the pull request in a workflow run.
    *
    * This property is only available when the event that triggers a workflow run is either pull_request or pull_request_target.
+   *
+   * @alias GITHUB_HEAD_REF
    */
   head_ref: string = '';
 
   /**
    * The {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_id `job_id`} of the current job.
    *
-   * Note: This context property is set by the Actions runner, and is only available within the execution steps of a job. Otherwise, the value of this property will be null.
+   * Note: This context property is set by the Actions runner, and is only available within the execution steps of a job.
+   * Otherwise, the value of this property will be null.
+   *
+   * @alias GITHUB_JOB
    */
   job: string = '';
 
@@ -130,6 +157,8 @@ export class Github {
    *
    * This file is unique to the current step and is a different file for each step in a job.
    * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#adding-a-system-path Workflow commands for GitHub Actions}."
+   *
+   * @alias GITHUB_PATH
    */
   path: string = '';
 
@@ -143,6 +172,8 @@ export class Github {
    * This is only set if a branch or tag is available for the event type.
    * The ref given is fully-formed, meaning that for branches the format is `refs/heads/<branch_name>`, for pull requests it is `refs/pull/<pr_number>/merge`, and for tags it is `refs/tags/<tag_name>`.
    * For example, `refs/heads/feature-branch-1`.
+   *
+   * @alias GITHUB_REF
    */
   ref: string = '';
 
@@ -152,36 +183,51 @@ export class Github {
    * For example, `feature-branch-1`.
    *
    * For pull requests, the format is `<pr_number>/merge`.
+   *
+   * @alias GITHUB_REF_NAME
    */
   ref_name: string = '';
 
   /**
    * `true` if branch protections or {@link https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/managing-rulesets-for-a-repository rulesets} are configured for the ref that triggered the workflow run.
+   *
+   * @alias GITHUB_REF_PROTECTED
    */
   ref_protected: boolean = false;
 
   /**
    * The type of ref that triggered the workflow run. Valid values are `branch` or `tag`.
+   *
+   * @alias GITHUB_REF_TYPE
    */
   ref_type: 'branch' | 'tag' | '' = '';
 
   /**
    * The owner and repository name. For example, `octocat/Hello-World`.
+   *
+   * @alias GITHUB_REPOSITORY
    */
   repository: string = '';
 
   /**
    * The ID of the repository. For example, `123456789`. Note that this is different from the repository name.
+   *
+   * @alias GITHUB_REPOSITORY_ID
    */
   repository_id: string = '';
 
   /**
    * The repository owner's username. For example, `octocat`.
+   *
+   * @alias GITHUB_REPOSITORY_OWNER
    */
   repository_owner: string = '';
 
   /**
-   * The repository owner's account ID. For example, `1234567`. Note that this is different from the owner's name.
+   * The repository owner's account ID. For example, `1234567`.
+   * Note that this is different from the owner's name.
+   *
+   * @alias GITHUB_REPOSITORY_OWNER_ID
    */
   repository_owner_id: string = '';
 
@@ -192,12 +238,16 @@ export class Github {
 
   /**
    * The number of days that workflow run logs and artifacts are kept.
+   *
+   * @alias GITHUB_RETENTION_DAYS
    */
   retention_days: string = '';
 
   /**
    * A unique number for each workflow run within a repository.
    * This number does not change if you re-run the workflow run.
+   *
+   * @alias GITHUB_RUN_ID
    */
   run_id: string = '';
 
@@ -205,12 +255,16 @@ export class Github {
    * A unique number for each run of a particular workflow in a repository.
    * This number begins at 1 for the workflow's first run, and increments with each new run.
    * This number does not change if you re-run the workflow run.
+   *
+   * @alias GITHUB_RUN_NUMBER
    */
   run_number: string = '';
 
   /**
    * A unique number for each attempt of a particular workflow run in a repository.
    * This number begins at 1 for the workflow run's first attempt, and increments with each re-run.
+   *
+   * @alias GITHUB_RUN_ATTEMPT
    */
   run_attempt: string = '';
 
@@ -221,6 +275,8 @@ export class Github {
 
   /**
    * The URL of the GitHub server. For example: `https://github.com`.
+   *
+   * @alias GITHUB_SERVER_URL
    */
   server_url: string = 'https://github.com';
 
@@ -230,6 +286,8 @@ export class Github {
    * The value of this commit SHA depends on the event that triggered the workflow.
    * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows Events that trigger workflows}."
    * For example, `ffac537e6cbbf934b08745a378932722df287a53`.
+   *
+   * @alias GITHUB_SHA
    */
   sha: string = '';
 
@@ -248,6 +306,8 @@ export class Github {
    *
    * If the workflow run is a re-run, this value may differ from `github.actor`.
    * Any workflow re-runs will use the privileges of `github.actor`, even if the actor initiating the re-run (`github.triggering_actor`) has different privileges.
+   *
+   * @alias GITHUB_TRIGGERING_ACTOR
    */
   triggering_actor: string = '';
 
@@ -255,6 +315,8 @@ export class Github {
    * The name of the workflow.
    *
    * If the workflow file doesn't specify a name, the value of this property is the full path of the workflow file in the repository.
+   *
+   * @alias GITHUB_WORKFLOW
    */
   workflow: string = '';
 
@@ -262,16 +324,22 @@ export class Github {
    * The ref path to the workflow.
    *
    * For example, `octocat/hello-world/.github/workflows/my-workflow.yml@refs/heads/my_branch`.
+   *
+   * @alias GITHUB_WORKFLOW_REF
    */
   workflow_ref: string = '';
 
   /**
    * The commit SHA for the workflow file.
+   *
+   * @alias GITHUB_WORKFLOW_SHA
    */
   workflow_sha: string = '';
 
   /**
    * The default working directory on the runner for steps, and the default location of your repository when using the {@link https://github.com/actions/checkout checkout} action.
+   *
+   * @alias GITHUB_WORKSPACE
    */
   workspace: string = '';
 
