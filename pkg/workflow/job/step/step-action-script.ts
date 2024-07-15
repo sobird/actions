@@ -16,13 +16,31 @@ class StepActionScript extends StepAction {
       const { id } = this;
       const { context } = runner;
       context.github.action = id;
-      context.steps[id] = {
+      const stepResult: Step = {
         outcome: 'success',
         conclusion: 'success',
         outputs: {},
       };
+      context.steps[id] = stepResult;
 
       this.setupEnv(runner);
+
+      // todo job status and step conclusion
+      const enabled = this.if.evaluate(runner);
+      console.log('enabled', enabled);
+
+      console.log('runner', this.#env);
+
+      if (!enabled) {
+        stepResult.conclusion = 'skipped';
+        stepResult.outcome = 'skipped';
+        // todo: log result
+      }
+
+      const stepName = this.getName(runner);
+      console.log('stepName:', stepName);
+
+      // Prepare and clean Runner File Commands
     });
   }
 
@@ -32,15 +50,17 @@ class StepActionScript extends StepAction {
 
   setupEnv(runner: Runner) {
     this.mergeEnv(runner);
+    // step env
+    runner.assign(this.#env, this.getEnv(runner));
   }
 
   mergeEnv(runner: Runner) {
     const { job } = runner.run;
     const { container } = job;
     if (container) {
-      runner.assign(this.#env, runner.env, container.env?.evaluate(runner) || {});
+      runner.assign(this.#env, runner.Env, container.env?.evaluate(runner) || {});
     } else {
-      runner.assign(this.#env, runner.env);
+      runner.assign(this.#env, runner.Env);
     }
 
     Object.assign(this.#env, runner.context.github.Env);

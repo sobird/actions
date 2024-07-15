@@ -30,6 +30,6 @@ export class Job {
     this.services = Object.fromEntries(Object.entries(job.services ?? {}).map(([serviceId, container]) => {
       return [serviceId, new Container(container ?? {})];
     }));
-    this.status = job.status;
+    this.status = job.status ?? 'success';
   }
 }

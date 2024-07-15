@@ -9,6 +9,12 @@ const runner: Runner = new (Runner as any)();
 const step = new StepActionScript({
   id: '__run',
   run: 'echo hello world!',
+  env: {
+    name: 'sobird',
+  },
+  with: {
+    'who-to-greet': 'actions',
+  },
 });
 
 describe('step action script run test', async () => {

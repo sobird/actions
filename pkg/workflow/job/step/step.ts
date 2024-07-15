@@ -42,8 +42,7 @@ export interface StepProps extends Pick<Step, 'id' | 'uses' | 'shell'> {
      * but you can also use it with JavaScript actions that don't define any inputs.
      */
     entrypoint: string;
-    [key: string]: string;
-  };
+  } | Record<string, string>;
   env?: Record<string, string>;
   'continue-on-error'?: boolean;
   'timeout-minutes'?: string;
@@ -185,6 +184,9 @@ class Step {
       step.if,
       ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'steps', 'inputs'],
       ['always', 'cancelled', 'success', 'failure', 'hashFiles'],
+      'success()',
+      true,
+      'step',
     );
     this.name = new Expression(
       step.name,

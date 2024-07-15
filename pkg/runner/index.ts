@@ -107,7 +107,10 @@ class Runner {
   //   return { ...this.config.env, ...workflow.env, ...job.env };
   // }
 
-  get env() {
+  /**
+   * ...workflow.env, ...job.env, ...config.env
+   */
+  get Env() {
     const { job, workflow } = this.run;
     const env = { ...workflow.env.evaluate(this), ...job.env.evaluate(this), ...this.config.env };
     this.context.env = env;

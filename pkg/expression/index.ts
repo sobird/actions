@@ -21,14 +21,13 @@ _.templateSettings.imports = {
 };
 
 class Expression<T> {
-  type: string = 'job';
-
   constructor(
     public source: T,
     public scopes: string[],
     public specials: string[] = [],
     public defaultValue: unknown = undefined,
     public isIf: boolean = false,
+    public type: string = 'job',
   ) {}
 
   evaluate(runner: Runner): T {
@@ -60,6 +59,7 @@ class Expression<T> {
             ...availability,
             ...this.getSpecialFunctions(runner),
           });
+
           if (output === 'true') {
             return true;
           }
@@ -167,6 +167,7 @@ class Expression<T> {
 
   static CreateStepSuccess(runner: Runner) {
     return () => {
+      console.log('121', runner.context.job.status);
       return runner.context.job.status === 'success';
     };
   }
