@@ -22,8 +22,7 @@ class StepActionScript extends StepAction {
         outputs: {},
       };
 
-      const res = runner.assign({}, { a: 1 });
-      console.log('res', res);
+      this.setupEnv(runner);
     });
   }
 
@@ -31,16 +30,20 @@ class StepActionScript extends StepAction {
     return new Executor(() => {});
   }
 
+  setupEnv(runner: Runner) {
+    this.mergeEnv(runner);
+  }
+
   mergeEnv(runner: Runner) {
-    const { context } = runner;
-    const env = this.getEnv(runner);
     const { job } = runner.run;
     const { container } = job;
     if (container) {
-      runner.assign(runner.env, env, container.env?.evaluate(runner) || {});
+      runner.assign(this.#env, runner.env, container.env?.evaluate(runner) || {});
     } else {
-      runner.assign(runner.env, env);
+      runner.assign(this.#env, runner.env);
     }
+
+    Object.assign(this.#env, runner.context.github.Env);
   }
 }
 

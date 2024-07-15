@@ -442,4 +442,45 @@ export class Github {
     this.repository_owner_id = this.event.repository?.owner?.id || this.repository_owner_id || '';
     this.repositoryUrl = this.event.repository?.clone_url || '';
   }
+
+  get Env() {
+    const env: Record<string, unknown> = {};
+    env.CI = true;
+    env.GITHUB_ACTION = this.action;
+    env.GITHUB_ACTION_PATH = this.action_path;
+    env.GITHUB_ACTION_REPOSITORY = this.action_repository;
+    // env.GITHUB_ACTION_REF = this.action_ref;
+    env.GITHUB_ACTIONS = true;
+    env.GITHUB_ACTOR = this.actor;
+    env.GITHUB_ACTOR_ID = this.actor_id;
+    env.GITHUB_API_URL = this.api_url;
+    env.GITHUB_BASE_REF = this.base_ref;
+    env.GITHUB_ENV = this.env;
+    env.GITHUB_EVENT_NAME = this.event_name;
+    env.GITHUB_EVENT_PATH = this.event_path;
+    env.GITHUB_GRAPHQL_URL = this.graphql_url;
+    env.GITHUB_HEAD_REF = this.head_ref;
+    env.GITHUB_JOB = this.job;
+    env.GITHUB_PATH = this.path;
+    env.GITHUB_REF = this.ref;
+    env.GITHUB_REF_NAME = this.ref_name;
+    env.GITHUB_REF_TYPE = this.ref_type;
+    env.GITHUB_REF_PROTECTED = this.ref_protected;
+    env.GITHUB_REPOSITORY = this.repository;
+    env.GITHUB_REPOSITORY_ID = this.repository_id;
+    env.GITHUB_REPOSITORY_OWNER = this.repository_owner;
+    env.GITHUB_REPOSITORY_OWNER_ID = this.repository_owner_id;
+    env.GITHUB_RETENTION_DAYS = this.retention_days;
+    env.GITHUB_RUN_ATTEMPT = this.run_attempt;
+    env.GITHUB_RUN_ID = this.run_id;
+    env.GITHUB_RUN_NUMBER = this.run_number;
+    env.GITHUB_SERVER_URL = this.server_url;
+    env.GITHUB_SHA = this.sha;
+    env.GITHUB_TRIGGERING_ACTOR = this.triggering_actor;
+    env.GITHUB_WORKFLOW = this.workflow;
+    env.GITHUB_WORKFLOW_REF = this.workflow_ref;
+    env.GITHUB_WORKFLOW_SHA = this.workflow_sha;
+    env.GITHUB_WORKSPACE = this.workspace;
+    return env;
+  }
 }

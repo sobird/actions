@@ -156,19 +156,6 @@ class Runner {
   get assign() {
     return this.container?.isCaseSensitive ? Object.assign : assignIgnoreCase;
   }
-
-  githubEnv() {
-    const { context } = this;
-    const env: Record<string, string> = {};
-    const github = lodash.omit(context.github, ['token', 'secret_source', 'repositoryUrl', 'event', 'action_status', 'action_ref']);
-    env.CI = 'true';
-    env.GITHUB_ACTIONS = 'true';
-
-    Object.keys(github).forEach((key) => {
-      env[`GITHUB_${key.toUpperCase()}`] = github[key];
-    });
-    return env;
-  }
 }
 
 export default Runner;
