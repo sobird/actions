@@ -16,12 +16,11 @@ class StepActionScript extends StepAction {
       const { id } = this;
       const { context } = runner;
       context.github.action = id;
-      const stepResult: Step = {
+      context.updateStepResult(id, {
         outcome: 'success',
         conclusion: 'success',
         outputs: {},
-      };
-      context.steps[id] = stepResult;
+      });
 
       this.setupEnv(runner);
 
@@ -32,8 +31,10 @@ class StepActionScript extends StepAction {
       console.log('runner', this.#env);
 
       if (!enabled) {
-        stepResult.conclusion = 'skipped';
-        stepResult.outcome = 'skipped';
+        context.updateStepResult(id, {
+          outcome: 'skipped',
+          conclusion: 'skipped',
+        });
         // todo: log result
       }
 

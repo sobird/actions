@@ -17,7 +17,7 @@ import { Matrix } from './matrix';
 import { Needs } from './needs';
 import { Runner } from './runner';
 import { Secrets } from './secrets';
-import { Steps } from './steps';
+import Step from './step';
 import { Strategy } from './strategy';
 import { Vars } from './vars';
 
@@ -49,7 +49,30 @@ export default class Context {
 
   jobs: Jobs;
 
-  steps: Steps;
+  /**
+   * The `steps` context contains information about the steps in the current job that have an {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsid `id`} specified and have already run.
+   *
+   * This context changes for each step in a job. You can access this context from any step in a job.
+   *
+   * @example
+   * ```json
+   * {
+   *   "checkout": {
+   *     "outputs": {},
+   *     "outcome": "success",
+   *     "conclusion": "success"
+   *   },
+   *   "generate_number": {
+   *     "outputs": {
+   *       "random_number": "1"
+   *     },
+   *     "outcome": "success",
+   *     "conclusion": "success"
+   *   }
+   * }
+   * ```
+   */
+  steps: Record<string, Step>;
 
   runner: Runner;
 
@@ -69,7 +92,7 @@ export default class Context {
     this.vars = context.vars ?? {};
     this.job = new Job(context.job ?? {});
     this.jobs = new Jobs(context.jobs ?? {});
-    this.steps = new Steps(context.steps ?? {});
+    this.steps = context.steps ?? {};
     this.runner = new Runner(context.runner ?? {});
     this.secrets = context.secrets ?? {};
     this.strategy = new Strategy(context.strategy ?? {});
@@ -80,5 +103,20 @@ export default class Context {
 
   test?() {
     return this.env;
+  }
+
+  updateStepResult(id: string, step: Partial<Step>) {
+    if (!this.steps[id]) {
+      this.steps[id] = {
+        outputs: {},
+        outcome: 'success',
+        conclusion: 'success',
+      };
+    }
+    Object.assign(this.steps[id], step);
+
+    if (step.conclusion === 'success' || step.conclusion === 'failure' || step.conclusion === 'cancelled') {
+      this.job.status = step.conclusion;
+    }
   }
 }

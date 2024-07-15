@@ -167,7 +167,6 @@ class Expression<T> {
 
   static CreateStepSuccess(runner: Runner) {
     return () => {
-      console.log('121', runner.context.job.status);
       return runner.context.job.status === 'success';
     };
   }
