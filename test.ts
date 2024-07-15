@@ -1,4 +1,6 @@
 /* eslint-disable max-classes-per-file */
+import path from 'path';
+
 abstract class Vehicle {
   abstract run(): void;
 }
@@ -37,3 +39,7 @@ const superX02Vehicle = superX02Factory.produceVehicle();
 
 superX01Vehicle.run();
 superX02Vehicle.run();
+
+console.log('process', process);
+const moduleDirname = path.dirname(new URL(import.meta.url).pathname);
+console.log('moduleDirname', moduleDirname);

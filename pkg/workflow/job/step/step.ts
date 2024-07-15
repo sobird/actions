@@ -262,11 +262,12 @@ class Step {
   /**
    * returns the Command run internally for the shell
    */
-  getShellCommand() {
+  get shellCommand() {
     let shellCommand = this.shell;
 
     switch (this.shell) {
       case '':
+        break;
       case 'bash':
         shellCommand = 'bash --noprofile --norc -e -o pipefail {0}';
         break;
@@ -310,6 +311,8 @@ class Step {
     return StepType.UsesActionRemote;
   }
 
+  // executor
+  // eslint-disable-next-line class-methods-use-this
   public pre() {
     return new Executor(() => {
       // todo nothing
