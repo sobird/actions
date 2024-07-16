@@ -661,6 +661,26 @@ class DockerContainer extends Container {
 
     return '';
   }
+
+  resolve(dir: string) {
+    if (process.platform === 'win32' && dir.includes('/')) {
+      throw Error('You cannot specify linux style local paths (/mnt/etc) on Windows as it does not understand them.');
+    }
+
+    const absdir = path.resolve(dir);
+    const windowsPathRegex = /^([a-zA-Z]):\\(.+)$/;
+    const windowsPathComponents = windowsPathRegex.exec(absdir);
+
+    if (windowsPathComponents === null) {
+      return absdir;
+    }
+
+    const driveLetter = windowsPathComponents[1].toLowerCase();
+    const translatedPath = windowsPathComponents[2].replace(/\\/g, '/');
+    const result = `/mnt/${driveLetter}/${translatedPath}`;
+
+    return result;
+  }
 }
 
 export default DockerContainer;

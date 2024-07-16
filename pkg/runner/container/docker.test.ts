@@ -169,3 +169,37 @@ describe('test Docker Container', () => {
     });
   });
 });
+
+describe('test docker container path', () => {
+  const cwd = process.cwd();
+
+  if (process.platform === 'win32') {
+    const rootDrive = process.env.SystemDrive || '';
+    const rootDriveLetter = rootDrive.toLowerCase().replaceAll(':', '');
+    const testCases = [
+      ['/mnt/c/Users/act/go/src/github.com/nektos/act', 'C:\\Users\\act\\go\\src\\github.com\\nektos\\act\\', ''],
+      ['/mnt/f/work/dir', 'F:\\work\\dir', ''],
+      ['/mnt/c/windows/to/unix', 'windows\\to\\unix', `${rootDrive}\\`],
+      [`/mnt/${rootDriveLetter}/act`, 'act', `${rootDrive}\\`],
+    ];
+
+    for (const item of testCases) {
+      const [destination, source, workDir] = item;
+      if (workDir !== '') {
+        process.chdir(workDir);
+      }
+      expect(docker.resolve(source)).toBe(destination);
+    }
+  } else {
+    const testCases = [
+      ['/home/act/go/src/github.com/nektos/act', '/home/act/go/src/github.com/nektos/act', ''],
+      ['/home/act', '/home/act/', ''],
+      [cwd, '.', ''],
+    ];
+
+    for (const item of testCases) {
+      const [destination, source, workDir] = item;
+      expect(docker.resolve(source)).toBe(destination);
+    }
+  }
+});
