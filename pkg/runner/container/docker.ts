@@ -665,18 +665,23 @@ class DockerContainer extends Container {
     const { workdir = '/' } = this.options;
 
     const absPath = path.resolve(workdir, ...paths);
-    const windowsPathRegex = /^([a-zA-Z]):\\(.+)$/;
+    const windowsPathRegex = /^([a-zA-Z]):(\\.+)$/;
     const windowsPathComponents = windowsPathRegex.exec(absPath);
 
     if (windowsPathComponents === null) {
       return absPath;
     }
 
+    // win32
     const driveLetter = windowsPathComponents[1].toLowerCase();
     const translatedPath = windowsPathComponents[2].replace(/\\/g, '/');
-    const result = `/mnt/${driveLetter}/${translatedPath}`;
+    const result = `/mnt/${driveLetter}${translatedPath}`;
 
-    return result;
+    if (path.isAbsolute(path.join(...paths))) {
+      return result;
+    }
+
+    return translatedPath;
   }
 }
 

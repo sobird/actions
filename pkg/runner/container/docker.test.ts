@@ -9,7 +9,9 @@ import DockerContainer from './docker';
 
 vi.mock('./docker');
 
+const workdir = '/home/runner';
 const docker: DockerContainer = new (DockerContainer as any)();
+docker.options.workdir = workdir;
 
 const tmp = path.join(os.tmpdir(), `container-docker-${randomBytes(8).toString('hex')}`);
 const files = [{
@@ -172,29 +174,29 @@ describe('test Docker Container', () => {
 
 describe('test docker container path', () => {
   if (process.platform === 'win32') {
-    const rootDrive = process.env.SystemDrive || '';
-    const rootDriveLetter = rootDrive.toLowerCase().replaceAll(':', '');
     const testCases = [
-      ['/mnt/c/Users/act/go/src/github.com/nektos/act', 'C:\\Users\\act\\go\\src\\github.com\\nektos\\act\\', ''],
-      ['/mnt/f/work/dir', 'F:\\work\\dir', ''],
-      ['/home/runner/windows/to/unix', 'windows\\to\\unix', '/'],
-      ['/home/runner/act', 'act', '/'],
+      ['/mnt/c/Users/act/go/src/github.com/nektos/act', 'C:\\Users\\act\\go\\src\\github.com\\nektos\\act\\'],
+      ['/mnt/f/work/dir', 'F:\\work\\dir'],
+      [`${workdir}/windows/to/unix`, 'windows\\to\\unix'],
+      [`${workdir}/act`, 'act'],
     ];
 
     testCases.forEach((item) => {
-      const [destination, source, workDir] = item;
-      expect(docker.resolve(source)).toBe(destination);
+      const [destination, source] = item;
+      it(source, () => {
+        expect(docker.resolve(source)).toBe(destination);
+      });
     });
   } else {
     const testCases = [
-      ['/home/act/go/src/github.com/nektos/act', '/home/act/go/src/github.com/nektos/act', '/home/runner'],
-      ['/home/act', '/home/act/', '/home/runner'],
-      ['/home/runner', '.', '/home/runner'],
-      ['/home/runner/test', 'test', '/home/runner'],
+      ['/home/act/go/src/github.com/nektos/act', '/home/act/go/src/github.com/nektos/act'],
+      ['/home/act', '/home/act/'],
+      [workdir, '.'],
+      [`${workdir}/test`, 'test'],
     ];
 
     testCases.forEach((item) => {
-      const [destination, source, workDir] = item;
+      const [destination, source] = item;
       it(source, () => {
         expect(docker.resolve(source)).toBe(destination);
       });
