@@ -142,10 +142,11 @@ describe('test hosted container class', () => {
     expect(archiveFiles).toEqual(files);
   });
 
-  // it('toContainerPath test case', () => {
-  //   const containerPath = hosted.toContainerPath('/opt/workspace/test.txt');
-  //   // expect(containerPath).toBe(path.join(hosted.cwdPath, 'test.txt'));
-  // });
+  it('relative test case', () => {
+    const testPath = 'test.txt';
+    const relative = hosted.relative(testPath);
+    expect(relative).toBe(path.resolve(testPath));
+  });
 
   it('container exec test case', async () => {
     const body = fs.readFileSync(path.join(__dirname, '__mocks__/print_message.sh'), 'utf8');

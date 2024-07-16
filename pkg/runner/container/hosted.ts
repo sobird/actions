@@ -176,18 +176,6 @@ class HostedContainer extends Container {
     });
   }
 
-  toContainerPath(rawPath: string) {
-    try {
-      const relativePath = path.relative(this.rootdir, rawPath);
-      if (relativePath !== '') {
-        return path.join(this.workdir, relativePath);
-      }
-    } catch (err) {
-      return path.join(this.workdir, path.basename(rawPath));
-    }
-    return this.workdir;
-  }
-
   get actPath() {
     let actPath = this.#actPath;
     if (process.platform === 'win32') {
@@ -203,6 +191,18 @@ class HostedContainer extends Container {
   resolve(dir: string = '') {
     const { rootdir, workdir } = this;
     return path.isAbsolute(dir) ? path.join(rootdir, dir) : path.join(workdir, dir);
+  }
+
+  relative(rawPath: string) {
+    try {
+      const relativePath = path.relative(this.workdir || '', rawPath);
+      if (relativePath !== '') {
+        return path.join(this.workdir, relativePath);
+      }
+    } catch (err) {
+      return path.join(this.workdir, path.basename(rawPath));
+    }
+    return this.workdir;
   }
 
   // spawnSync(command: string, args: string[], options: ContainerExecOptions = {}) {
