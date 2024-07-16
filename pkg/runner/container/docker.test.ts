@@ -124,9 +124,9 @@ describe('test Docker Container', () => {
   });
 
   it('container spawnSync printenv test case', async () => {
-    const { stdout } = docker.spawnSync('printenv', ['spawnSync'], { env: { spawnSync: 'sobird' } });
+    const { stdout } = docker.spawnSync('printenv', ['sobird'], { env: { sobird: 'sobird' } });
 
-    expect(stdout).toBe(`sobird${os.EOL}`);
+    expect(stdout.trim()).toBe('sobird');
   });
 
   it('container hashFiles test case', async () => {
@@ -177,13 +177,12 @@ describe('test docker container path', () => {
     const testCases = [
       ['/mnt/c/Users/act/go/src/github.com/nektos/act', 'C:\\Users\\act\\go\\src\\github.com\\nektos\\act\\', ''],
       ['/mnt/f/work/dir', 'F:\\work\\dir', ''],
-      ['/mnt/c/windows/to/unix', 'windows\\to\\unix', '/'],
-      [`/mnt/${rootDriveLetter}/act`, 'act', '/'],
+      ['/home/runner/windows/to/unix', 'windows\\to\\unix', '/'],
+      ['/home/runner/act', 'act', '/'],
     ];
 
     testCases.forEach((item) => {
       const [destination, source, workDir] = item;
-      docker.options.workdir = workDir;
       expect(docker.resolve(source)).toBe(destination);
     });
   } else {
@@ -196,7 +195,6 @@ describe('test docker container path', () => {
 
     testCases.forEach((item) => {
       const [destination, source, workDir] = item;
-      docker.options.workdir = workDir;
       it(source, () => {
         expect(docker.resolve(source)).toBe(destination);
       });

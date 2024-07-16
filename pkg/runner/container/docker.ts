@@ -139,8 +139,7 @@ class DockerContainer extends Container {
       if (!container) {
         return;
       }
-      const { workdir } = this.options;
-      const dest = path.resolve(workdir, destination);
+      const dest = this.resolve(destination);
 
       const info = path.parse(source);
       const sourceStat = fs.statSync(source);
@@ -188,8 +187,7 @@ class DockerContainer extends Container {
         return;
       }
 
-      const { workdir } = this.options;
-      const dest = path.resolve(workdir, destination);
+      const dest = this.resolve(destination);
 
       const pack = new tar.Pack({ prefix: dest, portable: true });
       for (const file of files) {
@@ -229,8 +227,7 @@ class DockerContainer extends Container {
       return;
     }
 
-    const { workdir } = this.options;
-    const dest = path.resolve(workdir, destination);
+    const dest = this.resolve(destination);
 
     const pack = new tar.Pack({});
     const header = new tar.Header({
@@ -273,8 +270,7 @@ class DockerContainer extends Container {
   async getArchive(source: string) {
     const { container } = this;
 
-    const { workdir } = this.options;
-    const dest = path.resolve(workdir, source);
+    const dest = this.resolve(source);
 
     return container!.getArchive({
       path: dest,
@@ -528,8 +524,7 @@ class DockerContainer extends Container {
       if (!container) {
         return;
       }
-      const { workdir } = this.options;
-      const WorkingDir = path.resolve(workdir, inputs.workdir || '');
+      const WorkingDir = this.resolve(inputs.workdir || '');
 
       const Env = Object.entries(inputs.env || {}).map(([key, value]) => { return `${key}=${value}`; });
 
@@ -650,7 +645,7 @@ class DockerContainer extends Container {
     };
 
     const { workdir } = this.options;
-    const hashFilesScript = path.resolve(workdir, hashFilesDir, 'index.cjs');
+    const hashFilesScript = this.resolve(hashFilesDir, 'index.cjs');
 
     const { stderr } = this.spawnSync('node', [hashFilesScript], { env, workdir });
 
@@ -662,19 +657,19 @@ class DockerContainer extends Container {
     return '';
   }
 
-  resolve(dir: string) {
-    if (process.platform === 'win32' && dir.includes('/')) {
+  resolve(...paths: string[]) {
+    if (process.platform === 'win32' && paths.includes('/')) {
       throw Error('You cannot specify linux style local paths (/mnt/etc) on Windows as it does not understand them.');
     }
 
-    const { workdir = '' } = this.options;
+    const { workdir = '/' } = this.options;
 
-    const absdir = path.resolve(workdir, dir);
+    const absPath = path.resolve(workdir, ...paths);
     const windowsPathRegex = /^([a-zA-Z]):\\(.+)$/;
-    const windowsPathComponents = windowsPathRegex.exec(absdir);
+    const windowsPathComponents = windowsPathRegex.exec(absPath);
 
     if (windowsPathComponents === null) {
-      return absdir;
+      return absPath;
     }
 
     const driveLetter = windowsPathComponents[1].toLowerCase();
