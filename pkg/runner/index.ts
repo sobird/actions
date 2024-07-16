@@ -11,7 +11,7 @@ import path from 'node:path';
 import Constants from '@/pkg/common/constants';
 import type { Config } from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
-import lodash, { asyncFunction, createSafeName, assignIgnoreCase } from '@/utils';
+import { asyncFunction, createSafeName, assignIgnoreCase } from '@/utils';
 
 import Container from './container';
 import Executor from '../common/executor';
@@ -115,6 +115,14 @@ class Runner {
     const env = { ...workflow.env.evaluate(this), ...job.env.evaluate(this), ...this.config.env };
     this.context.env = env;
     return env;
+  }
+
+  /**
+   * ...workflow.defaults, ...job.defaults
+   */
+  get Defaults() {
+    const { job, workflow } = this.run;
+    return { ...workflow.defaults, ...job.defaults };
   }
 
   private generateContainerName(id?: string) {

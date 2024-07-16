@@ -142,22 +142,16 @@ describe('test hosted container class', () => {
     expect(archiveFiles).toEqual(files);
   });
 
-  it('relative test case', () => {
-    const testPath = 'test.txt';
-    const relative = hosted.relative(testPath);
-    expect(relative).toBe(path.resolve(testPath));
-  });
-
   it('container exec test case', async () => {
-    const body = fs.readFileSync(path.join(__dirname, '__mocks__/print_message.sh'), 'utf8');
+    const scriptName = process.platform === 'win32' ? 'print_message.ps1' : 'print_message.sh';
+    const body = fs.readFileSync(path.join(__dirname, `__mocks__/${scriptName}`), 'utf8');
     const putContentExecutor = hosted.putContent('', {
-      name: 'print_message.sh',
+      name: scriptName,
       mode: 0o777,
       body,
     });
     await putContentExecutor.execute();
-
-    const execExecutor = hosted.exec(['./print_message.sh']);
+    const execExecutor = hosted.exec([process.platform === 'win32' ? 'powershell' : 'sh', hosted.resolve(scriptName)]);
     await execExecutor.execute();
 
     // spawn.stdout.on('data', (data) => {

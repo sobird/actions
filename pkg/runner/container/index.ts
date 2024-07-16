@@ -51,6 +51,7 @@ export default abstract class Container {
   // abstract spawnSync(command: string, args: string[], options: ContainerExecOptions): SpawnSyncReturns<string> | undefined;
   // hashFiles功能应由所在容器提供
   abstract hashFiles(...patterns: string[]): string;
+  abstract resolve(...paths: string[]): string;
 
   async parseEnvFile(filename: string) {
     const archive = await this.getArchive(filename);

@@ -144,6 +144,7 @@ class HostedContainer extends Container {
 
       const [cmd, ...args] = command;
       const cp = spawn(cmd, args, {
+        shell: true,
         cwd: workdir,
         env: {
           // ...process.env,
@@ -193,17 +194,17 @@ class HostedContainer extends Container {
     return path.isAbsolute(dir) ? path.join(rootdir, dir) : path.join(workdir, dir);
   }
 
-  relative(rawPath: string) {
-    try {
-      const relativePath = path.relative(this.workdir || '', rawPath);
-      if (relativePath !== '') {
-        return path.join(this.workdir, relativePath);
-      }
-    } catch (err) {
-      return path.join(this.workdir, path.basename(rawPath));
-    }
-    return this.workdir;
-  }
+  // relative(rawPath: string) {
+  //   try {
+  //     const relativePath = path.relative(this.workdir || '', rawPath);
+  //     if (relativePath !== '') {
+  //       return path.join(this.workdir, relativePath);
+  //     }
+  //   } catch (err) {
+  //     return path.join(this.workdir, path.basename(rawPath));
+  //   }
+  //   return this.workdir;
+  // }
 
   // spawnSync(command: string, args: string[], options: ContainerExecOptions = {}) {
   //   return spawnSync(command, args, { encoding: 'utf8' });
