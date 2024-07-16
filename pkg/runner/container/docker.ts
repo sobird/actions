@@ -667,7 +667,9 @@ class DockerContainer extends Container {
       throw Error('You cannot specify linux style local paths (/mnt/etc) on Windows as it does not understand them.');
     }
 
-    const absdir = path.resolve(dir);
+    const { workdir = '' } = this.options;
+
+    const absdir = path.resolve(workdir, dir);
     const windowsPathRegex = /^([a-zA-Z]):\\(.+)$/;
     const windowsPathComponents = windowsPathRegex.exec(absdir);
 
