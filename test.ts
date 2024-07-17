@@ -19,4 +19,4 @@ export enum Directory {
 
 }
 
-console.log('Directory', path.relative('/var/folders/0g/085cjcx1231cqqknq0k8pbzh0000gn/T/hosted-test/85665213a4827853/home/runner', '/test'));
+console.log('Directory', path.relative('/test', '/test/folders/0g/085cjcx1231cqqknq0k8pbzh0000gn/T/hosted-test/85665213a4827853/home/runner'));

@@ -25,15 +25,9 @@ export interface HostedContainerOptions {
 const hashFilesDir = 'bin/hashFiles';
 
 class HostedContainer extends Container {
-  #actPath: string;
-
   rootdir: string;
 
   workdir: string;
-
-  tmpPath: string;
-
-  tool_cache: string;
 
   os = Container.Os(process.platform);
 
@@ -45,26 +39,19 @@ class HostedContainer extends Container {
     const { basedir } = options;
     // like container root
     const rootdir = path.join(basedir, randomBytes(8).toString('hex'));
-    const toolCache = path.join(basedir, 'tool_cache');
-
-    const actPath = path.join(rootdir, 'act');
-    const tmpPath = path.join(rootdir, 'tmp');
     const workdir = path.join(rootdir, options.workdir || '');
 
     this.rootdir = rootdir;
-    this.tool_cache = toolCache;
-    this.#actPath = actPath;
-    this.tmpPath = tmpPath;
     this.workdir = workdir;
 
-    [toolCache, actPath, tmpPath, workdir].forEach((dir) => {
+    [workdir].forEach((dir) => {
       fs.mkdirSync(dir, { recursive: true });
     });
   }
 
   put(destination: string, source: string, useGitIgnore: boolean = false) {
     return new Executor(() => {
-      let dest = this.resolve(destination);
+      let dest = this.Resolve(destination);
 
       const copyOptions: CopySyncOptions = {
         dereference: true,
@@ -92,7 +79,7 @@ class HostedContainer extends Container {
 
   putContent(destination: string, ...files: FileEntry[]) {
     return new Executor(() => {
-      const dest = this.resolve(destination);
+      const dest = this.Resolve(destination);
       for (const file of files) {
         const filename = path.join(dest, file.name);
         fs.mkdirSync(path.dirname(filename), { recursive: true });
@@ -109,7 +96,7 @@ class HostedContainer extends Container {
   }
 
   async putArchive(destination: string, readStream: NodeJS.ReadableStream) {
-    const dest = this.resolve(destination);
+    const dest = this.Resolve(destination);
     fs.mkdirSync(dest, { recursive: true });
 
     const pipeline = readStream.pipe(tar.extract({
@@ -127,7 +114,7 @@ class HostedContainer extends Container {
   }
 
   async getArchive(destination: string) {
-    const dest = this.resolve(destination);
+    const dest = this.Resolve(destination);
     const info = path.parse(dest);
     return tar.create({ cwd: info.dir }, [info.base]) as unknown as NodeJS.ReadableStream;
   }
@@ -140,7 +127,7 @@ class HostedContainer extends Container {
 
   exec(command: string[], options: ContainerExecOptions = {}) {
     return new Executor(async () => {
-      const workdir = this.resolve((options.workdir as string) || '');
+      const workdir = this.Resolve((options.workdir as string) || '');
 
       const [cmd, ...args] = command;
       const cp = spawn(cmd, args, {
@@ -177,21 +164,19 @@ class HostedContainer extends Container {
     });
   }
 
-  get actPath() {
-    let actPath = this.#actPath;
-    if (process.platform === 'win32') {
-      actPath = actPath.replaceAll('\\', '/');
-    }
-    return actPath;
-  }
-
   remove() {
     fs.rmSync(this.rootdir, { recursive: true, force: true });
   }
 
-  resolve(dir: string = '') {
+  Resolve(dir: string = '') {
     const { rootdir, workdir } = this;
     return path.isAbsolute(dir) ? path.join(rootdir, dir) : path.join(workdir, dir);
+  }
+
+  resolve(dir: string = '') {
+    const { rootdir } = this;
+    const workdir = path.relative(rootdir, this.workdir);
+    return path.isAbsolute(dir) ? dir : path.resolve(path.sep, workdir, dir);
   }
 
   // relative(rawPath: string) {
@@ -221,7 +206,7 @@ class HostedContainer extends Container {
       patterns: patterns.join('\n'),
     };
 
-    const cwd = this.resolve();
+    const cwd = this.Resolve();
 
     const hashFilesScript = path.resolve(cwd, hashFilesDir, 'index.cjs');
 

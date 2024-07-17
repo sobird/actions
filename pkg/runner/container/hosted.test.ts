@@ -54,7 +54,7 @@ describe('test hosted container class', () => {
     const executor = hosted.put(destination, path.join(filedir, file.name));
     await executor.execute();
 
-    const destBody = fs.readFileSync(path.join(hosted.resolve(destination), file.name), 'utf8');
+    const destBody = fs.readFileSync(path.join(hosted.Resolve(destination), file.name), 'utf8');
 
     expect(destBody).toEqual(file.body);
   });
@@ -66,13 +66,13 @@ describe('test hosted container class', () => {
     await executor.execute();
 
     const sourceFiles = fs.readdirSync(filedir);
-    const destFiles = fs.readdirSync(hosted.resolve(destination));
+    const destFiles = fs.readdirSync(hosted.Resolve(destination));
     expect(destFiles).toEqual(sourceFiles);
   });
 
   it('put content to container relative directory test case', async () => {
     const destination = 'put-content-relative-test';
-    const containerdir = hosted.resolve(destination);
+    const containerdir = hosted.Resolve(destination);
 
     const executor = hosted.putContent(destination, ...files);
     await executor.execute();
@@ -85,7 +85,7 @@ describe('test hosted container class', () => {
 
   it('put content to container absolute directory test case', async () => {
     const destination = '/put-content-absolute-test';
-    const containerdir = hosted.resolve(destination);
+    const containerdir = hosted.Resolve(destination);
 
     const executor = hosted.putContent(destination, ...files);
     await executor.execute();
@@ -98,7 +98,7 @@ describe('test hosted container class', () => {
 
   it('put archive to container test case', async () => {
     const destination = 'put-archive-test';
-    const containerdir = hosted.resolve(destination);
+    const containerdir = hosted.Resolve(destination);
 
     const archive = tar.create({ cwd: filedir, portable: true }, ['.']) as unknown as NodeJS.ReadableStream;
 
@@ -151,7 +151,7 @@ describe('test hosted container class', () => {
       body,
     });
     await putContentExecutor.execute();
-    const execExecutor = hosted.exec([process.platform === 'win32' ? 'powershell' : 'sh', hosted.resolve(scriptName)]);
+    const execExecutor = hosted.exec([process.platform === 'win32' ? 'powershell' : 'sh', hosted.Resolve(scriptName)]);
     await execExecutor.execute();
 
     // spawn.stdout.on('data', (data) => {
@@ -177,3 +177,6 @@ describe('test hosted container class', () => {
     expect(hash.length).toBe(64);
   });
 });
+
+const ddd = hosted.Resolve('hosbi');
+console.log('ddd', ddd);

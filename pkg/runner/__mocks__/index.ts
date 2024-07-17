@@ -1,6 +1,6 @@
 import Runner from '@/pkg/runner';
-import DockerContainer from '@/pkg/runner/container/docker';
-// import HostedContainer from '@/pkg/runner/container/hosted';
+// import DockerContainer from '@/pkg/runner/container/docker';
+import HostedContainer from '@/pkg/runner/container/hosted';
 import Workflow from '@/pkg/workflow';
 import Run from '@/pkg/workflow/plan/run';
 
@@ -13,7 +13,7 @@ const workflow = Workflow.Read(`${__dirname}/anything.yaml`);
 const run = new Run(Object.keys(workflow.jobs)[0], workflow);
 
 const runner = new Runner(run, {} as any);
-runner.container = new DockerContainer({} as any);
+runner.container = new HostedContainer({} as any);
 
 const containerExecutor = runner.container.start();
 
