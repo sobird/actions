@@ -37,16 +37,14 @@ class ActionCommandFile {
     }
   }
 
-  static TryDeleteFile(file: string) {
-    if (!fs.existsSync(file)) {
-      return true;
-    }
-    try {
-      fs.rmSync(file);
-      return true;
-    } catch (err) {
-      console.log(`Unable to delete file ${file} for reason: ${(err as Error).message}`);
-      return false;
+  public ProcessFiles() {
+    for await (const fileCommand of this.commandExtensions) {
+      try {
+        fileCommand.process(this.runner, path.join(this.fileCommandDirectory, fileCommand.filePrefix + this.fileSuffix));
+      } catch (err) {
+        console.error(`Unable to process file command '${fileCommand.contextKey}' successfully.`);
+        // context.CommandResult = TaskResult.Failed;
+      }
     }
   }
 }

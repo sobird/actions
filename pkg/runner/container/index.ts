@@ -53,6 +53,27 @@ export default abstract class Container {
   abstract hashFiles(...patterns: string[]): string;
   abstract resolve(...paths: string[]): string;
 
+  async getContent(filename: string): Promise<string> {
+    const archive = await this.getArchive(filename);
+    const stream = tar.list({});
+    archive.pipe(stream);
+
+    return new Promise((resolve, reject) => {
+      stream.on('entry', (entry) => {
+        let content = '';
+        entry.on('data', (chunk: Buffer) => {
+          content += chunk;
+        });
+        entry.on('error', (err: Error) => {
+          reject(err);
+        });
+        entry.on('end', () => {
+          resolve(content);
+        });
+      });
+    });
+  }
+
   async parseEnvFile(filename: string) {
     const archive = await this.getArchive(filename);
 

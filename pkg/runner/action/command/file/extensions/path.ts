@@ -5,7 +5,7 @@ const AddPathFileCommand: FileCommandExtension = {
 
   filePrefix: 'add_path_',
 
-  process() {
+  process(runner, file) {
     //
   },
 };
