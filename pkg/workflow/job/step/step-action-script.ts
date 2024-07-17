@@ -13,7 +13,7 @@ class StepActionScript extends StepAction {
   }
 
   public main(runner: Runner) {
-    return new Executor(() => {
+    return new Executor(async () => {
       const { id } = this;
       const { context } = runner;
       context.github.action = id;
@@ -25,7 +25,7 @@ class StepActionScript extends StepAction {
 
       const actionCommandFile = new ActionCommandFile(runner);
 
-      actionCommandFile.initialize(this.uuid);
+      await actionCommandFile.initialize(this.uuid);
 
       this.setupEnv(runner);
 

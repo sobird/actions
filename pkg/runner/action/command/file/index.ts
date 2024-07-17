@@ -21,20 +21,16 @@ class ActionCommandFile {
   async initialize(fileSuffix: string) {
     const { runner } = this;
 
-    for (const fileCommand of this.commandExtensions) {
+    for await (const fileCommand of this.commandExtensions) {
       const basename = fileCommand.filePrefix + fileSuffix;
       const filename = path.join(this.fileCommandDirectory, basename);
 
-      const executor = runner.container?.putContent(this.fileCommandDirectory, {
+      const executor = runner.container!.putContent(this.fileCommandDirectory, {
         name: basename,
         mode: 0o666,
         body: '',
       });
-
-      // eslint-disable-next-line no-await-in-loop
-      await executor?.execute();
-
-      console.log('filename', filename);
+      await executor.fn();
 
       const pathToSet = runner.container ? runner.container.resolve(filename) : filename;
       runner.context.github[fileCommand.contextKey] = pathToSet;
