@@ -1,3 +1,5 @@
+import readline from 'node:readline';
+
 import dotenv from 'dotenv';
 import * as tar from 'tar';
 
@@ -69,6 +71,34 @@ export default abstract class Container {
         });
         entry.on('end', () => {
           resolve(content);
+        });
+      });
+    });
+  }
+
+  async readline(filename: string, callback?: (line: string) => void) {
+    const archive = await this.getArchive(filename);
+    const stream = tar.list({});
+    archive.pipe(stream);
+
+    return new Promise((resolve, reject) => {
+      stream.on('entry', (entry) => {
+        let content = '';
+        entry.on('data', (chunk: Buffer) => {
+          content += chunk;
+        });
+        const rl = readline.createInterface({ input: entry, crlfDelay: Infinity });
+        rl.on('line', (line) => {
+          if (line) {
+            callback?.(line);
+          }
+        });
+        rl.on('close', () => {
+          resolve(content);
+        });
+
+        rl.on('error', (err) => {
+          reject(err);
         });
       });
     });

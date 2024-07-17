@@ -33,9 +33,15 @@ beforeAll(() => {
   }
 });
 
-afterAll(() => {
+afterAll(async () => {
   console.log('testdir', testdir);
   // fs.rmdirSync(testdir, { recursive: true });
+
+  const destination = 'put-archive-test/test1.txt';
+  const archive = await hosted.readline(destination, (line) => {
+    console.log('line', line);
+  });
+  console.log('archive', archive);
 });
 
 describe('test hosted container class', () => {
@@ -177,6 +183,3 @@ describe('test hosted container class', () => {
     expect(hash.length).toBe(64);
   });
 });
-
-const ddd = hosted.Resolve('hosbi');
-console.log('ddd', ddd);

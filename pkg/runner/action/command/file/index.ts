@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import path from 'node:path';
 
 import Runner from '@/pkg/runner';
@@ -18,7 +17,7 @@ class ActionCommandFile {
     this.fileCommandDirectory = path.join(runner.directory('Temp'), this.folderName);
   }
 
-  async initialize(fileSuffix: string) {
+  public async initialize(fileSuffix: string) {
     const { runner } = this;
 
     for await (const fileCommand of this.commandExtensions) {
@@ -37,10 +36,10 @@ class ActionCommandFile {
     }
   }
 
-  public ProcessFiles() {
+  public async process() {
     for await (const fileCommand of this.commandExtensions) {
       try {
-        fileCommand.process(this.runner, path.join(this.fileCommandDirectory, fileCommand.filePrefix + this.fileSuffix));
+        await fileCommand.process(this.runner, path.join(this.fileCommandDirectory, fileCommand.filePrefix + this.fileSuffix));
       } catch (err) {
         console.error(`Unable to process file command '${fileCommand.contextKey}' successfully.`);
         // context.CommandResult = TaskResult.Failed;
