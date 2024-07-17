@@ -6,7 +6,7 @@ import Executor from '@/pkg/common/executor';
 export interface FileEntry {
   name: string;
   mode?: number;
-  body: string;
+  body?: string;
 }
 
 export interface ContainerExecOptions {

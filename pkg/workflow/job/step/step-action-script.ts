@@ -28,7 +28,8 @@ class StepActionScript extends StepAction {
       const enabled = this.if.evaluate(runner);
       console.log('enabled', enabled);
 
-      console.log('runner', this.#env);
+      console.log('step env', this.#env);
+      console.log('github env', runner.context.env);
 
       if (!enabled) {
         context.updateStepResult(id, {
@@ -43,7 +44,7 @@ class StepActionScript extends StepAction {
 
       // Prepare and clean Runner File Commands
       const outputFileCommand = `set_output_${this.uuid}`;
-      console.log('outputFileCommand', outputFileCommand);
+      console.log('outputFileCommand', outputFileCommand, runner.directory('Actions'));
     });
   }
 

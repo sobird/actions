@@ -1,6 +1,7 @@
 /* eslint-disable max-classes-per-file */
 
 // Related to definition variables.
+import path from 'node:path';
 
 class Actions {
   //
@@ -63,10 +64,49 @@ class Runner {
   public static readonly EnforcedNode16DetectedAfterEndOfLifeEnvVariable = 'Node20ForceActionsWarnings';
 }
 
+// export enum Directory {
+//   // eslint-disable-next-line @typescript-eslint/no-shadow
+//   Actions = 'actions',
+
+//   Bin = 'bin',
+
+//   Diag = 'diag',
+
+//   Externals = 'externals',
+
+//   Temp = 'temp',
+
+//   Tools = 'tool',
+
+//   Update = 'update',
+
+//   Work = 'work',
+// }
+
+const Directory = {
+  Work: 'work',
+
+  Bin: 'bin',
+
+  Diag: 'diag',
+
+  get Actions() { return path.join(this.Work, 'actions'); },
+
+  get Externals() { return path.join(Directory.Work, 'externals'); },
+
+  get Temp() { return path.join(Directory.Work, 'temp'); },
+
+  get Tool() { return path.join(Directory.Work, 'tool'); },
+
+  get Update() { return path.join(Directory.Work, 'update'); },
+};
+
 class Constants {
   public static readonly Runner = Runner;
 
   public static readonly Variables = Variables;
+
+  public static readonly Directory = Directory;
 
   public static readonly CompositeActionsMaxDepth = 9;
 }

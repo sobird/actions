@@ -13,6 +13,7 @@ jobs:
       - run: ls -a /home
       - run: ls -a /home/runner
       - run: ls -a /home/runner/work
+      - run: echo ${{ github.output }}
       - name: Checkout
         uses: actions/checkout@v4
 

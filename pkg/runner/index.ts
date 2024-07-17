@@ -167,6 +167,15 @@ class Runner {
   get assign() {
     return this.container?.isCaseSensitive ? Object.assign : assignIgnoreCase;
   }
+
+  directory(directory: keyof typeof Constants.Directory) {
+    if (!this.container) {
+      throw Error('Runner container not started yet!');
+    }
+    return this.container.resolve(Constants.Directory[directory]);
+  }
+
+  // action command
 }
 
 export default Runner;
