@@ -153,6 +153,15 @@ export class Github {
   job: string = '';
 
   /**
+   * Path on the runner to the file that set output from workflow commands.
+   *
+   * This file is unique to the current step and is a different file for each step in a job.
+   *
+   * @alias GITHUB_OUTPUT
+   */
+  output: string = '';
+
+  /**
    * Path on the runner to the file that sets system PATH variables from workflow commands.
    *
    * This file is unique to the current step and is a different file for each step in a job.
@@ -290,6 +299,30 @@ export class Github {
    * @alias GITHUB_SHA
    */
   sha: string = '';
+
+  /**
+   * Path on the runner to the file that save state from workflow commands.
+   *
+   * This file is unique to the current step and is a different file for each step in a job.
+   *
+   * @alias GITHUB_STATE
+   */
+  state: string = '';
+
+  /**
+   * Path on the runner to the file that create step summary from workflow commands.
+   *
+   * This file is unique to the current step and is a different file for each step in a job.
+   *
+   * ```sh
+   * echo "{markdown content}" >> $GITHUB_STEP_SUMMARY
+   *
+   * echo "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY
+   * ```
+   *
+   * @alias GITHUB_STEP_SUMMARY
+   */
+  step_summary: string = '';
 
   /**
    * A token to authenticate on behalf of the GitHub App installed on your repository.
@@ -481,6 +514,10 @@ export class Github {
     env.GITHUB_WORKFLOW_REF = this.workflow_ref;
     env.GITHUB_WORKFLOW_SHA = this.workflow_sha;
     env.GITHUB_WORKSPACE = this.workspace;
+
+    env.GITHUB_OUTPUT = this.output;
+    env.GITHUB_STATE = this.state;
+    env.GITHUB_STEP_SUMMARY = this.step_summary;
     return env;
   }
 }

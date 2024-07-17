@@ -1,5 +1,6 @@
 import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
+import ActionCommandFile from '@/pkg/runner/action/command/file';
 import { Step } from '@/pkg/runner/context/steps';
 
 import StepAction from './step-action';
@@ -21,6 +22,10 @@ class StepActionScript extends StepAction {
         conclusion: 'success',
         outputs: {},
       });
+
+      const actionCommandFile = new ActionCommandFile(runner);
+
+      actionCommandFile.initialize(this.uuid);
 
       this.setupEnv(runner);
 
