@@ -15,8 +15,11 @@ class StepActionScript extends StepAction {
   public main(runner: Runner) {
     return new Executor(async () => {
       const { id } = this;
-      const { context } = runner;
+      const { context, IntraActionState } = runner;
+      // set current step
       context.github.action = id;
+      IntraActionState[id] = {};
+
       context.updateStepResult(id, {
         outcome: 'success',
         conclusion: 'success',
@@ -45,7 +48,7 @@ class StepActionScript extends StepAction {
       }
 
       const stepName = this.getName(runner);
-      console.log('stepName:', stepName);
+      console.log('stepName:', stepName, IntraActionState);
 
       // Prepare and clean Runner File Commands
       const outputFileCommand = `set_output_${this.uuid}`;

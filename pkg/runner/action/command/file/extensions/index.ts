@@ -3,6 +3,7 @@ import { Github } from '@/pkg/runner/context/github';
 
 import SetEnvFileCommand from './env';
 import AddPathFileCommand from './path';
+import SaveStateFileCommand from './state';
 import CreateStepSummaryCommand from './step_summary';
 
 export interface FileCommandExtension {
@@ -16,4 +17,5 @@ export default [
   AddPathFileCommand,
   SetEnvFileCommand,
   CreateStepSummaryCommand,
+  SaveStateFileCommand,
 ];

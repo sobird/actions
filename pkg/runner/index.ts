@@ -179,17 +179,9 @@ class Runner {
 
   // action command
   saveState(key: string, value: string) {
-    const stepID = this.context.github.action;
-    if (stepID) {
-      if (!this.IntraActionState) {
-        this.IntraActionState = {};
-      }
-      let state = this.IntraActionState[stepID];
-      if (!state) {
-        state = {};
-        this.IntraActionState[stepID] = state;
-      }
-      state[key] = value;
+    const { action } = this.context.github;
+    if (action) {
+      this.IntraActionState[action][key] = value;
     }
   }
 }
