@@ -34,7 +34,7 @@ class Runner {
 
   container?: Container;
 
-  echoOnActionCommand: boolean;
+  EchoOnActionCommand: boolean;
 
   IntraActionState: Record<string, Record<string, string>> = {};
 
@@ -62,7 +62,7 @@ class Runner {
     }
 
     // Initialize 'echo on action command success' property, default to false, unless Step_Debug is set
-    this.echoOnActionCommand = context.secrets[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || context.vars[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || false;
+    this.EchoOnActionCommand = context.secrets[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || context.vars[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || false;
 
     this.context = context;
   }
@@ -181,6 +181,10 @@ class Runner {
     return this.container.resolve(Constants.Directory[directory]);
   }
 
+  get EnhancedAnnotationsEnabled() {
+    return !!this.context.vars['DistributedTask.EnhancedAnnotations'];
+  }
+
   // action command
   saveState(key: string, value: string) {
     const { action } = this.context.github;
@@ -227,7 +231,7 @@ class Runner {
       return;
     }
 
-    if (this.echoOnActionCommand) {
+    if (this.EchoOnActionCommand) {
       console.log('::add-mask::***');
     }
 

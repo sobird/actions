@@ -34,7 +34,7 @@ describe('action command manager ::set-env:: test', () => {
 
   it('set-env BlockList ', () => {
     process.env.ACTIONS_ALLOW_UNSECURE_COMMANDS = 'true';
-    runner.echoOnActionCommand = true;
+    runner.EchoOnActionCommand = true;
     commandManager.process('::set-env name=NODE_OPTIONS,::sobird');
 
     expect(runner.context.env).toEqual({});

@@ -22,6 +22,7 @@ class ActionCommandManager {
   }
 
   process(line: string) {
+    const { runner } = this;
     if (!line) {
       return;
     }
@@ -31,7 +32,7 @@ class ActionCommandManager {
       return;
     }
 
-    if (!this.enhancedAnnotationsEnabled() && actionCommand.command === 'notice') {
+    if (!runner.EnhancedAnnotationsEnabled && actionCommand.command === 'notice') {
       logger.debug("Enhanced Annotations not enabled on the server: 'notice' command will not be processed.");
       return false;
     }
@@ -54,7 +55,7 @@ class ActionCommandManager {
       return true;
     } else if (extensions[actionCommand.command]) {
       const extension = extensions[actionCommand.command];
-      if (this.runner.echoOnActionCommand && extension.echo) {
+      if (runner.EchoOnActionCommand && extension.echo) {
         // context.Output(input);
         console.log(line);
       }
@@ -72,10 +73,6 @@ class ActionCommandManager {
       // Command not found
       console.warn(`Can't find command extension for ##[${actionCommand.command}.command].`);
     }
-  }
-
-  enhancedAnnotationsEnabled() {
-    return !!this.runner.context.vars['DistributedTask.EnhancedAnnotations'];
   }
 
   validateStopToken(stopToken: string) {
