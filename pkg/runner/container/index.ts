@@ -9,6 +9,7 @@ export interface FileEntry {
   name: string;
   mode?: number;
   body: string;
+  size?: number;
 }
 
 export interface ContainerExecOptions {
@@ -55,57 +56,14 @@ export default abstract class Container {
   abstract hashFiles(...patterns: string[]): string;
   abstract resolve(...paths: string[]): string;
 
-  async getContent(filename: string): Promise<string> {
+  async getFile(filename: string): Promise<tar.ReadEntry> {
     const archive = await this.getArchive(filename);
-    const stream = tar.list({});
-    archive.pipe(stream);
+    const extract = tar.list({});
+    archive.pipe(extract);
 
     return new Promise((resolve, reject) => {
-      stream.on('entry', (entry) => {
-        let content = '';
-        entry.on('data', (chunk: Buffer) => {
-          content += chunk;
-        });
-        entry.on('error', (err: Error) => {
-          reject(err);
-        });
-        entry.on('end', () => {
-          resolve(content);
-        });
-      });
-    });
-  }
-
-  async readline(filename: string, callback?: (line: string) => void) {
-    const archive = await this.getArchive(filename);
-    const stream = tar.list({});
-    archive.pipe(stream);
-
-    return new Promise((resolve, reject) => {
-      stream.on('entry', (entry) => {
-        let content = '';
-        console.log('entry.size', entry);
-        if (entry.size === 0) {
-          resolve(content);
-          return;
-        }
-
-        entry.on('data', (chunk: Buffer) => {
-          content += chunk;
-        });
-        const rl = readline.createInterface({ input: entry, crlfDelay: Infinity });
-        rl.on('line', (line) => {
-          if (line) {
-            callback?.(line);
-          }
-        });
-        rl.on('close', () => {
-          resolve(content);
-        });
-
-        rl.on('error', (err) => {
-          reject(err);
-        });
+      extract.on('entry', (entry) => {
+        resolve(entry);
       });
       archive.on('error', (err) => {
         reject(err);
@@ -113,25 +71,88 @@ export default abstract class Container {
     });
   }
 
-  async parseEnvFile(filename: string) {
-    const archive = await this.getArchive(filename);
+  async getContent(filename: string): Promise<FileEntry> {
+    const file = await this.getFile(filename);
+    if (file.size === 0) {
+      return {
+        name: file.path,
+        mode: file.mode,
+        size: file.size,
+        body: '',
+      };
+    }
 
-    const stream = tar.list({});
-    archive.pipe(stream);
+    let body = '';
+    file.on('data', (chunk: Buffer) => {
+      body += chunk;
+    });
 
     return new Promise((resolve, reject) => {
-      stream.on('entry', (entry) => {
-        let content = '';
-        entry.on('data', (chunk: Buffer) => {
-          content += chunk;
+      file.on('error', (err) => {
+        reject(err);
+      });
+      file.on('end', () => {
+        resolve({
+          name: file.path,
+          mode: file.mode,
+          size: file.size,
+          body,
         });
-        entry.on('error', (err: Error) => {
-          reject(err);
-        });
-        entry.on('end', () => {
-          const config = dotenv.parse(content);
-          resolve(config ?? {});
-        });
+      });
+    });
+  }
+
+  async readline(filename: string, callback?: (line: string) => void): Promise<string> {
+    const file = await this.getFile(filename);
+    let content = '';
+
+    if (file.size === 0) {
+      return content;
+    }
+
+    file.on('data', (chunk: Buffer) => {
+      content += chunk;
+    });
+
+    const rl = readline.createInterface({
+      input: file as unknown as NodeJS.ReadableStream,
+      crlfDelay: Infinity,
+    });
+
+    return new Promise((resolve, reject) => {
+      rl.on('line', (line) => {
+        if (line) {
+          callback?.(line);
+        }
+      });
+      rl.on('close', () => {
+        resolve(content);
+      });
+
+      rl.on('error', (err) => {
+        reject(err);
+      });
+    });
+  }
+
+  async getFileEnv(filename: string): Promise<Record<string, string>> {
+    const file = await this.getFile(filename);
+    let content = '';
+    if (file.size === 0) {
+      return {};
+    }
+
+    file.on('data', (chunk: Buffer) => {
+      content += chunk;
+    });
+
+    return new Promise((resolve, reject) => {
+      file.on('error', (err) => {
+        reject(err);
+      });
+      file.on('end', () => {
+        const config = dotenv.parse(content);
+        resolve(config ?? {});
       });
     });
   }

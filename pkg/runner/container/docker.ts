@@ -580,7 +580,7 @@ class DockerContainer extends Container {
     }
 
     const buffer = cp.execSync(`docker exec ${container.id} printenv ${this.pathVariableName}`);
-    return buffer.toString();
+    return buffer.toString().trim();
   }
 
   info() {

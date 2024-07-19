@@ -149,7 +149,7 @@ describe('test Docker Container', () => {
     expect(hash.length).toBe(64);
   });
 
-  it('container parseEnvFile test case', async () => {
+  it('container getFileEnv test case', async () => {
     const putContentExecutor = docker.putContent('', {
       name: 'env',
       mode: 0o777,
@@ -160,7 +160,7 @@ describe('test Docker Container', () => {
     });
     await putContentExecutor.execute();
 
-    const envObj = await docker.parseEnvFile('env');
+    const envObj = await docker.getFileEnv('env');
 
     const dd = await DockerContainer.docker.version();
     console.log('dd', dd);

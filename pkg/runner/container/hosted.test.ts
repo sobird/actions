@@ -38,10 +38,11 @@ afterAll(async () => {
   // fs.rmdirSync(testdir, { recursive: true });
 
   const destination = 'put-archive-test/test1.txt';
-  const archive = await hosted.readline(destination, (line) => {
-    console.log('line', line);
-  });
+  const archive = await hosted.getFileEnv(destination);
   console.log('archive', archive);
+
+  // const ws = fs.createWriteStream('sobird.txt');
+  // archive.pipe(ws);
 });
 
 describe('test hosted container class', () => {
