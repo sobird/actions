@@ -14,6 +14,8 @@ jobs:
       - run: ls -a /home/runner
       - run: ls -a /home/runner/work
       - run: echo ${{ github.output }}
+      - run: echo ${{ github.action }}
+        id: sobird
       - name: Checkout
         uses: actions/checkout@v4
 

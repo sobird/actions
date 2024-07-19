@@ -1,4 +1,7 @@
 import fs from 'node:fs';
+import util from 'node:util';
+
+import Constants from '@/pkg/common/constants';
 
 import { type FileCommandExtension } from '.';
 
@@ -10,27 +13,29 @@ const CreateStepSummaryCommand: FileCommandExtension = {
   filePrefix: 'step_summary_',
 
   async process(runner, filename) {
-    const content = await runner.container?.getContent(filename);
-    const fileSize = content?.length || 0;
-    if (fileSize === 0) {
+    // todo
+    return;
+    const file = await runner.container!.getFile(filename);
+    const filesize = file.size;
+
+    if (filesize === 0) {
       console.info(`Step Summary file (${filename}) is empty; skipping attachment upload`);
+      return;
     }
-    if (fileSize > AttachmentSizeLimit) {
-      // context.Error(String.Format(Constants.Runner.UnsupportedSummarySize, AttachmentSizeLimit / 1024, fileSize / 1024));
-      console.info(`Step Summary file (${filename}) is too large (${fileSize} bytes); skipping attachment upload`);
+    if (filesize > AttachmentSizeLimit) {
+      console.error(util.format(Constants.Runner.UnsupportedSummarySize, AttachmentSizeLimit / 1024, filesize / 1024));
+      console.info(`Step Summary file (${filename}) is too large (${filesize} bytes); skipping attachment upload`);
       return;
     }
 
-    console.log(`Step Summary file exists: ${filename} and has a file size of ${fileSize} bytes`);
+    console.log(`Step Summary file exists: ${filename} and has a file size of ${filesize} bytes`);
 
     const scrubbedFilePath = `${filename}-scrubbed`;
-    const fileStream = fs.createReadStream(filename, 'utf8');
     let fileContents = '';
-    fileStream.on('data', (chunk) => { fileContents += chunk; });
-    fileStream.on('end', () => {
+    file.on('data', (chunk) => { fileContents += chunk; });
+    file.on('end', () => {
       const scrubbedContents = (fileContents);
-      console.log('scrubbedContents', scrubbedContents);
-      fs.writeFileSync(scrubbedFilePath, scrubbedContents, 'utf8');
+      // fs.writeFileSync(scrubbedFilePath, scrubbedContents, 'utf8');
 
       const attachmentName = '';
       console.log(`Queueing file (${filename}) for attachment upload (${attachmentName})`);

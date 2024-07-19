@@ -34,6 +34,8 @@ class Runner {
 
   echoOnActionCommand: boolean;
 
+  IntraActionState: Record<string, Record<string, string>> = {};
+
   constructor(public run: Run, public config: Config) {
     const { jobId, job, workflow } = run;
     const context = new Context(config.context);
@@ -176,6 +178,20 @@ class Runner {
   }
 
   // action command
+  saveState(key: string, value: string) {
+    const stepID = this.context.github.action;
+    if (stepID) {
+      if (!this.IntraActionState) {
+        this.IntraActionState = {};
+      }
+      let state = this.IntraActionState[stepID];
+      if (!state) {
+        state = {};
+        this.IntraActionState[stepID] = state;
+      }
+      state[key] = value;
+    }
+  }
 }
 
 export default Runner;
