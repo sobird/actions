@@ -2,6 +2,7 @@ import Runner from '@/pkg/runner';
 
 import SetEnvCommandExtension from './env';
 import SetOutputCommandExtension from './output';
+import SaveStateCommandExtension from './state';
 import ActionCommand from '..';
 
 export interface CommandExtension {
@@ -14,4 +15,5 @@ export interface CommandExtension {
 export default {
   [SetEnvCommandExtension.command]: SetEnvCommandExtension,
   [SetOutputCommandExtension.command]: SetOutputCommandExtension,
+  [SaveStateCommandExtension.command]: SaveStateCommandExtension,
 };

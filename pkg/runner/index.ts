@@ -182,9 +182,13 @@ class Runner {
   // action command
   saveState(key: string, value: string) {
     const { action } = this.context.github;
-    if (action) {
+
+    if (this.caller) {
+      // todo
+    } else if (action) {
       this.IntraActionState[action][key] = value;
     }
+    console.debug(`Save intra-action state ${key} = ${value}`);
   }
 
   setOutput(key: string, value: string) {
