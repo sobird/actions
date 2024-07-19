@@ -106,6 +106,7 @@ export default class Context {
   }
 
   updateStepResult(id: string, step: Partial<Step>) {
+    const { action } = this.github;
     if (!this.steps[id]) {
       this.steps[id] = {
         outputs: {},

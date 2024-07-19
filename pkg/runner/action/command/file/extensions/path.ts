@@ -7,7 +7,7 @@ const AddPathFileCommand: FileCommandExtension = {
 
   async process(runner, filename) {
     await runner.container?.readline(filename, (line) => {
-      runner.prependPath.push(line);
+      runner.addPath(line);
     });
   },
 };

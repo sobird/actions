@@ -2,6 +2,7 @@ import Runner from '@/pkg/runner';
 import { Github } from '@/pkg/runner/context/github';
 
 import SetEnvFileCommand from './env';
+import SetOutputFileCommand from './output';
 import AddPathFileCommand from './path';
 import SaveStateFileCommand from './state';
 import CreateStepSummaryCommand from './step_summary';
@@ -18,4 +19,5 @@ export default [
   SetEnvFileCommand,
   CreateStepSummaryCommand,
   SaveStateFileCommand,
+  SetOutputFileCommand,
 ];

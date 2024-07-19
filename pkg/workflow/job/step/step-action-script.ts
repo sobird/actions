@@ -19,7 +19,6 @@ class StepActionScript extends StepAction {
       // set current step
       context.github.action = id;
       IntraActionState[id] = {};
-
       context.updateStepResult(id, {
         outcome: 'success',
         conclusion: 'success',
@@ -55,6 +54,8 @@ class StepActionScript extends StepAction {
       console.log('outputFileCommand', outputFileCommand, runner.directory('Actions'));
 
       await actionCommandFile.process();
+
+      console.log('runner', runner.prependPath);
     });
   }
 

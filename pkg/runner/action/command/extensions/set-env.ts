@@ -5,7 +5,6 @@ import Constants from '@/pkg/common/constants';
 import type { CommandExtension } from '.';
 
 const ENV_KEY = 'name';
-const SetEnvBlockList = ['NODE_OPTIONS'];
 
 const commandExtension: CommandExtension = {
   command: 'set-env',
@@ -24,14 +23,7 @@ const commandExtension: CommandExtension = {
       throw new Error("Required field 'name' is missing in ##[set-env] command.");
     }
 
-    if (SetEnvBlockList.includes(envKey.toUpperCase())) {
-      console.log(`Can't update ${envKey} environment variable using ::set-env:: command.`);
-      // AddIssue
-      return;
-    }
-
-    runner.assign(runner.context.env, { [envKey]: actionCommand.data });
-    runner.assign(runner.globalEnv, { [envKey]: actionCommand.data });
+    runner.setEnv(envKey, actionCommand.data);
   },
 };
 

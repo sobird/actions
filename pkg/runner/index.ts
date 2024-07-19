@@ -17,6 +17,8 @@ import Container from './container';
 import Executor from '../common/executor';
 import { Run } from '../workflow/plan';
 
+const SetEnvBlockList = ['NODE_OPTIONS'];
+
 class Runner {
   context: Context;
 
@@ -183,6 +185,34 @@ class Runner {
     if (action) {
       this.IntraActionState[action][key] = value;
     }
+  }
+
+  setOutput(key: string, value: string) {
+    const { action } = this.context.github;
+    if (action) {
+      this.context.steps[action].outputs[key] = value;
+    }
+  }
+
+  setEnv(key: string, value: string) {
+    if (SetEnvBlockList.includes(key.toUpperCase())) {
+      console.log(`Can't update ${key} environment variable using set-env command.`);
+      // AddIssue
+      return;
+    }
+
+    this.assign(this.context.env, { [key]: value });
+    this.assign(this.globalEnv, { [key]: value });
+  }
+
+  addPath(value: string) {
+    const extraPath = [value];
+    for (const v of this.prependPath) {
+      if (v !== value) {
+        extraPath.push(v);
+      }
+    }
+    this.prependPath = extraPath;
   }
 }
 
