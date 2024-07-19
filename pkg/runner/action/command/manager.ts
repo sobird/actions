@@ -59,7 +59,7 @@ class ActionCommandManager {
         console.log(line);
       }
       try {
-        extension.main(this.runner, actionCommand);
+        extension.process(this.runner, actionCommand);
       } catch (err) {
         const commandInformation = extension.echo ? line : extension.command;
         const message = `Unable to process command '${commandInformation}' successfully.`;

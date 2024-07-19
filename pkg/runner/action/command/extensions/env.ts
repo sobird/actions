@@ -6,10 +6,10 @@ import type { CommandExtension } from '.';
 
 const ENV_KEY = 'name';
 
-const commandExtension: CommandExtension = {
+const SetEnvCommandExtension: CommandExtension = {
   command: 'set-env',
   echo: true,
-  main(runner, actionCommand) {
+  process(runner, actionCommand) {
     const { AllowUnsupportedCommands } = Constants.Variables.Actions;
     const allowUnsecureCommands = process.env[AllowUnsupportedCommands]?.toLowerCase() === 'true' || runner.context.env[AllowUnsupportedCommands]?.toLowerCase() === 'true' || false;
 
@@ -27,4 +27,4 @@ const commandExtension: CommandExtension = {
   },
 };
 
-export default commandExtension;
+export default SetEnvCommandExtension;

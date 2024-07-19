@@ -39,7 +39,7 @@ class Runner {
 
   public static readonly ResultsUploadFailure = 'RESULTS_UPLOAD_FAILURE';
 
-  public static readonly UnsupportedCommandMessage = 'The `{0}` command is deprecated and will be disabled soon. Please upgrade to using Environment Files. For more information see: https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/';
+  public static readonly UnsupportedCommandMessage = 'The `%s` command is deprecated and will be disabled soon. Please upgrade to using Environment Files. For more information see: https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/';
 
   public static readonly UnsupportedCommandMessageDisabled = 'The %s command is disabled. Please upgrade to using Environment Files or opt into unsecure command execution by setting the `ACTIONS_ALLOW_UNSECURE_COMMANDS` environment variable to `true`. For more information see: https://github.blog/changelog/2020-10-01-github-actions-deprecating-set-env-and-add-path-commands/';
 
