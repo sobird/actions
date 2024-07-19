@@ -16,6 +16,8 @@ const AddMatcherCommandExtension: CommandExtension = {
     file = runner.container!.resolve(file);
 
     console.log('file', file);
+
+    // add by file
   },
 };
 
