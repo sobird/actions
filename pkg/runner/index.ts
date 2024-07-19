@@ -38,6 +38,8 @@ class Runner {
 
   IntraActionState: Record<string, Record<string, string>> = {};
 
+  masks: string[] = [];
+
   constructor(public run: Run, public config: Config) {
     const { jobId, job, workflow } = run;
     const context = new Context(config.context);
@@ -217,6 +219,19 @@ class Runner {
       }
     }
     this.prependPath = extraPath;
+  }
+
+  addMask(value: string) {
+    if (!value) {
+      console.warn("Can't add secret mask for empty string in ##[add-mask] command.");
+      return;
+    }
+
+    if (this.echoOnActionCommand) {
+      console.log('::add-mask::***');
+    }
+
+    this.masks.push(value);
   }
 }
 

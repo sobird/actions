@@ -1,6 +1,7 @@
 import Runner from '@/pkg/runner';
 
 import SetEnvCommandExtension from './env';
+import AddMaskCommandExtension from './mask';
 import SetOutputCommandExtension from './output';
 import SaveStateCommandExtension from './state';
 import ActionCommand from '..';
@@ -16,4 +17,5 @@ export default {
   [SetEnvCommandExtension.command]: SetEnvCommandExtension,
   [SetOutputCommandExtension.command]: SetOutputCommandExtension,
   [SaveStateCommandExtension.command]: SaveStateCommandExtension,
+  [AddMaskCommandExtension.command]: AddMaskCommandExtension,
 };
