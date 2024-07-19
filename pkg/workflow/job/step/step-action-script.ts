@@ -50,6 +50,8 @@ class StepActionScript extends StepAction {
       // Prepare and clean Runner File Commands
       const outputFileCommand = `set_output_${this.uuid}`;
       console.log('outputFileCommand', outputFileCommand, runner.directory('Actions'));
+
+      await actionCommandFile.process();
     });
   }
 

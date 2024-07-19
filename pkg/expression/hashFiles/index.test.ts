@@ -22,9 +22,6 @@ function hashFiles() {
     const outend = output.indexOf(guard, outstartAdjusted);
     if (outend !== -1) {
       const hash = output.slice(outstartAdjusted, outend);
-      console.log('hash1212', hash);
-      // resolve(hash);
-
       return hash;
     }
   }

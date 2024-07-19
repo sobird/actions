@@ -84,6 +84,12 @@ export default abstract class Container {
     return new Promise((resolve, reject) => {
       stream.on('entry', (entry) => {
         let content = '';
+        console.log('entry.size', entry);
+        if (entry.size === 0) {
+          resolve(content);
+          return;
+        }
+
         entry.on('data', (chunk: Buffer) => {
           content += chunk;
         });
@@ -100,6 +106,9 @@ export default abstract class Container {
         rl.on('error', (err) => {
           reject(err);
         });
+      });
+      archive.on('error', (err) => {
+        reject(err);
       });
     });
   }

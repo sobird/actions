@@ -1,7 +1,9 @@
 import Runner from '@/pkg/runner';
 import { Github } from '@/pkg/runner/context/github';
 
+import SetEnvFileCommand from './env';
 import AddPathFileCommand from './path';
+import CreateStepSummaryCommand from './step_summary';
 
 export interface FileCommandExtension {
   // Avoid overwriting the original variables of GitHub context
@@ -12,4 +14,6 @@ export interface FileCommandExtension {
 
 export default [
   AddPathFileCommand,
+  SetEnvFileCommand,
+  CreateStepSummaryCommand,
 ];

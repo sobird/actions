@@ -19,6 +19,7 @@ class ActionCommandFile {
 
   public async initialize(fileSuffix: string) {
     const { runner } = this;
+    this.fileSuffix = fileSuffix;
 
     for await (const fileCommand of this.commandExtensions) {
       const basename = fileCommand.filePrefix + fileSuffix;
@@ -27,7 +28,7 @@ class ActionCommandFile {
       const executor = runner.container!.putContent(this.fileCommandDirectory, {
         name: basename,
         mode: 0o666,
-        body: '',
+        body: 'ss，你好',
       });
       await executor.fn();
 
