@@ -90,7 +90,7 @@ class Runner {
 
       console.log('job container image:', job.container.image.evaluate(this));
 
-      await jobExecutor.execute();
+      await jobExecutor.execute(this);
     });
   }
 

@@ -11,7 +11,7 @@ beforeEach(() => {
   runner.context.env = {};
 });
 
-describe('action command manager ::set-env:: test', () => {
+describe('action command ::set-env:: test', () => {
   it('set-env (ACTIONS_ALLOW_UNSECURE_COMMANDS = false)', () => {
     commandManager.process('::set-env name=name,::sobird');
 
@@ -38,5 +38,14 @@ describe('action command manager ::set-env:: test', () => {
     commandManager.process('::set-env name=NODE_OPTIONS,::sobird');
 
     expect(runner.context.env).toEqual({});
+  });
+});
+
+describe('action command ::set-output:: test', () => {
+  it('set-output', () => {
+    const { context } = runner;
+    commandManager.process('::set-output name=name,::sobird');
+
+    expect(context.steps[context.github.action].outputs.name).toEqual('sobird');
   });
 });

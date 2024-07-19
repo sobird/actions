@@ -20,6 +20,6 @@ const step = new StepActionScript({
 describe('step action script run test', async () => {
   it('run', async () => {
     const main = step.main(runner);
-    await main.execute();
+    await main.execute({ runner });
   });
 });

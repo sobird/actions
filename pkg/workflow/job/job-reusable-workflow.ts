@@ -1,3 +1,11 @@
+/**
+ * Reusing workflows
+ *
+ * @see https://docs.github.com/en/actions/using-workflows/reusing-workflows
+ *
+ * sobird<i@sobird.me> at 2024/07/14 16:32:46 created.
+ */
+
 import path from 'node:path';
 
 import Executor from '@/pkg/common/executor';

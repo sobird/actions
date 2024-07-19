@@ -10,6 +10,8 @@ import Executor from '@/pkg/common/executor';
 import Expression from '@/pkg/expression';
 import Runner from '@/pkg/runner';
 
+import StepAction from './step-action';
+
 /**
  * describes what type of step we are about to run
  */
@@ -48,7 +50,7 @@ export interface StepProps extends Pick<Step, 'id' | 'uses' | 'shell'> {
   'timeout-minutes'?: string;
 }
 
-class Step {
+class Step extends StepAction {
   #uuid: UUID;
 
   /**
@@ -178,6 +180,8 @@ class Step {
   #number: number = 0;
 
   constructor(step: StepProps) {
+    super();
+
     this.#uuid = randomUUID();
     this.id = step.id;
     this.if = new Expression(
@@ -314,8 +318,19 @@ class Step {
   }
 
   // executor
-  // eslint-disable-next-line class-methods-use-this
   public pre() {
+    return new Executor(() => {
+      // todo nothing
+    });
+  }
+
+  public main() {
+    return new Executor(() => {
+      // todo nothing
+    });
+  }
+
+  public post() {
     return new Executor(() => {
       // todo nothing
     });

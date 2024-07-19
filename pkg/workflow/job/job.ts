@@ -543,6 +543,7 @@ class Job {
     return JobType.Default;
   }
 
+  // job executor
   executor(runner: Runner) {
     const { steps } = this;
     if (!steps || steps.length === 0) {
@@ -562,11 +563,11 @@ class Job {
 
     const jobStepsPipeline = steps.map((step, index) => {
       // eslint-disable-next-line no-param-reassign
-      step.id = step.id || String(index);
-      // eslint-disable-next-line no-param-reassign
       step.number = index;
 
-      return new Executor(async () => {
+      return new Executor(async (ctx) => {
+        console.log('ctx', ctx);
+        console.log('step', step);
         console.log('step', step.constructor.name);
         console.log('step if:', step.if.evaluate(runner));
 

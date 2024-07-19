@@ -7,6 +7,8 @@
 import { Mutex } from 'async-mutex';
 import log4js from 'log4js';
 
+import Runner from '@/pkg/runner';
+
 const mutex = new Mutex();
 
 const logger = log4js.getLogger();
@@ -25,9 +27,9 @@ export class Conditional {
 }
 
 class Executor {
-  constructor(public fn: (ctx?: object) => Promise<void> | void) {}
+  constructor(public fn: (ctx?: Runner) => Promise<void> | void) {}
 
-  execute(ctx?: object) {
+  execute(ctx?: Runner) {
     return this.fn(ctx);
   }
 
@@ -86,8 +88,7 @@ class Executor {
   /** 创建一个按顺序执行多个执行器的执行器 */
   static Pipeline(...executors: Executor[]) {
     return new Executor(async (ctx) => {
-      for (const executor of executors) {
-        // eslint-disable-next-line no-await-in-loop
+      for await (const executor of executors) {
         await executor.execute(ctx);
       }
     });
@@ -159,10 +160,10 @@ class Executor {
 
   // 创建一个互斥的执行器
   static Mutex(executor: Executor) {
-    return new Executor(async () => {
+    return new Executor(async (ctx) => {
       const release = await mutex.acquire();
       try {
-        await executor.execute();
+        await executor.execute(ctx);
       } catch (err) {
         //
       } finally {

@@ -16,8 +16,15 @@ const runner = new Runner(run, {} as any);
 runner.container = new HostedContainer({} as any);
 
 const containerExecutor = runner.container.start();
-
 await containerExecutor.execute();
+
+// current step setup
+runner.context.github.action = '__run';
+runner.context.steps[runner.context.github.action] = {
+  outputs: {},
+  outcome: 'success',
+  conclusion: 'success',
+};
 
 // vi.mock('@/pkg/runner');
 

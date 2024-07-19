@@ -1,19 +1,20 @@
 import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
 import ActionCommandFile from '@/pkg/runner/action/command/file';
-import { Step } from '@/pkg/runner/context/steps';
 
-import StepAction from './step-action';
+import Step from './step';
 
-class StepActionScript extends StepAction {
+class StepActionScript extends Step {
   #env: Record<string, string> = {};
 
   public pre() {
     return new Executor(() => {});
   }
 
-  public main(runner: Runner) {
-    return new Executor(async () => {
+  public main() {
+    return new Executor(async (ctx) => {
+      const { runner } = ctx;
+      console.log('runner123', runner);
       const { id } = this;
       const { context, IntraActionState } = runner;
       // set current step
