@@ -1,9 +1,5 @@
-import dotenv from 'dotenv';
+import { createSafeName } from './utils';
 
-const content = `
-sobird=2
-hello=2
-`;
+const result = createSafeName('/actions/checkout@v4');
 
-const config = dotenv.parse(content);
-console.log('config', config);
+console.log('result', result);

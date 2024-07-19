@@ -13,7 +13,8 @@ import { asyncFunction } from '@/utils';
 import Container, { ContainerProps } from './container';
 import Defaults, { DefaultsProps } from './defaults';
 import Environment, { EnvironmentOptions } from './environment';
-import { StepFactory, StepProps, Step } from './step';
+import { StepProps, Step } from './step';
+import { createSteps } from './steps';
 import Strategy, { StrategyProps } from './strategy';
 import {
   WorkflowDispatchInput, Permissions, Concurrency,
@@ -402,11 +403,7 @@ class Job {
     this.env = new Expression(job.env, ['github', 'needs', 'strategy', 'matrix', 'vars', 'secrets', 'inputs']);
     this.defaults = new Defaults(job.defaults);
 
-    if (Array.isArray(job.steps)) {
-      this.steps = job.steps.map((step) => {
-        return StepFactory(step);
-      });
-    }
+    this.steps = createSteps(job.steps);
 
     this['timeout-minutes'] = job['timeout-minutes'];
     this.strategy = new Strategy(job.strategy);
