@@ -9,7 +9,7 @@ const Properties = {
 };
 
 const SaveStateCommandExtension: CommandExtension = {
-  command: 'set-state',
+  command: 'save-state',
   echo: true,
   process(runner, actionCommand) {
     if (runner.context.vars['DistributedTask.DeprecateStepOutputCommands']) {

@@ -49,3 +49,58 @@ describe('action command ::set-output:: test', () => {
     expect(context.steps[context.github.action].outputs.name).toEqual('sobird');
   });
 });
+
+describe('action command ::save-state:: test', () => {
+  it('save-state', () => {
+    const { context } = runner;
+    commandManager.process('::save-state name=name,::sobird');
+    expect(runner.IntraActionState[context.github.action].name).toEqual('sobird');
+  });
+});
+
+describe('action command ::stop-commands:: test', () => {
+  it('stop-commands with valid token', () => {
+    const { context } = runner;
+    const validToken = 'randomToken';
+    commandManager.process(`::stop-commands::${validToken}`);
+    commandManager.process('::set-env name=name,::sobird1');
+    commandManager.process(`::${validToken}::`);
+
+    expect(context.env).toEqual({});
+  });
+
+  it('stop-commands with valid token and new command process', () => {
+    const { context } = runner;
+    const validToken = 'randomToken';
+    commandManager.process(`::stop-commands::${validToken}`);
+    commandManager.process('::set-env name=name,::sobird1');
+    commandManager.process(`::${validToken}::`);
+    commandManager.process('::set-env name=name,::sobird2');
+
+    expect(context.env).toEqual({
+      name: 'sobird2',
+    });
+  });
+
+  it('stop-commands with invalid token', () => {
+    const { context } = runner;
+    const invalidToken = 'invalidToken';
+    commandManager.process('::stop-commands::stopToken');
+    commandManager.process('::set-env name=name,::sobird1');
+    commandManager.process(`::${invalidToken}::`);
+
+    expect(context.env).toEqual({});
+  });
+
+  it('stop-commands with invalid token and new command process', () => {
+    const { context } = runner;
+    const invalidToken = 'invalidToken';
+    commandManager.process('::stop-commands::stopToken');
+    commandManager.process('::set-env name=name,::sobird1');
+    commandManager.process(`::${invalidToken}::`);
+    commandManager.process('::set-env name=name,::sobird2');
+    commandManager.process('::set-env name=hello,::world');
+
+    expect(context.env).toEqual({});
+  });
+});

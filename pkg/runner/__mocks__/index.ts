@@ -25,6 +25,7 @@ runner.context.steps[runner.context.github.action] = {
   outcome: 'success',
   conclusion: 'success',
 };
+runner.IntraActionState[runner.context.github.action] = {};
 
 // vi.mock('@/pkg/runner');
 

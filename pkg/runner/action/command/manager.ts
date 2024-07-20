@@ -19,6 +19,7 @@ class ActionCommandManager {
 
   constructor(public runner: Runner) {
     this.registeredCommands = new Set(Object.keys(extensions));
+    this.registeredCommands.add(this.stopCommand);
   }
 
   process(line: string) {
@@ -28,6 +29,7 @@ class ActionCommandManager {
     }
 
     const actionCommand = ActionCommand.Parse(line, this.registeredCommands);
+
     if (!actionCommand) {
       return;
     }
@@ -38,10 +40,15 @@ class ActionCommandManager {
     }
 
     if (this.stopProcessCommand) {
-      if (!this.stopToken && actionCommand.command === this.stopToken) {
-        logger.debug('Resume processing commands');
+      console.log(this.stopToken, actionCommand.command);
+      if (this.stopToken && actionCommand.command === this.stopToken) {
+        console.debug('Resume processing commands');
+        this.registeredCommands.delete(this.stopToken);
+        this.stopProcessCommand = false;
+        this.stopToken = '';
       }
     } else if (actionCommand.command === this.stopCommand) {
+      console.log('121212', 121212, actionCommand);
       this.validateStopToken(actionCommand.data);
       this.stopToken = actionCommand.data;
       this.stopProcessCommand = true;
@@ -76,6 +83,7 @@ class ActionCommandManager {
   }
 
   validateStopToken(stopToken: string) {
+    console.log('stopToken', stopToken);
     const { AllowUnsupportedStopCommandTokens } = Constants.Variables.Actions;
     const allowUnsecureStopCommandTokens = process.env[AllowUnsupportedStopCommandTokens]?.toLowerCase() === 'true' || this.runner.context.env[AllowUnsupportedStopCommandTokens]?.toLowerCase() === 'true' || false;
 
