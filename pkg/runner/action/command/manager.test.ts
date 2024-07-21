@@ -1,3 +1,4 @@
+import Constants from '@/pkg/common/constants';
 import Runner from '@/pkg/runner';
 
 import ActionCommandManager from './manager';
@@ -9,6 +10,8 @@ const commandManager = new ActionCommandManager(runner);
 
 beforeEach(() => {
   runner.context.env = {};
+  runner.masks = [];
+  runner.EchoOnActionCommand = false;
 });
 
 describe('action command ::set-env:: test', () => {
@@ -82,6 +85,29 @@ describe('action command ::stop-commands:: test', () => {
     });
   });
 
+  it('Stop Process Command FailOn InvalidStopTokens', () => {
+    const invalidStopTokens = ['', 'pause-logging'];
+
+    invalidStopTokens.forEach((stopToken) => {
+      expect(() => {
+        commandManager.process(`::stop-commands::${stopToken}`);
+      }).toThrowError();
+    });
+  });
+
+  it('Stop Process Command Allows Invalid StopTokens If Env.Var.IsSet', () => {
+    const commandManager2 = new ActionCommandManager(new Runner(undefined as any, {
+      context: {
+        env: {
+          [Constants.Variables.Actions.AllowUnsupportedStopCommandTokens]: 'true',
+        },
+      },
+    } as any));
+
+    expect(commandManager2.process('::stop-commands::')).toBe(true);
+    expect(commandManager2.process('::stop-commands::pause-logging')).toBe(false);
+  });
+
   it('stop-commands with invalid token', () => {
     const { context } = runner;
     const invalidToken = 'invalidToken';
@@ -124,5 +150,57 @@ describe('action command ::add-mask:: test', () => {
     commandManager.process('::add-mask::mask3');
 
     expect(runner.masks).toEqual(['mask1', 'mask2', 'mask3']);
+  });
+
+  it('add-mask With Multiline Value', () => {
+    commandManager.process('::add-mask::abc%0Ddef%0Aghi%0D%0Ajkl');
+    commandManager.process('::add-mask:: %0D  %0A   %0D%0A    %0D');
+
+    expect(runner.masks).toEqual(['abc', 'def', 'ghi', 'jkl']);
+  });
+});
+
+describe('action command ::echo:: test', () => {
+  it('echo process', () => {
+    expect(runner.EchoOnActionCommand).toBe(false);
+
+    commandManager.process('::echo::on');
+    expect(runner.EchoOnActionCommand).toBe(true);
+
+    commandManager.process('::echo::off');
+    expect(runner.EchoOnActionCommand).toBe(false);
+
+    commandManager.process('::echo::ON');
+    expect(runner.EchoOnActionCommand).toBe(true);
+
+    commandManager.process('::echo::OFF');
+    expect(runner.EchoOnActionCommand).toBe(false);
+  });
+
+  it('echo process command DebugOn', () => {
+    const runner2 = new Runner(undefined as any, {
+      context: {
+        vars: {
+          [Constants.Variables.Actions.StepDebug]: 'true',
+        },
+      },
+    } as any);
+
+    expect(runner2.EchoOnActionCommand).toBe(true);
+    commandManager.process('::echo::off');
+    expect(runner2.EchoOnActionCommand).toBe(false);
+
+    commandManager.process('::echo::on');
+    expect(runner2.EchoOnActionCommand).toBe(true);
+  });
+
+  it('echo invalid value', () => {
+    commandManager.process('::echo::invalid');
+    expect(runner.EchoOnActionCommand).toBe(false);
+  });
+
+  it('echo no value', () => {
+    commandManager.process('::echo::');
+    expect(runner.EchoOnActionCommand).toBe(false);
   });
 });

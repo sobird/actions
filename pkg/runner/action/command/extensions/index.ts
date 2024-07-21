@@ -1,7 +1,11 @@
 import Runner from '@/pkg/runner';
 
 import AddMatcherCommandExtension from './add-matcher';
+import DebugCommandExtension from './debug';
+import EchoCommandExtension from './echo';
+import EndGroupCommandExtension from './endgroup';
 import SetEnvCommandExtension from './env';
+import GroupCommandExtension from './group';
 import AddMaskCommandExtension from './mask';
 import SetOutputCommandExtension from './output';
 import AddPathCommandExtension from './path';
@@ -24,4 +28,8 @@ export default {
   [AddPathCommandExtension.command]: AddPathCommandExtension,
   [AddMatcherCommandExtension.command]: AddMatcherCommandExtension,
   [RemoveMatcherCommandExtension.command]: RemoveMatcherCommandExtension,
+  [EchoCommandExtension.command]: EchoCommandExtension,
+  [GroupCommandExtension.command]: GroupCommandExtension,
+  [EndGroupCommandExtension.command]: EndGroupCommandExtension,
+  [DebugCommandExtension.command]: DebugCommandExtension,
 };

@@ -45,20 +45,23 @@ class ActionCommandManager {
         this.registeredCommands.delete(this.stopToken);
         this.stopProcessCommand = false;
         this.stopToken = '';
+        return true;
       }
-    } else if (actionCommand.command === this.stopCommand) {
+      console.debug(`Process commands has been stopped and waiting for '##[${this.stopToken}]' to resume.`);
+      return false;
+    } if (actionCommand.command === this.stopCommand) {
       this.validateStopToken(actionCommand.data);
       this.stopToken = actionCommand.data;
       this.stopProcessCommand = true;
       this.registeredCommands.add(this.stopToken);
 
       if (this.stopToken.length > 6) {
-        // HostContext.SecretMasker.AddValue(_stopToken);
+        runner.addMask(this.stopToken);
       }
 
       console.debug(('Paused processing commands until the token you called ::stopCommands:: with is received'));
       return true;
-    } else if (extensions[actionCommand.command]) {
+    } if (extensions[actionCommand.command]) {
       const extension = extensions[actionCommand.command];
       if (runner.EchoOnActionCommand && extension.echo) {
         // context.Output(input);

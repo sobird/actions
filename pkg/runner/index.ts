@@ -235,7 +235,9 @@ class Runner {
       console.log('::add-mask::***');
     }
 
-    this.masks.push(value);
+    const masks = value.split(/[\r\n]/).filter((item) => { return Boolean(item.trim()); });
+
+    this.masks.push(...masks);
   }
 }
 

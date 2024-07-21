@@ -3,8 +3,8 @@ import type { CommandExtension } from '.';
 const GroupCommandExtension: CommandExtension = {
   command: 'group',
   echo: false,
-  process(runner, actionCommand) {
-    runner.output(`##[${this.command}]${actionCommand.data}`);
+  process(runner, command) {
+    runner.output(`##[${this.command}]${command.data}`);
   },
 };
 

@@ -18,15 +18,6 @@ runner.container = new HostedContainer({} as any);
 const containerExecutor = runner.container.start();
 await containerExecutor.execute();
 
-// current step setup
-runner.context.github.action = '__run';
-runner.context.steps[runner.context.github.action] = {
-  outputs: {},
-  outcome: 'success',
-  conclusion: 'success',
-};
-runner.IntraActionState[runner.context.github.action] = {};
-
 // vi.mock('@/pkg/runner');
 
 // const mockedConstructor = vi.fn();
@@ -39,7 +30,18 @@ runner.IntraActionState[runner.context.github.action] = {};
 
 // console.log('Runner123', new Runner());
 
-const mockRunner = vi.fn().mockImplementation(() => {
+const mockRunner = vi.fn().mockImplementation((unknown, config = {}) => {
+  Object.assign(runner, new Runner(run, config as any));
+
+  // current step setup
+  runner.context.github.action = '__run';
+  runner.context.steps[runner.context.github.action] = {
+    outputs: {},
+    outcome: 'success',
+    conclusion: 'success',
+  };
+  runner.IntraActionState[runner.context.github.action] = {};
+
   return runner;
 });
 

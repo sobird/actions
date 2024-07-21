@@ -1,7 +1,11 @@
 import type { CommandExtension } from '.';
 
-const GroupingCommandExtension: CommandExtension = {
+const EndGroupCommandExtension: CommandExtension = {
   command: 'endgroup',
+  echo: false,
+  process(runner) {
+    runner.output(`##[${this.command}]`);
+  },
 };
 
-export default GroupingCommandExtension;
+export default EndGroupCommandExtension;
