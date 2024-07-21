@@ -104,3 +104,25 @@ describe('action command ::stop-commands:: test', () => {
     expect(context.env).toEqual({});
   });
 });
+
+describe('action command ::add-path:: test', () => {
+  it('add-path', () => {
+    commandManager.process('::stopToken::');
+    commandManager.process('::add-path::path1');
+    commandManager.process('::add-path::path2');
+    commandManager.process('::add-path::path2');
+
+    expect(runner.prependPath).toEqual(['path2', 'path1']);
+  });
+});
+
+describe('action command ::add-mask:: test', () => {
+  it('add-mask', () => {
+    commandManager.process('::stopToken::');
+    commandManager.process('::add-mask::mask1');
+    commandManager.process('::add-mask::mask2');
+    commandManager.process('::add-mask::mask3');
+
+    expect(runner.masks).toEqual(['mask1', 'mask2', 'mask3']);
+  });
+});
