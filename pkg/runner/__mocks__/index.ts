@@ -13,10 +13,10 @@ const workflow = Workflow.Read(`${__dirname}/anything.yaml`);
 const run = new Run(Object.keys(workflow.jobs)[0], workflow);
 
 const runner = new Runner(run, {} as any);
-runner.container = new HostedContainer({} as any);
+const container = new HostedContainer({} as any);
 
-const containerExecutor = runner.container.start();
-await containerExecutor.execute();
+// start container
+await container.start().execute();
 
 // vi.mock('@/pkg/runner');
 
@@ -41,6 +41,8 @@ const mockRunner = vi.fn().mockImplementation((unknown, config = {}) => {
     conclusion: 'success',
   };
   runner.IntraActionState[runner.context.github.action] = {};
+
+  runner.container = container;
 
   return runner;
 });

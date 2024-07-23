@@ -35,7 +35,7 @@ beforeAll(() => {
 
 afterAll(async () => {
   console.log('testdir', testdir);
-  // fs.rmdirSync(testdir, { recursive: true });
+  fs.rmdirSync(testdir, { recursive: true });
 
   const destination = 'put-archive-test/test1.txt';
   const archive = await hosted.getFileEnv(destination);
