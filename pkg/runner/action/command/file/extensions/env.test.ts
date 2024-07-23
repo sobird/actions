@@ -1,3 +1,4 @@
+import os from 'node:os';
 import path from 'node:path';
 
 import Runner from '@/pkg/runner';
@@ -177,6 +178,8 @@ describe('set env file command test', () => {
 
     await SetEnvFileCommand.process(runner, filename);
 
-    expect(runner.context.env).toEqual({});
+    expect(runner.context.env).toEqual({
+      MY_ENV: `line one${os.EOL}line two${os.EOL}line three`,
+    });
   });
 });

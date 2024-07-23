@@ -66,7 +66,7 @@ class DockerContainer extends Container {
 
   network?: Dockerode.Network;
 
-  os: string = '';
+  platform: string = '';
 
   arch: string = '';
 
@@ -586,7 +586,7 @@ class DockerContainer extends Container {
   info() {
     return new Executor(async () => {
       const { OSType, Architecture } = await docker.info();
-      this.os = Container.Os(OSType);
+      this.platform = Container.Os(OSType);
       this.arch = Container.Arch(Architecture);
     });
   }

@@ -29,7 +29,7 @@ class HostedContainer extends Container {
 
   workdir: string;
 
-  os = Container.Os(process.platform);
+  platform = Container.Os(process.platform);
 
   arch = Container.Arch(process.arch);
 

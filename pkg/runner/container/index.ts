@@ -1,6 +1,6 @@
+import os from 'node:os';
 import readline from 'node:readline';
 
-import dotenv from 'dotenv';
 import * as tar from 'tar';
 
 import Executor from '@/pkg/common/executor';
@@ -30,7 +30,7 @@ export interface ContainerOptions {
 export default abstract class Container {
   name = '';
 
-  abstract os: string;
+  abstract platform: string;
 
   abstract arch: string;
 
@@ -121,8 +121,8 @@ export default abstract class Container {
 
     return new Promise((resolve, reject) => {
       rl.on('line', (line) => {
-        if (line) {
-          callback?.(line);
+        if (line.trim()) {
+          callback?.(line.trim());
         }
       });
       rl.on('close', () => {
@@ -136,33 +136,61 @@ export default abstract class Container {
   }
 
   async getFileEnv(filename: string): Promise<Record<string, string>> {
-    const file = await this.getFile(filename);
-    let content = '';
-    if (file.size === 0) {
-      return {};
-    }
+    let key = '';
+    let value = '';
+    let delimiter = '';
+    let delimiterValues: string[] = [];
 
-    file.on('data', (chunk: Buffer) => {
-      content += chunk;
+    const env: Record<string, string> = {};
+
+    await this.readline(filename, (line) => {
+      const equalsIndex = line.indexOf('=');
+      const heredocIndex = line.indexOf('<<');
+
+      if (delimiter) {
+        if (delimiter === line) {
+          env[key] = delimiterValues.join(os.EOL);
+          delimiter = '';
+          delimiterValues = [];
+        } else {
+          delimiterValues.push(line);
+        }
+        return;
+      }
+
+      // Normal style NAME=VALUE
+      if (equalsIndex >= 0 && (heredocIndex < 0 || equalsIndex < heredocIndex)) {
+        const split = line.split('=');
+        [key] = split;
+        const [, ...rest] = split;
+        value = rest.join('=');
+      } else if (heredocIndex >= 0 && (equalsIndex < 0 || heredocIndex < equalsIndex)) {
+        // Heredoc style NAME<<EOF
+        const split = line.split('<<', 2);
+        if (!split[0] || !split[1]) {
+          throw new Error(`Invalid format '${line}'. Name must not be empty and delimiter must not be empty`);
+        }
+        [key, delimiter] = split;
+
+        return;
+      } else {
+        throw new Error("Invalid format '{line}'");
+      }
+
+      env[key] = value;
+      key = '';
+      value = '';
     });
 
-    return new Promise((resolve, reject) => {
-      file.on('error', (err) => {
-        reject(err);
-      });
-      file.on('end', () => {
-        const config = dotenv.parse(content);
-        resolve(config ?? {});
-      });
-    });
+    return env;
   }
 
   get pathVariableName() {
-    const { os } = this;
+    const { platform } = this;
     // if (platform === 'plan9') {
     //   return 'path';
     // }
-    if (os === 'Windows') {
+    if (platform === 'Windows') {
       return 'Path';
     }
     return 'PATH';
@@ -173,7 +201,7 @@ export default abstract class Container {
   }
 
   get isCaseSensitive() {
-    return this.os !== 'Windows';
+    return this.platform !== 'Windows';
   }
 
   static Os(platform: string) {
