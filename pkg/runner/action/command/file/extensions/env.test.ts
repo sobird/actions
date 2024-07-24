@@ -66,12 +66,12 @@ describe('set env file command test', () => {
 
     const putContentExecutor = runner.container!.putContent(rootDirectory, {
       name: 'simple-file',
-      body: `
-
-      MY_ENV=MY VALUE
-
-      MY_ENV_2=my second value
-      `,
+      body: [
+        '',
+        'MY_ENV=MY VALUE',
+        '',
+        'MY_ENV_2=my second value',
+      ].join(os.EOL),
     });
     putContentExecutor.execute();
 
@@ -103,11 +103,11 @@ describe('set env file command test', () => {
 
     const putContentExecutor = runner.container!.putContent(rootDirectory, {
       name: 'simple-file',
-      body: `
-      MY_ENV=MY VALUE
-      MY_ENV_2=
-      MY_ENV_3=my third value
-      `,
+      body: [
+        'MY_ENV=MY VALUE',
+        'MY_ENV_2=',
+        'MY_ENV_3=my third value',
+      ].join(os.EOL),
     });
     putContentExecutor.execute();
 
@@ -125,11 +125,11 @@ describe('set env file command test', () => {
 
     const putContentExecutor = runner.container!.putContent(rootDirectory, {
       name: 'simple-file',
-      body: `
-      MY_ENV==abc
-      MY_ENV_2=def=ghi
-      MY_ENV_3=jkl=
-      `,
+      body: [
+        'MY_ENV==abc',
+        'MY_ENV_2=def=ghi',
+        'MY_ENV_3=jkl=',
+      ].join(os.EOL),
     });
     putContentExecutor.execute();
 
@@ -147,11 +147,11 @@ describe('set env file command test', () => {
 
     const putContentExecutor = runner.container!.putContent(rootDirectory, {
       name: 'simple-file',
-      body: `
-      NODE_OPTIONS<<EOF
-      asdf
-      EOF
-      `,
+      body: [
+        'NODE_OPTIONS<<EOF',
+        'asdf',
+        'EOF',
+      ].join(os.EOL),
     });
     putContentExecutor.execute();
 
@@ -166,13 +166,13 @@ describe('set env file command test', () => {
 
     const putContentExecutor = runner.container!.putContent(rootDirectory, {
       name: basename,
-      body: `
-      MY_ENV<<EOF
-      line one
-      line two
-      line three
-      EOF
-      `,
+      body: [
+        'MY_ENV<<EOF',
+        'line one',
+        'line two',
+        'line three',
+        'EOF',
+      ].join(os.EOL),
     });
     putContentExecutor.execute();
 
@@ -181,5 +181,133 @@ describe('set env file command test', () => {
     expect(runner.context.env).toEqual({
       MY_ENV: `line one${os.EOL}line two${os.EOL}line three`,
     });
+  });
+
+  it('heredoc Empty Value', async () => {
+    const basename = 'heredoc';
+    const filename = path.join(rootDirectory, basename);
+
+    const putContentExecutor = runner.container!.putContent(rootDirectory, {
+      name: basename,
+      body: [
+        'MY_OUTPUT<<EOF',
+        'EOF',
+      ].join(os.EOL),
+    });
+    putContentExecutor.execute();
+
+    await SetEnvFileCommand.process(runner, filename);
+
+    expect(runner.context.env).toEqual({
+      MY_OUTPUT: '',
+    });
+  });
+
+  it('heredoc Skip Empty Lines', async () => {
+    const basename = 'heredoc';
+    const filename = path.join(rootDirectory, basename);
+
+    const putContentExecutor = runner.container!.putContent(rootDirectory, {
+      name: basename,
+      body: [
+        'MY_OUTPUT<<EOF',
+        'hello',
+        'world',
+        'EOF',
+        '',
+        'MY_OUTPUT_2<<EOF',
+        'HELLO',
+        'AGAIN',
+        'EOF',
+      ].join(os.EOL),
+    });
+    putContentExecutor.execute();
+
+    await SetEnvFileCommand.process(runner, filename);
+
+    expect(runner.context.env).toEqual({
+      MY_OUTPUT: `hello${os.EOL}world`,
+      MY_OUTPUT_2: `HELLO${os.EOL}AGAIN`,
+    });
+  });
+
+  it('heredoc Special Characters', async () => {
+    const basename = 'heredoc';
+    const filename = path.join(rootDirectory, basename);
+
+    const putContentExecutor = runner.container!.putContent(rootDirectory, {
+      name: basename,
+      body: [
+        'MY_OUTPUT<<=EOF',
+        'hello',
+        'one',
+        '=EOF',
+        'MY_OUTPUT_2<<<EOF',
+        'hello',
+        'two',
+        '<EOF',
+        'MY_OUTPUT_3<<EOF',
+        'hello',
+        '',
+        'three',
+        '',
+        'EOF',
+        'MY_OUTPUT_4<<EOF',
+        'hello=four',
+        'EOF',
+        'MY_OUTPUT_5<<EOF',
+        ' EOF',
+        'EOF',
+      ].join(os.EOL),
+    });
+    putContentExecutor.execute();
+
+    await SetEnvFileCommand.process(runner, filename);
+
+    expect(runner.context.env).toEqual({
+      MY_OUTPUT: `hello${os.EOL}one`,
+      MY_OUTPUT_2: `hello${os.EOL}two`,
+      MY_OUTPUT_3: `hello${os.EOL}three`,
+      MY_OUTPUT_4: 'hello=four',
+      MY_OUTPUT_5: ' EOF',
+    });
+  });
+
+  it('heredoc Missing NewLine', async () => {
+    const basename = 'heredoc';
+    const filename = path.join(rootDirectory, basename);
+
+    const putContentExecutor = runner.container!.putContent(rootDirectory, {
+      name: basename,
+      body: [
+        'MY_OUTPUT<<EOF',
+        'line one',
+        'line two',
+        'line three',
+        'EOF',
+      ].join(' '),
+    });
+    putContentExecutor.execute();
+
+    expect(SetEnvFileCommand.process(runner, filename)).rejects.toThrow();
+  });
+
+  it('heredoc Missing NewLine MultipleLines', async () => {
+    const basename = 'heredoc';
+    const filename = path.join(rootDirectory, basename);
+
+    const putContentExecutor = runner.container!.putContent(rootDirectory, {
+      name: basename,
+      body: [
+        'MY_OUTPUT<<EOF',
+        `line one
+        line two
+        line three`,
+        'EOF',
+      ].join(' '),
+    });
+    putContentExecutor.execute();
+
+    expect(SetEnvFileCommand.process(runner, filename)).rejects.toThrow();
   });
 });

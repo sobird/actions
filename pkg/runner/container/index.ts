@@ -122,7 +122,7 @@ export default abstract class Container {
     return new Promise((resolve, reject) => {
       rl.on('line', (line) => {
         if (line.trim()) {
-          callback?.(line.trim());
+          callback?.(line);
         }
       });
       rl.on('close', () => {
@@ -167,20 +167,26 @@ export default abstract class Container {
       } else if (heredocIndex >= 0 && (equalsIndex < 0 || heredocIndex < equalsIndex)) {
         // Heredoc style NAME<<EOF
         const split = line.split('<<', 2);
+
         if (!split[0] || !split[1]) {
           throw new Error(`Invalid format '${line}'. Name must not be empty and delimiter must not be empty`);
         }
+
         [key, delimiter] = split;
 
         return;
       } else {
-        throw new Error("Invalid format '{line}'");
+        // throw new Error("Invalid format '{line}'");
       }
 
       env[key] = value;
       key = '';
       value = '';
     });
+
+    if (delimiter) {
+      throw new Error(`Invalid value. Matching delimiter not found '${delimiter}'`);
+    }
 
     return env;
   }
