@@ -28,7 +28,7 @@ class ActionCommandFile {
       const executor = runner.container!.putContent(this.fileCommandDirectory, {
         name: basename,
         mode: 0o666,
-        body: 'name=sobird', // todo test it
+        body: '', // todo test it
       });
       await executor.fn();
 

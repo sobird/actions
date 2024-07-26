@@ -6,12 +6,8 @@
 
 import { UUID, randomUUID } from 'node:crypto';
 
-import Executor from '@/pkg/common/executor';
 import Expression from '@/pkg/expression';
 import Runner from '@/pkg/runner';
-
-import StepAction from './step-action';
-
 /**
  * describes what type of step we are about to run
  */
@@ -50,7 +46,7 @@ export interface StepProps extends Pick<Step, 'id' | 'uses' | 'shell'> {
   'timeout-minutes'?: string;
 }
 
-class Step extends StepAction {
+class Step {
   #uuid: UUID;
 
   /**
@@ -180,8 +176,6 @@ class Step extends StepAction {
   #number: number = 0;
 
   constructor(step: StepProps) {
-    super();
-
     this.#uuid = randomUUID();
     this.id = step.id;
     this.if = new Expression(
@@ -315,25 +309,6 @@ class Step extends StepAction {
       return StepType.UsesActionLocal;
     }
     return StepType.UsesActionRemote;
-  }
-
-  // executor
-  public pre() {
-    return new Executor(() => {
-      // todo nothing
-    });
-  }
-
-  public main() {
-    return new Executor(() => {
-      // todo nothing
-    });
-  }
-
-  public post() {
-    return new Executor(() => {
-      // todo nothing
-    });
   }
 }
 

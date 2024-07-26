@@ -26,10 +26,14 @@ export class Conditional {
   }
 }
 
-class Executor {
-  constructor(public fn: (ctx?: Runner) => Promise<void> | void) {}
+interface ExecutorContext {
+  runner: Runner;
+}
 
-  execute(ctx?: Runner) {
+class Executor {
+  constructor(public fn: (ctx?: ExecutorContext) => Promise<void> | void) {}
+
+  execute(ctx?: ExecutorContext) {
     return this.fn(ctx);
   }
 
