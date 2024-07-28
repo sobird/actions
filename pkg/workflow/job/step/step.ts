@@ -259,40 +259,6 @@ class Step {
     return env;
   }
 
-  /**
-   * returns the Command run internally for the shell
-   */
-  get shellCommand() {
-    let shellCommand = this.shell;
-
-    switch (this.shell) {
-      case '':
-        break;
-      case 'bash':
-        shellCommand = 'bash --noprofile --norc -e -o pipefail {0}';
-        break;
-      case 'pwsh':
-        shellCommand = "pwsh -command . '{0}'";
-        break;
-      case 'python':
-        shellCommand = 'python {0}';
-        break;
-      case 'sh':
-        shellCommand = 'sh -e {0}';
-        break;
-      case 'cmd':
-        shellCommand = 'cmd /D /E:ON /V:OFF /S /C "CALL "{0}""';
-        break;
-      case 'powershell':
-        shellCommand = "powershell -command . '{0}'";
-        break;
-      default:
-        // shellCommand = this.shell;
-    }
-
-    return shellCommand;
-  }
-
   type(runner: Runner) {
     if (this.run.evaluate(runner) === '' && this.uses === '') {
       return StepType.Invalid;

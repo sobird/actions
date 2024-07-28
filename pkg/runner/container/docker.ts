@@ -591,13 +591,12 @@ class DockerContainer extends Container {
     });
   }
 
-  async extractFromImageEnv() {
+  async imageEnv() {
     const { image } = this.options;
     const img = docker.getImage(image);
     const imageInspectInfo = await img.inspect();
 
-    const env = dotenv.parse(imageInspectInfo.Config.Env.join('\n'));
-    console.log('env', env);
+    return dotenv.parse(imageInspectInfo.Config.Env.join('\n'));
   }
 
   spawnSync(command: string, args: string[], options: ContainerExecOptions = {}) {

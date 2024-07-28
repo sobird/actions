@@ -195,6 +195,11 @@ class HostedContainer extends Container {
   //   return spawnSync(command, args, { encoding: 'utf8' });
   // }
 
+  // eslint-disable-next-line class-methods-use-this
+  async imageEnv() {
+    return {};
+  }
+
   hashFiles(...patterns: string[]) {
     const followSymlink = patterns[0] === '--follow-symbolic-links';
     if (followSymlink) {

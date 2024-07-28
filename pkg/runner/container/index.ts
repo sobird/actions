@@ -1,5 +1,7 @@
+import fs from 'node:fs';
 import os from 'node:os';
 import readline from 'node:readline';
+import path from 'path';
 
 import * as tar from 'tar';
 
@@ -55,6 +57,7 @@ export default abstract class Container {
   // hashFiles功能应由所在容器提供
   abstract hashFiles(...patterns: string[]): string;
   abstract resolve(...paths: string[]): string;
+  abstract imageEnv(): Promise<Record<string, string>>;
 
   async getFile(filename: string): Promise<tar.ReadEntry> {
     const archive = await this.getArchive(filename);
@@ -193,17 +196,79 @@ export default abstract class Container {
 
   get pathVariableName() {
     const { platform } = this;
-    // if (platform === 'plan9') {
-    //   return 'path';
-    // }
+    if (platform === 'plan9') {
+      return 'path';
+    }
     if (platform === 'Windows') {
       return 'Path';
     }
     return 'PATH';
   }
 
+  joinPath(...paths: string[]) {
+    return paths.join(this.platform === 'windows' ? ';' : ':');
+  }
+
+  splitPath(pathString: string) {
+    return pathString.split(this.platform === 'windows' ? ';' : ':');
+  }
+
+  lookPath(file: string, env: Record<string, string>) {
+    if (file.includes('/')) {
+      if (Container.isExecutable(file)) {
+        return file;
+      }
+      return '';
+    }
+    const pathEnv = process.env.PATH || '';
+    this.splitPath(pathEnv).map((dir) => { return dir.trim(); }).forEach((item) => {
+      let dir = item;
+      if (dir === '') {
+        // Unix shell semantics: path element "" means "."
+        dir = '.';
+      }
+      const fullPath = path.join(dir, file);
+      if (Container.isExecutable(fullPath)) {
+        return fullPath;
+      }
+    });
+
+    return '';
+  }
+
   get defaultPathVariable() {
     return process.env[this.pathVariableName];
+  }
+
+  async applyPath(prependPath: string[], env: Record<string, string>) {
+    if (prependPath.length > 0) {
+      let { pathVariableName } = this;
+      if (!this.isCaseSensitive) {
+        for (const k of Object.keys(env)) {
+          if (k.toLowerCase() === pathVariableName.toLowerCase()) {
+            pathVariableName = k;
+            break;
+          }
+        }
+      }
+
+      if (!env[pathVariableName]) {
+        let cpath = '';
+        const imageEnv = await this.imageEnv();
+        for (const k of Object.keys(imageEnv)) {
+          if (k === pathVariableName) {
+            cpath = imageEnv[k];
+            break;
+          }
+        }
+
+        cpath = cpath || this.defaultPathVariable || '';
+
+        prependPath.push(cpath);
+      }
+
+      env[pathVariableName] = this.joinPath(...prependPath);
+    }
   }
 
   get isCaseSensitive() {
@@ -244,5 +309,15 @@ export default abstract class Container {
       aarch64: 'ARM64',
     };
     return map[arch];
+  }
+
+  // Check if a file is an executable file
+  static isExecutable(file: string) {
+    try {
+      const stats = fs.statSync(file);
+      return !stats.isDirectory() && (stats.mode & 0o111) !== 0;
+    } catch (err) {
+      return false;
+    }
   }
 }
