@@ -4,10 +4,11 @@
  * sobird<i@sobird.me> at 2024/05/02 18:29:27 created.
  */
 
-import { UUID, randomUUID } from 'node:crypto';
+import { type UUID, randomUUID } from 'node:crypto';
 
 import Expression from '@/pkg/expression';
 import Runner from '@/pkg/runner';
+
 /**
  * describes what type of step we are about to run
  */

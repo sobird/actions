@@ -220,8 +220,8 @@ export default abstract class Container {
       }
       return '';
     }
-    const pathEnv = process.env.PATH || '';
-    this.splitPath(pathEnv).map((dir) => { return dir.trim(); }).forEach((item) => {
+    const envPath = this.getEnv(env, this.pathVariableName);
+    this.splitPath(envPath).map((dir) => { return dir.trim(); }).forEach((item) => {
       let dir = item;
       if (dir === '') {
         // Unix shell semantics: path element "" means "."
@@ -240,13 +240,26 @@ export default abstract class Container {
     return process.env[this.pathVariableName];
   }
 
+  getEnv(env:Record<string, string>, name: string) {
+    if (this.platform === 'windows') {
+      for (const k of Object.keys(env)) {
+        if (k.toLowerCase() === name.toLowerCase()) {
+          return env[k];
+        }
+      }
+      return '';
+    }
+    return env[name];
+  }
+
   async applyPath(prependPath: string[], env: Record<string, string>) {
     if (prependPath.length > 0) {
       let { pathVariableName } = this;
-      if (!this.isCaseSensitive) {
+
+      if (this.platform === 'windows') {
         for (const k of Object.keys(env)) {
           if (k.toLowerCase() === pathVariableName.toLowerCase()) {
-            pathVariableName = k;
+            pathVariableName = k as 'path' | 'Path' | 'PATH';
             break;
           }
         }
@@ -267,6 +280,7 @@ export default abstract class Container {
         prependPath.push(cpath);
       }
 
+      // eslint-disable-next-line no-param-reassign
       env[pathVariableName] = this.joinPath(...prependPath);
     }
   }
