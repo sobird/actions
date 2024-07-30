@@ -26,9 +26,8 @@ abstract class StepAction extends Step {
 
   // executor
   public executor(main: Executor) {
-    return new Executor(async (ctx) => {
-      console.log('step actions ctx', ctx);
-      const { runner } = ctx!;
+    return new Executor(async (runner) => {
+      console.log('step actions ctx', runner);
       const { id } = this;
       const { context, IntraActionState } = runner;
       // set current step
@@ -70,7 +69,7 @@ abstract class StepAction extends Step {
 
       const timeoutMinutes = Number(this['timeout-minutes'].evaluate(runner)) || 60;
 
-      await withTimeout(main.execute(ctx), timeoutMinutes * 60 * 1000);
+      await withTimeout(main.execute(runner), timeoutMinutes * 60 * 1000);
 
       await actionCommandFile.process();
 
