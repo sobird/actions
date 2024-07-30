@@ -2,11 +2,13 @@ import log4js from 'log4js';
 
 import { WithLoggerHook } from '@/pkg/common/logger';
 
+export const logger2 = log4js.getLogger();
+
 const logger = WithLoggerHook({
   fire(event) {
     console.log('event', event);
   },
-}, 'test');
+}, 'Logger');
 logger.level = log4js.levels.DEBUG;
 
 logger.addContext('name', 'sobird');

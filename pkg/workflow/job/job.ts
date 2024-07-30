@@ -13,7 +13,8 @@ import { asyncFunction } from '@/utils';
 import Container, { ContainerProps } from './container';
 import Defaults, { DefaultsProps } from './defaults';
 import Environment, { EnvironmentOptions } from './environment';
-import { StepProps, Step } from './step';
+import { StepProps } from './step';
+import StepAction from './step/step-action';
 import { createSteps } from './steps';
 import Strategy, { StrategyProps } from './strategy';
 import {
@@ -275,7 +276,7 @@ class Job {
    * GitHub only displays the first 1,000 checks, however, you can run an unlimited number of steps as long as you are within the workflow usage limits.
    * For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration Usage limits, billing, and administration}" for GitHub-hosted runners and "{@link https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#usage-limits About self-hosted runners}" for self-hosted runner usage limits.
    */
-  steps?: Step[] = [];
+  steps?: StepAction[] = [];
 
   /**
    * The maximum number of minutes to let a job run before GitHub automatically cancels it. Default: 360
@@ -550,20 +551,27 @@ class Job {
       return Executor.Debug('No steps found');
     }
 
-    const preStepsExecutor: Executor[] = [];
-    const stepsExecutor: Executor[] = [];
+    const preSteps: Executor[] = [];
+    const stepMainPipeline: Executor[] = [];
+    const postSteps: Executor[] = [];
 
-    stepsExecutor.push(new Executor(() => {
-      // logger.info('u0001F9EA  Matrix: %v', this.config.matrix);
-    }));
-
-    preStepsExecutor.push(new Executor(() => {
+    preSteps.push(new Executor(() => {
       // logger.info('Todo:', 'Job env Interpolate');
     }));
 
-    const jobStepsPipeline = steps.map((step, index) => {
+    stepMainPipeline.push(new Executor(() => {
+      // logger.info('u0001F9EA  Matrix: %v', this.config.matrix);
+    }));
+
+    stepMainPipeline.push(...steps.map((step, index) => {
       // eslint-disable-next-line no-param-reassign
       step.number = index;
+
+      const stepPreExecutor = step.pre();
+      preSteps.push(stepPreExecutor);
+
+      const stepPostExecutor = step.post();
+      postSteps.push(stepPostExecutor);
 
       return new Executor(async (ctx) => {
         console.log('ctx', ctx);
@@ -577,11 +585,10 @@ class Job {
         console.log('step with:', step.with.evaluate(runner));
 
         await asyncFunction(250);
-        console.log('');
-      });
-    });
+      }).finally(step.main());
+    }));
 
-    return Executor.Pipeline(...jobStepsPipeline);
+    return Executor.Pipeline(...stepMainPipeline);
   }
 }
 

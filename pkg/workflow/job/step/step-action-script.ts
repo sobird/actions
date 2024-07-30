@@ -27,6 +27,11 @@ class StepActionScript extends StepAction {
             shellWithFallback = ['pwsh', 'powershell'];
           }
           [this.shell] = shellWithFallback;
+          runner.container.applyPath(runner.prependPath);
+          const cmd = runner.container.lookPath(shellWithFallback[0]);
+          if (!cmd) {
+            [,this.shell] = shellWithFallback;
+          }
         } else if (runner.run.job.container.image.evaluate(runner)) {
           // Currently only linux containers are supported, use sh by default like actions/runner
           this.shell = 'sh';

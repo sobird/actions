@@ -15,7 +15,7 @@ import Context from '@/pkg/runner/context';
  */
 export interface Config {
   /**
-   * The preset github context, overrides some fields like DefaultBranch, Env, Secrets etc.
+   * The preset runner context.
    */
   readonly context: Context;
 

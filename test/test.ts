@@ -1,7 +1,8 @@
-import { MyClass } from '../test';
+import log4js from 'log4js';
 
-class Test extends MyClass {
+import { logger2 } from './log4js';
 
-}
+export const logger = log4js.getLogger();
 
-export default Test;
+console.log(logger2);
+console.log(logger);

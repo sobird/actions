@@ -8,6 +8,8 @@
 import os from 'node:os';
 import path from 'node:path';
 
+import log4js, { Logger } from 'log4js';
+
 import Constants from '@/pkg/common/constants';
 import type { Config } from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
@@ -39,6 +41,8 @@ class Runner {
   IntraActionState: Record<string, Record<string, string>> = {};
 
   masks: string[] = [];
+
+  logger: Logger = log4js.getLogger();
 
   constructor(public run: Run, public config: Config) {
     const { jobId, job, workflow } = run;

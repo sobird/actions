@@ -27,6 +27,7 @@ abstract class StepAction extends Step {
   // executor
   public executor(main: Executor) {
     return new Executor(async (ctx) => {
+      console.log('step actions ctx', ctx);
       const { runner } = ctx!;
       const { id } = this;
       const { context, IntraActionState } = runner;
