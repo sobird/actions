@@ -34,7 +34,7 @@ class ActionCommandManager {
       return;
     }
 
-    if (!runner.enhancedAnnotationsEnabled && actionCommand.command === 'notice') {
+    if (!runner.EnhancedAnnotationsEnabled && actionCommand.command === 'notice') {
       logger.debug("Enhanced Annotations not enabled on the server: 'notice' command will not be processed.");
       return false;
     }

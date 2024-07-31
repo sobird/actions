@@ -79,16 +79,16 @@ abstract class StepAction extends Step {
   setupEnv(runner: Runner) {
     this.mergeEnv(runner);
     // step env
-    runner.assign(this.#env, this.getEnv(runner));
+    runner.Assign(this.#env, this.getEnv(runner));
   }
 
   mergeEnv(runner: Runner) {
     const { job } = runner.run;
     const { container } = job;
     if (container) {
-      runner.assign(this.#env, runner.env, container.env?.evaluate(runner) || {});
+      runner.Assign(this.#env, runner.Env, container.env?.evaluate(runner) || {});
     } else {
-      runner.assign(this.#env, runner.env);
+      runner.Assign(this.#env, runner.Env);
     }
 
     Object.assign(this.#env, runner.context.github.Env);

@@ -13,7 +13,7 @@ vi.mock('@/pkg/runner');
 const runner: Runner = new (Runner as any)();
 
 afterEach(() => {
-  // fs.rmdirSync(runner.actionCacheDir, { recursive: true });
+  // fs.rmdirSync(runner.ActionCacheDir, { recursive: true });
 });
 
 describe('test workflow job', () => {

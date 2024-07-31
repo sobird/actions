@@ -15,7 +15,7 @@ class StepActionScript extends StepAction {
   setupShell() {
     return new Executor((runner) => {
       if (!this.shell) {
-        this.shell = runner.defaults.run.evaluate(runner)?.shell;
+        this.shell = runner.Defaults.run.evaluate(runner)?.shell;
       }
 
       if (!this.shell) {

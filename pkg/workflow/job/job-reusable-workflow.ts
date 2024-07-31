@@ -49,12 +49,12 @@ class JobReusableWorkflow extends Job {
       reusable.ref = sha;
     }
 
-    const repositoryDir = path.join(runner.actionCacheDir, reusable.repository, reusable.ref);
+    const repositoryDir = path.join(runner.ActionCacheDir, reusable.repository, reusable.ref);
     const url = new URL(reusable.repository, reusable.url);
 
-    if (runner.token) {
+    if (runner.Token) {
       url.username = 'token';
-      url.password = runner.token;
+      url.password = runner.Token;
     }
     const workflowpath = path.join(repositoryDir, reusable.filename);
     return Git.CloneExecutor(url.toString(), repositoryDir, reusable.ref).next(JobReusableWorkflow.ReusableWorkflowExecutor(workflowpath, runner));

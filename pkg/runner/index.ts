@@ -78,7 +78,7 @@ class Runner {
     // console.log('runner executor start:', workflow.jobs);
 
     return new Executor(async () => {
-      if (!this.enabled) {
+      if (!this.Enabled) {
         return;
       }
 
@@ -98,11 +98,11 @@ class Runner {
     });
   }
 
-  get token() {
+  get Token() {
     return this.context.github.token;
   }
 
-  get actionCacheDir() {
+  get ActionCacheDir() {
     return this.config.actionCache?.dir || path.join(os.tmpdir(), 'actions');
   }
 
@@ -121,7 +121,7 @@ class Runner {
    * @priority
    * ...workflow.env, ...job.env, ...config.env
    */
-  get env() {
+  get Env() {
     const { job, workflow } = this.run;
     const env = { ...workflow.env.evaluate(this), ...job.env.evaluate(this), ...this.config.env };
     this.context.env = env;
@@ -131,7 +131,7 @@ class Runner {
   /**
    * ...workflow.defaults, ...job.defaults
    */
-  get defaults() {
+  get Defaults() {
     const { job, workflow } = this.run;
     return { ...workflow.defaults, ...job.defaults };
   }
@@ -163,7 +163,7 @@ class Runner {
     process.stdout.write(message + os.EOL);
   }
 
-  get enabled() {
+  get Enabled() {
     const { job } = this.run;
     const jobIf = job.if.evaluate(this);
 
@@ -175,7 +175,7 @@ class Runner {
     return true;
   }
 
-  get assign() {
+  get Assign() {
     return this.container?.isCaseSensitive ? Object.assign : assignIgnoreCase;
   }
 
@@ -186,7 +186,7 @@ class Runner {
     return this.container.resolve(Constants.Directory[directory]);
   }
 
-  get enhancedAnnotationsEnabled() {
+  get EnhancedAnnotationsEnabled() {
     return !!this.context.vars['DistributedTask.EnhancedAnnotations'];
   }
 
