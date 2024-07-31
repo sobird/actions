@@ -5,7 +5,7 @@ import StepAction from './step-action';
 class StepActionScript extends StepAction {
   public main() {
     return this.executor(new Executor(async (ctx) => {
-      const { runner } = ctx!;
+      const runner = ctx!;
       console.log('step action script main');
 
       await runner.container?.exec(['node', '-v'], {}).execute();
@@ -13,7 +13,9 @@ class StepActionScript extends StepAction {
   }
 
   setupShell() {
-    return new Executor((runner) => {
+    return new Executor((ctx) => {
+      const runner = ctx!;
+
       if (!this.shell) {
         this.shell = runner.Defaults.run.evaluate(runner)?.shell;
       }
