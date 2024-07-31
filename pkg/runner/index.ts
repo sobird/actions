@@ -36,7 +36,7 @@ class Runner {
 
   container?: Container;
 
-  EchoOnActionCommand: boolean;
+  echoOnActionCommand: boolean;
 
   IntraActionState: Record<string, Record<string, string>> = {};
 
@@ -66,7 +66,7 @@ class Runner {
     }
 
     // Initialize 'echo on action command success' property, default to false, unless Step_Debug is set
-    this.EchoOnActionCommand = context.secrets[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || context.vars[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || false;
+    this.echoOnActionCommand = context.secrets[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || context.vars[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || false;
 
     this.context = context;
   }
@@ -118,9 +118,10 @@ class Runner {
   // }
 
   /**
+   * @priority
    * ...workflow.env, ...job.env, ...config.env
    */
-  get Env() {
+  get env() {
     const { job, workflow } = this.run;
     const env = { ...workflow.env.evaluate(this), ...job.env.evaluate(this), ...this.config.env };
     this.context.env = env;
@@ -130,7 +131,7 @@ class Runner {
   /**
    * ...workflow.defaults, ...job.defaults
    */
-  get Defaults() {
+  get defaults() {
     const { job, workflow } = this.run;
     return { ...workflow.defaults, ...job.defaults };
   }
@@ -185,7 +186,7 @@ class Runner {
     return this.container.resolve(Constants.Directory[directory]);
   }
 
-  get EnhancedAnnotationsEnabled() {
+  get enhancedAnnotationsEnabled() {
     return !!this.context.vars['DistributedTask.EnhancedAnnotations'];
   }
 
@@ -235,7 +236,7 @@ class Runner {
       return;
     }
 
-    if (this.EchoOnActionCommand) {
+    if (this.echoOnActionCommand) {
       console.log('::add-mask::***');
     }
 

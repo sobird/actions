@@ -11,7 +11,7 @@ const commandManager = new ActionCommandManager(runner);
 beforeEach(() => {
   runner.context.env = {};
   runner.masks = [];
-  runner.EchoOnActionCommand = false;
+  runner.echoOnActionCommand = false;
 });
 
 describe('action command ::set-env:: test', () => {
@@ -37,7 +37,7 @@ describe('action command ::set-env:: test', () => {
 
   it('set-env BlockList ', () => {
     process.env.ACTIONS_ALLOW_UNSECURE_COMMANDS = 'true';
-    runner.EchoOnActionCommand = true;
+    runner.echoOnActionCommand = true;
     commandManager.process('::set-env name=NODE_OPTIONS,::sobird');
 
     expect(runner.context.env).toEqual({});
@@ -162,19 +162,19 @@ describe('action command ::add-mask:: test', () => {
 
 describe('action command ::echo:: test', () => {
   it('echo process', () => {
-    expect(runner.EchoOnActionCommand).toBe(false);
+    expect(runner.echoOnActionCommand).toBe(false);
 
     commandManager.process('::echo::on');
-    expect(runner.EchoOnActionCommand).toBe(true);
+    expect(runner.echoOnActionCommand).toBe(true);
 
     commandManager.process('::echo::off');
-    expect(runner.EchoOnActionCommand).toBe(false);
+    expect(runner.echoOnActionCommand).toBe(false);
 
     commandManager.process('::echo::ON');
-    expect(runner.EchoOnActionCommand).toBe(true);
+    expect(runner.echoOnActionCommand).toBe(true);
 
     commandManager.process('::echo::OFF');
-    expect(runner.EchoOnActionCommand).toBe(false);
+    expect(runner.echoOnActionCommand).toBe(false);
   });
 
   it('echo process command DebugOn', () => {
@@ -186,21 +186,21 @@ describe('action command ::echo:: test', () => {
       },
     } as any);
 
-    expect(runner2.EchoOnActionCommand).toBe(true);
+    expect(runner2.echoOnActionCommand).toBe(true);
     commandManager.process('::echo::off');
-    expect(runner2.EchoOnActionCommand).toBe(false);
+    expect(runner2.echoOnActionCommand).toBe(false);
 
     commandManager.process('::echo::on');
-    expect(runner2.EchoOnActionCommand).toBe(true);
+    expect(runner2.echoOnActionCommand).toBe(true);
   });
 
   it('echo invalid value', () => {
     commandManager.process('::echo::invalid');
-    expect(runner.EchoOnActionCommand).toBe(false);
+    expect(runner.echoOnActionCommand).toBe(false);
   });
 
   it('echo no value', () => {
     commandManager.process('::echo::');
-    expect(runner.EchoOnActionCommand).toBe(false);
+    expect(runner.echoOnActionCommand).toBe(false);
   });
 });

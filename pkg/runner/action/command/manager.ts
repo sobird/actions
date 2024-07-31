@@ -34,7 +34,7 @@ class ActionCommandManager {
       return;
     }
 
-    if (!runner.EnhancedAnnotationsEnabled && actionCommand.command === 'notice') {
+    if (!runner.enhancedAnnotationsEnabled && actionCommand.command === 'notice') {
       logger.debug("Enhanced Annotations not enabled on the server: 'notice' command will not be processed.");
       return false;
     }
@@ -63,7 +63,7 @@ class ActionCommandManager {
       return true;
     } if (extensions[actionCommand.command]) {
       const extension = extensions[actionCommand.command];
-      if (runner.EchoOnActionCommand && extension.echo) {
+      if (runner.echoOnActionCommand && extension.echo) {
         // context.Output(input);
         console.log(line);
       }

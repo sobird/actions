@@ -27,7 +27,6 @@ abstract class StepAction extends Step {
   // executor
   public executor(main: Executor) {
     return new Executor(async (runner) => {
-      console.log('step actions ctx', runner);
       const { id } = this;
       const { context, IntraActionState } = runner;
       // set current step
@@ -38,7 +37,7 @@ abstract class StepAction extends Step {
         conclusion: 'success',
         outputs: {},
       });
-
+      console.log('step');
       const actionCommandFile = new ActionCommandFile(runner);
 
       await actionCommandFile.initialize(this.uuid);
@@ -87,9 +86,9 @@ abstract class StepAction extends Step {
     const { job } = runner.run;
     const { container } = job;
     if (container) {
-      runner.assign(this.#env, runner.Env, container.env?.evaluate(runner) || {});
+      runner.assign(this.#env, runner.env, container.env?.evaluate(runner) || {});
     } else {
-      runner.assign(this.#env, runner.Env);
+      runner.assign(this.#env, runner.env);
     }
 
     Object.assign(this.#env, runner.context.github.Env);

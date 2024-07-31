@@ -6,11 +6,11 @@ const EchoCommandExtension: CommandExtension = {
   process(runner, command) {
     switch (command.data.trim().toUpperCase()) {
       case 'ON':
-        runner.EchoOnActionCommand = true;
+        runner.echoOnActionCommand = true;
         // runner.debug("Setting echo command value to 'on'");
         break;
       case 'OFF':
-        runner.EchoOnActionCommand = false;
+        runner.echoOnActionCommand = false;
         // runner.debug("Setting echo command value to 'off'");
         break;
       default:
