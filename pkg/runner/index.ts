@@ -11,7 +11,7 @@ import path from 'node:path';
 import log4js, { Logger } from 'log4js';
 
 import Constants from '@/pkg/common/constants';
-import type { Config } from '@/pkg/runner/config';
+import Config from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
 import { asyncFunction, createSafeName, assignIgnoreCase } from '@/utils';
 
@@ -46,7 +46,8 @@ class Runner {
 
   constructor(public run: Run, public config: Config) {
     const { jobId, job, workflow } = run;
-    const context = new Context(config.context);
+    this.config = new Config(config);
+    const { context } = this.config;
 
     // github context
     context.github.job = jobId;
@@ -95,6 +96,14 @@ class Runner {
       console.log('job container image:', job.container.image.evaluate(this));
 
       await jobExecutor.execute(this);
+    });
+  }
+
+  public startContainer() {
+    return new Executor(() => {
+      //
+      const { IsHosted } = this;
+      console.log('IsHosted', IsHosted);
     });
   }
 
@@ -188,6 +197,47 @@ class Runner {
 
   get EnhancedAnnotationsEnabled() {
     return !!this.context.vars['DistributedTask.EnhancedAnnotations'];
+  }
+
+  get IsHosted() {
+    const platform = this.RunsOnImage;
+    const image = this.ContainerImage;
+
+    return image === '' && platform.toLowerCase() === '-self-hosted';
+  }
+
+  // job container image
+  get PlatformImage() {
+    const { ContainerImage } = this;
+    if (ContainerImage) {
+      return ContainerImage;
+    }
+    return this.RunsOnImage;
+  }
+
+  get ContainerImage() {
+    return this.run.job.container.image.evaluate(this) || '';
+  }
+
+  get RunsOnImage() {
+    const runsOn = this.run.job.runsOn(this);
+
+    let image = this.config.platformPicker?.(runsOn);
+
+    if (image) {
+      return image;
+    }
+
+    image = runsOn.find((item) => {
+      console.log('item', item, this.config);
+      return this.config.platforms[item.toLowerCase()];
+    });
+
+    if (image) {
+      return this.config.platforms[image];
+    }
+
+    return '';
   }
 
   // action command

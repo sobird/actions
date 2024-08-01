@@ -588,7 +588,7 @@ class Job {
       }).finally(step.main());
     }));
 
-    return Executor.Pipeline(...stepMainPipeline);
+    return Executor.Pipeline(runner.startContainer(), ...stepMainPipeline);
   }
 }
 

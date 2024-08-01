@@ -13,7 +13,7 @@ import Context from '@/pkg/runner/context';
 /**
  * The configuration interface for the runner.
  */
-export interface Config {
+class Config {
   /**
    * The preset runner context.
    */
@@ -102,14 +102,14 @@ export interface Config {
   token: string;
 
   /**
-   * Switch hiding output when printing to terminal.
+   * Switch hiding output when printing to terminal. Doesn't hide secrets while printing logs
    */
   insecureSecrets: boolean;
 
   /**
    * List of platforms.
    */
-  platforms: { [key: string]: string };
+  platforms?: { [key: string]: string };
 
   /**
    * Platform picker, it will take precedence over Platforms if isn't nil.
@@ -229,5 +229,39 @@ export interface Config {
      * Controls if the container is automatically removed upon workflow completion.
      */
     autoRemove: boolean;
+  };
+
+  constructor(config: Config) {
+    this.context = new Context(config.context ?? {});
+    this.workspace = config.workspace ?? '';
+    this.bind = config.bind ?? true;
+    this.eventPath = config.eventPath ?? '';
+    this.remoteName = config.remoteName ?? '';
+    this.reuseContainers = config.reuseContainers ?? false;
+    this.forcePull = config.forcePull ?? false;
+    this.forceRebuild = config.forceRebuild ?? false;
+    this.logPrefixJobID = config.logPrefixJobID ?? false;
+    this.logOutput = config.logOutput ?? true;
+    this.jsonLogger = config.jsonLogger ?? false;
+
+    this.env = config.env ?? {};
+    this.inputs = config.inputs ?? {};
+    this.secrets = config.secrets ?? {};
+    this.vars = config.vars ?? {};
+    this.token = config.token ?? '';
+
+    this.platforms = config.platforms ?? {};
+    this.platformPicker = config.platformPicker ?? (() => { return ''; });
+    this.useGitIgnore = config.useGitIgnore ?? true;
+
+    this.skipCheckout = config.skipCheckout || true;
+    this.replaceGheActionWithGithubCom = config.replaceGheActionWithGithubCom || [];
+    this.replaceGheActionTokenWithGithubCom = config.replaceGheActionTokenWithGithubCom || '';
+    this.matrix = config.matrix || {};
+    this.insecureSecrets = config.insecureSecrets || false;
+
+    this.artifactServerAddress = config.artifactServerAddress || '';
   }
 }
+
+export default Config;

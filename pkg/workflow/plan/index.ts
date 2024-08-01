@@ -4,7 +4,7 @@ import log4js from 'log4js';
 
 import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
-import { Config } from '@/pkg/runner/config';
+import Config from '@/pkg/runner/config';
 
 import Run from './run';
 import Stage from './stage';

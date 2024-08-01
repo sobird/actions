@@ -33,7 +33,7 @@ class StepActionScript extends StepAction {
           if (!cmd) {
             [,this.shell] = shellWithFallback;
           }
-        } else if (runner.run.job.container.image.evaluate(runner)) {
+        } else if (runner.ContainerImage) {
           // Currently only linux containers are supported, use sh by default like actions/runner
           this.shell = 'sh';
         }
