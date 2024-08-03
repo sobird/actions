@@ -203,6 +203,8 @@ class Runner {
     const platform = this.RunsOnImage;
     const image = this.ContainerImage;
 
+    console.log('platform', platform, image);
+
     return image === '' && platform.toLowerCase() === '-self-hosted';
   }
 
@@ -224,14 +226,15 @@ class Runner {
 
     let image = this.config.platformPicker?.(runsOn);
 
-    if (image) {
-      return image;
-    }
+    // if (image) {
+    //   return image;
+    // }
 
     image = runsOn.find((item) => {
-      console.log('item', item, this.config);
       return this.config.platforms[item.toLowerCase()];
     });
+
+    console.log('image', image);
 
     if (image) {
       return this.config.platforms[image];

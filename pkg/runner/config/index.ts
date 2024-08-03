@@ -4,11 +4,12 @@
  * sobird<i@sobird.me> at 2024/05/07 16:01:08 created.
  */
 
-import { HostConfig } from 'dockerode';
 import { Level } from 'log4js';
 
 import ActionCache from '@/pkg/runner/action/cache';
 import Context from '@/pkg/runner/context';
+
+import Container from './container';
 
 /**
  * The configuration interface for the runner.
@@ -29,207 +30,142 @@ class Config {
   /**
    * Use a custom ActionCache Implementation.
    */
-  actionCache: ActionCache;
+  readonly actionCache: ActionCache;
 
   /**
    * When offline, use caching action contents.
    */
-  actionOfflineMode: boolean;
+  readonly actionOfflineMode: boolean;
+
+  /**
+   * The default actions web site.
+   */
+  readonly actionInstance: string;
 
   /**
    * Path to the JSON file to use for event.json in containers.
    */
-  eventPath: string;
+  readonly eventPath: string;
 
   /**
    * Remote name in local git repo config.
    */
-  remoteName: string;
+  readonly remoteName: string;
 
   /**
    * Reuse containers to maintain state.
    */
-  reuseContainers: boolean;
-
-  /**
-   * Force pulling of the image, even if already present.
-   */
-  forcePull: boolean;
-
-  /**
-   * Force rebuilding local docker image action.
-   */
-  forceRebuild: boolean;
+  readonly reuseContainers: boolean;
 
   /**
    * Log the output from docker run.
    */
-  logOutput: boolean;
+  readonly logOutput: boolean;
 
   /**
    * Use json or text logger.
    */
-  jsonLogger: boolean;
+  readonly jsonLogger: boolean;
 
   /**
    * Switches from the full job name to the job id.
    */
-  logPrefixJobID: boolean;
+  readonly logPrefixJobID: boolean;
 
   /**
    * Environment for containers.
    */
-  env: Record<string, string>;
+  readonly env: Record<string, string>;
 
   /**
    * Manually passed action inputs.
    */
-  inputs: { [key: string]: string };
+  readonly inputs: { [key: string]: string };
 
   /**
    * List of secrets.
    */
-  secrets: { [key: string]: string };
+  readonly secrets: { [key: string]: string };
 
   /**
    * List of variables.
    */
-  vars: { [key: string]: string };
+  readonly vars: { [key: string]: string };
 
   /**
    * GitHub token.
    */
-  token: string;
+  readonly token: string;
 
   /**
    * Switch hiding output when printing to terminal. Doesn't hide secrets while printing logs
    */
-  insecureSecrets: boolean;
+  readonly insecureSecrets: boolean;
 
   /**
    * List of platforms.
    */
-  platforms?: { [key: string]: string };
+  readonly platforms: { [key: string]: string };
 
   /**
    * Platform picker, it will take precedence over Platforms if isn't nil.
    * @returns {string} The selected platform.
    */
-  platformPicker?: (labels: string[]) => string;
+  readonly platformPicker: (labels: string[]) => string;
 
   /**
    * Controls if paths in .gitignore should not be copied into container, default true.
    */
-  useGitIgnore: boolean;
+  readonly useGitIgnore: boolean;
 
   /**
    * GitHub instance to use, default "github.com".
    */
-  githubInstance: string;
+  readonly serverInstance: string;
 
   /**
    * artifact server address
    */
-  artifactServerAddress: string;
+  readonly artifactServerAddress: string;
 
   /**
    * skip local actions/checkout.
    */
-  skipCheckout: boolean;
+  readonly skipCheckout: boolean;
 
   /**
    * Use actions from GitHub Enterprise instance to GitHub.
    */
-  replaceGheActionWithGithubCom: string[];
+  readonly replaceGheActionWithGithubCom: string[];
 
   /**
    * Token of private action repo on GitHub.
    */
-  replaceGheActionTokenWithGithubCom: string;
+  readonly replaceGheActionTokenWithGithubCom: string;
 
   /**
    * Matrix config to run.
    */
-  matrix: Record<string, unknown[]>;
-
-  /**
-   * The default actions web site.
-   */
-  defaultActionInstance: string;
+  readonly matrix: Record<string, unknown[]>;
 
   /**
    * The level of job logger.
    * @type {LogLevel}
    */
-  loggerLevel?: Level;
+  readonly loggerLevel?: Level;
 
   /**
    * Only volumes (and bind mounts) in this slice can be mounted on the job container or service containers.
    */
-  validVolumes?: string[];
+  readonly validVolumes?: string[];
 
   /**
    * Whether to skip verifying TLS certificate of the Gitea instance.
    * @default false
    */
-  insecureSkipTLS?: boolean;
+  readonly insecureSkipTLS?: boolean;
 
-  container: {
-    /**
-     * Use privileged mode.
-     */
-    privileged: boolean;
-
-    /**
-     * User namespace to use.
-     */
-    usernsMode: string;
-
-    /**
-     * Desired OS/architecture platform for running containers.
-     */
-    platform: string;
-
-    /**
-     * Path to Docker daemon socket.
-     */
-    daemonSocket: string;
-
-    /**
-     * Options for the job container.
-     */
-    options: string;
-
-    /**
-     * List of kernel capabilities to add to the containers.
-     */
-    capAdd: string[];
-
-    /**
-     * List of kernel capabilities to remove from the containers.
-     */
-    capDrop: string[];
-
-    /**
-     * The prefix of container name.
-     */
-    namePrefix: string;
-
-    /**
-     * The max lifetime of job containers in seconds.
-     */
-    maxLifetime: number;
-
-    /**
-     * The network mode of job containers (the value of --network).
-     */
-    networkMode: HostConfig['NetworkMode'];
-
-    /**
-     * Controls if the container is automatically removed upon workflow completion.
-     */
-    autoRemove: boolean;
-  };
+  container: Container;
 
   constructor(config: Config) {
     this.context = new Context(config.context ?? {});
@@ -238,8 +174,6 @@ class Config {
     this.eventPath = config.eventPath ?? '';
     this.remoteName = config.remoteName ?? '';
     this.reuseContainers = config.reuseContainers ?? false;
-    this.forcePull = config.forcePull ?? false;
-    this.forceRebuild = config.forceRebuild ?? false;
     this.logPrefixJobID = config.logPrefixJobID ?? false;
     this.logOutput = config.logOutput ?? true;
     this.jsonLogger = config.jsonLogger ?? false;
@@ -261,6 +195,15 @@ class Config {
     this.insecureSecrets = config.insecureSecrets || false;
 
     this.artifactServerAddress = config.artifactServerAddress || '';
+
+    this.container = new Container(config.container ?? {});
+
+    // action
+    this.actionCache = config.actionCache;
+    this.actionOfflineMode = config.actionOfflineMode ?? false;
+    this.actionInstance = config.actionInstance ?? 'github.com';
+
+    this.serverInstance = config.serverInstance ?? 'github.com';
   }
 }
 

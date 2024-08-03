@@ -31,7 +31,7 @@ async function daemonAction(options: Options, program: typeof Command.prototype)
   let registration = null;
 
   try {
-    registration = Config.Registration.load(config.runner.file);
+    registration = Config.Registration.Load(config.runner.file);
     if (!registration) {
       logger.error('registration file not found, please register the runner first');
       return;

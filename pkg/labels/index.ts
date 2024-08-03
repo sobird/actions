@@ -20,7 +20,7 @@ class Labels {
 
   constructor(labels: (Label | string)[] = []) {
     labels.forEach((label) => {
-      const result = Labels.parse(label);
+      const result = Labels.Parse(label);
       if (result) {
         this.labels.push(result);
       }
@@ -86,7 +86,7 @@ class Labels {
     });
   }
 
-  static parse(str: string | Label) {
+  static Parse(str: string | Label) {
     if (typeof str === 'object') {
       return str;
     }

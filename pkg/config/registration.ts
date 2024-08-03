@@ -25,7 +25,7 @@ export class Registration {
     fs.writeFileSync(file, data, 'utf8');
   }
 
-  static load(file: string) {
+  static Load(file: string) {
     if (!fs.existsSync(file)) {
       return;
     }

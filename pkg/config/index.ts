@@ -92,7 +92,7 @@ class Config {
     // 兼容旧环境变量
     config.runner.loadEnvs();
 
-    config.registration = Registration.load(config.runner.file);
+    config.registration = Registration.Load(config.runner.file);
 
     // 设置默认值
 
