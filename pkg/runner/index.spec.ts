@@ -8,7 +8,7 @@ import Client from '../client';
 vi.mock('../client');
 
 const { RunnerServiceClient } = new Client('', '', false);
-const runner = new Runner(RunnerServiceClient, Config.loadDefault());
+const runner = new Runner(RunnerServiceClient, Config.Load());
 
 describe('Runner', () => {
   it('run', async () => {

@@ -13,8 +13,8 @@ import { Registration } from './registration';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-class Log {
-  constructor(public level: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal' = 'debug') {}
+interface Log {
+  level: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 }
 
 class Runner {
@@ -73,34 +73,42 @@ class Host {
 class Config {
   static Registration = Registration;
 
-  constructor(
-    public log: Log = new Log(),
-    public runner: Runner = new Runner(),
-    public cache: Cache = new Cache(),
-    public container: Container = new Container(),
-    public host: Host = new Host(),
-    public registration?: Registration,
-  ) {}
+  public log: Log;
 
-  // 加载默认配置
-  static loadDefault(file?: string) {
-    let config = new Config();
+  public runner: Runner = new Runner();
+
+  public cache: Cache = new Cache();
+
+  public container: Container = new Container();
+
+  public host: Host = new Host();
+
+  public registration?: Registration;
+
+  constructor(config: Config) {
+    this.log = config.log ?? {};
+    this.runner = config.runner ?? {};
+
+    this.registration = Registration.Load(config.runner.file);
+  }
+
+  // 加载配置
+  static Load(file?: string) {
+    let config = yaml.parse(Config.Default);
     if (file && fs.existsSync(file)) {
       config = yaml.parse(fs.readFileSync(file, 'utf8'));
     }
 
     // 兼容旧环境变量
-    config.runner.loadEnvs();
-
-    config.registration = Registration.Load(config.runner.file);
+    // config.runner.loadEnvs();
+    // config.registration = Registration.Load(config.runner.file);
 
     // 设置默认值
-
-    return config;
+    return new Config(config);
   }
 
-  static example() {
-    return fs.readFileSync(path.resolve(__dirname, 'config.example.yaml'), 'utf-8');
+  static get Default() {
+    return fs.readFileSync(path.resolve(__dirname, 'config.yaml'), 'utf-8');
   }
 }
 

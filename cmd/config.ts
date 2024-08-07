@@ -10,6 +10,5 @@ import { Config } from '@/pkg';
 export const configCommand = new Command('config')
   .description('Generate an example config file')
   .action(async () => {
-    // eslint-disable-next-line no-console
-    console.log(Config.example());
+    console.log(Config.Default);
   });

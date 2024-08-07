@@ -21,6 +21,10 @@ const tests = [
     args: 'ubuntu:vm:ubuntu-18.04',
     want: false,
   },
+  {
+    args: 'ubuntu-latest:gitea/runner-images:ubuntu-latest',
+    want: {},
+  },
 ];
 
 describe('labels test', () => {

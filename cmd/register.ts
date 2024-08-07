@@ -19,14 +19,8 @@ async function doRegister(options: RegisterOptions) {
     instance, token, name, version,
   } = options;
   const labels = new Labels(options.labels);
-  const config = Config.loadDefault(options.config);
-  const { PingServiceClient, RunnerServiceClient } = new Client(
-    instance,
-    '',
-    config.runner.insecure,
-    '',
-    version,
-  );
+  const config = Config.Load(options.config);
+  const { PingServiceClient, RunnerServiceClient } = new Client(instance, '', config.runner.insecure, '', version);
 
   const pingResponse = await new Promise((resolve) => {
     let timer: NodeJS.Timeout;

@@ -23,7 +23,8 @@ type DaemonOptions = Options & {
 async function daemonAction(options: Options, program: typeof Command.prototype) {
   const opts = program.optsWithGlobals<DaemonOptions>();
   opts.version = program.parent?.version();
-  const config = Config.loadDefault(opts.config);
+  const config = Config.Load(opts.config);
+  console.log('config', config, opts.config);
   logger.level = config.log.level;
 
   logger.info('Starting runner daemon');
@@ -74,7 +75,7 @@ async function daemonAction(options: Options, program: typeof Command.prototype)
 
   const { RunnerServiceClient } = new Client(
     registration.address,
-    registration.toke,
+    registration.token,
     config.runner.insecure,
     registration.uuid,
     opts.version,

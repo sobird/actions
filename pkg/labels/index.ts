@@ -3,6 +3,8 @@
  * @todo
  * 自动处理labels
  *
+ * [label]=[image]
+ *
  * sobird<i@sobird.me> at 2024/04/24 18:59:14 created.
  */
 

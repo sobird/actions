@@ -6,7 +6,7 @@ import { fetchTaskResponse } from '../client/__mocks__';
 vi.mock('../client');
 
 const { RunnerServiceClient } = new Client('', '', false);
-const config = Config.loadDefault();
+const config = Config.Load();
 config.runner.fetchTimeout = 1000;
 
 const runner = new Runner(RunnerServiceClient, config);
