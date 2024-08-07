@@ -97,28 +97,10 @@ class Labels {
       rest: rest.join(':'),
     };
     if (label.schema !== SCHEME_HOST && label.schema !== SCHEME_DOCKER) {
-      return false;
+      throw new Error(`unsupported schema: ${label.schema}`);
     }
     return label;
   }
 }
 
 export default Labels;
-
-/** @test */
-// const label1 = 'ubuntu-latest:docker://gitea/runner-images:ubuntu-latest';
-// const label2 = 'ubuntu-22.04:docker://gitea/runner-images:ubuntu-22.04';
-// const label3 = 'ubuntu-20.04:docker://gitea/runner-images:ubuntu-20.04';
-
-// const pl1 = Labels.parse(label1);
-// console.log('pl1', pl1);
-
-// const pl2 = Labels.parse(label2);
-// console.log('pl2', pl2);
-
-// const labels = new Labels();
-// labels.push(pl1);
-// labels.push(pl2);
-
-// console.log('pickPlatform', labels.pickPlatform(['docker']));
-// console.log('names', labels.names());

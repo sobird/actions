@@ -1,5 +1,10 @@
-import { createSafeName } from './utils';
+import { xdgData, xdgConfig, xdgDataDirectories } from 'xdg-basedir';
 
-const result = createSafeName('/actions/checkout@v4');
+console.log(xdgData);
+//= > '/home/sindresorhus/.local/share'
 
-console.log('result', result);
+console.log(xdgConfig);
+//= > '/home/sindresorhus/.config'
+
+console.log(xdgDataDirectories);
+//= > ['/home/sindresorhus/.local/share', '/usr/local/share/', '/usr/share/']

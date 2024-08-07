@@ -56,18 +56,21 @@ async function doRegister(options: RegisterOptions) {
       agentLabels: labels.names(),
       version,
     });
-    const registration = new Config.Registration(
-      runner!.id.toString(),
-      runner!.uuid,
-      runner!.name,
-      runner!.token,
-      instance,
-      options.labels,
-    );
-    registration.save(config.runner.file);
-    logger.info('Runner registered successfully.');
-  } catch (err: any) {
-    logger.fatal('Failed to register runner:', err.message);
+
+    if (runner) {
+      const registration = new Config.Registration(
+        runner.id.toString(),
+        runner.uuid,
+        runner.name,
+        runner.token,
+        instance,
+        options.labels,
+      );
+      registration.save(config.runner.file);
+      logger.info('Runner registered successfully.');
+    }
+  } catch (err) {
+    logger.fatal('Failed to register runner:', (err as Error).message);
   }
 }
 
@@ -109,8 +112,9 @@ const registerAction = async (options: RegisterArgs, program: typeof Command.pro
       type: 'list',
       name: 'labels',
       message: 'Enter the runner labels',
+      // @todo defaults value
       initial: 'ubuntu-latest:docker://gitea/runner-images:ubuntu-latest',
-      validate: (value) => { const values = value.split(',') || []; return values.every((item: string) => { return Labels.parse(item); }); },
+      validate: (value) => { const values = value.split(',') || []; return values.every((item: string) => { return Labels.Parse(item); }); },
     });
   }
   await doRegister({ ...opts, ...await prompts(questions) } as RegisterOptions);
