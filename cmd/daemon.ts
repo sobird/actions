@@ -81,11 +81,13 @@ async function daemonAction(options: Options, program: typeof Command.prototype)
   );
 
   try {
-    const resp = await RunnerServiceClient.declare({
+    const { runner } = await RunnerServiceClient.declare({
       labels: labels.names(),
       version: opts.version,
     });
-    logger.info(`runner: ${resp.runner?.name}, with version: ${resp.runner?.version}, with labels: ${resp.runner?.labels}, declare successfully`);
+    if (runner) {
+      logger.info(`runner: ${runner.name}, with version: ${runner.version}, with labels: ${runner.labels}, declare successfully`);
+    }
   } catch (err) {
     const connectError = err as ConnectError;
     if (connectError.code === Code.Unimplemented) {

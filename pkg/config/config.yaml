@@ -38,7 +38,7 @@ runner:
     ubuntu-latest: gitea/runner-images:ubuntu-latest
     ubuntu-22.04: gitea/runner-images:ubuntu-22.04
     ubuntu-20.04: gitea/runner-images:ubuntu-20.04
-    self-hosted: host
+    self-hosted: -self-hosted
 
 cache:
   # Enable cache server to use actions/cache.

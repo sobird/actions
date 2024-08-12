@@ -1,7 +1,5 @@
 /**
- * 标签解析
- * @todo
- * 自动处理labels
+ * Runner Labels
  *
  * [label]=[image]
  * ubuntu-latest=actions/runner-images:ubuntu-latest
@@ -9,46 +7,30 @@
  * sobird<i@sobird.me> at 2024/04/24 18:59:14 created.
  */
 
-const SCHEME_HOST = 'host';
-const SCHEME_DOCKER = 'docker';
+export const SELF_HOSTED = '-self-hosted';
 
-interface Label {
-  name: string;
-  schema: string;
-  rest: string;
+interface Platform {
+  label: string;
+  image: string;
 }
 
 class Labels {
-  private labels: Label[] = [];
+  platforms = new Map<string, string>();
 
-  constructor(labels: (Label | string)[] = []) {
-    labels.forEach((label) => {
-      const result = Labels.Parse(label);
-      if (result) {
-        this.labels.push(result);
-      }
+  constructor(platforms: string[] = []) {
+    platforms.forEach((platform) => {
+      const { label, image } = Labels.Parse(platform);
+      this.platforms.set(label, image);
     });
   }
 
   requireDocker() {
-    return this.labels.some((label) => { return label.schema === SCHEME_DOCKER; });
+    return [...this.platforms.values()].some((image) => { return image !== SELF_HOSTED; });
   }
 
   pickPlatform(runsOn: string[]) {
-    const platforms = new Map();
-    this.labels.forEach((label) => {
-      switch (label.schema) {
-        case SCHEME_DOCKER:
-          platforms.set(label.name, label.rest.startsWith('//') ? label.rest.slice(2) : label.rest);
-          break;
-        case SCHEME_HOST:
-          platforms.set(label.name, '-self-hosted');
-          break;
-        default:
-      }
-    });
+    const { platforms } = this;
 
-    // eslint-disable-next-line no-restricted-syntax
     for (const run of runsOn) {
       if (platforms.has(run)) {
         return platforms.get(run);
@@ -69,40 +51,26 @@ class Labels {
   }
 
   names() {
-    return this.labels.map((label) => { return label.name; });
-  }
-
-  push(label: Label) {
-    this.labels.push(label);
+    return [...this.platforms.keys()];
   }
 
   toStrings() {
-    return this.labels.map((label) => {
-      let str = label.name;
-      if (label.schema) {
-        str += `:${label.schema}`;
-        if (label.rest) {
-          str += `:${label.rest}`;
-        }
-      }
-      return str;
+    return [...this.platforms.entries()].map((platform) => {
+      return platform.join('=');
     });
   }
 
-  static Parse(str: string) {
-    if (typeof str === 'object') {
-      return str;
-    }
-    const [name, schema = SCHEME_DOCKER, ...rest] = str.split(':');
-    const label: Label = {
-      name,
-      schema,
-      rest: rest.join(':'),
+  static Parse(string: string) {
+    const [label, image] = string.split('=');
+    const platform: Platform = {
+      label,
+      // schema: image === '-self-hosted' ? SCHEME_HOST : SCHEME_DOCKER,
+      image,
     };
-    if (label.schema !== SCHEME_HOST && label.schema !== SCHEME_DOCKER) {
-      throw new Error(`unsupported schema: ${label.schema}`);
-    }
-    return label;
+    // if (platform.schema !== SCHEME_HOST && platform.schema !== SCHEME_DOCKER) {
+    //   throw new Error(`unsupported schema: ${platform.schema}`);
+    // }
+    return platform;
   }
 }
 

@@ -52,15 +52,14 @@ async function doRegister(options: RegisterOptions) {
     });
 
     if (runner) {
-      const registration = new Config.Registration(
+      new Config.Registration(
         runner.id.toString(),
         runner.uuid,
         runner.name,
         runner.token,
         instance,
         options.labels,
-      );
-      registration.save(config.runner.file);
+      ).save(config.runner.file);
       logger.info('Runner registered successfully.');
     }
   } catch (err) {
