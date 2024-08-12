@@ -24,7 +24,6 @@ async function daemonAction(options: Options, program: typeof Command.prototype)
   const opts = program.optsWithGlobals<DaemonOptions>();
   opts.version = program.parent?.version();
   const config = Config.Load(opts.config);
-  console.log('config', config, opts.config);
   logger.level = config.log.level;
 
   logger.info('Starting runner daemon');
@@ -37,8 +36,8 @@ async function daemonAction(options: Options, program: typeof Command.prototype)
       logger.error('registration file not found, please register the runner first');
       return;
     }
-  } catch (err: any) {
-    logger.fatal('failed to load registration file: %w', err.message);
+  } catch (err) {
+    logger.fatal('failed to load registration file: %w', (err as Error).message);
     return;
   }
 
@@ -58,8 +57,8 @@ async function daemonAction(options: Options, program: typeof Command.prototype)
 
     try {
       await docker.ping();
-    } catch (err: any) {
-      logger.fatal('cannot ping the docker daemon, is it running?', err.message);
+    } catch (err) {
+      logger.fatal('cannot ping the docker daemon, is it running?', (err as Error).message);
       return;
     }
   }
@@ -67,8 +66,8 @@ async function daemonAction(options: Options, program: typeof Command.prototype)
   if (JSON.stringify(registration.labels.sort()) !== JSON.stringify(labels.toStrings().sort())) {
     try {
       registration.save(config.runner.file);
-    } catch (err: any) {
-      return logger.error('failed to save runner config:', err.message);
+    } catch (err) {
+      return logger.error('failed to save runner config:', (err as Error).message);
     }
     logger.info('labels updated to:', registration.labels);
   }

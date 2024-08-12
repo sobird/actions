@@ -4,6 +4,7 @@
  * 自动处理labels
  *
  * [label]=[image]
+ * ubuntu-latest=actions/runner-images:ubuntu-latest
  *
  * sobird<i@sobird.me> at 2024/04/24 18:59:14 created.
  */
@@ -88,7 +89,7 @@ class Labels {
     });
   }
 
-  static Parse(str: string | Label) {
+  static Parse(str: string) {
     if (typeof str === 'object') {
       return str;
     }

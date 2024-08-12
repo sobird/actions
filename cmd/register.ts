@@ -106,8 +106,7 @@ const registerAction = async (options: RegisterArgs, program: typeof Command.pro
       type: 'list',
       name: 'labels',
       message: 'Enter the runner labels',
-      // @todo defaults value
-      initial: 'ubuntu-latest:docker://gitea/runner-images:ubuntu-latest',
+      initial: 'ubuntu-latest=gitea/runner-images:ubuntu-latest',
       validate: (value) => { const values = value.split(',') || []; return values.every((item: string) => { return Labels.Parse(item); }); },
     });
   }

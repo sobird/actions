@@ -4,6 +4,7 @@
  * sobird<i@sobird.me> at 2024/04/25 17:21:30 created.
  */
 import { Command } from '@commander-js/extra-typings';
+import yaml from 'yaml';
 
 import { Config } from '@/pkg';
 
