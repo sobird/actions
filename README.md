@@ -66,6 +66,12 @@ npx buf generate https://gitea.com/gitea/actions-proto-def.git
 * **keep_empty_files**: 允许保留空文件，以兼容需要提前声明所有输出文件的工具，如 Bazel。
 * **ts_nocheck**: 控制是否在每个文件顶部生成 // @ts-nocheck 注释。*
 
+## 创建配置文件
+
+```sh
+actions config > actions.config.yaml
+```
+
 <!-- Badges -->
 [npm]: https://img.shields.io/npm/v/@sobird/act-runner.svg
 [npm-url]: https://www.npmjs.com/package/@sobird/act-runner

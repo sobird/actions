@@ -5,10 +5,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import dotenv, { DotenvParseOutput } from 'dotenv';
 import yaml from 'yaml';
 
+import Cache from './cache';
+import Container from './container';
 import { Registration } from './registration';
+import Runner from './runner';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,77 +19,31 @@ interface Log {
   level: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 }
 
-class Runner {
-  constructor(
-    public file: string = '.runner',
-    public capacity: number = 3,
-    public envs: DotenvParseOutput = {},
-    public envFile: string = '',
-    public timeout: number = 3 * 3600 * 1000,
-    public insecure: boolean = false,
-    public fetchTimeout: number = 5 * 1000,
-    public fetchInterval: number = 2 * 1000,
-    public labels: string[] = [],
-  ) {
-    this.capacity = capacity > 0 ? capacity : 1;
-    this.timeout = timeout > 0 ? timeout : 3 * 3600 * 1000;
-    this.fetchTimeout = fetchTimeout > 0 ? fetchTimeout : 5000;
-    this.fetchInterval = fetchInterval > 0 ? fetchInterval : 2000;
-  }
-
-  // 从环境变量文件加载环境变量
-  loadEnvs() {
-    if (this.envFile && fs.existsSync(this.envFile)) {
-      this.envs = dotenv.config({ path: this.envFile }).parsed || {};
-    }
-  }
-}
-
-class Cache {
-  constructor(
-    public enabled: boolean = true,
-    public dir: string = path.join(os.homedir(), '.cache', 'actcache'),
-    public host: string = '',
-    public port: number = 0,
-    public external_server: string = '',
-  ) {}
-}
-
-class Container {
-  constructor(
-    public network: string = '',
-    public privileged: boolean = false,
-    public options: string = '',
-    public workdir_parent: string = '',
-    public valid_volumes: string[] = [],
-    public docker_host: string = '',
-    public force_pull: boolean = true,
-    public force_rebuild: boolean = false,
-  ) {}
-}
-
-class Host {
-  constructor(public workdir_parent: string = path.join(os.homedir(), '.cache', 'act')) {}
-}
-
 class Config {
   static Registration = Registration;
 
   public log: Log;
 
-  public runner: Runner = new Runner();
+  public runner: Runner;
 
-  public cache: Cache = new Cache();
+  public cache: Cache;
 
-  public container: Container = new Container();
-
-  public host: Host = new Host();
+  public container: Container;
 
   public registration?: Registration;
 
+  /**
+   * The parent directory of a job's working directory.
+   * If it's empty, $HOME/.cache/act/ will be used.
+   */
+  public actionCacheDir: string;
+
   constructor(config: Config) {
     this.log = config.log ?? {};
-    this.runner = config.runner ?? {};
+    this.runner = new Runner(config.runner ?? {});
+    this.cache = new Cache(config.cache ?? {});
+    this.container = new Container(config.container ?? {});
+    this.actionCacheDir = config.actionCacheDir ?? path.join(os.homedir(), '.actions', 'actions');
 
     this.registration = Registration.Load(config.runner.file);
   }
@@ -108,7 +64,7 @@ class Config {
   }
 
   static get Default() {
-    return fs.readFileSync(path.resolve(__dirname, 'config.yaml'), 'utf-8');
+    return fs.readFileSync(path.resolve(__dirname, 'default.yaml'), 'utf-8');
   }
 }
 
