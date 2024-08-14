@@ -5,7 +5,6 @@ import path from 'node:path';
 import bodyParser from 'body-parser';
 import express, { Express } from 'express';
 import ip from 'ip';
-import { totalist } from 'totalist/sync';
 
 import type { AddressInfo } from 'node:net';
 

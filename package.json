@@ -54,7 +54,6 @@
     "shell-quote": "^1.8.1",
     "simple-git": "^3.24.0",
     "tar": "^7.1.0",
-    "totalist": "^3.0.1",
     "xdg-basedir": "^5.1.0",
     "yaml": "^2.4.2"
   },
