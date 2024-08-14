@@ -9,6 +9,8 @@ import { totalist } from 'totalist/sync';
 
 import type { AddressInfo } from 'node:net';
 
+const GZIP_EXT = '.gz__';
+
 class Artifact {
   constructor(
     public dir: string = path.join(os.homedir(), '.artifacts'),
@@ -32,7 +34,7 @@ class Artifact {
       });
     });
 
-    // 获取上传地址
+    // 获取上传地址 artifact upload prepare
     app.post('/_apis/pipelines/workflows/:runId/artifacts', (req, res) => {
       const { runId } = req.params;
       console.log('runId', runId);
@@ -41,58 +43,99 @@ class Artifact {
       res.json({ fileContainerResourceUrl: `${baseURL}/upload/${runId}` });
     });
 
+    // Finalize Artifact Upload
     app.patch('/_apis/pipelines/workflows/:runId/artifacts', (req, res) => {
       const { runId } = req.params;
-
       res.json({ message: 'success', runId });
     });
 
-    // 获取artifaces下载列表
+    // List Artifacts
     app.get('/_apis/pipelines/workflows/:runId/artifacts', (req, res) => {
       const { runId } = req.params;
-      const artifacts = new Set();
-      const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
       const safePath = path.join(this.dir, path.normalize(runId));
-      totalist(safePath, (relPath) => {
-        const name = relPath.replace('\\', '/');
-        const fileDetails = {
-          name: name.split('/')[0],
-          fileContainerResourceUrl: `${baseURL}/download/${runId}`,
-        };
-        artifacts.add(fileDetails);
+
+      // const artifacts = new Set();
+      const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
+
+      fs.readdir(safePath, (err, files) => {
+        if (err) {
+          console.error('Error reading directory:', err);
+          return res.status(500).json({ message: 'Error reading directory' });
+        }
+
+        const filesInfo = files.map((file) => {
+          return {
+            name: file,
+            fileContainerResourceUrl: `${baseURL}/download/${runId}`,
+          };
+        });
+
+        res.json({ count: filesInfo.length, value: filesInfo });
       });
-      console.log(artifacts);
-      res.status(200).json({ count: artifacts.size, value: [...artifacts] });
+
+      // totalist(safePath, (relPath) => {
+      //   const name = relPath.replace('\\', '/');
+      //   const fileDetails = {
+      //     name: name.split('/')[0],
+      //     fileContainerResourceUrl: `${baseURL}/download/${runId}`,
+      //   };
+      //   artifacts.add(fileDetails);
+      // });
+      // console.log(artifacts);
+      // res.status(200).json({ count: artifacts.size, value: [...artifacts] });
     });
 
-    // 获取artifaces runId下载列表
-    app.get('/download/:container', (req, res) => {
-      const { container } = req.params;
+    // List Artifact Container
+    app.get('/download/:runId', (req, res) => {
+      const { runId } = req.params;
       const { itemPath } = req.query;
 
       const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
-      const safePath = path.join(this.dir, container, itemPath as string || '');
+      const safePath = path.join(this.dir, runId, itemPath as string || '');
 
-      const files = new Set();
-      totalist(safePath, (relPath, absPath) => {
-        console.log(relPath);
-        console.log(absPath);
-        files.add({
-          path: path.normalize(relPath),
-          itemType: 'file',
-          contentLocation: `${baseURL}/download/${container}/${relPath.replace('\\', '/')}`,
+      fs.readdir(safePath, (err, files) => {
+        if (err) {
+          console.error('Error reading directory:', err);
+          return res.status(500).json({ message: 'Error reading directory' });
+        }
+
+        const filesInfo = files.map((file) => {
+          const relPath = path.normalize(file);
+          return {
+            path: relPath,
+            itemType: 'file',
+            contentLocation: `${baseURL}/download/${runId}/${relPath.replace('\\', '/')}`,
+          };
         });
+
+        res.json({ value: filesInfo });
       });
-      res.status(200).json({ value: [...files] });
+
+      // const files = new Set();
+      // totalist(safePath, (relPath, absPath) => {
+      //   console.log(relPath);
+      //   console.log(absPath);
+      //   files.add({
+      //     path: path.normalize(relPath),
+      //     itemType: 'file',
+      //     contentLocation: `${baseURL}/download/${container}/${relPath.replace('\\', '/')}`,
+      //   });
+      // });
+      // res.status(200).json({ value: [...files] });
     });
 
     // 下载文件
     app.get('/download/:container/:path(*)', (req, res) => {
       const safePath = path.join(this.dir, req.params.container, req.params.path);
-      fs.createReadStream(safePath, { encoding: 'utf-8' }).pipe(res);
+      try {
+        fs.createReadStream(safePath, { encoding: 'utf-8' }).pipe(res);
+      } catch (err) {
+        res.setHeader('Content-Encoding', 'gzip');
+        fs.createReadStream(safePath + GZIP_EXT, { encoding: 'utf-8' }).pipe(res);
+      }
     });
 
-    // 上传artifacts
+    // Artifact Upload Blob
     app.put('/upload/:runId', (req, res) => {
       const { runId } = req.params;
       const { itemPath } = req.query;
@@ -102,17 +145,29 @@ class Artifact {
         });
         return;
       }
-      const safePath = path.join(this.dir, runId, itemPath as string || '');
+      let safePath = path.join(this.dir, runId, itemPath as string || '');
       fs.mkdirSync(path.dirname(safePath), { recursive: true });
 
-      // 写入文件
-      const fileWriteStream = fs.createWriteStream(safePath);
-      req.pipe(fileWriteStream);
+      // 处理 gzip 编码的文件
+      if (req.headers['content-encoding'] === 'gzip') {
+        safePath += GZIP_EXT;
+      }
 
-      // 响应上传成功
-      fileWriteStream.on('close', () => {
-        res.json(JSON.stringify({ message: 'success' }));
+      // 写入文件
+      const writeStream = fs.createWriteStream(safePath, {
+        flags: req.headers['content-range'] ? 'a' : 'w',
       });
+
+      writeStream.on('error', (err) => {
+        console.error('Error writing file:', err);
+        res.status(500).json({ message: 'Error writing file' });
+      });
+
+      writeStream.on('close', () => {
+        res.json({ message: 'success' });
+      });
+
+      req.pipe(writeStream);
     });
   }
 

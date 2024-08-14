@@ -49,7 +49,7 @@ async function daemonAction(options: Options, program: typeof Command.prototype)
   }
 
   if (labels.requireDocker()) {
-    const dockerHost = config.container.docker_host;
+    const { dockerHost } = config.container;
 
     if (dockerHost && dockerHost !== '-') {
       process.env.DOCKER_HOST = dockerHost;

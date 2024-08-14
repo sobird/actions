@@ -1,28 +1,28 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 import request from 'supertest';
 
 import Artifact from '.';
 
-const {
-  app, dir,
-} = new Artifact(undefined, undefined, 3000);
+const tmpdir = path.join(os.tmpdir(), 'artifacts');
+const { app, dir } = new Artifact(tmpdir, undefined, 3000);
+
+console.log('tmpdir', tmpdir);
+// 设置 mock-fs
+beforeAll(() => {
+  //
+});
+
+afterAll(() => {
+  fs.rmdirSync(tmpdir, { recursive: true });
+});
 
 describe('Artifact Server Test', () => {
-  // 设置 mock-fs
-  beforeAll(() => {
-    //
-  });
-
-  // 恢复原始的文件系统
-  afterAll(() => {
-
-  });
-
-  const filename = 'test.txt';
-  const runId = 'runId';
-  const itemPath = 'test';
+  const filename = 'file.txt';
+  const runId = '1234';
+  const itemPath = 'file.txt';
   const expectFileName = path.join(dir, runId, itemPath);
 
   it('POST /_apis/pipelines/workflows/:runId/artifacts', async () => {
@@ -31,16 +31,15 @@ describe('Artifact Server Test', () => {
     expect(response.body.fileContainerResourceUrl).includes(`/upload/${runId}`);
   });
 
-  it('patch /_apis/pipelines/workflows/:runId/artifacts', async () => {
+  it('Patch /_apis/pipelines/workflows/:runId/artifacts', async () => {
     const response = await request(app).patch(`/_apis/pipelines/workflows/${runId}/artifacts`);
     expect(response.statusCode).toBe(200);
     expect(response.body.message).toBe('success');
   });
 
   it('PUT /upload/:runId?itemPath=[itemPath]', async () => {
-    // 使用 supertest 发送一个模拟的文件上传请求
     const response = await request(app).put(`/upload/${runId}?itemPath=${itemPath}`)
-      .attach('file', Buffer.from('file content123'), filename);
+      .attach('file', Buffer.from('content'), filename);
 
     expect(response.statusCode).toBe(200);
     expect(fs.existsSync(expectFileName)).toBeTruthy();
@@ -59,7 +58,16 @@ describe('Artifact Server Test', () => {
     const response = await request(app).get(`/_apis/pipelines/workflows/${runId}/artifacts`);
     expect(response.statusCode).toBe(200);
     expect(response.body.count).toBe(1);
+    expect(response.body.value[0].name).toBe('file.txt');
+    expect(response.body.value[0].fileContainerResourceUrl).includes(`/download/${runId}`);
   });
 
-  fs.unlinkSync(expectFileName);
+  it('GET /download/:container', async () => {
+    const response = await request(app).get(`/download/${runId}`);
+    console.log('response.body', response.body);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.count).toBe(1);
+    expect(response.body.value[0].name).toBe('file.txt');
+    expect(response.body.value[0].fileContainerResourceUrl).includes(`/download/${runId}`);
+  });
 });
