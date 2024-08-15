@@ -5,6 +5,9 @@ import path from 'node:path';
 import bodyParser from 'body-parser';
 import express, { Express } from 'express';
 import ip from 'ip';
+import multer from 'multer';
+
+import { trimSuffix } from '@/utils';
 
 import type { AddressInfo } from 'node:net';
 
@@ -27,19 +30,72 @@ class Artifact {
       limit: '50mb',
     }));
 
+    const storage = multer.diskStorage({
+      destination(req, file, cb) {
+        const { runId } = req.params;
+        const safePath = path.join(dir, runId);
+        console.log('file', file);
+
+        cb(null, safePath);
+      },
+      filename(req, file, cb) {
+        const { itemPath } = req.query;
+        const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+        console.log('itemPath', itemPath);
+        cb(null, 'test.txt');
+      },
+    });
+    const upload = multer({ storage });
+
     app.get('/', (req, res) => {
       res.send({
         status: 'success',
       });
     });
 
-    // 获取上传地址 artifact upload prepare
+    // Artifact Upload Prepare
     app.post('/_apis/pipelines/workflows/:runId/artifacts', (req, res) => {
       const { runId } = req.params;
-      console.log('runId', runId);
       const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
 
       res.json({ fileContainerResourceUrl: `${baseURL}/upload/${runId}` });
+    });
+
+    // Artifact Upload Blob
+    // curl --silent --show-error --fail "http://127.0.0.1:3000/upload/1?itemPath=my-artifact/package.txt" --upload-file package.json
+    app.put('/upload/:runId', (req, res) => {
+      const { runId } = req.params;
+      const { itemPath } = req.query;
+
+      if (!itemPath) {
+        res.json({
+          message: 'Missing itemPath parameter',
+        });
+        return;
+      }
+      let safePath = path.join(this.dir, runId, itemPath as string || '');
+      fs.mkdirSync(path.dirname(safePath), { recursive: true });
+
+      // 处理 gzip 编码的文件
+      if (req.headers['content-encoding'] === 'gzip') {
+        safePath += GZIP_EXT;
+      }
+
+      // 写入文件
+      const writeStream = fs.createWriteStream(safePath, {
+        flags: req.headers['content-range'] ? 'a' : 'w',
+      });
+
+      writeStream.on('error', (err) => {
+        console.error('Error writing file:', err);
+        res.status(500).json({ message: 'Error writing file' });
+      });
+
+      writeStream.on('close', () => {
+        res.json({ message: 'success' });
+      });
+
+      req.pipe(writeStream);
     });
 
     // Finalize Artifact Upload
@@ -92,38 +148,32 @@ class Artifact {
       const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
       const safePath = path.join(this.dir, runId, itemPath as string || '');
 
-      fs.readdir(safePath, (err, files) => {
-        if (err) {
-          console.error('Error reading directory:', err);
-          return res.status(500).json({ message: 'Error reading directory' });
-        }
+      try {
+        const files = fs.readdirSync(safePath, {
+          recursive: true,
+          withFileTypes: true,
+        });
 
-        const filesInfo = files.map((file) => {
-          const relPath = path.normalize(file);
+        const filesInfo = files.filter((file) => {
+          return file.isFile();
+        }).map((file) => {
+          let relPath = path.relative(safePath, path.join(file.parentPath, file.name));
+          relPath = trimSuffix(relPath, GZIP_EXT);
+          const filePath = path.join(itemPath as string || '', relPath);
           return {
-            path: relPath,
+            path: filePath,
             itemType: 'file',
-            contentLocation: `${baseURL}/download/${runId}/${relPath.replace('\\', '/')}`,
+            contentLocation: `${baseURL}/download/${runId}/${filePath.replace('\\', '/')}`,
           };
         });
 
         res.json({ value: filesInfo });
-      });
-
-      // const files = new Set();
-      // totalist(safePath, (relPath, absPath) => {
-      //   console.log(relPath);
-      //   console.log(absPath);
-      //   files.add({
-      //     path: path.normalize(relPath),
-      //     itemType: 'file',
-      //     contentLocation: `${baseURL}/download/${container}/${relPath.replace('\\', '/')}`,
-      //   });
-      // });
-      // res.status(200).json({ value: [...files] });
+      } catch (err) {
+        return res.status(500).json({ message: (err as Error).message });
+      }
     });
 
-    // 下载文件
+    // Download Artifact File
     app.get('/download/:container/:path(*)', (req, res) => {
       const safePath = path.join(this.dir, req.params.container, req.params.path);
       try {
@@ -132,41 +182,6 @@ class Artifact {
         res.setHeader('Content-Encoding', 'gzip');
         fs.createReadStream(safePath + GZIP_EXT, { encoding: 'utf-8' }).pipe(res);
       }
-    });
-
-    // Artifact Upload Blob
-    app.put('/upload/:runId', (req, res) => {
-      const { runId } = req.params;
-      const { itemPath } = req.query;
-      if (!itemPath) {
-        res.json({
-          message: 'Missing itemPath parameter',
-        });
-        return;
-      }
-      let safePath = path.join(this.dir, runId, itemPath as string || '');
-      fs.mkdirSync(path.dirname(safePath), { recursive: true });
-
-      // 处理 gzip 编码的文件
-      if (req.headers['content-encoding'] === 'gzip') {
-        safePath += GZIP_EXT;
-      }
-
-      // 写入文件
-      const writeStream = fs.createWriteStream(safePath, {
-        flags: req.headers['content-range'] ? 'a' : 'w',
-      });
-
-      writeStream.on('error', (err) => {
-        console.error('Error writing file:', err);
-        res.status(500).json({ message: 'Error writing file' });
-      });
-
-      writeStream.on('close', () => {
-        res.json({ message: 'success' });
-      });
-
-      req.pipe(writeStream);
     });
   }
 

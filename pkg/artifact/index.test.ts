@@ -38,8 +38,12 @@ describe('Artifact Server Test', () => {
   });
 
   it('PUT /upload/:runId?itemPath=[itemPath]', async () => {
+    const res = fs.readFileSync('package.json');
+
     const response = await request(app).put(`/upload/${runId}?itemPath=${itemPath}`)
-      .attach('file', Buffer.from('content'), filename);
+      .attach('file', res, {
+        filename,
+      });
 
     expect(response.statusCode).toBe(200);
     expect(fs.existsSync(expectFileName)).toBeTruthy();
@@ -49,6 +53,8 @@ describe('Artifact Server Test', () => {
     // 使用 supertest 发送一个模拟的文件上传请求
     const response = await request(app).put(`/upload/${runId}`)
       .attach('file', Buffer.from('file content123'), filename);
+
+    console.log('response.body', response.body);
 
     expect(response.statusCode).toBe(200);
     expect(response.body.message).toBe('Missing itemPath parameter');
@@ -62,12 +68,24 @@ describe('Artifact Server Test', () => {
     expect(response.body.value[0].fileContainerResourceUrl).includes(`/download/${runId}`);
   });
 
-  it('GET /download/:container', async () => {
+  // List Artifact Container
+  it('GET /download/:runId', async () => {
     const response = await request(app).get(`/download/${runId}`);
-    console.log('response.body', response.body);
+
     expect(response.statusCode).toBe(200);
-    expect(response.body.count).toBe(1);
-    expect(response.body.value[0].name).toBe('file.txt');
-    expect(response.body.value[0].fileContainerResourceUrl).includes(`/download/${runId}`);
+    expect(response.body.value[0].path).toBe('file.txt');
+    expect(response.body.value[0].contentLocation).includes(`/download/${runId}`);
+  });
+
+  it('Test Download Artifact File', async () => {
+    const response = await request(app).get(`/download/${runId}/${filename}`);
+
+    console.log('response', response.text);
+
+    // response.pipe(fs.createWriteStream('test.txt'));
+
+    expect(response.statusCode).toBe(200);
   });
 });
+
+// curl --silent --show-error --fail "http://192.168.1.9:3000/upload/1?itemPath=my-artifact/secret.txt" --upload-file package.json
