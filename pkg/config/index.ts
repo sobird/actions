@@ -46,12 +46,12 @@ class Config {
   }
 
   static Load(file?: string) {
-    const config = rc('actions', yaml.parse(Config.Default), { config: file });
+    const config = rc('actions', Config.Default, { config: file });
     return new Config(config);
   }
 
   static get Default() {
-    return fs.readFileSync(path.resolve(__dirname, 'default.yaml'), 'utf-8');
+    return yaml.parse(fs.readFileSync(path.resolve(__dirname, 'default.yaml'), 'utf-8'));
   }
 }
 

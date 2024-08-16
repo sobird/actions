@@ -10,5 +10,5 @@ import { Config } from '@/pkg';
 export const configCommand = new Command('config')
   .description('Generate an example config file')
   .action(async () => {
-    console.log(Config.Default);
+    console.log(JSON.stringify(Config.Default, null, 2));
   });
