@@ -66,7 +66,7 @@ class Poller {
     loggerWithReporter.info('task:', task.id);
     // await withTimeout(plan.executor().execute(), this.config.runner.timeout);
 
-    await plan.executor().execute();
+    await plan.executor({}).execute();
   }
 
   /**
@@ -84,6 +84,7 @@ class Poller {
       if (fetchTaskResponse.task) {
         return fetchTaskResponse.task;
       }
+
       this.tasksVersion = BigInt(0);
     } catch (error) {
       logger.error('failed to fetch task', (error as ConnectError).message);

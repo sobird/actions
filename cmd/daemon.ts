@@ -23,15 +23,16 @@ type DaemonOptions = Options & {
 async function daemonAction(opts: Options, program: typeof Command.prototype) {
   const options = program.optsWithGlobals<DaemonOptions>();
   const version = program.parent?.version();
-  const config = Config.Load(options.config);
+  const appname = program.parent!.name();
+  const appconf = Config.Load(options.config, appname);
 
-  logger.level = config.log.level;
+  logger.level = appconf.log.level;
   logger.info('Starting runner daemon');
 
   let registration = null;
 
   try {
-    registration = Config.Registration.Load(config.runner.file);
+    registration = Config.Registration.Load(appconf.runner.file);
     if (!registration) {
       logger.error('registration file not found, please register the runner first');
       return;
@@ -42,14 +43,14 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
   }
 
   // 优先配置中的labels
-  const labels = new Labels(config.runner.labels.length > 0 ? config.runner.labels : registration.labels);
+  const labels = new Labels(appconf.runner.labels.length > 0 ? appconf.runner.labels : registration.labels);
 
   if (labels.names().length === 0) {
     logger.warn('no labels configured, runner may not be able to pick up jobs');
   }
 
   if (labels.requireDocker()) {
-    const { dockerHost } = config.container;
+    const { dockerHost } = appconf.container;
 
     if (dockerHost && dockerHost !== '-') {
       process.env.DOCKER_HOST = dockerHost;
@@ -65,7 +66,7 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
 
   if (JSON.stringify(registration.labels.sort()) !== JSON.stringify(labels.toStrings().sort())) {
     try {
-      registration.save(config.runner.file);
+      registration.save(appconf.runner.file);
     } catch (err) {
       return logger.error('failed to save runner config:', (err as Error).message);
     }
@@ -75,7 +76,7 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
   const { RunnerServiceClient } = new Client(
     registration.address,
     registration.token,
-    config.runner.insecure,
+    appconf.runner.insecure,
     registration.uuid,
     version,
   );
@@ -98,10 +99,10 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
     return;
   }
 
-  const poller = new Poller(RunnerServiceClient, config, version);
+  const poller = new Poller(RunnerServiceClient, appconf, version);
   poller.poll();
 }
 
 export const daemonCommand = new Command('daemon')
-  .description('Run as a runner daemon')
+  .description('run as a runner daemon')
   .action(daemonAction);

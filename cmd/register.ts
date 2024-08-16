@@ -19,8 +19,9 @@ async function doRegister(options: RegisterOptions) {
     instance, token, name, version,
   } = options;
   const labels = new Labels(options.labels);
-  const config = Config.Load(options.config);
-  const { PingServiceClient, RunnerServiceClient } = new Client(instance, '', config.runner.insecure, '', version);
+  const appconf = Config.Load(options.config);
+
+  const { PingServiceClient, RunnerServiceClient } = new Client(instance, '', appconf.runner.insecure, '', version);
 
   const pingResponse = await new Promise((resolve) => {
     let timer: NodeJS.Timeout;
@@ -30,11 +31,11 @@ async function doRegister(options: RegisterOptions) {
           data: name,
         });
         logger.info('Successfully pinged the Gitea instance server');
+
         clearTimeout(timer);
         resolve(res);
-        // logger.debug('Successfully pinged the Gitea instance server');
-      } catch (err: any) {
-        logger.fatal('Cannot ping the Gitea instance server:', err.message);
+      } catch (err) {
+        logger.fatal('Cannot ping the Gitea instance server:', (err as Error).message);
         timer = setTimeout(ping, 1000);
       }
     };
@@ -59,7 +60,7 @@ async function doRegister(options: RegisterOptions) {
         runner.token,
         instance,
         options.labels,
-      ).save(config.runner.file);
+      ).save(appconf.runner.file);
       logger.info('Runner registered successfully.');
     }
   } catch (err) {
@@ -114,7 +115,7 @@ const registerAction = async (options: RegisterArgs, program: typeof Command.pro
 
 // 注册子命令
 export const registerCommand = new Command('register')
-  .description('Register a runner to the server')
+  .description('register a runner to the server')
   .option('-i, --instance <addr>', 'Gitea instance address')
   .option('-t, --token <token>', 'Runner token')
   .option('-n, --name <name>', 'Runner name')

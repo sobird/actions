@@ -14,11 +14,11 @@ import ip from 'ip';
 import log4js from 'log4js';
 import rc from 'rc';
 
+import { Config, Labels, Client } from '@/pkg';
 import Artifact from '@/pkg/artifact';
 import ArtifactCache from '@/pkg/artifact/cache';
 import Git from '@/pkg/common/git';
 import { getSocketAndHost } from '@/pkg/docker';
-import Config from '@/pkg/runner/config';
 import { Github } from '@/pkg/runner/context/github';
 import WorkflowPlanner from '@/pkg/workflow/planner';
 import { readConfSync, generateId, readJsonSync } from '@/utils';
@@ -56,7 +56,7 @@ type RunOptions = Options & {
 };
 
 export const runCommand = new Command('run')
-  .description('Run workflow locally')
+  .description('run workflow locally')
   // run a event name
   .arguments('[eventName]')
   // workflows
@@ -132,15 +132,9 @@ export const runCommand = new Command('run')
     const version = program.parent!.version();
     const appname = program.parent!.name();
     const options = program.optsWithGlobals<RunOptions>();
+    const appconf = Config.Load(options.config, appname);
 
-    console.log('appname', appname);
-
-    const apprc = rc(appname, {
-      test: 'sobird',
-      age: 32,
-    });
-
-    console.log('apprc', apprc);
+    console.log('config1', appconf);
 
     if (options.bugReport) {
       return bugReportOption(version);

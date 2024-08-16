@@ -15,7 +15,7 @@ program
   .description('Run GitHub actions locally by specifying the event name (e.g. `push`) or an action name directly.')
   .version(pkg.version)
   // .arguments('[eventName]')
-  .option('-c, --config <path>', 'Config file path', 'actions.config.json');
+  .option('-c, --config <path>', 'config file path', 'actions.config.json');
 // .action((eventName: string, options: { config: string }) => {
 //   const configFile = options.config;
 //   // 这里可以添加事件名处理逻辑

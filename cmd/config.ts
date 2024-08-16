@@ -8,7 +8,7 @@ import { Command } from '@commander-js/extra-typings';
 import { Config } from '@/pkg';
 
 export const configCommand = new Command('config')
-  .description('Generate an example config file')
+  .description('generate an example config file')
   .action(async () => {
     console.log(JSON.stringify(Config.Default, null, 2));
   });

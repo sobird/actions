@@ -45,8 +45,8 @@ class Config {
     this.actionCacheDir = config.actionCacheDir ?? path.join(os.homedir(), '.actions', 'actions');
   }
 
-  static Load(file?: string) {
-    const config = rc('actions', Config.Default, { config: file });
+  static Load(file?: string, appname = 'actions') {
+    const config = rc(appname, Config.Default, { config: file });
     return new Config(config);
   }
 
