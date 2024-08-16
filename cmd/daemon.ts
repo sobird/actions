@@ -24,8 +24,8 @@ async function daemonAction(options: Options, program: typeof Command.prototype)
   const opts = program.optsWithGlobals<DaemonOptions>();
   opts.version = program.parent?.version();
   const config = Config.Load(opts.config);
-  logger.level = config.log.level;
 
+  logger.level = config.log.level;
   logger.info('Starting runner daemon');
 
   let registration = null;

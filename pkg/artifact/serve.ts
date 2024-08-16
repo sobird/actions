@@ -1,3 +1,5 @@
+// start server
+
 import Artifact from '.';
 
 const artifact = new Artifact(undefined, undefined, 4000);

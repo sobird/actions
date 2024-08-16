@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import rc from 'rc';
 import yaml from 'yaml';
 
 import Cache from './cache';
@@ -30,8 +31,6 @@ class Config {
 
   public container: Container;
 
-  public registration?: Registration;
-
   /**
    * The parent directory of a job's working directory.
    * If it's empty, $HOME/.cache/act/ will be used.
@@ -44,22 +43,10 @@ class Config {
     this.cache = new Cache(config.cache ?? {});
     this.container = new Container(config.container ?? {});
     this.actionCacheDir = config.actionCacheDir ?? path.join(os.homedir(), '.actions', 'actions');
-
-    this.registration = Registration.Load(config.runner.file);
   }
 
-  // 加载配置
   static Load(file?: string) {
-    let config = yaml.parse(Config.Default);
-    if (file && fs.existsSync(file)) {
-      config = yaml.parse(fs.readFileSync(file, 'utf8'));
-    }
-
-    // 兼容旧环境变量
-    // config.runner.loadEnvs();
-    // config.registration = Registration.Load(config.runner.file);
-
-    // 设置默认值
+    const config = rc('actions', yaml.parse(Config.Default), { config: file });
     return new Config(config);
   }
 
