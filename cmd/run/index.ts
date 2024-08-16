@@ -91,11 +91,13 @@ export const runCommand = new Command('run')
   .option('--cache-server-path <path>', 'Defines the path where the cache server stores caches.', path.join(ACTIONS_HOME, 'artifact', 'cache'))
   .option('--cache-server-addr <addr>', 'Defines the address to which the cache server binds.', ip.address())
   .option('--cache-server-port <port>', 'Defines the port where the artifact server listens. 0 means a randomly available port.', (value: string) => { return Number(value); }, 0)
-  .option('--artifact-server-path <path>', 'Defines the path where the artifact server stores uploads and retrieves downloads from. If not specified the artifact server will not start')
-  .option('--artifact-server-addr <addr>', 'Defines the address where the artifact server listens')
-  .option('--artifact-server-port <port>', 'Defines the port where the artifact server listens (will only bind to localhost)', (value: string) => { return Number(value); }, 34567)
   .option('--default-actions-url <url>', 'Defines the default url of action instance')
   .option('--no-skip-checkout', 'Do not skip actions/checkout')
+
+  // artifact server
+  .option('--artifact-server-path <path>', 'Defines the path where the artifact server stores uploads and retrieves downloads from. If not specified the artifact server will not start', '')
+  .option('--artifact-server-addr <addr>', 'Defines the address where the artifact server listens')
+  .option('--artifact-server-port <port>', 'Defines the port where the artifact server listens (will only bind to localhost)', (value: string) => { return Number(value); }, 0)
 
   // container
   .option('--privileged', 'use privileged mode')
@@ -225,18 +227,21 @@ export const runCommand = new Command('run')
       }
     }
 
-    // Artifact Server
+    // Start Artifact Server
+    const ACTIONS_RUNTIME_URL = 'ACTIONS_RUNTIME_URL';
     if (options.artifactServerPath) {
       const artifact = new Artifact(options.artifactServerPath, options.artifactServerAddr, options.artifactServerPort);
-      logger.debug('Artifact Server address:', await artifact.serve());
+      const actionsRuntimeURL = await artifact.serve();
+      logger.debug('Artifact Server address:', actionsRuntimeURL);
+      options.env[ACTIONS_RUNTIME_URL] = actionsRuntimeURL;
     }
-    // Artifact Cache Server
-    const cacheURLKey = 'ACTIONS_CACHE_URL';
-    if (options.cacheServer && !options.env[cacheURLKey]) {
+    // Start Artifact Cache Server
+    const ACTIONS_CACHE_URL = 'ACTIONS_CACHE_URL';
+    if (options.cacheServer && !options.env[ACTIONS_CACHE_URL]) {
       const artifactCache = new ArtifactCache(options.cacheServerPath, options.cacheServerAddr, options.cacheServerPort);
       const artifactCacheServeURL = await artifactCache.serve();
       logger.debug('Artifact Cache Server address:', artifactCacheServeURL);
-      options.env[cacheURLKey] = artifactCacheServeURL;
+      options.env[ACTIONS_CACHE_URL] = artifactCacheServeURL;
     }
 
     // run plan

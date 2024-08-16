@@ -19,6 +19,9 @@ class Artifact {
     public port: number = 0,
     public app: Express = express(),
   ) {
+    if (!this.dir) {
+      return;
+    }
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
@@ -156,12 +159,13 @@ class Artifact {
   }
 
   async serve() {
-    return new Promise((resolve) => {
+    if (!this.dir) {
+      return '';
+    }
+    return new Promise<string>((resolve) => {
       const server = this.app.listen(this.port, this.outboundIP, () => {
-        // console.log('Server running at:', (server.address() as AddressInfo).port);
         const { address, port } = server.address() as AddressInfo;
-        // serverAddress
-        resolve(`http://${address}:${port}`);
+        resolve(`http://${address}:${port}/`);
       });
     });
   }
