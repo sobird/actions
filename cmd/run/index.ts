@@ -14,6 +14,7 @@ import path from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import ip from 'ip';
 import log4js from 'log4js';
+import rc from 'rc';
 
 import Artifact from '@/pkg/artifact';
 import ArtifactCache from '@/pkg/artifact/cache';
@@ -50,6 +51,11 @@ function collectObject(value: string, prev: Record<string, string>) {
     ...options,
   };
 }
+
+type Options = ReturnType<typeof runCommand.opts>;
+type RunOptions = Options & {
+  config: string
+};
 
 export const runCommand = new Command('run')
   .description('Run workflow locally')
@@ -124,8 +130,20 @@ export const runCommand = new Command('run')
   .option('-d, --debug', 'enable debug log')
   .option('-n, --dryrun', 'dryrun mode')
 
-  .action(async (eventName, options, program) => {
-    const version = program.parent?.version();
+  .action(async (eventName, opts, program) => {
+    const version = program.parent!.version();
+    const appname = program.parent!.name();
+    const options = program.optsWithGlobals<RunOptions>();
+
+    console.log('appname', appname);
+
+    const apprc = rc(appname, {
+      test: 'sobird',
+      age: 32,
+    });
+
+    console.log('apprc', apprc);
+
     if (options.bugReport) {
       return bugReportOption(version);
     }
@@ -229,7 +247,7 @@ export const runCommand = new Command('run')
 
     // Start Artifact Server
     const ACTIONS_RUNTIME_URL = 'ACTIONS_RUNTIME_URL';
-    if (options.artifactServerPath) {
+    if (options.artifactServerPath && !options.env[ACTIONS_RUNTIME_URL]) {
       const artifact = new Artifact(options.artifactServerPath, options.artifactServerAddr, options.artifactServerPort);
       const actionsRuntimeURL = await artifact.serve();
       logger.debug('Artifact Server address:', actionsRuntimeURL);
@@ -307,11 +325,11 @@ export const runCommand = new Command('run')
 
     console.log('options', options);
 
-    const config = {
+    const config: Config = {
       context,
       skipCheckout: true,
     };
 
-    await plan.executor(config as Config).execute();
+    await plan.executor(config).execute();
     process.exit();
   });
