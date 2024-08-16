@@ -20,10 +20,10 @@ type DaemonOptions = Options & {
   version?: string;
 };
 
-async function daemonAction(options: Options, program: typeof Command.prototype) {
-  const opts = program.optsWithGlobals<DaemonOptions>();
-  opts.version = program.parent?.version();
-  const config = Config.Load(opts.config);
+async function daemonAction(opts: Options, program: typeof Command.prototype) {
+  const options = program.optsWithGlobals<DaemonOptions>();
+  const version = program.parent?.version();
+  const config = Config.Load(options.config);
 
   logger.level = config.log.level;
   logger.info('Starting runner daemon');
@@ -77,13 +77,13 @@ async function daemonAction(options: Options, program: typeof Command.prototype)
     registration.token,
     config.runner.insecure,
     registration.uuid,
-    opts.version,
+    version,
   );
 
   try {
     const { runner } = await RunnerServiceClient.declare({
       labels: labels.names(),
-      version: opts.version,
+      version,
     });
     if (runner) {
       logger.info(`runner: ${runner.name}, with version: ${runner.version}, with labels: ${runner.labels}, declare successfully`);
@@ -98,7 +98,7 @@ async function daemonAction(options: Options, program: typeof Command.prototype)
     return;
   }
 
-  const poller = new Poller(RunnerServiceClient, config, opts.version);
+  const poller = new Poller(RunnerServiceClient, config, version);
   poller.poll();
 }
 

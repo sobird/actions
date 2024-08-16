@@ -6,8 +6,6 @@
  * sobird<i@sobird.me> at 2024/05/17 5:25:33 created.
  */
 
-/* eslint-disable no-console */
-
 import os from 'node:os';
 import path from 'node:path';
 
