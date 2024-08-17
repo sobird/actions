@@ -10,8 +10,8 @@
  *    "example_job": {
  *       "result": "success",
  *       "outputs": {
- *           "output1": "hello",
- *            "output2": "world"
+ *          "output1": "hello",
+ *          "output2": "world"
  *       }
  *    }
  * }

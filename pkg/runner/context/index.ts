@@ -86,7 +86,7 @@ export default class Context {
 
   inputs: Inputs;
 
-  constructor(context: Context = {} as Context) {
+  constructor(context: Context) {
     this.github = new Github(context.github ?? {});
     this.env = context.env ?? {};
     this.vars = context.vars ?? {};

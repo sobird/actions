@@ -204,7 +204,7 @@ class Reporter implements LoggerHook {
     //   return;
     // }
 
-    logger.debug('Reporting task: %v', this.task.id);
+    logger.debug('Reporting task:', this.task.id);
 
     // 报告任务日志
     await this.reportLog(false);
