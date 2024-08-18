@@ -12,7 +12,6 @@ import path from 'node:path';
 import { Command } from '@commander-js/extra-typings';
 import ip from 'ip';
 import log4js from 'log4js';
-import rc from 'rc';
 
 import { Config, Labels, Client } from '@/pkg';
 import Artifact from '@/pkg/artifact';
@@ -61,20 +60,19 @@ export const runCommand = new Command('run')
   .arguments('[eventName]')
   // workflows
   .option('-W, --workflows <path>', 'path to workflow file(s)', './.github/workflows/')
-  .option('--no-workflowRecurse', "Flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
+  .option('--no-workflowRecurse', "flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
   .option('-l, --list', 'list workflows')
   .option('-g, --graph', 'draw workflows', false)
   .option('-j, --job <job>', 'run a specific job ID')
-  .option('-a, --actor <actor>', 'The username of the user that triggered the initial workflow run')
-
-  .option('--remote-name', 'git remote name that will be used to retrieve url of git repo', 'origin')
-  .option('--default-branch', 'the name of the main branch', 'master')
+  .option('-a, --actor <actor>', 'the username of the user that triggered the initial workflow run', os.userInfo().username || 'actor')
+  .option('--token <token>', 'if you want to use private actions on GitHub, you have to set personal access token')
+  .option('--remote-name <remote name>', 'git remote name that will be used to retrieve url of git repo', 'origin')
+  .option('--default-branch <default branch>', 'the name of the main branch', 'master')
   // .option('-E, --event <event>', 'run a event name')
-  .option('-e --event-file <event path>', 'path to event JSON file', 'event.json')
-  .option('--detect-event', 'Use first event type from workflow as event that triggered the workflow')
-
+  .option('-e --event-file <event file>', 'path to event JSON file', 'event.json')
+  .option('--detect-event', 'use first event type from workflow as event that triggered the workflow')
   .option('-C, --workspace <path>', 'the default working directory on the runner for steps', '.')
-  .option('--json', 'Output logs in json format')
+  .option('--json', 'output logs in json format')
   .option('--inputs <inputs>', 'action inputs to make available to actions (e.g. --inputs myinput=foo)', collectObject, {})
   .option('--inputs-file <inputs file>', 'inputs file to read and use as action inputs', '.inputs')
   .option('--env <env>', 'env to make available to actions with optional value (e.g. --env myenv=foo,other=bar)', collectObject, {})
@@ -85,56 +83,53 @@ export const runCommand = new Command('run')
   .option('--secrets-file <secretfile>', 'file with list of secrets to read from (e.g. --secret-file .secrets)', '.secrets')
   .option('--matrix', 'specify which matrix configuration to include (e.g. --matrix java:13')
   .option('--insecure-secrets', "NOT RECOMMENDED! Doesn't hide secrets while printing logs")
-
-  .option('-P, --platform <platform>', 'custom image to use per platform (e.g. -P ubuntu-latest=nektos/act-environments-ubuntu:18.04)', collectArray, [])
-
-  .option('--use-gitignore', 'Controls whether paths specified in .gitignore should be copied into container')
+  .option('--use-gitignore', 'controls whether paths specified in .gitignore should be copied into container')
 
   // actions/cache
-  .option('--no-cache-server', 'Disable cache server')
-  .option('--cache-server-path <path>', 'Defines the path where the cache server stores caches.', path.join(ACTIONS_HOME, 'artifact', 'cache'))
-  .option('--cache-server-addr <addr>', 'Defines the address to which the cache server binds.', ip.address())
-  .option('--cache-server-port <port>', 'Defines the port where the artifact server listens. 0 means a randomly available port.', (value: string) => { return Number(value); }, 0)
-  .option('--default-actions-url <url>', 'Defines the default url of action instance')
-  .option('--no-skip-checkout', 'Do not skip actions/checkout')
+  .option('--no-cache-server', 'disable cache server')
+  .option('--cache-server-path <path>', 'defines the path where the cache server stores caches.', path.join(ACTIONS_HOME, 'artifact', 'cache'))
+  .option('--cache-server-addr <addr>', 'defines the address to which the cache server binds.', ip.address())
+  .option('--cache-server-port <port>', 'defines the port where the artifact server listens. 0 means a randomly available port.', (value: string) => { return Number(value); }, 0)
+  .option('--default-actions-url <url>', 'defines the default url of action instance')
+  .option('--no-skip-checkout', 'do not skip actions/checkout')
 
   // artifact server
-  .option('--artifact-server-path <path>', 'Defines the path where the artifact server stores uploads and retrieves downloads from. If not specified the artifact server will not start', '')
-  .option('--artifact-server-addr <addr>', 'Defines the address where the artifact server listens')
-  .option('--artifact-server-port <port>', 'Defines the port where the artifact server listens (will only bind to localhost)', (value: string) => { return Number(value); }, 0)
-
-  // container
-  .option('--privileged', 'use privileged mode')
-  .option('--userns <userns>', 'user namespace to use')
-  .option('-i, --image <image>', 'Docker image to use. Use "-self-hosted" to run directly on the host', 'actions/runner-images:ubuntu-latest')
-  .option('--network <network>', 'Specify the network to which the container will connect')
-  .option('--container-architecture <arch>', 'Architecture which should be used to run containers, e.g.: linux/amd64. If not specified, will use host default architecture. Requires Docker server API Version 1.41+. Ignored on earlier Docker server platforms.')
-  .option('--container-daemon-socket <socket>', 'Path to Docker daemon socket which will be mounted to containers')
-  .option('--container-cap-add <cap...>', 'kernel capabilities to add to the workflow containers (e.g. --container-cap-add SYS_PTRACE)', collectArray, [])
-  .option('--container-cap-drop <drop...>', 'kernel capabilities to remove from the workflow containers (e.g. --container-cap-drop SYS_PTRACE)', collectArray, [])
-  .option('-p, --pull', 'pull docker image(s) even if already present')
-  .option('--rebuild', 'rebuild local action docker image(s) even if already present')
-  .option('--container-opts <opts>', 'container options')
+  .option('--artifact-server-path <path>', 'defines the path where the artifact server stores uploads and retrieves downloads from. If not specified the artifact server will not start', '')
+  .option('--artifact-server-addr <addr>', 'defines the address where the artifact server listens')
+  .option('--artifact-server-port <port>', 'defines the port where the artifact server listens (will only bind to localhost)', (value: string) => { return Number(value); }, 0)
 
   // actions
-  .option('--actions-instance <instance>', 'Actions instance to use')
-  .option('--use-new-action-cache', 'Enable using the new Action Cache for storing Actions locally', false)
-  .option('--action-offline-mode', 'If action contents exists, it will not be fetch and pull again. If turn on this, will turn off force pull', false)
-  .option('--action-cache-dir <dir>', 'Defines the dir where the actions get cached and host workspaces created.', path.join(ACTIONS_HOME, 'actions'))
-  .option('--local-repository <local repository>', 'Replaces the specified repository and ref with a local folder (e.g. https://github.com/test/test@v0=/home/act/test or test/test@v0=/home/act/test, the latter matches any hosts or protocols)', collectArray, [])
-  .option('--token <token>', 'If you want to use private actions on GitHub, you have to set personal access token', '')
+  .option('--actions-instance <instance>', 'actions instance to use')
+  .option('--use-new-action-cache', 'enable using the new Action Cache for storing Actions locally', false)
+  .option('--action-offline-mode', 'if action contents exists, it will not be fetch and pull again. If turn on this, will turn off force pull', false)
+  .option('--action-cache-dir <dir>', 'defines the dir where the actions get cached and host workspaces created.', path.join(ACTIONS_HOME, 'actions'))
+  .option('--local-repository <local repository>', 'replaces the specified repository and ref with a local folder (e.g. https://github.com/test/test@v0=/home/act/test or test/test@v0=/home/act/test, the latter matches any hosts or protocols)', collectArray, [])
+
+  // container
+  .option('-P, --platform <platform>', 'custom image to use per platform (e.g. -P ubuntu-latest=nektos/act-environments-ubuntu:18.04)', collectArray, [])
+  .option('-i, --image <image>', 'docker image to use. Use "-self-hosted" to run directly on the host', 'actions/runner-images:ubuntu-latest')
+  .option('--pull', 'pull docker image(s) even if already present')
+  .option('--rebuild', 'rebuild local action docker image(s) even if already present')
+  .option('--privileged', 'use privileged mode')
+  .option('--userns <userns>', 'user namespace to use')
+  .option('--network <network>', 'specify the network to which the container will connect')
+  .option('--container-architecture <arch>', 'architecture which should be used to run containers, e.g.: linux/amd64. If not specified, will use host default architecture. Requires Docker server API Version 1.41+. Ignored on earlier Docker server platforms.')
+  .option('--container-daemon-socket <socket>', 'path to Docker daemon socket which will be mounted to containers')
+  .option('--container-cap-add <cap...>', 'kernel capabilities to add to the workflow containers (e.g. --container-cap-add SYS_PTRACE)', collectArray, [])
+  .option('--container-cap-drop <drop...>', 'kernel capabilities to remove from the workflow containers (e.g. --container-cap-drop SYS_PTRACE)', collectArray, [])
+  .option('--container-opts <options>', 'container options')
   // debug
-  .option('--bug-report', 'Display system information for bug report', false)
+  .option('--bug-report', 'display system information for bug report')
   .option('-d, --debug', 'enable debug log')
   .option('-n, --dryrun', 'dryrun mode')
-
   .action(async (eventName, opts, program) => {
     const version = program.parent!.version();
     const appname = program.parent!.name();
     const options = program.optsWithGlobals<RunOptions>();
     const appconf = Config.Load(options.config, appname);
 
-    console.log('config1', appconf);
+    console.log('appconf', appconf);
+    console.log('options', options);
 
     if (options.bugReport) {
       return bugReportOption(version);

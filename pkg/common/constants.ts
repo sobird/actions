@@ -1,7 +1,10 @@
 /* eslint-disable max-classes-per-file */
 
 // Related to definition variables.
+import os from 'node:os';
 import path from 'node:path';
+
+export const ACTIONS_HOME = path.join(os.homedir(), '.actions');
 
 class Actions {
   //
