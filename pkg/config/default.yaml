@@ -1,7 +1,7 @@
 # Example configuration file, it's safe to copy this as the default config file without any modification.
 
 # You don't have to copy this file to your instance,
-# just run `actions config > config.yaml` to generate a config file.
+# just run `actions config > actions.config.json` to generate a config file.
 
 log:
   # The level of logging, can be trace, debug, info, warn, error, fatal
@@ -45,7 +45,7 @@ cache:
   # Enable cache server to use actions/cache.
   enabled: true
   # The directory to store the cache data.
-  # If it's empty, the cache data will be stored in $HOME/.cache/actcache.
+  # If it's empty, the cache data will be stored in $ACTIONS_HOME/cache.
   dir: ""
   # The host of the cache server.
   # It's not for the address to listen, but the address to connect from job containers.

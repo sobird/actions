@@ -65,7 +65,6 @@ export const runCommand = new Command('run')
   .option('-g, --graph', 'draw workflows', false)
   .option('-j, --job <job>', 'run a specific job ID')
   .option('-a, --actor <actor>', 'the username of the user that triggered the initial workflow run', os.userInfo().username || 'actor')
-  .option('--token <token>', 'if you want to use private actions on GitHub, you have to set personal access token')
   .option('--remote-name <remote name>', 'git remote name that will be used to retrieve url of git repo', 'origin')
   .option('--default-branch <default branch>', 'the name of the main branch', 'master')
   // .option('-E, --event <event>', 'run a event name')
@@ -73,14 +72,17 @@ export const runCommand = new Command('run')
   .option('--detect-event', 'use first event type from workflow as event that triggered the workflow')
   .option('-C, --workspace <path>', 'the default working directory on the runner for steps', '.')
   .option('--json', 'output logs in json format')
+
+  .option('--token <token>', 'if you want to use private actions on GitHub, you have to set personal access token')
   .option('--inputs <inputs>', 'action inputs to make available to actions (e.g. --inputs myinput=foo)', collectObject, {})
   .option('--inputs-file <inputs file>', 'inputs file to read and use as action inputs', '.inputs')
-  .option('--env <env>', 'env to make available to actions with optional value (e.g. --env myenv=foo,other=bar)', collectObject, {})
-  .option('--env-file <env file>', 'environment file to read and use as env in the containers', '.env')
-  .option('--vars <var>', 'variable to make available to actions with optional value (e.g. --vars myvar=foo or --var myvar)', collectObject, {})
-  .option('--vars-file <var file>', 'file with list of vars to read from (e.g. --vars-file .vars)', '.vars')
-  .option('-s --secrets <secret>', 'secret to make available to actions with optional value (e.g. --secrets mysecret=foo,toke=bar)', collectObject, {})
-  .option('--secrets-file <secretfile>', 'file with list of secrets to read from (e.g. --secret-file .secrets)', '.secrets')
+  .option('--envs <envs>', 'env to make available to actions with optional value (e.g. --envs myenv=foo,other=bar)', collectObject, {})
+  .option('--envs-file <envs file>', 'environment file to read and use as env in the containers', '.env')
+  .option('--vars <vars>', 'variable to make available to actions with optional value (e.g. --vars myvar=foo or --var myvar)', collectObject, {})
+  .option('--vars-file <vars file>', 'file with list of vars to read from (e.g. --vars-file .vars)', '.vars')
+  .option('--secrets <secrets>', 'secret to make available to actions with optional value (e.g. --secrets mysecret=foo,toke=bar)', collectObject, {})
+  .option('--secrets-file <secrets file>', 'file with list of secrets to read from (e.g. --secrets-file .secrets)', '.secrets')
+
   .option('--matrix', 'specify which matrix configuration to include (e.g. --matrix java:13')
   .option('--insecure-secrets', "NOT RECOMMENDED! Doesn't hide secrets while printing logs")
   .option('--use-gitignore', 'controls whether paths specified in .gitignore should be copied into container')
@@ -90,7 +92,6 @@ export const runCommand = new Command('run')
   .option('--cache-server-path <path>', 'defines the path where the cache server stores caches.', path.join(ACTIONS_HOME, 'artifact', 'cache'))
   .option('--cache-server-addr <addr>', 'defines the address to which the cache server binds.', ip.address())
   .option('--cache-server-port <port>', 'defines the port where the artifact server listens. 0 means a randomly available port.', (value: string) => { return Number(value); }, 0)
-  .option('--default-actions-url <url>', 'defines the default url of action instance')
   .option('--no-skip-checkout', 'do not skip actions/checkout')
 
   // artifact server
@@ -99,7 +100,8 @@ export const runCommand = new Command('run')
   .option('--artifact-server-port <port>', 'defines the port where the artifact server listens (will only bind to localhost)', (value: string) => { return Number(value); }, 0)
 
   // actions
-  .option('--actions-instance <instance>', 'actions instance to use')
+  .option('--action-instance <url>', 'defines the default url of action instance', 'https://github.com')
+  .option('--server-instance <url>', 'server instance to use')
   .option('--use-new-action-cache', 'enable using the new Action Cache for storing Actions locally', false)
   .option('--action-offline-mode', 'if action contents exists, it will not be fetch and pull again. If turn on this, will turn off force pull', false)
   .option('--action-cache-dir <dir>', 'defines the dir where the actions get cached and host workspaces created.', path.join(ACTIONS_HOME, 'actions'))
@@ -148,8 +150,8 @@ export const runCommand = new Command('run')
       console.warn(" \u26d4 You are using Apple M-series chip and you have not specified container architecture, you might encounter issues while running act. If so, try running it with '--container-architecture linux/amd64'. \u26d4");
     }
 
-    logger.debug('Loading environment from %s', options.envFile);
-    Object.assign(options.env, readConfSync(options.envFile));
+    logger.debug('Loading environment from %s', options.envsFile);
+    Object.assign(options.envs, readConfSync(options.envsFile));
 
     logger.debug('Loading vars from %s', options.varsFile);
     Object.assign(options.vars, readConfSync(options.varsFile));
@@ -234,19 +236,19 @@ export const runCommand = new Command('run')
 
     // Start Artifact Server
     const ACTIONS_RUNTIME_URL = 'ACTIONS_RUNTIME_URL';
-    if (options.artifactServerPath && !options.env[ACTIONS_RUNTIME_URL]) {
+    if (options.artifactServerPath && !options.envs[ACTIONS_RUNTIME_URL]) {
       const artifact = new Artifact(options.artifactServerPath, options.artifactServerAddr, options.artifactServerPort);
       const actionsRuntimeURL = await artifact.serve();
       logger.debug('Artifact Server address:', actionsRuntimeURL);
-      options.env[ACTIONS_RUNTIME_URL] = actionsRuntimeURL;
+      options.envs[ACTIONS_RUNTIME_URL] = actionsRuntimeURL;
     }
     // Start Artifact Cache Server
     const ACTIONS_CACHE_URL = 'ACTIONS_CACHE_URL';
-    if (options.cacheServer && !options.env[ACTIONS_CACHE_URL]) {
+    if (options.cacheServer && !options.envs[ACTIONS_CACHE_URL]) {
       const artifactCache = new ArtifactCache(options.cacheServerPath, options.cacheServerAddr, options.cacheServerPort);
       const artifactCacheServeURL = await artifactCache.serve();
       logger.debug('Artifact Cache Server address:', artifactCacheServeURL);
-      options.env[ACTIONS_CACHE_URL] = artifactCacheServeURL;
+      options.envs[ACTIONS_CACHE_URL] = artifactCacheServeURL;
     }
 
     // run plan
@@ -301,7 +303,7 @@ export const runCommand = new Command('run')
 
     const context = {
       github,
-      env: options.env,
+      env: options.envs,
       vars: options.vars,
       secrets: {
         ...options.secrets,

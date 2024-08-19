@@ -27,7 +27,7 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
   const appconf = Config.Load(options.config, appname);
 
   logger.level = appconf.log.level;
-  logger.info('Starting runner daemon');
+  logger.info('starting runner daemon');
 
   let registration = null;
 
@@ -92,10 +92,10 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
   } catch (err) {
     const connectError = err as ConnectError;
     if (connectError.code === Code.Unimplemented) {
-      logger.error('Your Gitea version is too old to support runner declare, please upgrade to v1.21 or later');
+      logger.error('your Gitea version is too old to support runner declare, please upgrade to v1.21 or later');
       return;
     }
-    logger.error('Fail to invoke declare', connectError.message);
+    logger.error('fail to invoke declare', connectError.message);
     return;
   }
 
