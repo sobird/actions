@@ -7,6 +7,18 @@ log:
   # The level of logging, can be trace, debug, info, warn, error, fatal
   level: info
 
+daemon: 
+  # Whether skip verifying the TLS certificate of the Server instance.
+  insecure: false
+  # The timeout for a job to be finished.
+  # Please note that the Server instance also has a timeout (3h by default) for the job.
+  # So the job could be stopped by the Server instance if it's timeout is shorter than this.
+  timeout: 10800000
+  # The timeout for fetching the job from the Server instance.
+  fetchTimeout: 5000
+  # The interval for fetching the job from the Server instance.
+  fetchInterval: 3000
+
 runner:
   # Where to store the registration result.
   file: .runner
@@ -20,18 +32,18 @@ runner:
   # It will be ignored if it's empty or the file doesn't exist.
   envFile: .env
   # The timeout for a job to be finished.
-  # Please note that the Gitea instance also has a timeout (3h by default) for the job.
-  # So the job could be stopped by the Gitea instance if it's timeout is shorter than this.
+  # Please note that the Server instance also has a timeout (3h by default) for the job.
+  # So the job could be stopped by the Server instance if it's timeout is shorter than this.
   timeout: 10800000
-  # Whether skip verifying the TLS certificate of the Gitea instance.
+  # Whether skip verifying the TLS certificate of the Server instance.
   insecure: false
-  # The timeout for fetching the job from the Gitea instance.
+  # The timeout for fetching the job from the Server instance.
   fetchTimeout: 5000
-  # The interval for fetching the job from the Gitea instance.
+  # The interval for fetching the job from the Server instance.
   fetchInterval: 3000
   # The labels of a runner are used to determine which jobs the runner can run, and how to run them.
   # Like: "macos-arm64=host" or "ubuntu-latest=gitea/runner-images:ubuntu-latest"
-  # Find more images provided by Gitea at https://gitea.com/gitea/runner-images .
+  # Find more images provided by Server at https://gitea.com/gitea/runner-images .
   # If it's empty when registering, it will ask for inputting labels.
   # If it's empty when execute `daemon`, will use labels in `.runner` file.
   labels:

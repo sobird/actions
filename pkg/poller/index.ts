@@ -70,7 +70,6 @@ class Poller {
 
     const loggerWithReporter = WithLoggerHook(reporter, 'Reporter');
     loggerWithReporter.info('task:', task.id);
-    // await withTimeout(plan.executor().execute(), this.config.runner.timeout);
 
     const needs = Object.fromEntries(Object.entries(task.needs).map(([job, need]) => {
       return [job, need.toJson()];
@@ -87,7 +86,8 @@ class Poller {
       },
     } as unknown as RunnerConfig;
 
-    await plan.executor(config).execute();
+    // await plan.executor(config).execute();
+    await withTimeout(plan.executor(config).execute(), this.config.runner.timeout);
   }
 
   async fetchTask() {

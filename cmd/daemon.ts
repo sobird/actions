@@ -17,7 +17,6 @@ const logger = log4js.getLogger();
 type Options = ReturnType<typeof daemonCommand.opts>;
 type DaemonOptions = Options & {
   config: string
-  version?: string;
 };
 
 async function daemonAction(opts: Options, program: typeof Command.prototype) {
