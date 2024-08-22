@@ -9,7 +9,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import { Command } from '@commander-js/extra-typings';
+import { Command, Option } from '@commander-js/extra-typings';
 import ip from 'ip';
 import log4js from 'log4js';
 
@@ -75,10 +75,10 @@ export const runCommand = new Command('run')
   .option('--no-workflowRecurse', "flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
   .option('-l, --list', 'list workflows')
   .option('-g, --graph', 'draw workflows')
-  .option('-j, --job <job>', 'run a specific job ID')
-  .option('-a, --actor <actor>', 'the username of the user that triggered the initial workflow run', os.userInfo().username || 'actor')
-  .option('--remote-name <remote name>', 'git remote name that will be used to retrieve url of git repo', 'origin')
-  .option('--default-branch <default branch>', 'the name of the main branch', 'master')
+  .option('-j, --job <string>', 'run a specific job ID')
+  .option('-a, --actor <string>', 'the username of the user that triggered the initial workflow run', os.userInfo().username || 'actor')
+  .option('--remote-name <string>', 'git remote name that will be used to retrieve url of git repo', 'origin')
+  .option('--default-branch <string>', 'the name of the main branch', 'master')
   // .option('-E, --event <event>', 'run a event name')
   .option('-e --event-file <path>', 'path to event JSON file', 'event.json')
   .option('--detect-event', 'use first event type from workflow as event that triggered the workflow')

@@ -31,7 +31,7 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
   let registration = null;
 
   try {
-    registration = Config.Registration.Load(appconf.runner.file);
+    registration = appconf.registration;
     if (!registration) {
       logger.error('registration file not found, please register the runner first');
       return;
@@ -65,7 +65,7 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
 
   if (JSON.stringify(registration.labels.sort()) !== JSON.stringify(labels.toStrings().sort())) {
     try {
-      registration.save(appconf.runner.file);
+      registration.save();
     } catch (err) {
       return logger.error('failed to save runner config:', (err as Error).message);
     }

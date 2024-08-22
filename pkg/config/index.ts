@@ -40,12 +40,16 @@ class Config {
 
   public file: string = path.join(ACTIONS_HOME, 'config');
 
+  public registration: Registration;
+
   constructor(config: Config) {
     this.log = config.log ?? {};
     this.runner = new Runner(config.runner ?? {});
     this.cache = new Cache(config.cache ?? {});
     this.container = new Container(config.container ?? {});
     this.actionCacheDir = config.actionCacheDir ?? path.join(ACTIONS_HOME, 'actions');
+
+    this.registration = Registration.Load(config.registration.file);
   }
 
   save() {

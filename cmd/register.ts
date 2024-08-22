@@ -53,14 +53,14 @@ async function doRegister(options: RegisterOptions) {
     });
 
     if (runner) {
-      new Config.Registration(
-        runner.id.toString(),
-        runner.uuid,
-        runner.name,
-        runner.token,
-        instance,
-        options.labels,
-      ).save(appconf.runner.file);
+      appconf.registration.id = runner.id.toString();
+      appconf.registration.uuid = runner.uuid;
+      appconf.registration.name = runner.name;
+      appconf.registration.token = runner.token;
+      appconf.registration.address = instance;
+      appconf.registration.labels = options.labels;
+
+      appconf.registration.save();
       logger.info('Runner registered successfully.');
     }
   } catch (err) {
