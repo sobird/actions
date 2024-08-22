@@ -109,3 +109,11 @@ container:
 # The parent directory of a job's working directory.
 # If it's empty, $HOME/.cache/act/ will be used.
 actionCacheDir:
+
+matrix:
+  java:
+    - 13
+  node:
+    - 22
+    - 20
+    - 18

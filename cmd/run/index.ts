@@ -13,7 +13,7 @@ import { Command } from '@commander-js/extra-typings';
 import ip from 'ip';
 import log4js from 'log4js';
 
-import { Config, Labels, Client } from '@/pkg';
+import { Config, Labels } from '@/pkg';
 import Artifact from '@/pkg/artifact';
 import ArtifactCache from '@/pkg/artifact/cache';
 import Git from '@/pkg/common/git';
@@ -30,11 +30,11 @@ const logger = log4js.getLogger();
 
 const ACTIONS_HOME = path.join(os.homedir(), '.actions');
 
-function collectArray(value: string, prev: string[]) {
-  return prev.concat(value.split(','));
+function collectArray(value: string, previous: string[] = []) {
+  return previous.concat(value.split(','));
 }
 
-function collectObject(value: string, prev: Record<string, string>) {
+function collectObject(value: string, previous: Record<string, string>) {
   const options: Record<string, string> = {};
   const pairs = value.split(',');
   for (const pair of pairs) {
@@ -44,9 +44,21 @@ function collectObject(value: string, prev: Record<string, string>) {
     }
   }
   return {
-    ...prev,
+    ...previous,
     ...options,
   };
+}
+
+function collectMatrix(value: string, previous: Record<string, unknown[]> = {}) {
+  const pairs = value.split(':');
+
+  if (pairs.length < 2) {
+    logger.fatal('Invalid matrix format. Failed to parse %s', value);
+  }
+
+  previous[pairs[0]] = [...new Set(previous[pairs[0]] || []).add(pairs[1])];
+
+  return previous;
 }
 
 type Options = ReturnType<typeof runCommand.opts>;
@@ -62,28 +74,28 @@ export const runCommand = new Command('run')
   .option('-W, --workflows <path>', 'path to workflow file(s)', './.github/workflows/')
   .option('--no-workflowRecurse', "flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
   .option('-l, --list', 'list workflows')
-  .option('-g, --graph', 'draw workflows', false)
+  .option('-g, --graph', 'draw workflows')
   .option('-j, --job <job>', 'run a specific job ID')
   .option('-a, --actor <actor>', 'the username of the user that triggered the initial workflow run', os.userInfo().username || 'actor')
   .option('--remote-name <remote name>', 'git remote name that will be used to retrieve url of git repo', 'origin')
   .option('--default-branch <default branch>', 'the name of the main branch', 'master')
   // .option('-E, --event <event>', 'run a event name')
-  .option('-e --event-file <event file>', 'path to event JSON file', 'event.json')
+  .option('-e --event-file <path>', 'path to event JSON file', 'event.json')
   .option('--detect-event', 'use first event type from workflow as event that triggered the workflow')
   .option('-C, --workspace <path>', 'the default working directory on the runner for steps', '.')
   .option('--json', 'output logs in json format')
 
   .option('--token <token>', 'if you want to use private actions on GitHub, you have to set personal access token')
-  .option('--inputs <inputs>', 'action inputs to make available to actions (e.g. --inputs myinput=foo)', collectObject, {})
-  .option('--inputs-file <inputs file>', 'inputs file to read and use as action inputs', '.inputs')
-  .option('--envs <envs>', 'env to make available to actions with optional value (e.g. --envs myenv=foo,other=bar)', collectObject, {})
-  .option('--envs-file <envs file>', 'environment file to read and use as env in the containers', '.env')
-  .option('--vars <vars>', 'variable to make available to actions with optional value (e.g. --vars myvar=foo or --var myvar)', collectObject, {})
-  .option('--vars-file <vars file>', 'file with list of vars to read from (e.g. --vars-file .vars)', '.vars')
-  .option('--secrets <secrets>', 'secret to make available to actions with optional value (e.g. --secrets mysecret=foo,toke=bar)', collectObject, {})
-  .option('--secrets-file <secrets file>', 'file with list of secrets to read from (e.g. --secrets-file .secrets)', '.secrets')
+  .option('--env <envs...>', 'env to make available to actions with optional value (e.g. --env myenv=foo,other=bar)', collectObject, {})
+  .option('--env-file <path>', 'environment file to read and use as env in the containers', '.env')
+  .option('--vars <vars...>', 'variable to make available to actions with optional value (e.g. --vars myvar=foo or --var myvar)', collectObject, {})
+  .option('--vars-file <path>', 'file with list of vars to read from (e.g. --vars-file .vars)', '.vars')
+  .option('--inputs <inputs...>', 'action inputs to make available to actions (e.g. --inputs myinput=foo)', collectObject, {})
+  .option('--inputs-file <path>', 'inputs file to read and use as action inputs', '.inputs')
+  .option('--secrets <secrets...>', 'secret to make available to actions with optional value (e.g. --secrets mysecret=foo,toke=bar)', collectObject, {})
+  .option('--secrets-file <path>', 'file with list of secrets to read from (e.g. --secrets-file .secrets)', '.secrets')
 
-  .option('--matrix', 'specify which matrix configuration to include (e.g. --matrix java:13')
+  .option('--matrix <list...>', 'specify which matrix configuration to include (e.g. --matrix java:13 node:20 node:18', collectMatrix, {})
   .option('--insecure-secrets', "NOT RECOMMENDED! Doesn't hide secrets while printing logs")
   .option('--use-gitignore', 'controls whether paths specified in .gitignore should be copied into container')
 
@@ -117,9 +129,9 @@ export const runCommand = new Command('run')
   .option('--network <network>', 'specify the network to which the container will connect')
   .option('--container-architecture <arch>', 'architecture which should be used to run containers, e.g.: linux/amd64. If not specified, will use host default architecture. Requires Docker server API Version 1.41+. Ignored on earlier Docker server platforms.')
   .option('--container-daemon-socket <socket>', 'path to Docker daemon socket which will be mounted to containers')
-  .option('--container-cap-add <cap...>', 'kernel capabilities to add to the workflow containers (e.g. --container-cap-add SYS_PTRACE)', collectArray, [])
-  .option('--container-cap-drop <drop...>', 'kernel capabilities to remove from the workflow containers (e.g. --container-cap-drop SYS_PTRACE)', collectArray, [])
-  .option('--container-opts <options>', 'container options')
+  .option('--container-cap-add <cap...>', 'kernel capabilities to add to the workflow containers (e.g. --container-cap-add SYS_PTRACE)', collectArray)
+  .option('--container-cap-drop <drop...>', 'kernel capabilities to remove from the workflow containers (e.g. --container-cap-drop SYS_PTRACE)', collectArray)
+  .option('--container-options <string>', 'container options')
   // debug
   .option('--bug-report', 'display system information for bug report')
   .option('-d, --debug', 'enable debug log')
@@ -131,7 +143,7 @@ export const runCommand = new Command('run')
     const appconf = Config.Load(options.config, appname);
 
     console.log('appconf', appconf);
-    console.log('options', options);
+    console.log('options', options.matrix);
 
     if (options.bugReport) {
       return bugReportOption(version);
@@ -150,8 +162,8 @@ export const runCommand = new Command('run')
       console.warn(" \u26d4 You are using Apple M-series chip and you have not specified container architecture, you might encounter issues while running act. If so, try running it with '--container-architecture linux/amd64'. \u26d4");
     }
 
-    logger.debug('Loading environment from %s', options.envsFile);
-    Object.assign(options.envs, readConfSync(options.envsFile));
+    logger.debug('Loading environment from %s', options.envFile);
+    Object.assign(options.env, readConfSync(options.envFile));
 
     logger.debug('Loading vars from %s', options.varsFile);
     Object.assign(options.vars, readConfSync(options.varsFile));
@@ -209,18 +221,18 @@ export const runCommand = new Command('run')
       // init todo
     }
 
-    const deprecationWarning = '--%s is deprecated and will be removed soon, please switch to cli: `--container-options "%[2]s"` or `.actrc`: `--container-options %[2]s`.';
+    const deprecationWarning = '--%s is deprecated and will be removed soon, please switch to cli: --container-options "%s" or .actionsrc: { "containerOptions": "%s" }.';
     if (options.privileged) {
       logger.warn(deprecationWarning, 'privileged', '--privileged');
     }
     if (options.userns) {
-      logger.warn(deprecationWarning, 'userns', `--userns=${options.userns}`);
+      logger.warn(deprecationWarning, 'userns', `--userns=${options.userns}`, `--userns=${options.userns}`);
     }
     if (options.containerCapAdd) {
-      logger.warn(deprecationWarning, 'container-cap-add', `--container-cap-add=${options.containerCapAdd}`);
+      logger.warn(deprecationWarning, 'container-cap-add', `--cap-add=${options.containerCapAdd.join(' ')}`, `--cap-add=${options.containerCapAdd.join(' ')}`);
     }
     if (options.containerCapDrop) {
-      logger.warn(deprecationWarning, 'container-cap-drop', `--container-cap-drop=${options.containerCapDrop}`);
+      logger.warn(deprecationWarning, 'container-cap-drop', `--cap-drop=${options.containerCapDrop.join(' ')}`, `--cap-drop=${options.containerCapDrop.join(' ')}`);
     }
 
     if (options.useNewActionCache || options.localRepository.length > 0) {
@@ -236,19 +248,19 @@ export const runCommand = new Command('run')
 
     // Start Artifact Server
     const ACTIONS_RUNTIME_URL = 'ACTIONS_RUNTIME_URL';
-    if (options.artifactServerPath && !options.envs[ACTIONS_RUNTIME_URL]) {
+    if (options.artifactServerPath && !options.env[ACTIONS_RUNTIME_URL]) {
       const artifact = new Artifact(options.artifactServerPath, options.artifactServerAddr, options.artifactServerPort);
       const actionsRuntimeURL = await artifact.serve();
       logger.debug('Artifact Server address:', actionsRuntimeURL);
-      options.envs[ACTIONS_RUNTIME_URL] = actionsRuntimeURL;
+      options.env[ACTIONS_RUNTIME_URL] = actionsRuntimeURL;
     }
     // Start Artifact Cache Server
     const ACTIONS_CACHE_URL = 'ACTIONS_CACHE_URL';
-    if (options.cacheServer && !options.envs[ACTIONS_CACHE_URL]) {
+    if (options.cacheServer && !options.env[ACTIONS_CACHE_URL]) {
       const artifactCache = new ArtifactCache(options.cacheServerPath, options.cacheServerAddr, options.cacheServerPort);
       const artifactCacheServeURL = await artifactCache.serve();
       logger.debug('Artifact Cache Server address:', artifactCacheServeURL);
-      options.envs[ACTIONS_CACHE_URL] = artifactCacheServeURL;
+      options.env[ACTIONS_CACHE_URL] = artifactCacheServeURL;
     }
 
     // run plan
@@ -303,7 +315,7 @@ export const runCommand = new Command('run')
 
     const context = {
       github,
-      env: options.envs,
+      env: options.env,
       vars: options.vars,
       secrets: {
         ...options.secrets,

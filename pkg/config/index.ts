@@ -54,6 +54,7 @@ class Config {
 
   static Load(file?: string, appname = 'actions') {
     const config = rc(appname, Config.Default, { config: file });
+    console.log('config', config);
     return new Config(config);
   }
 
