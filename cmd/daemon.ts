@@ -25,8 +25,6 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
   const appname = program.parent!.name();
   const appconf = Config.Load(options.config, appname);
 
-  console.log('appconf', appconf);
-
   logger.level = appconf.log.level;
   logger.info('starting runner daemon');
 

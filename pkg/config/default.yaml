@@ -7,6 +7,10 @@ log:
   # The level of logging, can be trace, debug, info, warn, error, fatal
   level: info
 
+registration:
+  # Where to store the registration result.
+  file: .runner
+
 daemon: 
   # Execute how many tasks concurrently at the same time.
   capacity: 1
@@ -22,15 +26,19 @@ daemon:
   fetchInterval: 3000
 
 runner:
-
+  # The parent directory of a job's working directory.
+  # NOTE: There is no need to add the first '/' of the path as runner will add it automatically. 
+  # If the path starts with '/', the '/' will be trimmed.
+  # For example, if the parent directory is /path/to/my/dir, workdir_parent should be path/to/my/dir
+  # If it's empty, /workspace will be used.
+  workdir:
   # Extra environment variables to run jobs.
-  envs:
+  env:
     A_TEST_ENV_NAME_1: a_test_env_value_1
     A_TEST_ENV_NAME_2: a_test_env_value_2
   # Extra environment variables to run jobs from a file.
   # It will be ignored if it's empty or the file doesn't exist.
   envFile: .env
-
   # The labels of a runner are used to determine which jobs the runner can run, and how to run them.
   # Like: "macos-arm64=host" or "ubuntu-latest=gitea/runner-images:ubuntu-latest"
   # Find more images provided by Server at https://gitea.com/gitea/runner-images .
@@ -41,33 +49,37 @@ runner:
     ubuntu-22.04: gitea/runner-images:ubuntu-22.04
     ubuntu-20.04: gitea/runner-images:ubuntu-20.04
     self-hosted: -self-hosted
-
-# actions/cache
-cache:
+  # actions/cache
   # Enable cache server to use actions/cache.
-  enabled: true
+  cacheServer: true
   # The directory to store the cache data.
   # If it's empty, the cache data will be stored in $ACTIONS_HOME/cache.
-  dir: ""
+  cacheServerPath: ""
   # The host of the cache server.
   # It's not for the address to listen, but the address to connect from job containers.
   # So 0.0.0.0 is a bad choice, leave it empty to detect automatically.
-  host: ""
+  cacheServerAddr: ""
   # The port of the cache server.
   # 0 means to use a random available port.
-  port: 0
+  cacheServerPort: 0
   # The external cache server URL. Valid only when enable is true.
   # If it's specified, runner will use this URL as the ACTIONS_CACHE_URL rather than start a server by itself.
   # The URL should generally end with "/".
   externalServer: ""
 
-container:
   # The parent directory of a job's working directory.
-  # NOTE: There is no need to add the first '/' of the path as runner will add it automatically. 
-  # If the path starts with '/', the '/' will be trimmed.
-  # For example, if the parent directory is /path/to/my/dir, workdir_parent should be path/to/my/dir
-  # If it's empty, /workspace will be used.
-  workdir:
+  # If it's empty, $HOME/.cache/act/ will be used.
+  actionCacheDir:
+
+  matrix:
+    java:
+      - 13
+    node:
+      - 22
+      - 20
+      - 18
+
+container:
   # Specifies the network to which the container will connect.
   # Could be host, bridge or the name of a custom network.
   # If it's empty, runner will create a network automatically.
@@ -95,18 +107,3 @@ container:
   forcePull: true
   # Rebuild docker image(s) even if already present
   forceRebuild: false
-
-# The parent directory of a job's working directory.
-# If it's empty, $HOME/.cache/act/ will be used.
-actionCacheDir:
-
-matrix:
-  java:
-    - 13
-  node:
-    - 22
-    - 20
-    - 18
-registration:
-  # Where to store the registration result.
-  file: .runner

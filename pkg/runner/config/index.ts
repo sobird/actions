@@ -16,16 +16,19 @@ import Container from './container';
  */
 class Config {
   /**
-   * The preset runner context.
+   * The runner context.
    */
   readonly context: Context;
 
-  readonly workspace: string;
+  /**
+   * path to working directory
+   */
+  readonly workdir: string;
 
   /**
-   * Bind the workspace to the job container.
+   * Bind the workdir to the job container.
    */
-  readonly bind: boolean;
+  readonly bindWorkdir: boolean;
 
   /**
    * Use a custom ActionCache Implementation.
@@ -103,9 +106,9 @@ class Config {
   readonly insecureSecrets: boolean;
 
   /**
-   * List of platforms.
+   * List of labels.
    */
-  readonly platforms: { [key: string]: string };
+  readonly labels: { [key: string]: string };
 
   /**
    * Platform picker, it will take precedence over Platforms if isn't nil.
@@ -116,7 +119,7 @@ class Config {
   /**
    * Controls if paths in .gitignore should not be copied into container, default true.
    */
-  readonly useGitIgnore: boolean;
+  readonly useGitignore: boolean;
 
   /**
    * GitHub instance to use, default "github.com".
@@ -169,8 +172,8 @@ class Config {
 
   constructor(config: Config) {
     this.context = new Context(config.context ?? {});
-    this.workspace = config.workspace ?? '';
-    this.bind = config.bind ?? true;
+    this.workdir = config.workdir ?? '';
+    this.bindWorkdir = config.bindWorkdir ?? true;
     this.eventPath = config.eventPath ?? '';
     this.remoteName = config.remoteName ?? '';
     this.reuseContainers = config.reuseContainers ?? false;
@@ -184,9 +187,9 @@ class Config {
     this.vars = config.vars ?? {};
     this.token = config.token ?? '';
 
-    this.platforms = config.platforms ?? {};
+    this.labels = config.labels ?? {};
     this.platformPicker = config.platformPicker ?? (() => { return ''; });
-    this.useGitIgnore = config.useGitIgnore ?? true;
+    this.useGitignore = config.useGitignore ?? true;
 
     this.skipCheckout = config.skipCheckout || true;
     this.replaceGheActionWithGithubCom = config.replaceGheActionWithGithubCom || [];

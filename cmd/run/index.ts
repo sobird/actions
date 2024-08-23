@@ -9,7 +9,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import { Command, Option } from '@commander-js/extra-typings';
+import { Command } from '@commander-js/extra-typings';
 import ip from 'ip';
 import log4js from 'log4js';
 
@@ -120,7 +120,7 @@ export const runCommand = new Command('run')
   .option('--local-repository <local repository>', 'replaces the specified repository and ref with a local folder (e.g. https://github.com/test/test@v0=/home/act/test or test/test@v0=/home/act/test, the latter matches any hosts or protocols)', collectArray, [])
 
   // container
-  .option('-P, --platform <platform>', 'custom image to use per platform (e.g. -P ubuntu-latest=nektos/act-environments-ubuntu:18.04)', collectArray, [])
+  .option('--labels <labels...>', 'custom image to use per platform (e.g. --labels ubuntu-latest=nektos/act-environments-ubuntu:18.04)', collectArray)
   .option('-i, --image <image>', 'docker image to use. Use "-self-hosted" to run directly on the host', 'actions/runner-images:ubuntu-latest')
   .option('--pull', 'pull docker image(s) even if already present')
   .option('--rebuild', 'rebuild local action docker image(s) even if already present')
@@ -217,7 +217,7 @@ export const runCommand = new Command('run')
       return graphOption(plan);
     }
 
-    if (options.platform.length === 0) {
+    if (options.labels?.length === 0) {
       // init todo
     }
 
