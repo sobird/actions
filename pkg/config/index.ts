@@ -11,6 +11,7 @@ import { ACTIONS_HOME } from '@/pkg/common/constants';
 
 import Cache from './cache';
 import Container from './container';
+import Daemon from './daemon';
 import { Registration } from './registration';
 import Runner from './runner';
 
@@ -25,6 +26,8 @@ class Config {
   static Registration = Registration;
 
   public log: Log;
+
+  public daemon: Daemon;
 
   public runner: Runner;
 
@@ -44,6 +47,7 @@ class Config {
 
   constructor(config: Config) {
     this.log = config.log ?? {};
+    this.daemon = new Daemon(config.daemon ?? {});
     this.runner = new Runner(config.runner ?? {});
     this.cache = new Cache(config.cache ?? {});
     this.container = new Container(config.container ?? {});

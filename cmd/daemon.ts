@@ -25,6 +25,8 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
   const appname = program.parent!.name();
   const appconf = Config.Load(options.config, appname);
 
+  console.log('appconf', appconf);
+
   logger.level = appconf.log.level;
   logger.info('starting runner daemon');
 
@@ -72,15 +74,15 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
     logger.info('labels updated to:', registration.labels);
   }
 
-  const { RunnerServiceClient } = new Client(
-    registration.address,
-    registration.token,
-    appconf.runner.insecure,
-    registration.uuid,
-    version,
-  );
-
   try {
+    const { RunnerServiceClient } = new Client(
+      registration.address,
+      registration.token,
+      appconf.runner.insecure,
+      registration.uuid,
+      version,
+    );
+
     const { runner } = await RunnerServiceClient.declare({
       labels: labels.names(),
       version,
@@ -88,6 +90,9 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
     if (runner) {
       logger.info(`runner: ${runner.name}, with version: ${runner.version}, with labels: ${runner.labels}, declare successfully`);
     }
+
+    const poller = new Poller(RunnerServiceClient, appconf.daemon, version);
+    poller.poll();
   } catch (err) {
     const connectError = err as ConnectError;
     if (connectError.code === Code.Unimplemented) {
@@ -95,11 +100,7 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
       return;
     }
     logger.error('fail to invoke declare', connectError.message);
-    return;
   }
-
-  const poller = new Poller(RunnerServiceClient, appconf, version);
-  poller.poll();
 }
 
 export const daemonCommand = new Command('daemon')

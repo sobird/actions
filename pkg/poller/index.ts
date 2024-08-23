@@ -26,16 +26,16 @@ class Poller {
 
   constructor(
     public client: typeof Client.prototype.RunnerServiceClient,
-    public config: typeof Config.prototype,
+    public config: InstanceType<typeof Config>['daemon'],
     public runnerVersion?: string,
   ) {}
 
   async poll() {
     const checkInterval = setInterval(async () => {
-      if (this.runningTasks.size >= this.config.runner.capacity) {
+      if (this.runningTasks.size >= this.config.capacity) {
         return;
       }
-      logger.debug('fetching task', this.tasksVersion, this.runningTasks.size, this.config.runner.capacity);
+      logger.debug('fetching task', this.tasksVersion, this.runningTasks.size, this.config.capacity);
       const task = await this.fetchTask();
 
       if (this.runningTasks.has(task?.id)) {
@@ -52,7 +52,7 @@ class Poller {
         logger.error('failed to run task', error);
         clearInterval(checkInterval);
       }
-    }, this.config.runner.fetchInterval);
+    }, this.config.fetchInterval);
   }
 
   async assign(task: Task) {
@@ -87,13 +87,13 @@ class Poller {
     } as unknown as RunnerConfig;
 
     // await plan.executor(config).execute();
-    await withTimeout(plan.executor(config).execute(), this.config.runner.timeout);
+    await withTimeout(plan.executor(config).execute(), this.config.timeout);
   }
 
   async fetchTask() {
     const { tasksVersion } = this;
     try {
-      const fetchTaskResponse = await withTimeout(this.client.fetchTask(new FetchTaskRequest({ tasksVersion })), this.config.runner.fetchTimeout);
+      const fetchTaskResponse = await withTimeout(this.client.fetchTask(new FetchTaskRequest({ tasksVersion })), this.config.fetchTimeout);
 
       if (fetchTaskResponse.tasksVersion > tasksVersion) {
         this.tasksVersion = fetchTaskResponse.tasksVersion;
