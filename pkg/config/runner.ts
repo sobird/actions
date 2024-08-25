@@ -1,10 +1,32 @@
+/**
+ * Runner Configurator
+ *
+ * sobird<i@sobird.me> at 2024/08/13 20:25:25 created.
+ */
+
 import fs from 'node:fs';
 
 import dotenv, { DotenvParseOutput } from 'dotenv';
+import log4js from 'log4js';
 
+import { Options } from '@/cmd/run';
+import ActionCache from '@/pkg/runner/action/cache/cache';
 import Config from '@/pkg/runner/config';
+import { readConfSync, generateId, readJsonSync } from '@/utils';
 
-class Runner implements Config {
+const logger = log4js.getLogger();
+
+class Runner implements Options {
+  /**
+   * Working directory
+   */
+  public workdir: string;
+
+  /**
+   * Bind the workdir to the job container.
+   */
+  public bindWorkdir: boolean;
+
   /**
    * Extra environment variables to run jobs.
    */
@@ -15,6 +37,10 @@ class Runner implements Config {
    * It will be ignored if it's empty or the file doesn't exist.
    */
   public envFile: string;
+
+  public vars: Record<string, string>;
+
+  public varsFile: string;
 
   /**
    * Whether skip verifying the TLS certificate of the Gitea instance.
@@ -65,8 +91,14 @@ class Runner implements Config {
   public externalServer: string;
 
   constructor(runner: Runner) {
+    this.workdir = runner.workdir;
+    this.bindWorkdir = runner.bindWorkdir;
+
     this.env = runner.env ?? {};
     this.envFile = runner.envFile ?? '';
+    this.vars = runner.env ?? {};
+    this.varsFile = runner.varsFile;
+
     this.insecure = runner.insecure ?? false;
     this.labels = runner.labels ?? [];
     this.cacheServer = runner.cacheServer ?? true;
@@ -81,9 +113,31 @@ class Runner implements Config {
     }
   }
 
+  // merge cli options
+  options(options: Options) {
+
+  }
+
   configure():Config {
-    //
-    return {};
+    logger.debug('Loading environment from %s', this.envFile);
+    Object.assign(this.env, readConfSync(this.envFile));
+
+    logger.debug('Loading vars from %s', this.varsFile);
+    Object.assign(this.vars, readConfSync(this.varsFile));
+
+    logger.debug('Loading secrets from %s', options.secretsFile);
+    Object.assign(options.secrets, readConfSync(options.secretsFile));
+
+    logger.debug('Loading action inputs from %s', options.inputsFile);
+    Object.assign(options.inputs, readConfSync(options.inputsFile));
+
+    const actionCache = '';
+
+    return {
+      workdir: this.workdir,
+      bindWorkdir: this.bindWorkdir,
+      actionCache,
+    };
   }
 }
 

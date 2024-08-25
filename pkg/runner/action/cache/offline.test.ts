@@ -10,7 +10,8 @@ import path from 'node:path';
 
 import * as tar from 'tar';
 
-import ActionCache from './cache';
+import ActionCache from '.';
+import ActionCacheOffline from './offline';
 
 vi.setConfig({
   testTimeout: 10000,
@@ -28,7 +29,7 @@ afterEach(() => {
 });
 
 describe('ActionCache Tests', () => {
-  const actionCache = new ActionCache(testTmp);
+  const actionCache = new ActionCacheOffline(new ActionCache(testTmp));
 
   const repository = 'sobird/actions-test';
   const repo = 'https://gitea.com/sobird/actions-test';

@@ -26,12 +26,18 @@ daemon:
   fetchInterval: 3000
 
 runner:
+  context:
+    github:
   # The parent directory of a job's working directory.
   # NOTE: There is no need to add the first '/' of the path as runner will add it automatically. 
   # If the path starts with '/', the '/' will be trimmed.
   # For example, if the parent directory is /path/to/my/dir, workdir_parent should be path/to/my/dir
   # If it's empty, /workspace will be used.
   workdir:
+  # Bind the workdir to the job container.
+  bindWorkdir: true
+  # Path to event JSON file
+  eventFile: event.json
   # Extra environment variables to run jobs.
   env:
     A_TEST_ENV_NAME_1: a_test_env_value_1
@@ -39,16 +45,24 @@ runner:
   # Extra environment variables to run jobs from a file.
   # It will be ignored if it's empty or the file doesn't exist.
   envFile: .env
+  vars:
+  varsFile: .vars
+  inputs:
+  inputsFile: .inputs
+  secrets:
+  secretsFile: .secrets
   # The labels of a runner are used to determine which jobs the runner can run, and how to run them.
   # Like: "macos-arm64=host" or "ubuntu-latest=gitea/runner-images:ubuntu-latest"
   # Find more images provided by Server at https://gitea.com/gitea/runner-images .
   # If it's empty when registering, it will ask for inputting labels.
   # If it's empty when execute `daemon`, will use labels in `.runner` file.
   labels:
-    ubuntu-latest: gitea/runner-images:ubuntu-latest
-    ubuntu-22.04: gitea/runner-images:ubuntu-22.04
-    ubuntu-20.04: gitea/runner-images:ubuntu-20.04
-    self-hosted: -self-hosted
+    - ubuntu-latest=gitea/runner-images:ubuntu-latest
+    - ubuntu-22.04=gitea/runner-images:ubuntu-22.04
+    - ubuntu-20.04=gitea/runner-images:ubuntu-20.04
+    - self-hosted=-self-hosted
+  #actions
+  actionInstance: github.com
   # actions/cache
   # Enable cache server to use actions/cache.
   cacheServer: true

@@ -56,9 +56,7 @@ class Poller {
   }
 
   async assign(task: Task) {
-    const {
-      workflowPayload, secrets, vars,
-    } = task;
+    const { workflowPayload, secrets, vars } = task;
 
     const reporter = new Reporter(this.client, task);
     await reporter.runDaemon();

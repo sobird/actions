@@ -6,7 +6,7 @@
 
 import { Level } from 'log4js';
 
-import ActionCache from '@/pkg/runner/action/cache';
+import ActionCache from '@/pkg/runner/action/cache/cache';
 import Context from '@/pkg/runner/context';
 
 import Container from './container';

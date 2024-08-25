@@ -61,7 +61,7 @@ function collectMatrix(value: string, previous: Record<string, unknown[]> = {}) 
   return previous;
 }
 
-type Options = ReturnType<typeof runCommand.opts>;
+export type Options = ReturnType<typeof runCommand.opts>;
 type RunOptions = Options & {
   config: string
 };
