@@ -56,7 +56,25 @@ class ActionCache {
       return file.startsWith(includePrefix);
     });
 
-    return tar.create({ cwd: repoPath }, files);
+    const pack = new tar.Pack({ portable: true });
+    files.forEach((file) => {
+      git.show(`${commit}:${file}`, (err, show) => {
+        if (err) throw err;
+        const content = Buffer.from(show);
+        const header = new tar.Header({
+          path: file,
+          mode: 0o644,
+          size: content.byteLength,
+          mtime: new Date(),
+        });
+        header.encode();
+        const entry = new tar.ReadEntry(header);
+        entry.end(content);
+        pack.add(entry);
+      });
+    });
+
+    return pack;
   }
 }
 
