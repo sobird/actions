@@ -37,7 +37,7 @@ describe('ActionCache Tests', () => {
       name: 'Fetch Branch Name',
       repository,
       repo,
-      ref: 'master',
+      ref: 'main',
     },
     {
       name: 'Fetch Branch Name Absolutely',
@@ -62,6 +62,7 @@ describe('ActionCache Tests', () => {
   refs.forEach((ref) => {
     it(ref.name, async () => {
       const sha = await actionCache.fetch(ref.repo, ref.repository, ref.ref);
+      console.log('sha', sha);
       assert.notEqual(sha, '', 'SHA should not be empty');
 
       const stream = await actionCache.archive(ref.repository, sha, 'package.json');
