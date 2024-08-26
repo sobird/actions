@@ -8,9 +8,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import * as tar from 'tar';
+import { readTar } from '@/utils/readTar';
 
-import ActionCache from '.';
 import ActionCacheOffline from './offline';
 
 vi.setConfig({
@@ -19,15 +18,15 @@ vi.setConfig({
 
 const testTmp = path.join(os.tmpdir(), 'actions');
 
-beforeEach(() => {
+beforeAll(() => {
   fs.mkdirSync(testTmp, { recursive: true });
 });
-afterEach(() => {
+afterAll(() => {
   // fs.rmdirSync(testTmp, { recursive: true });
 });
 
 describe('ActionCache Tests', () => {
-  const actionCache = new ActionCacheOffline(new ActionCache(testTmp));
+  const actionCache = new ActionCacheOffline(testTmp);
 
   const repository = 'sobird/actions-test';
   const repo = 'https://gitea.com/sobird/actions-test';
@@ -36,7 +35,7 @@ describe('ActionCache Tests', () => {
       name: 'Fetch Branch Name',
       repository,
       repo,
-      ref: 'master',
+      ref: 'main',
     },
     {
       name: 'Fetch Branch Name Absolutely',
@@ -63,23 +62,11 @@ describe('ActionCache Tests', () => {
       const sha = await actionCache.fetch(ref.repo, ref.repository, ref.ref);
       assert.notEqual(sha, '', 'SHA should not be empty');
 
-      const stream = await actionCache.archive(ref.repository, sha, 'package.json');
-
-      const parser = new tar.Parser();
-      stream.pipe(parser);
-
-      parser.on('entry', (entry) => {
-        const content: Buffer[] = [];
-        entry.on('data', (chunk: Buffer) => {
-          content.push(chunk);
-        });
-        entry.on('end', () => {
-          // console.log('content', Buffer.concat(content).toString());
-          assert.ok(content, 'content should not be empty');
-        });
+      const stream = await actionCache.archive(ref.repository, sha, '');
+      await readTar(stream, (header, content) => {
+        assert.ok(content, 'content should not be empty');
+        expect(header.size).not.equal(0);
       });
-      parser.on('end', () => {});
-      parser.on('close', () => {});
     });
   });
 });

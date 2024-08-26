@@ -1,3 +1,3 @@
 import path from 'node:path';
 
-console.log('first', path.dirname('sobird/dddd-d'));
+console.log('first', path.normalize('./../test/../ddd'));

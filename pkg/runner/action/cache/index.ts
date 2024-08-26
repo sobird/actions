@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import simpleGit from 'simple-git';
-import * as tar from 'tar';
+import tar from 'tar-stream';
 
 class ActionCache {
   constructor(public dir: string = path.join(os.tmpdir(), 'actions')) {}
@@ -45,30 +45,43 @@ class ActionCache {
     return hash;
   }
 
-  async archive(repository: string, ref: string, includePrefix: string = '') {
+  async archive(repository: string, ref: string, prefix: string = '.') {
     const repoPath = path.join(this.dir, `${repository}.git`);
     fs.mkdirSync(repoPath, { recursive: true });
     const git = simpleGit(repoPath);
 
+    const cleanPrefix = path.normalize(prefix || '.');
+
     const commit = await git.revparse(ref);
-    const pack = new tar.Pack({ portable: true });
-    (await git.raw(['ls-tree', '-r', '--name-only', commit])).split('\n').forEach((file) => {
-      if (file.startsWith(includePrefix)) {
-        git.show(`${commit}:${file}`, (err, show) => {
-          if (err) throw err;
-          const content = Buffer.from(show);
-          const header = new tar.Header({
-            path: file,
-            mode: 0o644,
-            size: content.byteLength,
-            mtime: new Date(),
-          });
-          header.encode();
-          const entry = new tar.ReadEntry(header);
-          entry.end(content);
-          pack.add(entry);
-        });
+    const pack = tar.pack();
+    const files = (await git.raw(['ls-tree', '-r', '--name-only', commit])).split('\n').filter((file) => {
+      if (file.startsWith(`${cleanPrefix}/`)) {
+        return true;
       }
+      if (cleanPrefix !== '.' && file !== cleanPrefix) {
+        return false;
+      }
+
+      if (!file) {
+        return false;
+      }
+
+      return true;
+    });
+
+    let count = 0;
+    files.forEach((file) => {
+      git.show(`${commit}:${file}`, (err, content) => {
+        if (err) {
+          return;
+        }
+        pack.entry({ name: file }, content, () => {
+          count += 1;
+          if (count === files.length) {
+            pack.finalize();
+          }
+        });
+      });
     });
 
     return pack;
