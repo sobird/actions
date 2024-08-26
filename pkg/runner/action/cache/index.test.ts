@@ -18,8 +18,6 @@ vi.setConfig({
 
 const testTmp = path.join(os.tmpdir(), 'actions');
 
-console.log('testTmp', testTmp);
-
 beforeEach(() => {
   fs.mkdirSync(testTmp, { recursive: true });
 });
@@ -62,7 +60,6 @@ describe('ActionCache Tests', () => {
   refs.forEach((ref) => {
     it(ref.name, async () => {
       const sha = await actionCache.fetch(ref.repo, ref.repository, ref.ref);
-      console.log('sha', sha);
       assert.notEqual(sha, '', 'SHA should not be empty');
 
       const stream = await actionCache.archive(ref.repository, sha, 'package.json');

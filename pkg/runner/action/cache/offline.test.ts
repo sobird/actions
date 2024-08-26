@@ -19,8 +19,6 @@ vi.setConfig({
 
 const testTmp = path.join(os.tmpdir(), 'actions');
 
-console.log('testTmp', testTmp);
-
 beforeEach(() => {
   fs.mkdirSync(testTmp, { recursive: true });
 });

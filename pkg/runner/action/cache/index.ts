@@ -28,7 +28,6 @@ class ActionCache {
 
     try {
       await git.clone(url, repoPath, ['--bare']);
-      // await git.addRemote('origin', url);
     } catch (err) {
       //
     }
@@ -52,26 +51,24 @@ class ActionCache {
     const git = simpleGit(repoPath);
 
     const commit = await git.revparse(ref);
-    const files = (await git.raw(['ls-tree', '-r', '--name-only', commit])).split('\n').filter((file) => {
-      return file.startsWith(includePrefix);
-    });
-
     const pack = new tar.Pack({ portable: true });
-    files.forEach((file) => {
-      git.show(`${commit}:${file}`, (err, show) => {
-        if (err) throw err;
-        const content = Buffer.from(show);
-        const header = new tar.Header({
-          path: file,
-          mode: 0o644,
-          size: content.byteLength,
-          mtime: new Date(),
+    (await git.raw(['ls-tree', '-r', '--name-only', commit])).split('\n').forEach((file) => {
+      if (file.startsWith(includePrefix)) {
+        git.show(`${commit}:${file}`, (err, show) => {
+          if (err) throw err;
+          const content = Buffer.from(show);
+          const header = new tar.Header({
+            path: file,
+            mode: 0o644,
+            size: content.byteLength,
+            mtime: new Date(),
+          });
+          header.encode();
+          const entry = new tar.ReadEntry(header);
+          entry.end(content);
+          pack.add(entry);
         });
-        header.encode();
-        const entry = new tar.ReadEntry(header);
-        entry.end(content);
-        pack.add(entry);
-      });
+      }
     });
 
     return pack;
