@@ -5,8 +5,8 @@ import simpleGit from 'simple-git';
 import ActionCache from '.';
 
 class ActionCacheOffline extends ActionCache {
-  async fetch(url: string, repository: string, ref: string) {
-    const sha = await super.fetch(url, repository, ref);
+  async fetch(url: string, repository: string, ref: string, token?: string) {
+    const sha = await super.fetch(url, repository, ref, token);
 
     const gitPath = path.join(this.dir, `${repository}.git`);
     const git = simpleGit(gitPath);

@@ -88,7 +88,7 @@ class ActionCache {
       pack.finalize();
     }
 
-    return pack;
+    return pack as unknown as NodeJS.ReadableStream;
   }
 }
 
