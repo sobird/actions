@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import * as tar from 'tar';
+import { readTar } from '@/utils/readTar';
 
 import ActionCache from '.';
 
@@ -64,21 +64,10 @@ describe('ActionCache Tests', () => {
 
       const stream = await actionCache.archive(ref.repository, sha, 'package.json');
 
-      const parser = new tar.Parser();
-      stream.pipe(parser);
-
-      parser.on('entry', (entry) => {
-        const content: Buffer[] = [];
-        entry.on('data', (chunk: Buffer) => {
-          content.push(chunk);
-        });
-        entry.on('end', () => {
-          // console.log('content', Buffer.concat(content).toString());
-          assert.ok(content, 'content should not be empty');
-        });
+      await readTar(stream, (header, content) => {
+        assert.ok(content, 'content should not be empty');
+        expect(header.size).not.equal(0);
       });
-      parser.on('end', () => {});
-      parser.on('close', () => {});
     });
   });
 });

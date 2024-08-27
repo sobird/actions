@@ -84,6 +84,10 @@ class ActionCache {
       });
     });
 
+    if (files.length === 0) {
+      pack.finalize();
+    }
+
     return pack;
   }
 }
