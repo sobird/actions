@@ -140,9 +140,9 @@ describe('test hosted container class', () => {
       });
     });
 
-    await new Promise((resolve) => {
+    await new Promise<void>((resolve) => {
       extract.on('finish', () => {
-        resolve('');
+        resolve();
       });
     });
 

@@ -4,18 +4,20 @@ export async function readTar(pack: NodeJS.ReadableStream, callback?: (header: t
   const extract = tar.t({});
   pack.pipe(extract);
 
-  extract.on('entry', (stream) => {
-    let content = Buffer.from('');
-    stream.on('data', (chunk: Buffer) => {
-      content = Buffer.concat([content, chunk]);
+  extract.on('entry', (entry) => {
+    const buffer = Buffer.from('');
+    entry.on('data', (chunk: Buffer) => {
+      Buffer.concat([buffer, chunk]);
     });
-    stream.on('end', () => {
-      callback?.(stream.header, content);
+    entry.on('end', () => {
+      if (entry.type === 'File') {
+        callback?.(entry.header, Buffer.from(buffer));
+      }
     });
   });
 
-  return new Promise<void>((resolve) => {
-    extract.on('end', () => {
+  await new Promise<void>((resolve) => {
+    extract.on('finish', () => {
       resolve();
     });
   });
