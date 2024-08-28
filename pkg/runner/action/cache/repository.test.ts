@@ -14,7 +14,7 @@ import { readTar } from '@/utils/readTar';
 import ActionCacheRepository from './repository';
 
 vi.setConfig({
-  testTimeout: 10000,
+  testTimeout: 20000,
 });
 
 const testTmp = path.join(os.tmpdir(), 'actions');
@@ -24,54 +24,55 @@ beforeAll(() => {
   fs.mkdirSync(testTmp, { recursive: true });
 });
 afterAll(() => {
-  // fs.rmdirSync(testTmp, { recursive: true });
+  fs.rmdirSync(testTmp, { recursive: true });
+  fs.rmdirSync(repoTmp, { recursive: true });
 });
 
-// describe('ActionCacheRepository Tests', () => {
-//   const actionCache = new ActionCacheRepository(testTmp);
+describe('ActionCacheRepository Tests', () => {
+  const actionCache = new ActionCacheRepository(testTmp);
 
-//   const repository = 'sobird/actions-test';
-//   const repo = 'https://gitea.com/sobird/actions-test';
-//   const refs = [
-//     {
-//       name: 'Fetch Branch Name',
-//       repository,
-//       repo,
-//       ref: 'main',
-//     },
-//     {
-//       name: 'Fetch Branch Name Absolutely',
-//       repository,
-//       repo,
-//       ref: 'refs/heads/master',
-//     },
-//     {
-//       name: 'Fetch HEAD',
-//       repository,
-//       repo,
-//       ref: 'HEAD',
-//     },
-//     {
-//       name: 'Fetch Sha',
-//       repository,
-//       repo,
-//       ref: '62f365c5242878ab2a5ff76c047724548ea56664',
-//     },
-//   ];
+  const repository = 'sobird/actions-test';
+  const repo = 'https://gitea.com/sobird/actions-test';
+  const refs = [
+    {
+      name: 'Fetch Branch Name',
+      repository,
+      repo,
+      ref: 'main',
+    },
+    {
+      name: 'Fetch Branch Name Absolutely',
+      repository,
+      repo,
+      ref: 'refs/heads/master',
+    },
+    {
+      name: 'Fetch HEAD',
+      repository,
+      repo,
+      ref: 'HEAD',
+    },
+    {
+      name: 'Fetch Sha',
+      repository,
+      repo,
+      ref: '62f365c5242878ab2a5ff76c047724548ea56664',
+    },
+  ];
 
-//   refs.forEach((ref) => {
-//     it(ref.name, async () => {
-//       const sha = await actionCache.fetch(ref.repo, ref.repository, ref.ref);
-//       assert.notEqual(sha, '', 'SHA should not be empty');
+  refs.forEach((ref) => {
+    it(ref.name, async () => {
+      const sha = await actionCache.fetch(ref.repo, ref.repository, ref.ref);
+      assert.notEqual(sha, '', 'SHA should not be empty');
 
-//       const stream = await actionCache.archive(ref.repository, sha);
-//       await readTar(stream, (header, content) => {
-//         assert.ok(content, 'content should not be empty');
-//         expect(header.size).not.equal(0);
-//       });
-//     });
-//   });
-// });
+      const stream = await actionCache.archive(ref.repository, sha);
+      await readTar(stream, (header, content) => {
+        assert.ok(content, 'content should not be empty');
+        expect(header.size).not.equal(0);
+      });
+    });
+  });
+});
 
 describe('ActionCacheRepository With repositories map Tests', async () => {
   const repoDir = path.join(repoTmp, 'gitea/runner-images');

@@ -22,7 +22,7 @@ beforeAll(() => {
   fs.mkdirSync(testTmp, { recursive: true });
 });
 afterAll(() => {
-  // fs.rmdirSync(testTmp, { recursive: true });
+  fs.rmdirSync(testTmp, { recursive: true });
 });
 
 describe('ActionCache Tests', () => {

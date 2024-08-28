@@ -39,7 +39,6 @@ class ActionCacheRepository extends ActionCache {
     const repositoryKey = `${repository}@${ref}`;
     if (this.cacheDirCache[repositoryKey]) {
       const file = path.join(this.cacheDirCache[repositoryKey], prefix);
-      console.log('file', file);
       return tar.create({ portable: true, cwd: file }, ['']) as unknown as NodeJS.ReadableStream;
     }
     return super.archive(repository, ref, prefix) as unknown as NodeJS.ReadableStream;
