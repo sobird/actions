@@ -1,22 +1,21 @@
-import tar from 'tar-stream';
+import * as tar from 'tar';
 
-export async function readTar(pack: NodeJS.ReadableStream, callback?: (header: tar.Headers, chunk: Buffer) => void) {
-  const extract = tar.extract();
+export async function readTar(pack: NodeJS.ReadableStream, callback?: (header: tar.Header, chunk: Buffer) => void) {
+  const extract = tar.t({});
   pack.pipe(extract);
 
-  extract.on('entry', (header, stream, next) => {
+  extract.on('entry', (stream) => {
     let content = Buffer.from('');
     stream.on('data', (chunk: Buffer) => {
       content = Buffer.concat([content, chunk]);
     });
     stream.on('end', () => {
-      callback?.(header, content);
-      next(); // ready for next entry
+      callback?.(stream.header, content);
     });
   });
 
   return new Promise<void>((resolve) => {
-    extract.on('finish', () => {
+    extract.on('end', () => {
       resolve();
     });
   });

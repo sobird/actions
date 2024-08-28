@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import tar from 'tar';
+import * as tar from 'tar';
 
 import ActionCache from '.';
 
@@ -14,7 +14,7 @@ class ActionCacheRepository extends ActionCache {
     super(dir);
   }
 
-  async fetch(url: string, repository: string, ref: string, token?: string) {
+  async fetch(url: string, repository: string, ref: string = 'HEAD', token?: string) {
     const key = `${url}@${ref}`;
     if (this.repositories[key]) {
       this.cacheDirCache[`${repository}@${ref}`] = this.repositories[key];
@@ -39,7 +39,7 @@ class ActionCacheRepository extends ActionCache {
     const repositoryKey = `${repository}@${ref}`;
     if (this.cacheDirCache[repositoryKey]) {
       const file = path.join(this.cacheDirCache[repositoryKey], prefix);
-      return tar.create({ }, [file]) as unknown as NodeJS.ReadableStream;
+      return tar.create({ portable: true }, [file]) as unknown as NodeJS.ReadableStream;
     }
     return super.archive(repository, ref, prefix) as unknown as NodeJS.ReadableStream;
   }

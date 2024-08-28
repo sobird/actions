@@ -206,7 +206,7 @@ class Git {
     return refTag || refBranch;
   }
 
-  static async Clone(url: string, localPath: string, ref: string) {
+  static async Clone(url: string, localPath: string, ref: string = 'HEAD') {
     const git = this.SimpleGit(localPath);
 
     try {
