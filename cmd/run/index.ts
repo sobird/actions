@@ -98,8 +98,9 @@ export const runCommand = new Command('run')
   .option('--matrix <list...>', 'specify which matrix configuration to include (e.g. --matrix java:13 node:20 node:18', collectMatrix, {})
   .option('--insecure-secrets', "NOT RECOMMENDED! Doesn't hide secrets while printing logs")
   .option('--use-gitignore', 'controls whether paths specified in .gitignore should be copied into container')
+  .option('--server-instance <url>', 'server instance to use')
 
-  // actions/cache
+  // actions/cache server
   .option('--no-cache-server', 'disable cache server')
   .option('--cache-server-path <path>', 'defines the path where the cache server stores caches.', path.join(ACTIONS_HOME, 'artifact', 'cache'))
   .option('--cache-server-addr <addr>', 'defines the address to which the cache server binds.', ip.address())
@@ -111,13 +112,12 @@ export const runCommand = new Command('run')
   .option('--artifact-server-addr <addr>', 'defines the address where the artifact server listens')
   .option('--artifact-server-port <port>', 'defines the port where the artifact server listens (will only bind to localhost)', (value: string) => { return Number(value); }, 0)
 
-  // actions
-  .option('--action-instance <url>', 'defines the default url of action instance', 'https://github.com')
-  .option('--server-instance <url>', 'server instance to use')
-  .option('--use-new-action-cache', 'enable using the new Action Cache for storing Actions locally', false)
-  .option('--action-offline-mode', 'if action contents exists, it will not be fetch and pull again. If turn on this, will turn off force pull', false)
+  // actionCache
+  .option('--use-action-cache', 'enable using the new Action Cache for storing Actions locally')
+  .option('--repositories <repositories...>', 'replaces the specified repository and ref with a local folder (e.g. https://github.com/test/test@v0=/home/act/test or test/test@v0=/home/act/test, the latter matches any hosts or protocols)', collectObject)
+  .option('--action-offline-mode', 'if action contents exists, it will not be fetch and pull again. If turn on this, will turn off force pull')
   .option('--action-cache-dir <dir>', 'defines the dir where the actions get cached and host workspaces created.', path.join(ACTIONS_HOME, 'actions'))
-  .option('--local-repository <local repository>', 'replaces the specified repository and ref with a local folder (e.g. https://github.com/test/test@v0=/home/act/test or test/test@v0=/home/act/test, the latter matches any hosts or protocols)', collectArray, [])
+  .option('--action-instance <url>', 'defines the default url of action instance', 'https://github.com')
 
   // container
   .option('--labels <labels...>', 'custom image to use per platform (e.g. --labels ubuntu-latest=nektos/act-environments-ubuntu:18.04)', collectArray)
@@ -235,13 +235,13 @@ export const runCommand = new Command('run')
       logger.warn(deprecationWarning, 'container-cap-drop', `--cap-drop=${options.containerCapDrop.join(' ')}`, `--cap-drop=${options.containerCapDrop.join(' ')}`);
     }
 
-    if (options.useNewActionCache || options.localRepository.length > 0) {
+    if (options.useActionCache || options.repositories) {
       if (options.actionOfflineMode) {
         // todo offline model
       } else {
         // todo online model
       }
-      if (options.localRepository.length > 0) {
+      if (options.repositories) {
         // todo init LocalRepositoryCache
       }
     }

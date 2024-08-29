@@ -6,7 +6,7 @@
 
 import { Level } from 'log4js';
 
-import ActionCache from '@/pkg/runner/action/cache/cache';
+import ActionCache from '@/pkg/runner/action/cache';
 import Context from '@/pkg/runner/context';
 
 import Container from './container';
@@ -14,7 +14,7 @@ import Container from './container';
 /**
  * The configuration interface for the runner.
  */
-class Config {
+interface Config {
   /**
    * The runner context.
    */
@@ -33,7 +33,7 @@ class Config {
   /**
    * Use a custom ActionCache Implementation.
    */
-  readonly actionCache: ActionCache;
+  readonly actionCache?: ActionCache;
 
   /**
    * When offline, use caching action contents.
@@ -169,45 +169,6 @@ class Config {
   readonly insecureSkipTLS?: boolean;
 
   container: Container;
-
-  constructor(config: Config) {
-    this.context = new Context(config.context ?? {});
-    this.workdir = config.workdir ?? '';
-    this.bindWorkdir = config.bindWorkdir ?? true;
-    this.eventPath = config.eventPath ?? '';
-    this.remoteName = config.remoteName ?? '';
-    this.reuseContainers = config.reuseContainers ?? false;
-    this.logPrefixJobID = config.logPrefixJobID ?? false;
-    this.logOutput = config.logOutput ?? true;
-    this.jsonLogger = config.jsonLogger ?? false;
-
-    this.env = config.env ?? {};
-    this.inputs = config.inputs ?? {};
-    this.secrets = config.secrets ?? {};
-    this.vars = config.vars ?? {};
-    this.token = config.token ?? '';
-
-    this.labels = config.labels ?? {};
-    this.platformPicker = config.platformPicker ?? (() => { return ''; });
-    this.useGitignore = config.useGitignore ?? true;
-
-    this.skipCheckout = config.skipCheckout || true;
-    this.replaceGheActionWithGithubCom = config.replaceGheActionWithGithubCom || [];
-    this.replaceGheActionTokenWithGithubCom = config.replaceGheActionTokenWithGithubCom || '';
-    this.matrix = config.matrix || {};
-    this.insecureSecrets = config.insecureSecrets || false;
-
-    this.artifactServerAddress = config.artifactServerAddress || '';
-
-    this.container = new Container(config.container ?? {});
-
-    // action
-    this.actionCache = config.actionCache;
-    this.actionOfflineMode = config.actionOfflineMode ?? false;
-    this.actionInstance = config.actionInstance ?? 'github.com';
-
-    this.serverInstance = config.serverInstance ?? 'github.com';
-  }
 }
 
 export default Config;

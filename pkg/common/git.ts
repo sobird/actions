@@ -6,6 +6,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import tty from 'node:tty';
 
 import GitUrlParse from 'git-url-parse';
 import log4js from 'log4js';
@@ -16,15 +17,13 @@ import Executor from './executor';
 export { GitError } from 'simple-git';
 
 const logger = log4js.getLogger();
+const isatty = tty.isatty(process.stdout.fd);
 
 class Git {
   git;
 
-  name: string;
-
-  constructor(public base: string) {
-    this.name = path.basename(base);
-    this.git = Git.SimpleGit(base, {
+  constructor(public dir: string) {
+    this.git = Git.SimpleGit(dir, {
       // progress({ method, stage, progress }) {
       //   console.log(`git ${method} ${stage} stage ${progress}% complete`);
       // },
@@ -47,15 +46,30 @@ class Git {
     return (await this.git.log(['--pretty=%H', '-1', filename])).latest?.hash;
   }
 
-  async clone(url: string, ref: string = 'HEAD') {
-    const { git } = this;
+  async clone(url: string, ref: string = 'HEAD', token?: string) {
+    const { git, dir } = this;
+
     try {
-      await git.fetch();
+      const repoURL = new URL(url);
+      if (token) {
+        repoURL.username = 'token';
+        repoURL.password = token;
+      }
+      // eslint-disable-next-line no-param-reassign
+      url = repoURL.toString();
     } catch (err) {
-      await git.clone(url, this.base);
+      //
     }
 
-    await git.checkout(ref);
+    try {
+      await git.revparse('HEAD');
+    } catch (err) {
+      try {
+        await git.clone(url, dir);
+      } catch (error) {
+        logger.error('Unable to clone %s %s: %s', url, ref, (error as Error).message);
+      }
+    }
 
     return git;
   }
@@ -149,19 +163,12 @@ class Git {
 
   static SimpleGit(basePath: string, options?: Partial<SimpleGitOptions>) {
     const baseDir = path.resolve(basePath);
-    fs.mkdirSync(baseDir, { recursive: true });
+    fs.mkdirSync(baseDir, { recursive: true, mode: 0o755 });
     return simpleGit(baseDir, options);
   }
 
-  static async Revision(repoPath: string) {
-    const git = Git.SimpleGit(repoPath);
-
-    const shortsha = await git.revparse(['--short', 'HEAD']);
-    const sha = await git.revparse(['HEAD']);
-    return {
-      shortsha,
-      sha,
-    };
+  static async Revision(dir: string) {
+    return new Git(dir).revision();
   }
 
   static async Ref(gitDir: string) {
@@ -206,21 +213,24 @@ class Git {
     return refTag || refBranch;
   }
 
-  static async Clone(url: string, localPath: string, ref: string = 'HEAD') {
-    const git = this.SimpleGit(localPath);
-
-    try {
-      await git.fetch();
-    } catch (err) {
-      await git.clone(url, localPath);
-    }
-
-    await git.checkout(ref);
-
-    return git;
+  static async Clone(dir: string, url: string, ref: string = 'HEAD', token?: string) {
+    return new Git(dir).clone(url, ref, token);
   }
 
-  static CloneExecutor(url: string, localPath: string, ref: string = 'HEAD', offlineMode: boolean = false) {
+  static CloneExecutor(dir: string, url: string, ref: string = 'HEAD', offlineMode: boolean = false) {
+    return Executor.Mutex(new Executor(async () => {
+      logger.info("\u2601  git clone '%s' # ref=%s", url, ref);
+      logger.debug('cloning %s to %s', url, dir);
+
+      const git = await this.Clone(url, dir, ref);
+
+      if (!offlineMode) {
+        git.pull();
+      }
+    }));
+  }
+
+  static TestCloneExecutor(url: string, localPath: string, ref: string = 'HEAD', offlineMode: boolean = false) {
     return Executor.Mutex(new Executor(async () => {
       logger.info("\u2601  git clone '%s' # ref=%s", url, ref);
       logger.debug('cloning %s to %s', url, localPath);

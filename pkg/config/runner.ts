@@ -10,7 +10,9 @@ import dotenv, { DotenvParseOutput } from 'dotenv';
 import log4js from 'log4js';
 
 import { Options } from '@/cmd/run';
-import ActionCache from '@/pkg/runner/action/cache/cache';
+import ActionCache from '@/pkg/runner/action/cache';
+import ActionCacheOffline from '@/pkg/runner/action/cache/offline';
+import ActionCacheRepository from '@/pkg/runner/action/cache/repository';
 import Config from '@/pkg/runner/config';
 import { readConfSync, generateId, readJsonSync } from '@/utils';
 
@@ -90,6 +92,33 @@ class Runner implements Options {
    */
   public externalServer: string;
 
+  /**
+   * enable using the new Action Cache for storing Actions locally
+   */
+  public useActionCache?: true;
+
+  /**
+   * replaces the specified repository and ref with a local folder
+   * (e.g. https://github.com/test/test@v0=/home/act/test or test/test@v0=/home/act/test, the latter matches any hosts or protocols)
+   */
+  public repositories: Record<string, string>;
+
+  /**
+   * if action contents exists, it will not be fetch and pull again.
+   * If turn on this, will turn off force pull
+   */
+  public actionOfflineMode?: true;
+
+  /**
+   * defines the dir where the actions get cached and host workspaces created.
+   */
+  public actionCacheDir: string;
+
+  /**
+   * defines the default url of action instance', 'https://github.com
+   */
+  public actionInstance: string;
+
   constructor(runner: Runner) {
     this.workdir = runner.workdir;
     this.bindWorkdir = runner.bindWorkdir;
@@ -106,6 +135,13 @@ class Runner implements Options {
     this.cacheServerAddr = runner.cacheServerAddr ?? '';
     this.cacheServerPort = runner.cacheServerPort ?? '';
     this.externalServer = runner.externalServer ?? '';
+
+    // action cache
+    this.useActionCache = runner.useActionCache;
+    this.repositories = runner.repositories;
+    this.actionOfflineMode = runner.actionOfflineMode;
+    this.actionCacheDir = runner.actionCacheDir;
+    this.actionInstance = runner.actionInstance ?? 'https://github.com';
 
     // 从环境变量文件加载环境变量
     if (this.envFile && fs.existsSync(this.envFile)) {
@@ -131,13 +167,22 @@ class Runner implements Options {
     logger.debug('Loading action inputs from %s', options.inputsFile);
     Object.assign(options.inputs, readConfSync(options.inputsFile));
 
-    const actionCache = '';
+    let actionCache;
+    if (this.useActionCache) {
+      actionCache = this.actionOfflineMode ? new ActionCacheOffline(this.actionCacheDir) : new ActionCache(this.actionCacheDir);
+    }
 
-    return {
+    if (this.repositories) {
+      actionCache = new ActionCacheRepository(this.actionCacheDir, this.repositories);
+    }
+
+    const config: Config = {
       workdir: this.workdir,
       bindWorkdir: this.bindWorkdir,
       actionCache,
     };
+
+    return config;
   }
 }
 

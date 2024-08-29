@@ -46,7 +46,7 @@ class Runner {
 
   constructor(public run: Run, public config: Config) {
     const { jobId, job, workflow } = run;
-    this.config = new Config(config);
+    // this.config = new Config(config);
     const { context } = this.config;
 
     // github context
