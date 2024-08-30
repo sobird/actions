@@ -172,45 +172,7 @@ class Git {
   }
 
   static async Ref(gitDir: string) {
-    const git = Git.SimpleGit(gitDir);
-
-    let refTag;
-    let refBranch;
-
-    const raw = await git.raw(['for-each-ref', '--format', '%(refname)']);
-    const refnames = raw.trim().split('\n');
-
-    const headSha = await git.revparse('HEAD');
-
-    for (const ref of refnames) {
-      // eslint-disable-next-line no-await-in-loop
-      const sha = await git.revparse(ref);
-      /* tags and branches will have the same hash
-       * when a user checks out a tag, it is not mentioned explicitly
-       * in the go-git package, we must identify the revision
-       * then check if any tag matches that revision,
-       * if so then we checked out a tag
-       * else we look for branches and if matches,
-       * it means we checked out a branch
-       *
-       * If a branches matches first we must continue and check all tags (all references)
-       * in case we match with a tag later in the interation
-       */
-      if (sha === headSha) {
-        if (ref.startsWith('refs/tags')) {
-          refTag = ref;
-        }
-        if (ref.startsWith('refs/heads')) {
-          refBranch = ref;
-        }
-      }
-
-      if (!refTag && !refBranch) {
-        throw Error('');
-      }
-    }
-
-    return refTag || refBranch;
+    return new Git(gitDir).ref();
   }
 
   static async Clone(dir: string, url: string, ref: string = 'HEAD', token?: string) {
@@ -222,24 +184,49 @@ class Git {
       logger.info("\u2601  git clone '%s' # ref=%s", url, ref);
       logger.debug('cloning %s to %s', url, dir);
 
-      const git = await this.Clone(url, dir, ref);
+      const git = await this.Clone(dir, url, ref);
 
       if (!offlineMode) {
-        git.pull();
+        try {
+          console.log('offlineMode', offlineMode);
+          await git.fetch(['origin', 'HEAD:refs/heads/HEAD']);
+        } catch (err) {
+          console.log('err', err);
+        }
       }
-    }));
-  }
 
-  static TestCloneExecutor(url: string, localPath: string, ref: string = 'HEAD', offlineMode: boolean = false) {
-    return Executor.Mutex(new Executor(async () => {
-      logger.info("\u2601  git clone '%s' # ref=%s", url, ref);
-      logger.debug('cloning %s to %s', url, localPath);
+      let hash = await git.revparse(ref);
+      console.log('hash', hash);
 
-      const git = await this.Clone(url, localPath, ref);
-
-      if (!offlineMode) {
-        git.pull();
+      if (hash !== ref && ref.startsWith(hash)) {
+        throw new Error('Short ref error');
       }
+
+      let refType = 'tag';
+      const { all } = await git.tags([ref]);
+      if (all.length === 0) {
+        refType = 'branch';
+        await git.checkout(`origin/${ref}`);
+      } else {
+        refType = 'sha';
+      }
+
+      if (hash !== ref && refType === 'branch') {
+        logger.debug('Provided ref is not a sha. Checking out branch before pulling changes');
+        await git.checkout(`origin/${ref}`);
+      }
+
+      logger.debug('Cloned %s to %s', url, dir);
+
+      if (hash !== ref && refType === 'branch') {
+        logger.debug('Provided ref is not a sha. Updating branch ref after pull');
+        hash = await git.revparse([ref]);
+      }
+
+      await git.checkout(hash);
+      await git.reset(['--hard', hash]);
+
+      logger.debug(`Checked out ${ref}`);
     }));
   }
 }

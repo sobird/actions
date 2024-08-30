@@ -1,26 +1,19 @@
 /* eslint-disable no-await-in-loop */
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 
 import { SimpleGit } from 'simple-git';
 
+import { testDir } from '@/utils/test';
+
 import Git from './git';
 
 vi.setConfig({
-  testTimeout: 200000,
-});
-
-const testTmp = path.join(os.tmpdir(), 'git-test');
-
-beforeAll(() => {
-  fs.mkdirSync(testTmp, { recursive: true });
-});
-afterAll(() => {
-  fs.rmdirSync(testTmp, { recursive: true });
+  testTimeout: 20000,
 });
 
 describe('Test Git', () => {
+  const testTmp = testDir();
   it('remote url test case', async () => {
     const wantRemoteURL = 'https://git-codecommit.us-east-1.amazonaws.com/v1/repos/my-repo-name';
     const dir = path.join(testTmp, 'remote-url');
@@ -164,14 +157,63 @@ describe('Test Git', () => {
     expect(isRepo).toBe(true);
   });
 
-  // it('git Clone Executor test case', async () => {
-  //   const dir = path.join(testTmp, 'git-Clone-Executor-test');
-  //   const git = new Git(dir);
-  //   const executor = Git.CloneExecutor('https://gitea.com/sobird/actions-test', dir, 'master');
+  it('git Clone Executor test case', async () => {
+    const dir = path.join(testTmp, 'git-Clone-Executor-test');
+    const git = new Git(dir);
+    const executor = Git.CloneExecutor(dir, 'https://gitea.com/sobird/actions-test', 'master');
 
-  //   await executor.execute();
+    await executor.execute();
 
-  //   const isRepo = await git.git.checkIsRepo();
-  //   expect(isRepo).toBe(true);
-  // });
+    const isRepo = await git.git.checkIsRepo();
+    expect(isRepo).toBe(true);
+  });
+});
+
+describe('Git Clone Executor', () => {
+  const testTmp = testDir();
+
+  const testCases = {
+    tag: {
+      err: null,
+      url: 'https://gitea.com/actions/checkout',
+      ref: 'v2',
+    },
+    branch: {
+      err: null,
+      url: 'https://gitea.com/anchore/scan-action',
+      ref: 'act-fails',
+    },
+    sha: {
+      err: null,
+      url: 'https://gitea.com/actions/checkout',
+      ref: '5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f', // 示例 SHA
+    },
+    'short-sha': {
+      err: new Error('ErrShortRef', '5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f'),
+      url: 'https://gitea.com/actions/checkout',
+      ref: '5a4ac90', // 短 SHA 示例
+    },
+  };
+
+  Object.entries(testCases).forEach(([name, tt]) => {
+    test(name, async () => {
+      const cloneExecutor = Git.CloneExecutor(testTmp, tt.url, tt.ref);
+
+      try {
+        await cloneExecutor.execute();
+        if (tt.err) {
+          expect(tt.err).toBeFalsy();
+        } else {
+          expect(tt.err).toBeNull();
+        }
+      } catch (err) {
+        if (tt.err) {
+          console.log('err', err);
+          expect(err).toEqual(tt.err);
+        } else {
+          throw new Error('No error expected but one was thrown');
+        }
+      }
+    });
+  });
 });
