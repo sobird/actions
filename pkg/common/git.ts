@@ -74,13 +74,15 @@ class Git {
     return git;
   }
 
+  /**
+   * get the current git revision
+   */
   async revision() {
-    const shortsha = await this.git.revparse(['--short', 'HEAD']);
-    const sha = await this.git.revparse(['HEAD']);
-    return {
-      shortsha,
-      sha,
-    };
+    try {
+      return await this.git.revparse(['HEAD']);
+    } catch (err) {
+      return '';
+    }
   }
 
   /**
@@ -89,18 +91,22 @@ class Git {
    * @returns
    */
   async ref() {
+    const rev = await this.revision();
+    if (!rev) {
+      return '';
+    }
+
+    logger.debug("HEAD points to '%s'", rev);
+
     const { git } = this;
     let refTag;
     let refBranch;
 
-    const raw = await git.raw(['for-each-ref', '--format', '%(refname)']);
-    const refnames = raw.trim().split('\n');
+    const refs = (await git.raw(['for-each-ref', '--format', '%(refname)'])).trim().split('\n');
 
-    const headSha = await git.revparse('HEAD');
-
-    for (const ref of refnames) {
-      // eslint-disable-next-line no-await-in-loop
+    for await (const ref of refs) {
       const sha = await git.revparse(ref);
+
       /* tags and branches will have the same hash
        * when a user checks out a tag, it is not mentioned explicitly
        * in the go-git package, we must identify the revision
@@ -112,17 +118,19 @@ class Git {
        * If a branches matches first we must continue and check all tags (all references)
        * in case we match with a tag later in the interation
        */
-      if (sha === headSha) {
+      if (sha === rev) {
         if (ref.startsWith('refs/tags')) {
           refTag = ref;
         }
         if (ref.startsWith('refs/heads')) {
           refBranch = ref;
         }
+
+        console.log('sha', sha, rev, ref, refTag, refBranch);
       }
 
       if (!refTag && !refBranch) {
-        throw Error('');
+        // throw Error('');
       }
     }
 
@@ -187,11 +195,10 @@ class Git {
       const git = await this.Clone(dir, url, ref);
 
       if (!offlineMode) {
-        try {
-          console.log('offlineMode', offlineMode);
-          await git.fetch(['origin', 'HEAD:refs/heads/HEAD']);
-        } catch (err) {
-          console.log('err', err);
+        const { updated } = await git.fetch();
+        console.log('updated', updated);
+        if (updated.length === 0) {
+          // return;
         }
       }
 
@@ -206,9 +213,7 @@ class Git {
       const { all } = await git.tags([ref]);
       if (all.length === 0) {
         refType = 'branch';
-        await git.checkout(`origin/${ref}`);
-      } else {
-        refType = 'sha';
+        await git.checkout([ref]);
       }
 
       if (hash !== ref && refType === 'branch') {
@@ -220,9 +225,9 @@ class Git {
 
       if (hash !== ref && refType === 'branch') {
         logger.debug('Provided ref is not a sha. Updating branch ref after pull');
-        hash = await git.revparse([ref]);
+        hash = await git.revparse(ref);
       }
-
+      console.log('hash12', hash);
       await git.checkout(hash);
       await git.reset(['--hard', hash]);
 
