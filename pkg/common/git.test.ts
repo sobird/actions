@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import path from 'node:path';
 
 import { SimpleGit } from 'simple-git';
@@ -196,51 +195,37 @@ describe('Test Get Git Ref', () => {
   }
 });
 
-// describe('Git Clone Executor', () => {
-//   const testTmp = testDir();
+describe('Git Clone Executor', () => {
+  const testTmp = testDir();
 
-//   const testCases = {
-//     tag: {
-//       err: null,
-//       url: 'https://gitea.com/actions/checkout',
-//       ref: 'v2',
-//     },
-//     branch: {
-//       err: null,
-//       url: 'https://gitea.com/sobird/actions-test',
-//       ref: 'test',
-//     },
-//     sha: {
-//       err: null,
-//       url: 'https://gitea.com/actions/checkout',
-//       ref: '5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f',
-//     },
-//     'short-sha': {
-//       err: new Error('ErrShortRef', '5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f'),
-//       url: 'https://gitea.com/actions/checkout',
-//       ref: '5a4ac90', // 短 SHA 示例
-//     },
-//   };
+  const testCases = {
+    tag: {
+      err: null,
+      url: 'https://gitea.com/actions/checkout',
+      ref: 'v2',
+    },
+    branch: {
+      err: null,
+      url: 'https://gitea.com/sobird/actions-test',
+      ref: 'test',
+    },
+    sha: {
+      err: null,
+      url: 'https://gitea.com/actions/checkout',
+      ref: '5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f',
+    },
+    'short-sha': {
+      err: null,
+      url: 'https://gitea.com/actions/checkout',
+      ref: '5a4ac90', // 短 SHA 示例
+    },
+  };
 
-//   Object.entries(testCases).forEach(([name, tt]) => {
-//     test(name, async () => {
-//       const cloneExecutor = Git.CloneExecutor(path.join(testTmp, name), tt.url, tt.ref);
+  Object.entries(testCases).forEach(([name, tt]) => {
+    test(name, async () => {
+      const cloneExecutor = Git.CloneExecutor(path.join(testTmp, name), tt.url, tt.ref);
 
-//       try {
-//         await cloneExecutor.execute();
-//         // if (tt.err) {
-//         //   expect(tt.err).toBeFalsy();
-//         // } else {
-//         //   expect(tt.err).toBeNull();
-//         // }
-//       } catch (err) {
-//         if (tt.err) {
-//           console.log('err', err);
-//           expect(err).toEqual(tt.err);
-//         } else {
-//           throw new Error('No error expected but one was thrown');
-//         }
-//       }
-//     });
-//   });
-// });
+      await cloneExecutor.execute();
+    });
+  });
+});

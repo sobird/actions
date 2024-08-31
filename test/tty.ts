@@ -8,4 +8,4 @@ console.log('stdoutFd', stdoutFd);
 // 检查标准输出是否连接到终端
 const isTerminal = tty.isatty(stdoutFd);
 
-console.log('是否连接到终端:', isTerminal);
+console.log('是否连接到终端:', isTerminal, process.stdout.isTTY);

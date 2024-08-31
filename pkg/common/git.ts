@@ -6,7 +6,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import tty from 'node:tty';
+// import tty from 'node:tty';
 
 import GitUrlParse from 'git-url-parse';
 import log4js from 'log4js';
@@ -17,7 +17,7 @@ import Executor from './executor';
 export { GitError } from 'simple-git';
 
 const logger = log4js.getLogger();
-const isatty = tty.isatty(process.stdout.fd);
+// const isatty = tty.isatty(process.stdout.fd);
 
 class Git {
   git;
@@ -67,7 +67,7 @@ class Git {
       try {
         await git.clone(url, dir);
       } catch (error) {
-        logger.error('Unable to clone %s %s: %s', url, ref, (error as Error).message);
+        logger.error('unable to clone %s %s: %s', url, ref, (error as Error).message);
       }
     }
 
@@ -87,9 +87,7 @@ class Git {
   }
 
   /**
-   * 获取当前 ref，形如：refs/heads/main
-   *
-   * @returns
+   * get the current git ref, example: refs/heads/main
    */
   async ref() {
     const rev = await this.revision();
@@ -192,87 +190,15 @@ class Git {
 
       if (!offlineMode) {
         const { updated } = await git.fetch();
-        console.log('updated', updated);
         if (updated.length === 0) {
-          // return;
+          return;
         }
+        await git.pull(['--force']);
       }
 
-      let hash = await git.revparse(ref);
-      console.log('hash', hash);
-
-      if (hash !== ref && ref.startsWith(hash)) {
-        throw new Error('Short ref error');
-      }
-
-      let refType = 'tag';
-      const { all } = await git.tags([ref]);
-      if (all.length === 0) {
-        refType = 'branch';
-        await git.checkout([ref]);
-      }
-
-      if (hash !== ref && refType === 'branch') {
-        logger.debug('Provided ref is not a sha. Checking out branch before pulling changes');
-        await git.checkout(`origin/${ref}`);
-      }
-
-      logger.debug('Cloned %s to %s', url, dir);
-
-      if (hash !== ref && refType === 'branch') {
-        logger.debug('Provided ref is not a sha. Updating branch ref after pull');
-        hash = await git.revparse(ref);
-      }
-      console.log('hash12', hash);
-      await git.checkout(hash);
-      await git.reset(['--hard', hash]);
-
-      logger.debug(`Checked out ${ref}`);
+      logger.debug('cloned %s to %s', url, dir);
     }));
   }
 }
 
 export default Git;
-
-// const testTmp = path.join(os.tmpdir(), 'git-test');
-// Git.Clone('https://github.com/sobird/actions-test', testTmp, 'main');
-// console.log('testTmp', testTmp);
-// const git = new Git(testTmp);
-// await git.clone('https://github.com/sobird/actions-test.git', 'test');
-// // get short sha
-// // const ref = await git.revparse();
-// const sha = await git.revparse('refs/tags/v1.2.3');
-// const sha2 = await git.revparse('HEAD');
-// const tags = await git.tags();
-// const branches = await git.branch();
-// const br = await git.branch(['--show-current']);
-// const raw = await git.raw(['for-each-ref', '--format', '%(refname)']);
-
-// console.log('sha', sha);
-// console.log('sha2', sha2);
-// console.log('tags', tags);
-// console.log('branches', branches);
-// console.log('br', br);
-// console.log('raw', raw.trim().split('\n'));
-
-// const ref = await git.branchLocal();
-// console.log('ref', ref);
-
-// const exists = await git.checkIsRepo();
-// console.log('exists', exists);
-
-// const res = await git.clone('http://192.168.50.100:3000/sobird/actions-test.git', ['--branch', 'main']);
-// console.log('res', res);
-
-// const remotes = await git.getRemotes(true);
-// console.log('remotes', remotes);
-
-// const info = GitUrlParse('https://git-codecommit.us-east-1.amazonaws.com/v1/repos/my-repo-name');
-// info.user = 'sobird';
-// console.log('info', info);
-
-// const info1 = hostedGitInfo.fromUrl('http://myotherrepo.com/act.git');
-// console.log('info1', info1?.shortcut());
-
-// const res = new URL('git@github.com:nektos/act.git');
-// console.log('res', res);
