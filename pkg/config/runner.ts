@@ -33,6 +33,11 @@ class Runner implements Options {
   public bindWorkdir: boolean;
 
   /**
+   * path to event JSON file
+   */
+  public eventFile: string;
+
+  /**
    * Extra environment variables to run jobs.
    */
   public env: DotenvParseOutput;
@@ -134,6 +139,7 @@ class Runner implements Options {
     this.context = new Context(runner.context);
     this.workdir = runner.workdir;
     this.bindWorkdir = runner.bindWorkdir;
+    this.eventFile = runner.eventFile;
 
     this.env = runner.env ?? {};
     this.envFile = runner.envFile ?? '';
@@ -183,6 +189,9 @@ class Runner implements Options {
     logger.debug('Loading action inputs from %s', this.inputsFile);
     Object.assign(this.inputs, readConfSync(this.inputsFile));
 
+    logger.debug('Loading github event from %s', this.eventFile);
+    Object.assign(this.context.github.event, readConfSync(this.eventFile));
+
     let actionCache;
     if (this.useActionCache) {
       actionCache = this.actionOfflineMode ? new ActionCacheOffline(this.actionCacheDir) : new ActionCache(this.actionCacheDir);
@@ -193,6 +202,7 @@ class Runner implements Options {
     }
 
     const config: Config = {
+      context: this.context,
       workdir: this.workdir,
       bindWorkdir: this.bindWorkdir,
       actionCache,

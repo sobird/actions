@@ -142,7 +142,10 @@ export const runCommand = new Command('run')
     const options = program.optsWithGlobals<RunOptions>();
     const appconf = Config.Load(options.config, appname);
 
-    console.log('appconf', appconf.runner.context);
+    const runnerConf = appconf.runner.configure();
+    console.log('runnerConf', runnerConf.context.github);
+
+    console.log('appconf', appconf.runner);
     console.log('options', options.matrix);
 
     if (options.bugReport) {
