@@ -45,7 +45,6 @@ describe('Test Git Ref', () => {
         expect(ref).toBe('refs/tags/v1.2.3');
       },
     },
-
     current_head_is_same_as_tag: {
       prepare: async (git) => {
         await git.commit('1.4.2 release', ['--allow-empty']);
@@ -55,7 +54,6 @@ describe('Test Git Ref', () => {
         expect(ref).toBe('refs/tags/v1.4.2');
       },
     },
-
     current_head_is_same_as_multi_tag: {
       prepare: async (git) => {
         await git.commit('1.4.2 release', ['--allow-empty']);
@@ -63,11 +61,21 @@ describe('Test Git Ref', () => {
         await git.addTag('v1.4.3');
       },
       assert: async (ref) => {
-        console.log('ref1', ref);
         expect(ref).toBe('refs/tags/v1.4.2');
       },
     },
-
+    repo_with_multi_tag: {
+      prepare: async (git) => {
+        await git.commit('1.4.2 release', ['--allow-empty']);
+        await git.addTag('v1.4.2');
+        await git.commit('1.4.3 release', ['--allow-empty']);
+        await git.addTag('v1.4.3');
+        await git.checkout('v1.4.2');
+      },
+      assert: async (ref) => {
+        expect(ref).toBe('refs/tags/v1.4.2');
+      },
+    },
     current_head_is_not_tag: {
       prepare: async (git) => {
         await git.commit('msg', ['--allow-empty']);

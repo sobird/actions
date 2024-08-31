@@ -99,8 +99,8 @@ class Git {
     logger.debug("HEAD points to '%s'", rev);
 
     const { git } = this;
-    let refTag;
-    let refBranch;
+    let refTag = '';
+    let refBranch = '';
 
     const refs = (await git.raw(['for-each-ref', '--format', '%(refname)'])).trim().split('\n');
 
@@ -125,12 +125,10 @@ class Git {
         if (ref.startsWith('refs/heads')) {
           refBranch = ref;
         }
-
-        console.log('sha', sha, rev, ref, refTag, refBranch);
       }
 
-      if (!refTag && !refBranch) {
-        // throw Error('');
+      if (refTag && refBranch) {
+        break;
       }
     }
 

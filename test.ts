@@ -1,7 +1,7 @@
 import Git from './pkg/common/git';
 
 try {
-  const ref = await Git.Ref('/var/folders/0g/085cjcx1231cqqknq0k8pbzh0000gn/T/test-dir/tag');
+  const ref = await Git.Ref('/Users/sobird/checkout');
   console.log('ref', ref);
 } catch (err) {
   console.log('err', err);
