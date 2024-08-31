@@ -71,6 +71,7 @@ class Git {
       }
     }
 
+    await git.checkout(ref);
     return git;
   }
 
@@ -145,18 +146,18 @@ class Git {
       return {
         owner,
         name,
-        slug: `${owner}/${name}`,
+        repository: `${owner}/${name}`,
         url: '',
       };
     }
 
-    const { owner, name, full_name: slug } = GitUrlParse(remoteURL.refs.fetch);
+    const { owner, name, full_name: repository } = GitUrlParse(remoteURL);
 
     return {
       owner,
       name,
-      slug,
-      url: remoteURL.refs.fetch,
+      repository,
+      url: remoteURL,
     };
   }
 

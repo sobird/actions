@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop */
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -50,6 +49,57 @@ describe('Test Git', () => {
     const upstreamRemoteURL = 'git@github.com/AwesomeOwner/MyAwesomeRepo.git';
     await git.git.addRemote('upstream', upstreamRemoteURL);
     expect(await git.remoteURL('upstream')).toBe(upstreamRemoteURL);
+  });
+
+  it('get git remote url(empty url)', async () => {
+    const dir = path.join(testTmp, 'remote-url');
+    const git = new Git(dir);
+
+    await git.git.init();
+    expect(await git.remoteURL()).toBeUndefined();
+  });
+
+  it('get git repository info', async () => {
+    const testCases = [
+      ['https://git-codecommit.us-east-1.amazonaws.com/v1/repos/my-repo-name', 'CodeCommit', 'v1/repos/my-repo-name'],
+      ['ssh://git-codecommit.us-west-2.amazonaws.com/v1/repos/my-repo', 'CodeCommit', 'v1/repos/my-repo'],
+      ['git@github.com:nektos/act.git', 'GitHub', 'nektos/act'],
+      ['git@github.com:nektos/act', 'GitHub', 'nektos/act'],
+      ['https://github.com/nektos/act.git', 'GitHub', 'nektos/act'],
+      ['http://github.com/nektos/act.git', 'GitHub', 'nektos/act'],
+      ['https://github.com/nektos/act', 'GitHub', 'nektos/act'],
+      ['http://github.com/nektos/act', 'GitHub', 'nektos/act'],
+      ['git+ssh://git@github.com/owner/repo.git', 'GitHub', 'owner/repo'],
+      ['http://myotherrepo.com/act.git', '', 'act'],
+    ];
+
+    for await (const [index, [url, , repository]] of testCases.entries()) {
+      const dir = path.join(testTmp, `repository${index}`);
+      const git = new Git(dir);
+      await git.git.init();
+      await git.git.addRemote('origin', url);
+
+      const repoInfo = await git.repoInfo();
+      expect(repoInfo.repository).toBe(repository);
+    }
+  });
+
+  it('git clone test case', async () => {
+    const dir = path.join(testTmp, 'git-clone-test');
+    const git = new Git(dir);
+    await git.clone('https://gitea.com/sobird/actions-test');
+
+    const isRepo = await git.git.checkIsRepo();
+    expect(isRepo).toBe(true);
+  });
+
+  it('git clone with token test case', async () => {
+    const dir = path.join(testTmp, 'git-clone-token-test');
+    const git = new Git(dir);
+    await git.clone('https://gitea.com/sobird/actions-test', 'main', 'thisistoken');
+
+    const isRepo = await git.git.checkIsRepo();
+    expect(isRepo).toBe(true);
   });
 });
 
@@ -145,84 +195,6 @@ describe('Test Get Git Ref', () => {
     });
   }
 });
-
-// describe('Test Git', () => {
-//   const testTmp = testDir();
-//   it('remote url test case', async () => {
-//     const wantRemoteURL = 'https://git-codecommit.us-east-1.amazonaws.com/v1/repos/my-repo-name';
-//     const dir = path.join(testTmp, 'remote-url');
-//     // fs.mkdirSync(dir, { recursive: true });
-//     const git = new Git(dir);
-//     await git.git.init();
-//     await git.git.addRemote('origin', wantRemoteURL);
-
-//     const remoteURL = await git.remoteURL();
-//     expect(remoteURL?.refs.fetch).toBe(wantRemoteURL);
-//   });
-
-//   it('get repository test case', async () => {
-//     const rangeTest = [
-//       ['https://git-codecommit.us-east-1.amazonaws.com/v1/repos/my-repo-name', 'CodeCommit', 'v1/repos/my-repo-name'],
-//       ['ssh://git-codecommit.us-west-2.amazonaws.com/v1/repos/my-repo', 'CodeCommit', 'v1/repos/my-repo'],
-//       ['git@github.com:nektos/act.git', 'GitHub', 'nektos/act'],
-//       ['git@github.com:nektos/act', 'GitHub', 'nektos/act'],
-//       ['https://github.com/nektos/act.git', 'GitHub', 'nektos/act'],
-//       ['http://github.com/nektos/act.git', 'GitHub', 'nektos/act'],
-//       ['https://github.com/nektos/act', 'GitHub', 'nektos/act'],
-//       ['http://github.com/nektos/act', 'GitHub', 'nektos/act'],
-//       ['git+ssh://git@github.com/owner/repo.git', 'GitHub', 'owner/repo'],
-//       ['http://myotherrepo.com/act.git', '', 'act'],
-//     ];
-
-//     for (const [index, [url, , slug]] of rangeTest.entries()) {
-//       const dir = path.join(testTmp, `repository${index}`);
-//       fs.mkdirSync(dir, { recursive: true });
-//       const git = new Git(dir);
-//       await git.git.init();
-//       await git.git.addRemote('origin', url);
-
-//       const repoInfo = await git.repoInfo();
-//       expect(repoInfo.slug).toBe(slug);
-//     }
-//   });
-
-//   it('git clone test case', async () => {
-//     const dir = path.join(testTmp, 'git-clone-test');
-//     const git = new Git(dir);
-//     await git.clone('https://gitea.com/sobird/actions-test');
-
-//     const isRepo = await git.git.checkIsRepo();
-//     expect(isRepo).toBe(true);
-//   });
-
-//   it('git clone with token test case', async () => {
-//     const dir = path.join(testTmp, 'git-clone-token-test');
-//     const git = new Git(dir);
-//     await git.clone('https://gitea.com/sobird/actions-test', undefined, 'thisistoken');
-
-//     const isRepo = await git.git.checkIsRepo();
-//     expect(isRepo).toBe(true);
-//   });
-
-//   it('Git Clone test case', async () => {
-//     const dir = path.join(testTmp, 'git-clone-static-test');
-//     const git = await Git.Clone(dir, 'https://gitea.com/sobird/actions-test', 'master');
-
-//     const isRepo = await git.checkIsRepo();
-//     expect(isRepo).toBe(true);
-//   });
-
-//   it('git Clone Executor test case', async () => {
-//     const dir = path.join(testTmp, 'git-Clone-Executor-test');
-//     const git = new Git(dir);
-//     const executor = Git.CloneExecutor(dir, 'https://gitea.com/sobird/actions-test', 'master');
-
-//     await executor.execute();
-
-//     const isRepo = await git.git.checkIsRepo();
-//     expect(isRepo).toBe(true);
-//   });
-// });
 
 // describe('Git Clone Executor', () => {
 //   const testTmp = testDir();
