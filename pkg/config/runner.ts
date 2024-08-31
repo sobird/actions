@@ -14,11 +14,14 @@ import ActionCache from '@/pkg/runner/action/cache';
 import ActionCacheOffline from '@/pkg/runner/action/cache/offline';
 import ActionCacheRepository from '@/pkg/runner/action/cache/repository';
 import Config from '@/pkg/runner/config';
+import Context from '@/pkg/runner/context';
 import { readConfSync, generateId, readJsonSync } from '@/utils';
 
 const logger = log4js.getLogger();
 
 class Runner implements Options {
+  public context: Context;
+
   /**
    * Working directory
    */
@@ -43,6 +46,14 @@ class Runner implements Options {
   public vars: Record<string, string>;
 
   public varsFile: string;
+
+  public inputs: Record<string, string>;
+
+  public inputsFile: string;
+
+  public secrets: Record<string, string>;
+
+  public secretsFile: string;
 
   /**
    * Whether skip verifying the TLS certificate of the Gitea instance.
@@ -120,6 +131,7 @@ class Runner implements Options {
   public actionInstance: string;
 
   constructor(runner: Runner) {
+    this.context = new Context(runner.context);
     this.workdir = runner.workdir;
     this.bindWorkdir = runner.bindWorkdir;
 
@@ -127,6 +139,10 @@ class Runner implements Options {
     this.envFile = runner.envFile ?? '';
     this.vars = runner.env ?? {};
     this.varsFile = runner.varsFile;
+    this.inputs = runner.inputs ?? {};
+    this.inputsFile = runner.inputsFile;
+    this.secrets = runner.secrets ?? {};
+    this.secretsFile = runner.secretsFile;
 
     this.insecure = runner.insecure ?? false;
     this.labels = runner.labels ?? [];
@@ -161,11 +177,11 @@ class Runner implements Options {
     logger.debug('Loading vars from %s', this.varsFile);
     Object.assign(this.vars, readConfSync(this.varsFile));
 
-    logger.debug('Loading secrets from %s', options.secretsFile);
-    Object.assign(options.secrets, readConfSync(options.secretsFile));
+    logger.debug('Loading secrets from %s', this.secretsFile);
+    Object.assign(this.secrets, readConfSync(this.secretsFile));
 
-    logger.debug('Loading action inputs from %s', options.inputsFile);
-    Object.assign(options.inputs, readConfSync(options.inputsFile));
+    logger.debug('Loading action inputs from %s', this.inputsFile);
+    Object.assign(this.inputs, readConfSync(this.inputsFile));
 
     let actionCache;
     if (this.useActionCache) {

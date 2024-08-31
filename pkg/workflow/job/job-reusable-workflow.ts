@@ -15,10 +15,17 @@ import WorkflowPlanner from '@/pkg/workflow/planner';
 
 import Job from './job';
 
+interface Reusable {
+  url: string;
+  repository: string;
+  filename: string;
+  ref: string;
+}
+
 class JobReusableWorkflow extends Job {
   executor(runner: Runner) {
     let { uses = '' } = this;
-    const reusable = {
+    const reusable: Reusable = {
       url: '',
       repository: '',
       filename: '',
@@ -50,14 +57,22 @@ class JobReusableWorkflow extends Job {
     }
 
     const repositoryDir = path.join(runner.ActionCacheDir, reusable.repository, reusable.ref);
-    const url = new URL(reusable.repository, reusable.url);
 
-    if (runner.Token) {
-      url.username = 'token';
-      url.password = runner.Token;
+    try {
+      const url = new URL(reusable.repository, reusable.url);
+
+      if (runner.Token) {
+        url.username = 'token';
+        url.password = runner.Token;
+      }
+
+      reusable.url = url.toString();
+    } catch (err) {
+      //
     }
+    console.log('repositoryDir', repositoryDir, reusable);
     const workflowpath = path.join(repositoryDir, reusable.filename);
-    return Git.CloneExecutor(url.toString(), repositoryDir, reusable.ref).next(JobReusableWorkflow.ReusableWorkflowExecutor(workflowpath, runner));
+    return Git.CloneExecutor(repositoryDir, reusable.url, reusable.ref).next(JobReusableWorkflow.ReusableWorkflowExecutor(workflowpath, runner));
   }
 
   static ReusableWorkflowExecutor(workflowPath: string, runner: Runner) {
@@ -65,6 +80,13 @@ class JobReusableWorkflow extends Job {
       const workflowPlanner = await WorkflowPlanner.Collect(workflowPath);
       const plan = workflowPlanner.planEvent('workflow_call');
       await plan.executor(runner.config, runner).execute();
+    });
+  }
+
+  static ActionCacheReusableWorkflowExecutor(reusable: Reusable, runner: Runner) {
+    return new Executor(async () => {
+      const sha = await runner.config.actionCache?.fetch(reusable.url, reusable.repository, reusable.ref);
+      const archive = await runner.config.actionCache?.archive(reusable.repository, reusable.ref, reusable.filename);
     });
   }
 }

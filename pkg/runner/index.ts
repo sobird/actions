@@ -46,8 +46,8 @@ class Runner {
 
   constructor(public run: Run, public config: Config) {
     const { jobId, job, workflow } = run;
-    // this.config = new Config(config);
-    const { context } = this.config;
+    this.config = config;
+    const context = new Context(config.context ?? {});
 
     // github context
     context.github.job = jobId;
@@ -231,13 +231,13 @@ class Runner {
     // }
 
     image = runsOn.find((item) => {
-      return this.config.platforms[item.toLowerCase()];
+      return this.config.labels[item.toLowerCase()];
     });
 
     console.log('image', image);
 
     if (image) {
-      return this.config.platforms[image];
+      return this.config.labels[image];
     }
 
     return '';

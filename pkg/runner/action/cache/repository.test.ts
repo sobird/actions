@@ -76,7 +76,7 @@ describe('ActionCacheRepository Tests', () => {
 
 describe('ActionCacheRepository With repositories map Tests', async () => {
   const repoDir = path.join(repoTmp, 'gitea/runner-images');
-  Git.Clone('https://gitea.com/gitea/runner-images', repoDir);
+  Git.Clone(repoDir, 'https://gitea.com/gitea/runner-images');
   const repositorys = {
     'https://gitea.com/gitea/runner-images@HEAD': repoDir,
   };
