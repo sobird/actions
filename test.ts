@@ -1,3 +1,5 @@
+import path from 'path';
+
 import Git from './pkg/common/git';
 
 try {
@@ -6,3 +8,5 @@ try {
 } catch (err) {
   console.log('err', err);
 }
+
+console.log('first', path.basename('/Users/sobird/checkout'));

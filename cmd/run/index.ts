@@ -265,14 +265,14 @@ export const runCommand = new Command('run')
 
     // run plan
     const git = new Git(options.workspace);
-    const username = await git.username();
+    const author = await git.author();
     const repoInfo = await git.repoInfo();
     const ref = await git.ref() || '';
 
-    const actor = options.actor || username || 'actor';
+    const actor = options.actor || author || 'actor';
     const actor_id = generateId(actor);
 
-    const { sha } = await git.revision();
+    const sha = await git.revision();
 
     const repository_owner = repoInfo.owner || 'owner';
     const repository = `${repository_owner}/${repoInfo.name}`;

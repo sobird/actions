@@ -17,7 +17,43 @@ interface TestCase {
   assert: (ref?: string, err?: Error) => Promise<void>
 }
 
-describe('Test Git Ref', () => {
+describe('Test Git', () => {
+  const testTmp = testDir();
+  it('get git first log', async () => {
+    const git = new Git(path.join(testTmp, 'first-log'));
+    await git.git.init();
+    await git.git.commit('first commit', ['--allow-empty']);
+    await git.git.commit('second commit', ['--allow-empty']);
+    const { latest } = await git.firstLog();
+
+    expect(latest?.message).toBe('first commit');
+  });
+
+  it('get git author name', async () => {
+    const git = new Git(path.join(testTmp, 'author'));
+    await git.git.init();
+    await git.git.commit('first commit', ['--allow-empty']);
+    await git.git.commit('second commit', ['--allow-empty']);
+    const author = await git.author();
+
+    expect(author).toBeDefined();
+  });
+
+  it('get git remote url', async () => {
+    const dir = path.join(testTmp, 'remote-url');
+    const git = new Git(dir);
+
+    const OriginRemoteURL = 'https://git-codecommit.us-east-1.amazonaws.com/v1/repos/my-repo-name';
+    await git.git.init().addRemote('origin', OriginRemoteURL);
+    expect(await git.remoteURL('origin')).toBe(OriginRemoteURL);
+
+    const upstreamRemoteURL = 'git@github.com/AwesomeOwner/MyAwesomeRepo.git';
+    await git.git.addRemote('upstream', upstreamRemoteURL);
+    expect(await git.remoteURL('upstream')).toBe(upstreamRemoteURL);
+  });
+});
+
+describe('Test Get Git Ref', () => {
   const testTmp = testDir();
 
   const testCases: Record<string, TestCase> = {

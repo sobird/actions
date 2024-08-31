@@ -34,7 +34,7 @@ class Git {
     return this.git.log([await this.git.firstCommit()]);
   }
 
-  async username() {
+  async author() {
     const { git } = this;
     const gitUsername = (await git.getConfig('user.name')).value;
     const logUsername = (await git.log(['-n', '1'])).latest?.author_name;
@@ -135,16 +135,13 @@ class Git {
     return refTag || refBranch;
   }
 
-  /**
-   * 获取本地仓库名称，形如： user/repo
-   */
   async repoInfo(remoteName?: string) {
     const remoteURL = await this.remoteURL(remoteName);
     if (!remoteURL) {
       // 认为第一条提交的用户为owner
       const { latest } = await this.firstLog();
       const owner = latest?.author_name;
-      const { name } = this;
+      const name = path.basename(this.dir);
       return {
         owner,
         name,
@@ -164,7 +161,7 @@ class Git {
   }
 
   async remoteURL(remoteName: string = 'origin') {
-    return (await this.git.getRemotes(true)).find((remote) => { return remote.name === remoteName; });
+    return (await this.git.getRemotes(true)).find((remote) => { return remote.name === remoteName; })?.refs.fetch;
   }
 
   static SimpleGit(basePath: string, options?: Partial<SimpleGitOptions>) {
