@@ -4,12 +4,12 @@ class Container {
   /**
    * Force pulling of the image, even if already present.
    */
-  readonly forcePull: boolean;
+  forcePull: boolean;
 
   /**
-     * Force rebuilding local docker image action.
-     */
-  readonly forceRebuild: boolean;
+   * Force rebuilding local docker image action.
+   */
+  forceRebuild: boolean;
 
   /**
    * Use privileged mode.
@@ -24,17 +24,12 @@ class Container {
   /**
    * Desired OS/architecture platform for running containers.
    */
-  platform: string;
+  architecture: string;
 
   /**
    * Path to Docker daemon socket.
    */
   daemonSocket: string;
-
-  /**
-   * Options for the job container.
-   */
-  options: string;
 
   /**
    * List of kernel capabilities to add to the containers.
@@ -66,22 +61,28 @@ class Container {
    */
   autoRemove: boolean;
 
+  /**
+   * Options for the job container.
+   */
+  options: string;
+
   constructor(container: Container) {
     this.forcePull = container.forcePull ?? false;
     this.forceRebuild = container.forceRebuild ?? false;
 
     this.privileged = container.privileged ?? false;
     this.usernsMode = container.usernsMode ?? '';
-    this.platform = container.platform ?? '';
+    this.architecture = container.architecture ?? '';
     this.daemonSocket = container.daemonSocket ?? '';
-    this.options = container.options ?? '';
 
     this.capAdd = container.capAdd;
     this.capDrop = container.capDrop ?? [];
-    this.namePrefix = container.namePrefix ?? 'ACTIONS';
-    this.maxLifetime = container.maxLifetime;
+
     this.networkMode = container.networkMode;
+    this.maxLifetime = container.maxLifetime;
+    this.namePrefix = container.namePrefix ?? 'ACTIONS';
     this.autoRemove = container.autoRemove ?? true;
+    this.options = container.options ?? '';
   }
 }
 

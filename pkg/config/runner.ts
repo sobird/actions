@@ -13,6 +13,7 @@ import log4js from 'log4js';
 import { Options } from '@/cmd/run';
 import Artifact from '@/pkg/artifact';
 import ArtifactCache from '@/pkg/artifact/cache';
+import { getSocketAndHost } from '@/pkg/docker';
 import Labels from '@/pkg/labels';
 import ActionCache from '@/pkg/runner/action/cache';
 import ActionCacheOffline from '@/pkg/runner/action/cache/offline';
@@ -21,14 +22,16 @@ import Config from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
 import { readConfSync, generateId, readJsonSync } from '@/utils';
 
+import Container from './container';
+
 const logger = log4js.getLogger();
 
 const ACTIONS_HOME = path.join(os.homedir(), '.actions');
 
-class Runner implements Options {
+class Runner implements Omit<Options, 'workflowRecurse'> {
   public workflows: string;
 
-  public workflowRecurse: boolean;
+  // public workflowRecurse: boolean;
 
   public context: Context;
 
@@ -107,7 +110,7 @@ class Runner implements Options {
    * It's not for the address to listen, but the address to connect from job containers.
    * So 0.0.0.0 is a bad choice, leave it empty to detect automatically.
    */
-  public cacheServerAddr?: string;
+  public cacheServerAddr: string;
 
   /**
    * The port of the cache server.
@@ -173,9 +176,11 @@ class Runner implements Options {
 
   public image: string;
 
+  public container: Container;
+
   constructor(runner: Runner) {
     this.workflows = runner.workflows;
-    this.workflowRecurse = runner.workflowRecurse;
+    // this.workflowRecurse = runner.workflowRecurse;
     this.context = new Context(runner.context);
     this.workdir = runner.workdir;
     this.bindWorkdir = runner.bindWorkdir;
@@ -186,7 +191,7 @@ class Runner implements Options {
 
     this.env = runner.env ?? {};
     this.envFile = runner.envFile ?? '';
-    this.vars = runner.env ?? {};
+    this.vars = runner.vars ?? {};
     this.varsFile = runner.varsFile;
     this.inputs = runner.inputs ?? {};
     this.inputsFile = runner.inputsFile;
@@ -206,7 +211,7 @@ class Runner implements Options {
     this.repositories = runner.repositories;
     this.actionOfflineMode = runner.actionOfflineMode;
     this.actionCacheDir = runner.actionCacheDir;
-    this.actionInstance = runner.actionInstance ?? 'https://github.com';
+    this.actionInstance = runner.actionInstance || 'https://github.com';
 
     // Artifact Server
     this.artifactServerPath = runner.artifactServerPath;
@@ -216,6 +221,8 @@ class Runner implements Options {
     this.skipCheckout = runner.skipCheckout;
     this.image = runner.image;
     this.matrix = runner.matrix;
+
+    this.container = new Container(runner.container ?? {});
   }
 
   // merge cli options
@@ -224,6 +231,19 @@ class Runner implements Options {
   }
 
   async configure(): Promise<Config> {
+    try {
+      const { socket, host } = getSocketAndHost(this.containerDaemonSocket);
+      process.env.DOCKER_HOST = host;
+      this.containerDaemonSocket = socket;
+      logger.info("Using docker host '%s', and daemon socket '%s'", host, socket);
+    } catch (error) {
+      logger.warn("Couldn't get a valid docker connection: %s", (error as Error).message);
+    }
+
+    if (process.platform === 'darwin' && process.arch === 'arm64' && !this.containerArchitecture) {
+      console.warn(" \u26d4 You are using Apple M-series chip and you have not specified container architecture, you might encounter issues while running act. If so, try running it with '--container-architecture linux/amd64'. \u26d4");
+    }
+
     logger.debug('Loading environment from %s', this.envFile);
     Object.assign(this.env, readConfSync(this.envFile));
 

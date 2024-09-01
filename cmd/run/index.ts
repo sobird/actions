@@ -17,7 +17,6 @@ import { Config, Labels } from '@/pkg';
 import Artifact from '@/pkg/artifact';
 import ArtifactCache from '@/pkg/artifact/cache';
 import Git from '@/pkg/common/git';
-import { getSocketAndHost } from '@/pkg/docker';
 import { Github } from '@/pkg/runner/context/github';
 import WorkflowPlanner from '@/pkg/workflow/planner';
 import { readConfSync, generateId, readJsonSync } from '@/utils';
@@ -98,6 +97,7 @@ export const runCommand = new Command('run')
   .option('--matrix <list...>', 'specify which matrix configuration to include (e.g. --matrix java:13 node:20 node:18', collectMatrix, {})
   .option('--insecure-secrets', "NOT RECOMMENDED! Doesn't hide secrets while printing logs")
   .option('--use-gitignore', 'controls whether paths specified in .gitignore should be copied into container')
+  .option('--no-skip-checkout', 'do not skip actions/checkout')
   .option('--server-instance <url>', 'server instance to use')
 
   // actions/cache server
@@ -105,11 +105,10 @@ export const runCommand = new Command('run')
   .option('--cache-server-path <path>', 'defines the path where the cache server stores caches.', path.join(ACTIONS_HOME, 'artifact', 'cache'))
   .option('--cache-server-addr <addr>', 'defines the address to which the cache server binds.', ip.address())
   .option('--cache-server-port <port>', 'defines the port where the artifact server listens. 0 means a randomly available port.', (value: string) => { return Number(value); }, 0)
-  .option('--no-skip-checkout', 'do not skip actions/checkout')
 
   // artifact server
-  .option('--artifact-server-path <path>', 'defines the path where the artifact server stores uploads and retrieves downloads from. If not specified the artifact server will not start', '')
-  .option('--artifact-server-addr <addr>', 'defines the address where the artifact server listens')
+  .option('--artifact-server-path <path>', 'defines the path where the artifact server stores uploads and retrieves downloads from. If not specified the artifact server will not start')
+  .option('--artifact-server-addr <addr>', 'defines the address where the artifact server listens', ip.address())
   .option('--artifact-server-port <port>', 'defines the port where the artifact server listens (will only bind to localhost)', (value: string) => { return Number(value); }, 0)
 
   // actionCache
@@ -142,42 +141,12 @@ export const runCommand = new Command('run')
     const options = program.optsWithGlobals<RunOptions>();
     const appconf = Config.Load(options.config, appname);
 
-    const runnerConf = await appconf.runner.configure();
-    console.log('runnerConf', runnerConf.context.github);
-
     console.log('appconf', appconf.runner);
     console.log('options', options.matrix);
 
     if (options.bugReport) {
       return bugReportOption(version);
     }
-
-    try {
-      const { socket, host } = getSocketAndHost(options.containerDaemonSocket);
-      process.env.DOCKER_HOST = host;
-      options.containerDaemonSocket = socket;
-      logger.info("Using docker host '%s', and daemon socket '%s'", host, socket);
-    } catch (error) {
-      logger.warn("Couldn't get a valid docker connection: %+v", (error as Error).message);
-    }
-
-    if (process.platform === 'darwin' && process.arch === 'arm64' && !options.containerArchitecture) {
-      console.warn(" \u26d4 You are using Apple M-series chip and you have not specified container architecture, you might encounter issues while running act. If so, try running it with '--container-architecture linux/amd64'. \u26d4");
-    }
-
-    logger.debug('Loading environment from %s', options.envFile);
-    Object.assign(options.env, readConfSync(options.envFile));
-
-    logger.debug('Loading vars from %s', options.varsFile);
-    Object.assign(options.vars, readConfSync(options.varsFile));
-
-    logger.debug('Loading secrets from %s', options.secretsFile);
-    Object.assign(options.secrets, readConfSync(options.secretsFile));
-
-    logger.debug('Loading action inputs from %s', options.inputsFile);
-    Object.assign(options.inputs, readConfSync(options.inputsFile));
-
-    // @todo matrix
 
     const planner = await WorkflowPlanner.Collect(options.workflows, options.workflowRecurse);
     // collect all events from loaded workflows
@@ -233,6 +202,9 @@ export const runCommand = new Command('run')
     if (options.containerCapDrop) {
       logger.warn(deprecationWarning, 'container-cap-drop', `--cap-drop=${options.containerCapDrop.join(' ')}`, `--cap-drop=${options.containerCapDrop.join(' ')}`);
     }
+
+    const runnerConf = await appconf.runner.configure();
+    console.log('runnerConf', runnerConf.context.github);
 
     // run plan
     const git = new Git(options.workdir);
