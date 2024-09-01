@@ -231,13 +231,13 @@ class Runner {
     // }
 
     image = runsOn.find((item) => {
-      return this.config.labels[item.toLowerCase()];
+      return this.config.platforms.get(item.toLowerCase());
     });
 
     console.log('image', image);
 
     if (image) {
-      return this.config.labels[image];
+      return this.config.platforms.get(image);
     }
 
     return '';

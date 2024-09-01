@@ -82,10 +82,17 @@ runner:
   # If it's specified, runner will use this URL as the ACTIONS_CACHE_URL rather than start a server by itself.
   # The URL should generally end with "/".
   externalServer: ""
+  # defines the path where the artifact server stores uploads and retrieves downloads from. 
+  # If not specified the artifact server will not start
+  artifactServerPath: ""
+  # defines the address where the artifact server listens
+  artifactServerAddr: ""
+  # defines the port where the artifact server listens (will only bind to localhost)
+  artifactServerPort: 0
 
   # The parent directory of a job's working directory.
   # If it's empty, $HOME/.cache/act/ will be used.
-  actionCacheDir:
+  actionCacheDir: ""
 
   matrix:
     java:

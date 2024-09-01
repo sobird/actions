@@ -108,7 +108,7 @@ interface Config {
   /**
    * List of labels.
    */
-  readonly labels: { [key: string]: string };
+  readonly platforms: Map<string, string>;
 
   /**
    * Platform picker, it will take precedence over Platforms if isn't nil.

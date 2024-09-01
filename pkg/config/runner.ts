@@ -4,12 +4,16 @@
  * sobird<i@sobird.me> at 2024/08/13 20:25:25 created.
  */
 
-import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 import dotenv, { DotenvParseOutput } from 'dotenv';
 import log4js from 'log4js';
 
 import { Options } from '@/cmd/run';
+import Artifact from '@/pkg/artifact';
+import ArtifactCache from '@/pkg/artifact/cache';
+import Labels from '@/pkg/labels';
 import ActionCache from '@/pkg/runner/action/cache';
 import ActionCacheOffline from '@/pkg/runner/action/cache/offline';
 import ActionCacheRepository from '@/pkg/runner/action/cache/repository';
@@ -19,7 +23,13 @@ import { readConfSync, generateId, readJsonSync } from '@/utils';
 
 const logger = log4js.getLogger();
 
+const ACTIONS_HOME = path.join(os.homedir(), '.actions');
+
 class Runner implements Options {
+  public workflows: string;
+
+  public workflowRecurse: boolean;
+
   public context: Context;
 
   /**
@@ -31,6 +41,12 @@ class Runner implements Options {
    * Bind the workdir to the job container.
    */
   public bindWorkdir: boolean;
+
+  public actor: string;
+
+  public remoteName: string;
+
+  public defaultBranch: string;
 
   /**
    * path to event JSON file
@@ -91,7 +107,7 @@ class Runner implements Options {
    * It's not for the address to listen, but the address to connect from job containers.
    * So 0.0.0.0 is a bad choice, leave it empty to detect automatically.
    */
-  public cacheServerAddr: string;
+  public cacheServerAddr?: string;
 
   /**
    * The port of the cache server.
@@ -135,11 +151,38 @@ class Runner implements Options {
    */
   public actionInstance: string;
 
+  /**
+   * defines the path where the artifact server stores uploads and retrieves downloads from.
+   * If not specified the artifact server will not start
+   */
+  public artifactServerPath: string;
+
+  /**
+   * defines the address where the artifact server listens
+   */
+  public artifactServerAddr: string;
+
+  /**
+   * defines the port where the artifact server listens (will only bind to localhost)
+   */
+  public artifactServerPort: number;
+
+  public skipCheckout: boolean;
+
+  public matrix: Record<string, unknown[]>;
+
+  public image: string;
+
   constructor(runner: Runner) {
+    this.workflows = runner.workflows;
+    this.workflowRecurse = runner.workflowRecurse;
     this.context = new Context(runner.context);
     this.workdir = runner.workdir;
     this.bindWorkdir = runner.bindWorkdir;
     this.eventFile = runner.eventFile;
+    this.actor = runner.actor;
+    this.remoteName = runner.remoteName;
+    this.defaultBranch = runner.defaultBranch;
 
     this.env = runner.env ?? {};
     this.envFile = runner.envFile ?? '';
@@ -153,9 +196,9 @@ class Runner implements Options {
     this.insecure = runner.insecure ?? false;
     this.labels = runner.labels ?? [];
     this.cacheServer = runner.cacheServer ?? true;
-    this.cacheServerPath = runner.cacheServerPath ?? '';
-    this.cacheServerAddr = runner.cacheServerAddr ?? '';
-    this.cacheServerPort = runner.cacheServerPort ?? '';
+    this.cacheServerPath = runner.cacheServerPath || path.join(ACTIONS_HOME, 'artifact', 'cache');
+    this.cacheServerAddr = runner.cacheServerAddr || undefined;
+    this.cacheServerPort = runner.cacheServerPort ?? 0;
     this.externalServer = runner.externalServer ?? '';
 
     // action cache
@@ -165,10 +208,14 @@ class Runner implements Options {
     this.actionCacheDir = runner.actionCacheDir;
     this.actionInstance = runner.actionInstance ?? 'https://github.com';
 
-    // 从环境变量文件加载环境变量
-    if (this.envFile && fs.existsSync(this.envFile)) {
-      Object.assign(this.env, dotenv.config({ path: this.envFile }).parsed);
-    }
+    // Artifact Server
+    this.artifactServerPath = runner.artifactServerPath;
+    this.artifactServerAddr = runner.artifactServerAddr || undefined;
+    this.artifactServerPort = runner.artifactServerPort;
+
+    this.skipCheckout = runner.skipCheckout;
+    this.image = runner.image;
+    this.matrix = runner.matrix;
   }
 
   // merge cli options
@@ -176,7 +223,7 @@ class Runner implements Options {
 
   }
 
-  configure():Config {
+  async configure(): Promise<Config> {
     logger.debug('Loading environment from %s', this.envFile);
     Object.assign(this.env, readConfSync(this.envFile));
 
@@ -192,6 +239,7 @@ class Runner implements Options {
     logger.debug('Loading github event from %s', this.eventFile);
     Object.assign(this.context.github.event, readConfSync(this.eventFile));
 
+    // ActionCache
     let actionCache;
     if (this.useActionCache) {
       actionCache = this.actionOfflineMode ? new ActionCacheOffline(this.actionCacheDir) : new ActionCache(this.actionCacheDir);
@@ -201,11 +249,33 @@ class Runner implements Options {
       actionCache = new ActionCacheRepository(this.actionCacheDir, this.repositories);
     }
 
+    // Start Artifact Server
+    const ACTIONS_RUNTIME_URL = 'ACTIONS_RUNTIME_URL';
+    if (this.artifactServerPath && !this.env[ACTIONS_RUNTIME_URL]) {
+      const artifact = new Artifact(this.artifactServerPath, this.artifactServerAddr, this.artifactServerPort);
+      const actionsRuntimeURL = await artifact.serve();
+      logger.debug('Artifact Server address:', actionsRuntimeURL);
+      this.env[ACTIONS_RUNTIME_URL] = actionsRuntimeURL;
+    }
+    // Start Artifact Cache Server
+    const ACTIONS_CACHE_URL = 'ACTIONS_CACHE_URL';
+    console.log('this.cacheServerPath', this.cacheServerPath);
+    if (this.cacheServer && !this.env[ACTIONS_CACHE_URL]) {
+      const artifactCache = new ArtifactCache(this.cacheServerPath, this.cacheServerAddr, this.cacheServerPort);
+      const artifactCacheServeURL = await artifactCache.serve();
+      logger.debug('Artifact Cache Server address:', artifactCacheServeURL);
+      this.env[ACTIONS_CACHE_URL] = artifactCacheServeURL;
+    }
+
+    // labels
+    const { platforms } = new Labels(this.labels);
+
     const config: Config = {
       context: this.context,
       workdir: this.workdir,
       bindWorkdir: this.bindWorkdir,
       actionCache,
+      platforms,
     };
 
     return config;

@@ -82,7 +82,7 @@ export const runCommand = new Command('run')
   // .option('-E, --event <event>', 'run a event name')
   .option('-e --event-file <path>', 'path to event JSON file', 'event.json')
   .option('--detect-event', 'use first event type from workflow as event that triggered the workflow')
-  .option('-C, --workspace <path>', 'the default working directory on the runner for steps', '.')
+  .option('-C, --workdir <path>', 'the default working directory on the runner for steps', '.')
   .option('--json', 'output logs in json format')
 
   .option('--token <token>', 'if you want to use private actions on GitHub, you have to set personal access token')
@@ -142,7 +142,7 @@ export const runCommand = new Command('run')
     const options = program.optsWithGlobals<RunOptions>();
     const appconf = Config.Load(options.config, appname);
 
-    const runnerConf = appconf.runner.configure();
+    const runnerConf = await appconf.runner.configure();
     console.log('runnerConf', runnerConf.context.github);
 
     console.log('appconf', appconf.runner);
@@ -220,10 +220,6 @@ export const runCommand = new Command('run')
       return graphOption(plan);
     }
 
-    if (options.labels?.length === 0) {
-      // init todo
-    }
-
     const deprecationWarning = '--%s is deprecated and will be removed soon, please switch to cli: --container-options "%s" or .actionsrc: { "containerOptions": "%s" }.';
     if (options.privileged) {
       logger.warn(deprecationWarning, 'privileged', '--privileged');
@@ -238,36 +234,8 @@ export const runCommand = new Command('run')
       logger.warn(deprecationWarning, 'container-cap-drop', `--cap-drop=${options.containerCapDrop.join(' ')}`, `--cap-drop=${options.containerCapDrop.join(' ')}`);
     }
 
-    if (options.useActionCache || options.repositories) {
-      if (options.actionOfflineMode) {
-        // todo offline model
-      } else {
-        // todo online model
-      }
-      if (options.repositories) {
-        // todo init LocalRepositoryCache
-      }
-    }
-
-    // Start Artifact Server
-    const ACTIONS_RUNTIME_URL = 'ACTIONS_RUNTIME_URL';
-    if (options.artifactServerPath && !options.env[ACTIONS_RUNTIME_URL]) {
-      const artifact = new Artifact(options.artifactServerPath, options.artifactServerAddr, options.artifactServerPort);
-      const actionsRuntimeURL = await artifact.serve();
-      logger.debug('Artifact Server address:', actionsRuntimeURL);
-      options.env[ACTIONS_RUNTIME_URL] = actionsRuntimeURL;
-    }
-    // Start Artifact Cache Server
-    const ACTIONS_CACHE_URL = 'ACTIONS_CACHE_URL';
-    if (options.cacheServer && !options.env[ACTIONS_CACHE_URL]) {
-      const artifactCache = new ArtifactCache(options.cacheServerPath, options.cacheServerAddr, options.cacheServerPort);
-      const artifactCacheServeURL = await artifactCache.serve();
-      logger.debug('Artifact Cache Server address:', artifactCacheServeURL);
-      options.env[ACTIONS_CACHE_URL] = artifactCacheServeURL;
-    }
-
     // run plan
-    const git = new Git(options.workspace);
+    const git = new Git(options.workdir);
     const author = await git.author();
     const repoInfo = await git.repoInfo();
     const ref = await git.ref() || '';
@@ -313,7 +281,7 @@ export const runCommand = new Command('run')
       ref,
       triggering_actor: userInfo.username,
       token: options.token,
-      workspace: options.workspace,
+      workspace: options.workdir,
     });
 
     const context = {
