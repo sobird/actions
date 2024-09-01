@@ -269,24 +269,6 @@ class Runner implements Omit<Options, 'workflowRecurse'> {
       actionCache = new ActionCacheRepository(this.actionCacheDir, this.repositories);
     }
 
-    // Start Artifact Server
-    const ACTIONS_RUNTIME_URL = 'ACTIONS_RUNTIME_URL';
-    if (this.artifactServerPath && !this.env[ACTIONS_RUNTIME_URL]) {
-      const artifact = new Artifact(this.artifactServerPath, this.artifactServerAddr, this.artifactServerPort);
-      const actionsRuntimeURL = await artifact.serve();
-      logger.debug('Artifact Server address:', actionsRuntimeURL);
-      this.env[ACTIONS_RUNTIME_URL] = actionsRuntimeURL;
-    }
-    // Start Artifact Cache Server
-    const ACTIONS_CACHE_URL = 'ACTIONS_CACHE_URL';
-    console.log('this.cacheServerPath', this.cacheServerPath);
-    if (this.cacheServer && !this.env[ACTIONS_CACHE_URL]) {
-      const artifactCache = new ArtifactCache(this.cacheServerPath, this.cacheServerAddr, this.cacheServerPort);
-      const artifactCacheServeURL = await artifactCache.serve();
-      logger.debug('Artifact Cache Server address:', artifactCacheServeURL);
-      this.env[ACTIONS_CACHE_URL] = artifactCacheServeURL;
-    }
-
     // labels
     const { platforms } = new Labels(this.labels);
 
@@ -299,6 +281,33 @@ class Runner implements Omit<Options, 'workflowRecurse'> {
     };
 
     return config;
+  }
+
+  async setActionRuntimeEnv() {
+    // Start Artifact Server
+    const ACTIONS_RUNTIME_URL = 'ACTIONS_RUNTIME_URL';
+    const ACTIONS_RUNTIME_TOKEN = 'ACTIONS_RUNTIME_TOKEN';
+    if (this.artifactServerPath && !this.env[ACTIONS_RUNTIME_URL]) {
+      const artifact = new Artifact(this.artifactServerPath, this.artifactServerAddr, this.artifactServerPort);
+      const actionsRuntimeUrl = await artifact.serve();
+      logger.debug('Artifact Server address:', actionsRuntimeUrl);
+      this.env[ACTIONS_RUNTIME_URL] = actionsRuntimeUrl;
+
+      let actionsRuntimeToken = process.env[ACTIONS_RUNTIME_TOKEN];
+      if (!actionsRuntimeToken) {
+        actionsRuntimeToken = 'token';
+      }
+      this.env[ACTIONS_RUNTIME_TOKEN] = actionsRuntimeToken;
+    }
+
+    // Start Artifact Cache Server
+    const ACTIONS_CACHE_URL = 'ACTIONS_CACHE_URL';
+    if (this.cacheServer && !this.env[ACTIONS_CACHE_URL]) {
+      const artifactCache = new ArtifactCache(this.cacheServerPath, this.cacheServerAddr, this.cacheServerPort);
+      const artifactCacheServeURL = await artifactCache.serve();
+      logger.debug('Artifact Cache Server address:', artifactCacheServeURL);
+      this.env[ACTIONS_CACHE_URL] = artifactCacheServeURL;
+    }
   }
 }
 
