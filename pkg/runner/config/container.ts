@@ -24,7 +24,7 @@ class Container {
   /**
    * Desired OS/architecture platform for running containers.
    */
-  architecture: string;
+  platform: string;
 
   /**
    * Path to Docker daemon socket.
@@ -72,7 +72,7 @@ class Container {
 
     this.privileged = container.privileged ?? false;
     this.usernsMode = container.usernsMode ?? '';
-    this.architecture = container.architecture ?? '';
+    this.platform = container.platform ?? '';
     this.daemonSocket = container.daemonSocket ?? '';
 
     this.capAdd = container.capAdd;

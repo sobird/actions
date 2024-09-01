@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 /**
  * Runner Configurator
  *
@@ -13,6 +14,7 @@ import log4js from 'log4js';
 import { Options } from '@/cmd/run';
 import Artifact from '@/pkg/artifact';
 import ArtifactCache from '@/pkg/artifact/cache';
+import Git from '@/pkg/common/git';
 import { getSocketAndHost } from '@/pkg/docker';
 import Labels from '@/pkg/labels';
 import ActionCache from '@/pkg/runner/action/cache';
@@ -20,7 +22,10 @@ import ActionCacheOffline from '@/pkg/runner/action/cache/offline';
 import ActionCacheRepository from '@/pkg/runner/action/cache/repository';
 import Config from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
-import { readConfSync, generateId, readJsonSync } from '@/utils';
+import { Github } from '@/pkg/runner/context/github';
+import {
+  readConfSync, generateId, readJsonSync, lodash,
+} from '@/utils';
 
 import Container from './container';
 
@@ -226,8 +231,51 @@ class Runner implements Omit<Options, 'workflowRecurse'> {
   }
 
   // merge cli options
-  options(options: Options) {
+  async options(options: Options, eventName?: string) {
+    lodash.merge(this, options);
 
+    const git = new Git(options.workdir);
+    const author = await git.author();
+    const repoInfo = await git.repoInfo();
+    const ref = await git.ref() || '';
+
+    const actor = options.actor || author || 'actor';
+    const actor_id = generateId(actor);
+
+    const sha = await git.revision();
+
+    const repository_owner = repoInfo.owner || 'owner';
+    const repository = `${repository_owner}/${repoInfo.name}`;
+    const repository_id = generateId(repository);
+    const repository_owner_id = generateId(repository_owner);
+    const repositoryUrl = repoInfo.url;
+
+    const userInfo = os.userInfo();
+
+    const github = {
+      actor,
+      actor_id,
+      api_url: 'https://api.github.com/',
+      graphql_url: 'https://api.github.com/graphql',
+      repository,
+      repository_id,
+      repository_owner,
+      repository_owner_id,
+      repositoryUrl,
+      retention_days: '0',
+      server_url: 'https://github.com',
+      event_name: eventName,
+      event_path: options.eventFile,
+      sha,
+      ref,
+      triggering_actor: userInfo.username,
+      token: options.token,
+      workspace: options.workdir,
+    };
+
+    Object.assign(this.context.github, github);
+
+    return this;
   }
 
   async configure(): Promise<Config> {
@@ -245,19 +293,29 @@ class Runner implements Omit<Options, 'workflowRecurse'> {
     }
 
     logger.debug('Loading environment from %s', this.envFile);
+    console.log('this.env', this.env);
     Object.assign(this.env, readConfSync(this.envFile));
+    // Object.assign(this.context.env, this.env);
 
     logger.debug('Loading vars from %s', this.varsFile);
     Object.assign(this.vars, readConfSync(this.varsFile));
+    Object.assign(this.context.vars, this.vars);
 
     logger.debug('Loading secrets from %s', this.secretsFile);
     Object.assign(this.secrets, readConfSync(this.secretsFile));
+    Object.assign(this.context.secrets, this.secrets);
 
     logger.debug('Loading action inputs from %s', this.inputsFile);
     Object.assign(this.inputs, readConfSync(this.inputsFile));
+    Object.assign(this.context.inputs, this.inputs);
 
     logger.debug('Loading github event from %s', this.eventFile);
-    Object.assign(this.context.github.event, readConfSync(this.eventFile));
+    const event = readJsonSync(this.eventFile);
+    if (!event?.repository?.default_branch) {
+      event.repository = event.repository || {};
+      event.repository.default_branch = this.defaultBranch;
+    }
+    Object.assign(this.context.github.event, event);
 
     // ActionCache
     let actionCache;
@@ -271,6 +329,8 @@ class Runner implements Omit<Options, 'workflowRecurse'> {
 
     // labels
     const { platforms } = new Labels(this.labels);
+
+    // this.context.secrets.GITHUB_TOKEN = this.token;
 
     const config: Config = {
       context: this.context,

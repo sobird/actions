@@ -33,6 +33,7 @@ export interface DockerContainerOptions {
   image: string;
   /** Current directory (PWD) in the command will be launched */
   workdir: string;
+  /** Set platform if server is multi-platform capable */
   platform?: string;
   /** Entrypoint to run when starting the container */
   entrypoint?: string[];

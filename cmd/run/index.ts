@@ -17,7 +17,6 @@ import { Config, Labels } from '@/pkg';
 import Artifact from '@/pkg/artifact';
 import ArtifactCache from '@/pkg/artifact/cache';
 import Git from '@/pkg/common/git';
-import { Github } from '@/pkg/runner/context/github';
 import WorkflowPlanner from '@/pkg/workflow/planner';
 import { readConfSync, generateId, readJsonSync } from '@/utils';
 
@@ -109,7 +108,7 @@ export const runCommand = new Command('run')
   // artifact server
   .option('--artifact-server-path <path>', 'defines the path where the artifact server stores uploads and retrieves downloads from. If not specified the artifact server will not start')
   .option('--artifact-server-addr <addr>', 'defines the address where the artifact server listens', ip.address())
-  .option('--artifact-server-port <port>', 'defines the port where the artifact server listens (will only bind to localhost)', (value: string) => { return Number(value); }, 0)
+  .option('--artifact-server-port <port>', 'defines the port where the artifact server listens (will only bind to localhost)', (value: string) => { return Number(value); })
 
   // actionCache
   .option('--use-action-cache', 'enable using the new Action Cache for storing Actions locally')
@@ -124,9 +123,9 @@ export const runCommand = new Command('run')
   .option('--pull', 'pull docker image(s) even if already present')
   .option('--rebuild', 'rebuild local action docker image(s) even if already present')
   .option('--privileged', 'use privileged mode')
-  .option('--userns <userns>', 'user namespace to use')
-  .option('--network <network>', 'specify the network to which the container will connect')
-  .option('--container-architecture <arch>', 'architecture which should be used to run containers, e.g.: linux/amd64. If not specified, will use host default architecture. Requires Docker server API Version 1.41+. Ignored on earlier Docker server platforms.')
+  .option('--usernsMode <userns>', 'user namespace to use')
+  .option('--networkMode <network>', 'specify the network to which the container will connect')
+  .option('--container-platform <string>', 'platform which should be used to run containers, e.g.: linux/amd64. if not specified, will use host default architecture. Requires Docker server API Version 1.41+. Ignored on earlier Docker server platforms.')
   .option('--container-daemon-socket <socket>', 'path to Docker daemon socket which will be mounted to containers')
   .option('--container-cap-add <cap...>', 'kernel capabilities to add to the workflow containers (e.g. --container-cap-add SYS_PTRACE)', collectArray)
   .option('--container-cap-drop <drop...>', 'kernel capabilities to remove from the workflow containers (e.g. --container-cap-drop SYS_PTRACE)', collectArray)
@@ -139,10 +138,7 @@ export const runCommand = new Command('run')
     const version = program.parent!.version();
     const appname = program.parent!.name();
     const options = program.optsWithGlobals<RunOptions>();
-    const appconf = Config.Load(options.config, appname);
-
-    console.log('appconf', appconf.runner);
-    console.log('options', options.matrix);
+    const { runner } = Config.Load(options.config, appname);
 
     if (options.bugReport) {
       return bugReportOption(version);
@@ -167,7 +163,7 @@ export const runCommand = new Command('run')
       [eventName] = events;
     } else {
       // logger.debug('Using default workflow event: push');
-      // eventName = 'push';
+      eventName = 'push';
     }
 
     if (options.job) {
@@ -193,8 +189,8 @@ export const runCommand = new Command('run')
     if (options.privileged) {
       logger.warn(deprecationWarning, 'privileged', '--privileged');
     }
-    if (options.userns) {
-      logger.warn(deprecationWarning, 'userns', `--userns=${options.userns}`, `--userns=${options.userns}`);
+    if (options.usernsMode) {
+      logger.warn(deprecationWarning, 'userns', `--userns=${options.usernsMode}`, `--userns=${options.usernsMode}`);
     }
     if (options.containerCapAdd) {
       logger.warn(deprecationWarning, 'container-cap-add', `--cap-add=${options.containerCapAdd.join(' ')}`, `--cap-add=${options.containerCapAdd.join(' ')}`);
@@ -203,77 +199,11 @@ export const runCommand = new Command('run')
       logger.warn(deprecationWarning, 'container-cap-drop', `--cap-drop=${options.containerCapDrop.join(' ')}`, `--cap-drop=${options.containerCapDrop.join(' ')}`);
     }
 
-    const runnerConf = await appconf.runner.configure();
-    console.log('runnerConf', runnerConf.context.github);
+    await runner.options(options, eventName);
+    const config = await runner.configure();
+    console.log('runner', runner);
+    console.log('config', config);
 
-    // run plan
-    const git = new Git(options.workdir);
-    const author = await git.author();
-    const repoInfo = await git.repoInfo();
-    const ref = await git.ref() || '';
-
-    const actor = options.actor || author || 'actor';
-    const actor_id = generateId(actor);
-
-    const sha = await git.revision();
-
-    const repository_owner = repoInfo.owner || 'owner';
-    const repository = `${repository_owner}/${repoInfo.name}`;
-    const repository_id = generateId(repository);
-    const repository_owner_id = generateId(repository_owner);
-    const repositoryUrl = repoInfo.url;
-
-    // event
-    const event = readJsonSync(options.eventFile);
-    if (!event?.repository?.default_branch) {
-      event.repository = event.repository || {};
-      event.repository.default_branch = options.defaultBranch;
-    }
-
-    const userInfo = os.userInfo();
-
-    const github = new Github({
-      actor,
-      actor_id,
-      api_url: 'https://api.github.com/',
-      graphql_url: 'https://api.github.com/graphql',
-      repository,
-      repository_id,
-      repository_owner,
-      repository_owner_id,
-      repositoryUrl,
-      retention_days: '0',
-
-      server_url: 'https://github.com',
-
-      event_name: eventName,
-      event_path: options.eventFile,
-      event,
-      sha,
-      ref,
-      triggering_actor: userInfo.username,
-      token: options.token,
-      workspace: options.workdir,
-    });
-
-    const context = {
-      github,
-      env: options.env,
-      vars: options.vars,
-      secrets: {
-        ...options.secrets,
-        GITHUB_TOKEN: options.token,
-      },
-      inputs: options.inputs,
-    };
-
-    console.log('options', options);
-
-    const config: Config = {
-      context,
-      skipCheckout: true,
-    };
-
-    await plan.executor(config).execute();
+    // await plan.executor(config).execute();
     process.exit();
   });
