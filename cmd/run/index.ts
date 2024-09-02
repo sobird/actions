@@ -13,12 +13,8 @@ import { Command } from '@commander-js/extra-typings';
 import ip from 'ip';
 import log4js from 'log4js';
 
-import { Config, Labels } from '@/pkg';
-import Artifact from '@/pkg/artifact';
-import ArtifactCache from '@/pkg/artifact/cache';
-import Git from '@/pkg/common/git';
+import { Config } from '@/pkg';
 import WorkflowPlanner from '@/pkg/workflow/planner';
-import { readConfSync, generateId, readJsonSync } from '@/utils';
 
 import { bugReportOption } from './bugReportOption';
 import { graphOption } from './graphOption';
@@ -70,7 +66,7 @@ export const runCommand = new Command('run')
   .arguments('[eventName]')
   // workflows
   .option('-W, --workflows <path>', 'path to workflow file(s)', './.github/workflows/')
-  .option('--no-workflowRecurse', "flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
+  .option('--no-recursive', "flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
   .option('-l, --list', 'list workflows')
   .option('-g, --graph', 'draw workflows')
   .option('-j, --job <string>', 'run a specific job ID')
@@ -80,8 +76,13 @@ export const runCommand = new Command('run')
   // .option('-E, --event <event>', 'run a event name')
   .option('-e --event-file <path>', 'path to event JSON file', 'event.json')
   .option('--detect-event', 'use first event type from workflow as event that triggered the workflow')
-  .option('-C, --workdir <path>', 'the default working directory on the runner for steps', '.')
+  .option('-w, --workdir <path>', 'the default working directory on the runner for steps', '.')
+  .option('--bindWorkdir', 'bind working directory to container, rather than copy')
+  .option('--reuseContainers', "don't remove container(s) on successfully completed workflow(s) to maintain state between runs")
+
+  // log
   .option('--json', 'output logs in json format')
+  .option('--log-prefix-job-id', 'output the job id within non-json logs instead of the entire name')
 
   .option('--token <token>', 'if you want to use private actions on GitHub, you have to set personal access token')
   .option('--env <envs...>', 'env to make available to actions with optional value (e.g. --env myenv=foo,other=bar)', collectObject, {})
@@ -119,17 +120,21 @@ export const runCommand = new Command('run')
 
   // container
   .option('--labels <labels...>', 'custom image to use per platform (e.g. --labels ubuntu-latest=nektos/act-environments-ubuntu:18.04)', collectArray)
-  .option('-i, --image <image>', 'docker image to use. Use "-self-hosted" to run directly on the host', 'actions/runner-images:ubuntu-latest')
+  .option('--image <image>', 'docker image to use. Use "-self-hosted" to run directly on the host', 'actions/runner-images:ubuntu-latest')
   .option('--pull', 'pull docker image(s) even if already present')
   .option('--rebuild', 'rebuild local action docker image(s) even if already present')
   .option('--privileged', 'use privileged mode')
-  .option('--usernsMode <userns>', 'user namespace to use')
-  .option('--networkMode <network>', 'specify the network to which the container will connect')
+  .option('--auto-remove', 'automatically remove container(s)/volume(s) after a workflow(s) failure')
+  .option('--container-userns <userns>', 'user namespace to use')
+  .option('--container-network <network>', 'specify the network to which the container will connect')
   .option('--container-platform <string>', 'platform which should be used to run containers, e.g.: linux/amd64. if not specified, will use host default architecture. Requires Docker server API Version 1.41+. Ignored on earlier Docker server platforms.')
   .option('--container-daemon-socket <socket>', 'path to Docker daemon socket which will be mounted to containers')
   .option('--container-cap-add <cap...>', 'kernel capabilities to add to the workflow containers (e.g. --container-cap-add SYS_PTRACE)', collectArray)
   .option('--container-cap-drop <drop...>', 'kernel capabilities to remove from the workflow containers (e.g. --container-cap-drop SYS_PTRACE)', collectArray)
   .option('--container-options <string>', 'container options')
+
+  .option('--watch', 'watch the contents of the local repo and run when files change')
+
   // debug
   .option('--bug-report', 'display system information for bug report')
   .option('-d, --debug', 'enable debug log')
@@ -144,7 +149,7 @@ export const runCommand = new Command('run')
       return bugReportOption(version);
     }
 
-    const planner = await WorkflowPlanner.Collect(options.workflows, options.workflowRecurse);
+    const planner = await WorkflowPlanner.Collect(options.workflows, options.recursive);
     // collect all events from loaded workflows
     const { events } = planner;
 
@@ -187,10 +192,10 @@ export const runCommand = new Command('run')
 
     const deprecationWarning = '--%s is deprecated and will be removed soon, please switch to cli: --container-options "%s" or .actionsrc: { "containerOptions": "%s" }.';
     if (options.privileged) {
-      logger.warn(deprecationWarning, 'privileged', '--privileged');
+      logger.warn(deprecationWarning, 'privileged', '--privileged', '--privileged');
     }
-    if (options.usernsMode) {
-      logger.warn(deprecationWarning, 'userns', `--userns=${options.usernsMode}`, `--userns=${options.usernsMode}`);
+    if (options.containerUserns) {
+      logger.warn(deprecationWarning, 'userns', `--userns=${options.containerUserns}`, `--userns=${options.containerUserns}`);
     }
     if (options.containerCapAdd) {
       logger.warn(deprecationWarning, 'container-cap-add', `--cap-add=${options.containerCapAdd.join(' ')}`, `--cap-add=${options.containerCapAdd.join(' ')}`);

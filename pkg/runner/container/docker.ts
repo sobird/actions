@@ -55,7 +55,7 @@ export interface DockerContainerOptions {
   capDrop?: string[];
   privileged?: boolean;
   usernsMode?: string;
-  NetworkAliases?: string[];
+  networkAliases?: string[];
 }
 
 const hashFilesDir = 'bin/hashFiles';
@@ -397,9 +397,9 @@ class DockerContainer extends Container {
       const NetworkMode = options.networkMode || 'default';
       const isNetworkMode = ['default', 'host', 'bridge', 'container', 'none'].includes(NetworkMode);
       let endpointsConfig: EndpointsConfig = {};
-      if (!isNetworkMode && options.networkMode !== 'host' && (options.NetworkAliases || []).length > 0) {
+      if (!isNetworkMode && options.networkMode !== 'host' && (options.networkAliases || []).length > 0) {
         const endpointSettings: EndpointSettings = {
-          Aliases: options.NetworkAliases,
+          Aliases: options.networkAliases,
         };
 
         endpointsConfig = {

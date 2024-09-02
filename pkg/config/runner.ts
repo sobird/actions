@@ -22,7 +22,6 @@ import ActionCacheOffline from '@/pkg/runner/action/cache/offline';
 import ActionCacheRepository from '@/pkg/runner/action/cache/repository';
 import Config from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
-import { Github } from '@/pkg/runner/context/github';
 import {
   readConfSync, generateId, readJsonSync, lodash,
 } from '@/utils';
@@ -33,10 +32,13 @@ const logger = log4js.getLogger();
 
 const ACTIONS_HOME = path.join(os.homedir(), '.actions');
 
-class Runner implements Omit<Options, 'workflowRecurse'> {
+class Runner implements Omit<Options, ''> {
+  /**
+   * path to workflow file(s)
+   */
   public workflows: string;
 
-  // public workflowRecurse: boolean;
+  public recursive: boolean;
 
   public context: Context;
 
@@ -185,7 +187,7 @@ class Runner implements Omit<Options, 'workflowRecurse'> {
 
   constructor(runner: Runner) {
     this.workflows = runner.workflows;
-    // this.workflowRecurse = runner.workflowRecurse;
+    this.recursive = runner.recursive;
     this.context = new Context(runner.context);
     this.workdir = runner.workdir;
     this.bindWorkdir = runner.bindWorkdir;
