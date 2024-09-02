@@ -1,12 +1,28 @@
-import path from 'path';
+import fs from 'fs';
 
-import Git from './pkg/common/git';
+// 创建一个 Generator 函数来读取流
+function* readStream(stream) {
+  yield new Promise((resolve, reject) => {
+    stream.on('data', (chunk) => {
+      resolve(chunk.toString()); // 将每个数据块作为字符串 yield 出来
+    });
 
-try {
-  const ref = await Git.Ref('/Users/sobird/checkout');
-  console.log('ref', ref);
-} catch (err) {
-  console.log('err', err);
+    stream.on('error', (err) => {
+      reject(err);
+    });
+
+    stream.on('end', () => {
+      resolve(); // 当流结束时，解决 Promise
+    });
+  });
 }
 
-console.log('first', path.basename('/Users/sobird/checkout'));
+// 使用 Generator 函数
+async function processStream(filePath) {
+  const readStreamGenerator = readStream(fs.createReadStream(filePath, 'utf8'));
+
+  const result = await readStreamGenerator.next().value;
+  console.log('result', result);
+}
+
+await processStream('package.json');

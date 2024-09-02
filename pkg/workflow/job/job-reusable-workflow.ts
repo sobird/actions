@@ -12,6 +12,7 @@ import Executor from '@/pkg/common/executor';
 import Git from '@/pkg/common/git';
 import type Runner from '@/pkg/runner';
 import WorkflowPlanner from '@/pkg/workflow/planner';
+import { readEntry } from '@/utils/tar';
 
 import Job from './job';
 
@@ -48,6 +49,7 @@ class JobReusableWorkflow extends Job {
       if (runner.config.skipCheckout) {
         return JobReusableWorkflow.ReusableWorkflowExecutor(uses, runner);
       }
+
       // remote resuable workflow
       const { repository, sha, server_url: serverUrl } = runner.context.github;
       reusable.url = serverUrl;
@@ -70,7 +72,11 @@ class JobReusableWorkflow extends Job {
     } catch (err) {
       //
     }
-    console.log('repositoryDir', repositoryDir, reusable);
+
+    if (runner.config.actionCache) {
+      return JobReusableWorkflow.ActionCacheReusableWorkflowExecutor(reusable, runner);
+    }
+
     const workflowpath = path.join(repositoryDir, reusable.filename);
     return Git.CloneExecutor(repositoryDir, reusable.url, reusable.ref).next(JobReusableWorkflow.ReusableWorkflowExecutor(workflowpath, runner));
   }
@@ -85,8 +91,17 @@ class JobReusableWorkflow extends Job {
 
   static ActionCacheReusableWorkflowExecutor(reusable: Reusable, runner: Runner) {
     return new Executor(async () => {
-      const sha = await runner.config.actionCache?.fetch(reusable.url, reusable.repository, reusable.ref);
-      const archive = await runner.config.actionCache?.archive(reusable.repository, reusable.ref, reusable.filename);
+      const { actionCache } = runner.config;
+      if (actionCache) {
+        await actionCache.fetch(reusable.url, reusable.repository, reusable.ref);
+        const archive = await actionCache.archive(reusable.repository, reusable.ref, reusable.filename);
+        const readEntryGenerator = readEntry(archive);
+        const { value } = await readEntryGenerator.next();
+
+        const workflowPlanner = WorkflowPlanner.Single(value as string);
+        const plan = workflowPlanner.planEvent('workflow_call');
+        await plan.executor(runner.config, runner).execute();
+      }
     });
   }
 }

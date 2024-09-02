@@ -101,7 +101,6 @@ class Runner {
 
   public startContainer() {
     return new Executor(() => {
-      //
       const { IsHosted } = this;
       console.log('IsHosted', IsHosted);
     });
@@ -203,9 +202,7 @@ class Runner {
     const platform = this.RunsOnImage;
     const image = this.ContainerImage;
 
-    console.log('platform', platform, image);
-
-    return image === '' && platform.toLowerCase() === '-self-hosted';
+    return image === '' && platform?.toLowerCase() === '-self-hosted';
   }
 
   // job container image
@@ -226,15 +223,13 @@ class Runner {
 
     let image = this.config.platformPicker?.(runsOn);
 
-    // if (image) {
-    //   return image;
-    // }
+    if (image) {
+      return image;
+    }
 
     image = runsOn.find((item) => {
       return this.config.platforms.get(item.toLowerCase());
     });
-
-    console.log('image', image);
 
     if (image) {
       return this.config.platforms.get(image);

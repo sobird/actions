@@ -220,7 +220,7 @@ class Runner implements Omit<Options, ''> {
     this.useActionCache = runner.useActionCache;
     this.repositories = runner.repositories;
     this.actionOfflineMode = runner.actionOfflineMode;
-    this.actionCacheDir = runner.actionCacheDir;
+    this.actionCacheDir = runner.actionCacheDir || path.join(ACTIONS_HOME, 'actions');
     this.actionInstance = runner.actionInstance || 'https://github.com';
 
     // Artifact Server

@@ -75,6 +75,9 @@ export default class Plan {
             const runner = new Runner(new Run(jobId, workflow), config);
             runner.caller = caller;
 
+            /** @todo just todo test */
+            runner.container = caller?.container;
+
             return runner.executor();
           });
 

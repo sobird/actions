@@ -107,14 +107,13 @@ class WorkflowPlanner {
 
       const files = fs.readdirSync(absPath, { withFileTypes: true, recursive });
 
-      for (const file of files) {
+      for await (const file of files) {
         const { ext } = parse(file.name);
         if (file.isFile() && (ext === '.yml' || ext === '.yaml')) {
           const filename = join(file.parentPath, file.name);
           const workflow = Workflow.Read(filename);
           workflow.file = filename;
           try {
-            // eslint-disable-next-line no-await-in-loop
             workflow.sha = await git.fileSha(filename);
           } catch (error) {
             //

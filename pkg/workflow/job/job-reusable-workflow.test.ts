@@ -1,5 +1,6 @@
 /* eslint-disable no-template-curly-in-string */
 import Runner from '@/pkg/runner';
+import HostedContainer from '@/pkg/runner/container/hosted';
 
 import JobReusableWorkflow from './job-reusable-workflow';
 
@@ -8,8 +9,10 @@ vi.setConfig({
 });
 
 vi.mock('@/pkg/runner');
+vi.mock('@/pkg/runner/container/hosted');
 
 const runner: Runner = new (Runner as any)();
+const hosted: HostedContainer = new (HostedContainer as any)();
 
 describe('job-reusable-workflow test', () => {
   it('local reusable workflow skipCheckout test case', async () => {
@@ -19,9 +22,10 @@ describe('job-reusable-workflow test', () => {
       uses: './.github/workflows/test-reusable-workflow.yml',
     });
 
-    runner.config.skipCheckout = true;
+    (runner.config as any).skipCheckout = true;
     runner.run.jobId = 'job1';
     runner.run.workflow.jobs.job1 = job;
+    runner.container = hosted;
 
     const executor = job.executor(runner);
     await executor.execute();
@@ -34,7 +38,7 @@ describe('job-reusable-workflow test', () => {
       uses: './.gitea/workflows/reusable-workflow.yaml',
     });
 
-    runner.config.skipCheckout = false;
+    (runner.config as any).skipCheckout = false;
     runner.run.jobId = 'job1';
     runner.run.workflow.jobs.job1 = job;
 

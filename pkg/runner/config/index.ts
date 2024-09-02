@@ -89,7 +89,7 @@ interface Config {
    * Platform picker, it will take precedence over Platforms if isn't nil.
    * @returns {string} The selected platform.
    */
-  readonly platformPicker: (labels: string[]) => string;
+  readonly platformPicker: (labels: string[]) => string | undefined;
 
   /**
    * Controls if paths in .gitignore should not be copied into container, default true.
