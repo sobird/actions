@@ -48,7 +48,6 @@ class Config {
     this.runner = new Runner(config.runner ?? {});
     this.cache = new Cache(config.cache ?? {});
     this.actionCacheDir = config.actionCacheDir ?? path.join(ACTIONS_HOME, 'actions');
-
     this.registration = Registration.Load(config.registration.file);
   }
 

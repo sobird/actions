@@ -46,11 +46,6 @@ interface Config {
   readonly actionInstance: string;
 
   /**
-   * Path to the JSON file to use for event.json in containers.
-   */
-  readonly eventPath: string;
-
-  /**
    * Remote name in local git repo config.
    */
   readonly remoteName: string;
@@ -74,26 +69,6 @@ interface Config {
    * Switches from the full job name to the job id.
    */
   readonly logPrefixJobID: boolean;
-
-  /**
-   * Environment for containers.
-   */
-  readonly env: Record<string, string>;
-
-  /**
-   * Manually passed action inputs.
-   */
-  readonly inputs: { [key: string]: string };
-
-  /**
-   * List of secrets.
-   */
-  readonly secrets: { [key: string]: string };
-
-  /**
-   * List of variables.
-   */
-  readonly vars: { [key: string]: string };
 
   /**
    * GitHub token.
@@ -164,7 +139,6 @@ interface Config {
 
   /**
    * Whether to skip verifying TLS certificate of the Gitea instance.
-   * @default false
    */
   readonly insecureSkipTLS?: boolean;
 

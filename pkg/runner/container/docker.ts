@@ -41,11 +41,9 @@ export interface DockerContainerOptions {
   cmd?: string[];
   env?: NodeJS.ProcessEnv;
   exposedPorts?: { [port: string]: {} };
-
   stdout?: string;
   stderr?: string;
-
-  // HostConfig
+  /** Automatically remove the container when it exits */
   autoRemove?: boolean;
   binds?: string[];
   networkMode?: 'default' | 'host' | 'bridge' | 'container' | 'none' | string;

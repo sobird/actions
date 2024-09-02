@@ -183,7 +183,10 @@ class Runner implements Omit<Options, ''> {
 
   public image: string;
 
+  // container
   public container: Container;
+
+  public containerDaemonSocket: string;
 
   constructor(runner: Runner) {
     this.workflows = runner.workflows;
@@ -229,7 +232,9 @@ class Runner implements Omit<Options, ''> {
     this.image = runner.image;
     this.matrix = runner.matrix;
 
+    // container
     this.container = new Container(runner.container ?? {});
+    this.containerDaemonSocket = runner.containerDaemonSocket;
   }
 
   // merge cli options
