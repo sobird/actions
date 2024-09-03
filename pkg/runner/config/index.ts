@@ -4,12 +4,12 @@
  * sobird<i@sobird.me> at 2024/05/07 16:01:08 created.
  */
 
+import { HostConfig } from 'dockerode';
 import { Level } from 'log4js';
 
 import ActionCache from '@/pkg/runner/action/cache';
 import Context from '@/pkg/runner/context';
-
-import Container from './container';
+// import Container from './container';
 
 /**
  * The configuration interface for the runner.
@@ -28,7 +28,7 @@ interface Config {
   /**
    * Bind the workdir to the job container.
    */
-  readonly bindWorkdir: boolean;
+  readonly bindWorkdir?: boolean;
 
   /**
    * Use a custom ActionCache Implementation.
@@ -137,7 +137,71 @@ interface Config {
    */
   readonly insecureSkipTLS?: boolean;
 
-  container: Container;
+  // container: Container;
+  /**
+   * Force pulling of the image, even if already present.
+   */
+  pull?: boolean;
+
+  /**
+   * Force rebuilding local docker image action.
+   */
+  rebuild?: boolean;
+
+  /**
+   * Use privileged mode.
+   */
+  containerPrivileged?: boolean;
+
+  /**
+   * User namespace to use.
+   */
+  containerUserns: string;
+
+  /**
+   * Desired OS/architecture platform for running containers.
+   */
+  containerPlatform: string;
+
+  /**
+   * Path to Docker daemon socket.
+   */
+  containerDaemonSocket: string;
+
+  /**
+   * List of kernel capabilities to add to the containers.
+   */
+  containerCapAdd: string[];
+
+  /**
+   * List of kernel capabilities to remove from the containers.
+   */
+  containerCapDrop: string[];
+
+  /**
+   * The prefix of container name.
+   */
+  containerNamePrefix?: string;
+
+  /**
+   * The max lifetime of job containers in seconds.
+   */
+  containerMaxLifetime: number;
+
+  /**
+   * The network mode of job containers (the value of --network).
+   */
+  containerNetworkMode: HostConfig['NetworkMode'];
+
+  /**
+   * Controls if the container is automatically removed upon workflow completion.
+   */
+  containerAutoRemove?: boolean;
+
+  /**
+   * Options for the job container.
+   */
+  containerOptions: string;
 }
 
 export default Config;

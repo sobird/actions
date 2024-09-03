@@ -192,7 +192,7 @@ export const runCommand = new Command('run')
     }
 
     const deprecationWarning = '--%s is deprecated and will be removed soon, please switch to cli: --container-options "%s" or .actionsrc: { "containerOptions": "%s" }.';
-    if (options.privileged) {
+    if (options.containerPrivileged) {
       logger.warn(deprecationWarning, 'privileged', '--privileged', '--privileged');
     }
     if (options.containerUserns) {
@@ -207,9 +207,6 @@ export const runCommand = new Command('run')
 
     await runner.options(options, eventName);
     const config = await runner.configure();
-    console.log('runner', runner);
-    console.log('config', config);
-
-    // await plan.executor(config).execute();
+    await plan.executor(config).execute();
     process.exit();
   });

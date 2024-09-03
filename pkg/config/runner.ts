@@ -8,7 +8,6 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import dotenv, { DotenvParseOutput } from 'dotenv';
 import ip from 'ip';
 import log4js from 'log4js';
 
@@ -51,7 +50,7 @@ class Runner implements Omit<Options, ''> {
   /**
    * Bind the workdir to the job container.
    */
-  public bindWorkdir: boolean;
+  public bindWorkdir?: true;
 
   public actor: string;
 
@@ -67,7 +66,7 @@ class Runner implements Omit<Options, ''> {
   /**
    * Extra environment variables to run jobs.
    */
-  public env: DotenvParseOutput;
+  public env: Record<string, string>;
 
   /**
    * Extra environment variables to run jobs from a file.
@@ -188,6 +187,10 @@ class Runner implements Omit<Options, ''> {
 
   public image: string;
 
+  public replaceGheActionWithGithubCom: string[];
+
+  public replaceGheActionTokenWithGithubCom: string;
+
   /**
    * NOT RECOMMENDED! Doesn't hide secrets while printing logs
    */
@@ -239,6 +242,8 @@ class Runner implements Omit<Options, ''> {
 
   public reuse?: true;
 
+  public containerNamePrefix?: string;
+
   /**
    * Give extended privileges to this container
    */
@@ -263,6 +268,8 @@ class Runner implements Omit<Options, ''> {
    * Drop Linux capabilities
    */
   public containerCapDrop: string[];
+
+  public containerMaxLifetime: number;
 
   public containerOptions: string;
 
@@ -312,6 +319,8 @@ class Runner implements Omit<Options, ''> {
     this.insecureSecrets = runner.insecureSecrets;
     this.useGitignore = runner.useGitignore;
     this.serverInstance = runner.serverInstance;
+    this.replaceGheActionWithGithubCom = runner.replaceGheActionWithGithubCom;
+    this.replaceGheActionTokenWithGithubCom = runner.replaceGheActionTokenWithGithubCom;
 
     // log
     this.logOutput = runner.logOutput;
@@ -323,6 +332,7 @@ class Runner implements Omit<Options, ''> {
     this.pull = runner.pull;
     this.rebuild = runner.rebuild;
     this.reuse = runner.reuse;
+    this.containerNamePrefix = runner.containerNamePrefix;
     this.containerNetwork = runner.containerNetwork;
     this.containerPlatform = runner.containerPlatform;
     this.containerDaemonSocket = runner.containerDaemonSocket;
@@ -331,6 +341,7 @@ class Runner implements Omit<Options, ''> {
     this.containerUserns = runner.containerUserns;
     this.containerCapAdd = runner.containerCapAdd;
     this.containerCapDrop = runner.containerCapDrop;
+    this.containerMaxLifetime = runner.containerMaxLifetime;
     this.containerOptions = runner.containerOptions;
   }
 
@@ -456,6 +467,20 @@ class Runner implements Omit<Options, ''> {
       useGitignore: this.useGitignore,
       skipCheckout: this.skipCheckout,
       matrix: this.matrix,
+      pull: this.pull,
+      rebuild: this.rebuild,
+      containerUserns: this.containerUserns,
+      containerPlatform: this.containerPlatform,
+      containerDaemonSocket: this.containerDaemonSocket,
+      containerCapAdd: this.containerCapAdd,
+      containerCapDrop: this.containerCapDrop,
+      containerNamePrefix: this.containerNamePrefix,
+      containerMaxLifetime: this.containerMaxLifetime,
+      containerNetworkMode: this.containerNetwork,
+      containerAutoRemove: this.containerAutoRemove,
+      containerOptions: this.containerOptions,
+      replaceGheActionWithGithubCom: this.replaceGheActionWithGithubCom,
+      replaceGheActionTokenWithGithubCom: this.replaceGheActionTokenWithGithubCom,
     };
 
     return config;
