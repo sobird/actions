@@ -38,7 +38,7 @@ interface Config {
   /**
    * When offline, use caching action contents.
    */
-  readonly actionOfflineMode: boolean;
+  readonly actionOfflineMode?: boolean;
 
   /**
    * The default actions web site.
@@ -53,7 +53,7 @@ interface Config {
   /**
    * Reuse containers to maintain state.
    */
-  readonly reuseContainers: boolean;
+  readonly reuseContainers?: boolean;
 
   /**
    * Log the output from docker run.
@@ -63,22 +63,22 @@ interface Config {
   /**
    * Use json or text logger.
    */
-  readonly jsonLogger: boolean;
+  readonly logJson?: boolean;
 
   /**
    * Switches from the full job name to the job id.
    */
-  readonly logPrefixJobID: boolean;
+  readonly logPrefixJobID?: boolean;
 
   /**
    * GitHub token.
    */
-  readonly token: string;
+  readonly token?: string;
 
   /**
    * Switch hiding output when printing to terminal. Doesn't hide secrets while printing logs
    */
-  readonly insecureSecrets: boolean;
+  readonly insecureSecrets?: boolean;
 
   /**
    * List of labels.
@@ -94,17 +94,12 @@ interface Config {
   /**
    * Controls if paths in .gitignore should not be copied into container, default true.
    */
-  readonly useGitignore: boolean;
+  readonly useGitignore?: boolean;
 
   /**
    * GitHub instance to use, default "github.com".
    */
   readonly serverInstance: string;
-
-  /**
-   * artifact server address
-   */
-  readonly artifactServerAddress: string;
 
   /**
    * skip local actions/checkout.

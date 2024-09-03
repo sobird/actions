@@ -9,6 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import dotenv, { DotenvParseOutput } from 'dotenv';
+import ip from 'ip';
 import log4js from 'log4js';
 
 import { Options } from '@/cmd/run';
@@ -179,14 +180,91 @@ class Runner implements Omit<Options, ''> {
 
   public skipCheckout: boolean;
 
+  public useGitignore?: true;
+
+  public serverInstance: string;
+
   public matrix: Record<string, unknown[]>;
 
   public image: string;
 
+  /**
+   * NOT RECOMMENDED! Doesn't hide secrets while printing logs
+   */
+  public insecureSecrets?: true;
+
+  // log
+  /**
+   * logging of output from steps
+   */
+  public logOutput: boolean;
+
+  /**
+   * output logs in json format
+   */
+  public logJson?: true;
+
+  /**
+   * output the job id within non-json logs instead of the entire name
+   */
+  public logPrefixJobId?: true;
+
   // container
   public container: Container;
 
+  /**
+   * Connect a container to a network
+   */
+  public containerNetwork: string;
+
+  /**
+   * Set platform if server is multi-platform capable
+   */
+  public containerPlatform: string;
+
+  /**
+   * path to Docker daemon socket which will be mounted to containers
+   */
   public containerDaemonSocket: string;
+
+  /**
+   * pull docker image(s) even if already present
+   */
+  public pull?: true;
+
+  /**
+   * rebuild local action docker image(s) even if already present
+   */
+  public rebuild?: true;
+
+  public reuse?: true;
+
+  /**
+   * Give extended privileges to this container
+   */
+  public containerPrivileged?: true;
+
+  /**
+   * Automatically remove the container when it exits
+   */
+  public containerAutoRemove?: true;
+
+  /**
+   * User namespace to use
+   */
+  public containerUserns: string;
+
+  /**
+   * Add Linux capabilities
+   */
+  public containerCapAdd: string[];
+
+  /**
+   * Drop Linux capabilities
+   */
+  public containerCapDrop: string[];
+
+  public containerOptions: string;
 
   constructor(runner: Runner) {
     this.workflows = runner.workflows;
@@ -212,7 +290,7 @@ class Runner implements Omit<Options, ''> {
     this.labels = runner.labels ?? [];
     this.cacheServer = runner.cacheServer ?? true;
     this.cacheServerPath = runner.cacheServerPath || path.join(ACTIONS_HOME, 'artifact', 'cache');
-    this.cacheServerAddr = runner.cacheServerAddr || undefined;
+    this.cacheServerAddr = runner.cacheServerAddr || ip.address();
     this.cacheServerPort = runner.cacheServerPort ?? 0;
     this.externalServer = runner.externalServer ?? '';
 
@@ -225,16 +303,35 @@ class Runner implements Omit<Options, ''> {
 
     // Artifact Server
     this.artifactServerPath = runner.artifactServerPath;
-    this.artifactServerAddr = runner.artifactServerAddr || undefined;
+    this.artifactServerAddr = runner.artifactServerAddr || ip.address();
     this.artifactServerPort = runner.artifactServerPort;
 
     this.skipCheckout = runner.skipCheckout;
     this.image = runner.image;
     this.matrix = runner.matrix;
+    this.insecureSecrets = runner.insecureSecrets;
+    this.useGitignore = runner.useGitignore;
+    this.serverInstance = runner.serverInstance;
+
+    // log
+    this.logOutput = runner.logOutput;
+    this.logJson = runner.logJson;
+    this.logPrefixJobId = runner.logPrefixJobId;
 
     // container
     this.container = new Container(runner.container ?? {});
+    this.pull = runner.pull;
+    this.rebuild = runner.rebuild;
+    this.reuse = runner.reuse;
+    this.containerNetwork = runner.containerNetwork;
+    this.containerPlatform = runner.containerPlatform;
     this.containerDaemonSocket = runner.containerDaemonSocket;
+    this.containerPrivileged = runner.containerPrivileged;
+    this.containerAutoRemove = runner.containerAutoRemove;
+    this.containerUserns = runner.containerUserns;
+    this.containerCapAdd = runner.containerCapAdd;
+    this.containerCapDrop = runner.containerCapDrop;
+    this.containerOptions = runner.containerOptions;
   }
 
   // merge cli options
@@ -281,6 +378,7 @@ class Runner implements Omit<Options, ''> {
     };
 
     Object.assign(this.context.github, github);
+    Object.assign(this.context.secrets, { GITHUB_TOKEN: options.token });
 
     return this;
   }
@@ -295,7 +393,7 @@ class Runner implements Omit<Options, ''> {
       logger.warn("Couldn't get a valid docker connection: %s", (error as Error).message);
     }
 
-    if (process.platform === 'darwin' && process.arch === 'arm64' && !this.containerArchitecture) {
+    if (process.platform === 'darwin' && process.arch === 'arm64' && !this.containerPlatform) {
       console.warn(" \u26d4 You are using Apple M-series chip and you have not specified container architecture, you might encounter issues while running act. If so, try running it with '--container-architecture linux/amd64'. \u26d4");
     }
 
@@ -345,6 +443,19 @@ class Runner implements Omit<Options, ''> {
       bindWorkdir: this.bindWorkdir,
       actionCache,
       platforms,
+      actionOfflineMode: this.actionOfflineMode,
+      actionInstance: this.actionInstance,
+      serverInstance: this.serverInstance,
+      remoteName: this.remoteName,
+      reuseContainers: this.reuse,
+      logJson: this.logJson,
+      logOutput: this.logOutput,
+      logPrefixJobID: this.logPrefixJobId,
+      insecureSecrets: this.insecureSecrets,
+      platformPicker: () => { return this.image; },
+      useGitignore: this.useGitignore,
+      skipCheckout: this.skipCheckout,
+      matrix: this.matrix,
     };
 
     return config;

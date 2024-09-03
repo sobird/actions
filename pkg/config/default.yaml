@@ -103,6 +103,7 @@ runner:
       - 22
       - 20
       - 18
+  # container
   containerForcePull: true
   container:
     # Pull docker image(s) even if already present
