@@ -5,6 +5,7 @@ import path from 'path';
 
 import * as tar from 'tar';
 
+import Constants from '@/pkg/common/constants';
 import Executor from '@/pkg/common/executor';
 
 export interface FileEntry {
@@ -206,11 +207,11 @@ export default abstract class Container {
   }
 
   joinPath(...paths: string[]) {
-    return paths.join(this.platform === 'windows' ? ';' : ':');
+    return paths.join(this.platform === 'Windows' ? ';' : ':');
   }
 
   splitPath(pathString: string) {
-    return pathString.split(this.platform === 'windows' ? ';' : ':');
+    return pathString.split(this.platform === 'Windows' ? ';' : ':');
   }
 
   lookPath(file: string, env: Record<string, string>) {
@@ -287,6 +288,10 @@ export default abstract class Container {
 
   get isCaseSensitive() {
     return this.platform !== 'Windows';
+  }
+
+  directory(directory: keyof typeof Constants.Directory) {
+    return this.resolve(Constants.Directory[directory]);
   }
 
   static Os(platform: string) {

@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /**
  * Hosted Container
  *
@@ -13,6 +14,7 @@ import ignore from 'ignore';
 import * as tar from 'tar';
 
 import Executor from '@/pkg/common/executor';
+import Runner from '@/pkg/runner';
 
 import Container, { FileEntry, ContainerExecOptions } from '.';
 
@@ -223,6 +225,16 @@ class HostedContainer extends Container {
     }
 
     return '';
+  }
+
+  static Setup(runner: Runner) {
+    return new Executor(() => {
+      console.log('121212', 121212);
+      runner.container = new HostedContainer({
+        basedir: runner.ActionCacheDir,
+        workdir: runner.config.workdir,
+      });
+    });
   }
 }
 

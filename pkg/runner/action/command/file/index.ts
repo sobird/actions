@@ -14,7 +14,7 @@ class ActionCommandFile {
   private commandExtensions: FileCommandExtension[] = extensions;
 
   constructor(public runner: Runner) {
-    this.fileCommandDirectory = path.join(runner.directory('Temp'), this.folderName);
+    this.fileCommandDirectory = path.join(runner.container!.directory('Temp'), this.folderName);
   }
 
   public async initialize(fileSuffix: string) {

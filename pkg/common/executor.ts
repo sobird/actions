@@ -27,10 +27,14 @@ export class Conditional {
 }
 
 class Executor {
-  constructor(public fn: (ctx?: Runner) => Promise<void> | void) {}
+  constructor(public fn: (ctx?: Runner) => Promise<void> | void | InstanceType<typeof Executor> | Promise<InstanceType<typeof Executor>>) {}
 
-  execute(ctx?: Runner) {
-    return this.fn(ctx);
+  async execute(ctx?: Runner) {
+    const result = this.fn(ctx);
+    if (result instanceof Executor) {
+      await result.execute(ctx);
+    }
+    return result;
   }
 
   // Executor 的 Then 方法用于链式调用执行器
@@ -107,7 +111,7 @@ class Executor {
 
   /** 创建一个总是返回错误的执行器 */
   static Error(err: unknown) {
-    return new Executor(() => { return Promise.reject(err); });
+    return new Executor(() => { Promise.reject(err); });
   }
 
   /** 创建一个并行执行多个执行器的执行器 */

@@ -16,6 +16,7 @@ import Context from '@/pkg/runner/context';
 import { asyncFunction, createSafeName, assignIgnoreCase } from '@/utils';
 
 import Container from './container';
+import HostedContainer from './container/hosted';
 import Executor from '../common/executor';
 import { Run } from '../workflow/plan';
 
@@ -100,9 +101,28 @@ class Runner {
   }
 
   public startContainer() {
+    const { IsHosted } = this;
+    console.log('IsHosted', IsHosted);
+
+    const executor = HostedContainer.Setup(this);
+
+    const workflowDirectory = path.join(Constants.Directory.Temp, '_github_workflow');
+    return executor.finally(new Executor(() => {
+      const { event } = this.context.github;
+      console.log('4444', 4444);
+      return this.container?.putContent(workflowDirectory, {
+        name: 'event.json',
+        mode: 0o644,
+        body: JSON.stringify(event),
+      });
+    }));
+  }
+
+  startHostedContainer() {
     return new Executor(() => {
-      const { IsHosted } = this;
-      console.log('IsHosted', IsHosted);
+      this.container = new HostedContainer({
+        basedir: this.ActionCacheDir,
+      });
     });
   }
 
