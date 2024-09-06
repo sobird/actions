@@ -199,6 +199,8 @@ class DockerContainer extends Container {
           // gid: this.gid,
           size: content.byteLength,
           mtime: new Date(),
+          // ctime: new Date(),
+          // atime: new Date(),
         });
         header.encode();
 

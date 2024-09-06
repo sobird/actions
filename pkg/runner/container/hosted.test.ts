@@ -36,13 +36,6 @@ beforeAll(() => {
 afterAll(async () => {
   console.log('testdir', testdir);
   // fs.rmdirSync(testdir, { recursive: true });
-
-  const destination = 'put-archive-test/test1.txt';
-  const archive = await hosted.getFileEnv(destination);
-  console.log('archive', archive);
-
-  // const ws = fs.createWriteStream('sobird.txt');
-  // archive.pipe(ws);
 });
 
 describe('test hosted container class', () => {
@@ -182,6 +175,22 @@ describe('test hosted container class', () => {
   it('container hashFiles with --follow-symbolic-links test case', async () => {
     const hash = hosted.hashFiles('--follow-symbolic-links', 'package.json');
     expect(hash.length).toBe(64);
+  });
+
+  it('container getFileEnv test case', async () => {
+    const putContentExecutor = hosted.putContent('.', {
+      name: 'env',
+      mode: 0o777,
+      body: ['name=sobird', 'hello=world'].join('\n'),
+    });
+    await putContentExecutor.execute();
+
+    const envObj = await hosted.getFileEnv('env');
+
+    expect(envObj).toEqual({
+      name: 'sobird',
+      hello: 'world',
+    });
   });
 });
 

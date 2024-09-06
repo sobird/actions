@@ -1,4 +1,8 @@
-import path from 'node:path';
+import * as tar from 'tar';
 
-console.log('path.', path.posix.join('home/sobird/').trimEnd('/'));
-console.log(path.posix.resolve('/foo', 'bar/', 'baz/'));
+import { readEntry } from './utils/tar';
+
+const pack = tar.create({ portable: true, cwd: './test' }, ['']);
+
+const gg = await readEntry(pack);
+console.log('gg', gg);

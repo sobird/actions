@@ -39,21 +39,21 @@ vi.setConfig({
   testTimeout: 60000,
 });
 
-describe('test Docker Container', () => {
-  it('docker pull image test case', async () => {
+describe('Test Docker Container', () => {
+  it('pull image', async () => {
     const executor = docker.pull();
     await executor.execute();
     // expect(docker.container).not.toBeUndefined();
   });
 
-  it('docker create container test case', async () => {
+  it('create container', async () => {
     const executor = docker.create();
     await executor.execute();
     const id = docker.container?.id;
     expect(id).not.toBeUndefined();
   });
 
-  it('docker start container test case', async () => {
+  it('start container', async () => {
     const executor = docker.start();
     await executor.execute();
 
@@ -61,27 +61,32 @@ describe('test Docker Container', () => {
     expect(id).not.toBeUndefined();
   });
 
-  it('docker put file to container test case', async () => {
+  it('put file to container', async () => {
     const executor = docker.put('put-file-test', path.join(tmp, files[0].name));
     await executor.execute();
   });
 
-  it('docker put dir to container test case', async () => {
+  it('put dir to container', async () => {
     const executor = docker.put('put-dir-test', tmp);
     await executor.execute();
   });
 
-  it('docker put content to container test case', async () => {
+  it('put content to container', async () => {
     const executor = docker.putContent('put-content-test', ...files);
     await executor.execute();
   });
 
-  it('put archive to container test case', async () => {
+  it('get content from container', async () => {
+    const { body } = await docker.getContent('put-content-test/test1.txt');
+    expect(body).toBe('test1 content');
+  });
+
+  it('put archive to container', async () => {
     const archive = tar.create({ cwd: tmp, portable: true }, ['.']) as unknown as NodeJS.ReadableStream;
     await docker.putArchive('put-archive-test', archive);
   });
 
-  it('get archive from container test case', async () => {
+  it('get archive from container', async () => {
     const archive = await docker.getArchive('put-archive-test');
 
     const extract = tar.t({ });
@@ -112,7 +117,7 @@ describe('test Docker Container', () => {
     expect(archiveFiles).toEqual(files);
   });
 
-  it('container exec test case', async () => {
+  it('container exec', async () => {
     const body = fs.readFileSync(path.join(__dirname, '__mocks__/print_message.sh'), 'utf8');
     const putContentExecutor = docker.putContent('', {
       name: 'print_message.sh',
@@ -153,18 +158,11 @@ describe('test Docker Container', () => {
     const putContentExecutor = docker.putContent('.', {
       name: 'env',
       mode: 0o777,
-      body: `
-      name=sobird
-      hello=world
-      `,
+      body: ['name=sobird', 'hello=world'].join('\n'),
     });
     await putContentExecutor.execute();
 
-    console.log('121212', 121212);
     const envObj = await docker.getFileEnv('env');
-
-    const dd = await DockerContainer.docker.version();
-    console.log('dd', dd);
 
     expect(envObj).toEqual({
       name: 'sobird',

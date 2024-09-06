@@ -7,6 +7,7 @@ import * as tar from 'tar';
 
 import Constants from '@/pkg/common/constants';
 import Executor from '@/pkg/common/executor';
+import { readEntry } from '@/utils/tar';
 
 export interface FileEntry {
   name: string;
@@ -62,11 +63,14 @@ export default abstract class Container {
 
   async getFile(filename: string): Promise<tar.ReadEntry> {
     const archive = await this.getArchive(filename);
-    const extract = tar.list({});
+
+    const extract = tar.t({ portable: true, noResume: true });
     archive.pipe(extract);
 
     return new Promise((resolve, reject) => {
-      extract.on('entry', (entry) => {
+      extract.on('entry', (entry: tar.ReadEntry) => {
+        // archive.unpipe(extract);
+        entry.pause();
         resolve(entry);
       });
       archive.on('error', (err) => {
@@ -76,7 +80,41 @@ export default abstract class Container {
   }
 
   async getContent(filename: string): Promise<FileEntry> {
+    const archive = await this.getArchive(filename);
+    const extract = tar.t({ portable: true });
+    archive.pipe(extract);
+
+    return new Promise((resolve) => {
+      extract.on('entry', (entry: tar.ReadEntry) => {
+        if (entry.size === 0) {
+          resolve({
+            name: entry.path,
+            mode: entry.mode,
+            size: entry.size,
+            body: '',
+          });
+        }
+
+        let body = '';
+        entry.on('data', (chunk: Buffer) => {
+          body += chunk;
+        });
+        entry.on('end', () => {
+          if (entry.type === 'File') {
+            resolve({
+              name: entry.path,
+              mode: entry.mode,
+              size: entry.size,
+              body,
+            });
+            archive.unpipe(extract);
+          }
+        });
+      });
+    });
+
     const file = await this.getFile(filename);
+
     if (file.size === 0) {
       return {
         name: file.path,
@@ -108,6 +146,10 @@ export default abstract class Container {
 
   async readline(filename: string, callback?: (line: string) => void): Promise<string> {
     const file = await this.getFile(filename);
+    console.log('file', file);
+
+    // file.resume();
+
     let content = '';
 
     if (file.size === 0) {
@@ -116,19 +158,26 @@ export default abstract class Container {
 
     file.on('data', (chunk: Buffer) => {
       content += chunk;
+      console.log('content123', content.split('\n'));
     });
 
     const rl = readline.createInterface({
-      input: file as unknown as NodeJS.ReadableStream,
+      input: file,
       crlfDelay: Infinity,
     });
 
+    // rl.pause();
+
+    rl.on('line', (line) => {
+      console.log('line', line);
+      if (line.trim()) {
+        callback?.(line);
+      }
+
+      // file.resume();
+    });
+
     return new Promise((resolve, reject) => {
-      rl.on('line', (line) => {
-        if (line.trim()) {
-          callback?.(line);
-        }
-      });
       rl.on('close', () => {
         resolve(content);
       });
