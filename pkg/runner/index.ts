@@ -151,9 +151,9 @@ class Runner {
    */
   get Env() {
     const { job, workflow } = this.run;
-    const env = { ...workflow.env.evaluate(this), ...job.env.evaluate(this), ...this.config.env };
-    this.context.env = env;
-    return env;
+    const env = { ...workflow.env.evaluate(this), ...job.env.evaluate(this) };
+    this.Assign(this.context.env, env);
+    return this.context.env;
   }
 
   /**

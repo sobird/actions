@@ -183,7 +183,10 @@ export default abstract class Container {
         // throw new Error("Invalid format '{line}'");
       }
 
-      env[key] = value;
+      if (key) {
+        env[key] = value;
+      }
+
       key = '';
       value = '';
     });
@@ -191,7 +194,7 @@ export default abstract class Container {
     if (delimiter) {
       throw new Error(`Invalid value. Matching delimiter not found '${delimiter}'`);
     }
-
+    console.log('env', env);
     return env;
   }
 
@@ -242,7 +245,7 @@ export default abstract class Container {
   }
 
   getEnv(env:Record<string, string>, name: string) {
-    if (this.platform === 'windows') {
+    if (this.platform === 'Windows') {
       for (const k of Object.keys(env)) {
         if (k.toLowerCase() === name.toLowerCase()) {
           return env[k];
@@ -257,7 +260,7 @@ export default abstract class Container {
     if (prependPath.length > 0) {
       let { pathVariableName } = this;
 
-      if (this.platform === 'windows') {
+      if (this.platform === 'Windows') {
         for (const k of Object.keys(env)) {
           if (k.toLowerCase() === pathVariableName.toLowerCase()) {
             pathVariableName = k as 'path' | 'Path' | 'PATH';

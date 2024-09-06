@@ -15,6 +15,7 @@ import * as tar from 'tar';
 
 import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
+import { trimSuffix } from '@/utils';
 
 import Container, { FileEntry, ContainerExecOptions } from '.';
 
@@ -175,10 +176,11 @@ class HostedContainer extends Container {
     return path.isAbsolute(dir) ? path.join(rootdir, dir) : path.join(workdir, dir);
   }
 
-  resolve(dir: string = '') {
+  resolve(...paths: string[]) {
     const { rootdir } = this;
     const workdir = path.relative(rootdir, this.workdir);
-    return path.isAbsolute(dir) ? dir : path.resolve(path.sep, workdir, dir);
+    const dir = path.join(...paths);
+    return trimSuffix(path.isAbsolute(dir) ? dir : path.resolve(path.sep, workdir, dir), path.sep);
   }
 
   // relative(rawPath: string) {

@@ -411,7 +411,7 @@ class Runner implements Omit<Options, ''> {
     logger.debug('Loading environment from %s', this.envFile);
     console.log('this.env', this.env);
     Object.assign(this.env, readConfSync(this.envFile));
-    // Object.assign(this.context.env, this.env);
+    Object.assign(this.context.env, this.env);
 
     logger.debug('Loading vars from %s', this.varsFile);
     Object.assign(this.vars, readConfSync(this.varsFile));

@@ -7,7 +7,7 @@ import * as tar from 'tar';
 import HostedContainer from './hosted';
 
 vi.mock('./hosted');
-
+const workdir = '/home/runner';
 const testdir = path.join(os.tmpdir(), 'hosted-test');
 const filedir = path.join(testdir, 'file');
 const hosted: HostedContainer = new (HostedContainer as any)();
@@ -35,7 +35,7 @@ beforeAll(() => {
 
 afterAll(async () => {
   console.log('testdir', testdir);
-  fs.rmdirSync(testdir, { recursive: true });
+  // fs.rmdirSync(testdir, { recursive: true });
 
   const destination = 'put-archive-test/test1.txt';
   const archive = await hosted.getFileEnv(destination);
@@ -182,5 +182,43 @@ describe('test hosted container class', () => {
   it('container hashFiles with --follow-symbolic-links test case', async () => {
     const hash = hosted.hashFiles('--follow-symbolic-links', 'package.json');
     expect(hash.length).toBe(64);
+  });
+});
+
+describe('test docker container path', () => {
+  if (process.platform === 'win32') {
+    const testCases = [
+      ['/mnt/c/Users/act/go/src/github.com/nektos/act', 'C:\\Users\\act\\go\\src\\github.com\\nektos\\act\\'],
+      ['/mnt/f/work/dir', 'F:\\work\\dir'],
+      [`${workdir}/windows/to/unix`, 'windows\\to\\unix'],
+      [`${workdir}/act`, 'act'],
+    ];
+
+    testCases.forEach((item) => {
+      const [destination, source] = item;
+      it(source, () => {
+        expect(hosted.resolve(source)).toBe(destination);
+      });
+    });
+  } else {
+    const testCases = [
+      ['/home/act/go/src/github.com/nektos/act', '/home/act/go/src/github.com/nektos/act'],
+      ['/home/act', '/home/act/'],
+      [workdir, '.'],
+      [`${workdir}/test`, 'test'],
+    ];
+
+    testCases.forEach((item) => {
+      const [destination, source] = item;
+      it(source, () => {
+        expect(hosted.resolve(source)).toBe(destination);
+      });
+    });
+  }
+});
+
+describe('Container Shared Utils Test', () => {
+  it('', () => {
+
   });
 });

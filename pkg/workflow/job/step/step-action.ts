@@ -34,47 +34,40 @@ abstract class StepAction extends Step {
       // set current step
       context.github.action = id;
       IntraActionState[id] = {};
-      context.updateStepResult(id, {
+      context.StepResult = {
         outcome: 'success',
         conclusion: 'success',
         outputs: {},
-      });
-      console.log('step');
+      };
+
       const actionCommandFile = new ActionCommandFile(runner);
 
       await actionCommandFile.initialize(this.uuid);
 
       this.setupEnv(runner);
 
-      // todo job status and step conclusion
-      const enabled = this.if.evaluate(runner);
-      console.log('enabled', enabled);
+      try {
+        const enabled = this.if.evaluate(runner);
 
-      console.log('step env', this.#env);
-      console.log('github env', runner.context.env);
-
-      if (!enabled) {
-        context.updateStepResult(id, {
-          outcome: 'skipped',
-          conclusion: 'skipped',
-        });
-        // todo: log result
+        if (!enabled) {
+          context.StepResult = {
+            outcome: 'skipped',
+            conclusion: 'skipped',
+          };
+          return;
+        }
+      } catch (err) {
+        context.StepResult = {
+          outcome: 'failure',
+          conclusion: 'failure',
+        };
+        throw err;
       }
 
-      const stepName = this.getName(runner);
-      console.log('stepName:', stepName, IntraActionState);
-
-      // Prepare and clean Runner File Commands
-      const outputFileCommand = `set_output_${this.uuid}`;
-      console.log('outputFileCommand', outputFileCommand, runner.directory('Actions'));
-
       const timeoutMinutes = Number(this['timeout-minutes'].evaluate(runner)) || 60;
-
       await withTimeout(main.execute(runner), timeoutMinutes * 60 * 1000);
 
       await actionCommandFile.process();
-
-      console.log('runner', runner.prependPath);
     });
   }
 

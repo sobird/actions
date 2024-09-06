@@ -150,7 +150,7 @@ describe('test Docker Container', () => {
   });
 
   it('container getFileEnv test case', async () => {
-    const putContentExecutor = docker.putContent('', {
+    const putContentExecutor = docker.putContent('.', {
       name: 'env',
       mode: 0o777,
       body: `
@@ -160,6 +160,7 @@ describe('test Docker Container', () => {
     });
     await putContentExecutor.execute();
 
+    console.log('121212', 121212);
     const envObj = await docker.getFileEnv('env');
 
     const dd = await DockerContainer.docker.version();

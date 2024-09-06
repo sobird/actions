@@ -1,3 +1,4 @@
-import Constants from './pkg/common/constants';
+import path from 'node:path';
 
-console.log('Constants.Directory[directory]', Constants.Directory.Temp);
+console.log('path.', path.posix.join('home/sobird/').trimEnd('/'));
+console.log(path.posix.resolve('/foo', 'bar/', 'baz/'));

@@ -105,16 +105,16 @@ export default class Context {
     return this.env;
   }
 
-  updateStepResult(id: string, step: Partial<Step>) {
+  set StepResult(step: Partial<Step>) {
     const { action } = this.github;
-    if (!this.steps[id]) {
-      this.steps[id] = {
+    if (!this.steps[action]) {
+      this.steps[action] = {
         outputs: {},
         outcome: 'success',
         conclusion: 'success',
       };
     }
-    Object.assign(this.steps[id], step);
+    Object.assign(this.steps[action], step);
 
     if (step.conclusion === 'success' || step.conclusion === 'failure' || step.conclusion === 'cancelled') {
       this.job.status = step.conclusion;
