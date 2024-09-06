@@ -22,6 +22,7 @@ const dockerContainer = new DockerContainer({
 
 const fn = vi.fn();
 (fn as any).docker = DockerContainer.docker;
+(fn as any).Setup = DockerContainer.Setup;
 const Mocker = fn.mockImplementation(() => {
   return dockerContainer;
 });

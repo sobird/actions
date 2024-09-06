@@ -38,7 +38,7 @@ afterAll(async () => {
   // fs.rmdirSync(testdir, { recursive: true });
 });
 
-describe('test hosted container class', () => {
+describe('Test Hosted Container', () => {
   it('docker start container test case', async () => {
     const executor = hosted.start();
     await executor.execute();

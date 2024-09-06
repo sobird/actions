@@ -7,7 +7,6 @@ import * as tar from 'tar';
 
 import Constants from '@/pkg/common/constants';
 import Executor from '@/pkg/common/executor';
-import { readEntry } from '@/utils/tar';
 
 export interface FileEntry {
   name: string;
@@ -61,7 +60,7 @@ export default abstract class Container {
   abstract resolve(...paths: string[]): string;
   abstract imageEnv(): Promise<Record<string, string>>;
 
-  async getFile(filename: string): Promise<tar.ReadEntry> {
+  private async getEntry(filename: string): Promise<tar.ReadEntry> {
     const archive = await this.getArchive(filename);
 
     const extract = tar.t({ portable: true, noResume: true });
@@ -112,43 +111,10 @@ export default abstract class Container {
         });
       });
     });
-
-    const file = await this.getFile(filename);
-
-    if (file.size === 0) {
-      return {
-        name: file.path,
-        mode: file.mode,
-        size: file.size,
-        body: '',
-      };
-    }
-
-    let body = '';
-    file.on('data', (chunk: Buffer) => {
-      body += chunk;
-    });
-
-    return new Promise((resolve, reject) => {
-      file.on('error', (err) => {
-        reject(err);
-      });
-      file.on('end', () => {
-        resolve({
-          name: file.path,
-          mode: file.mode,
-          size: file.size,
-          body,
-        });
-      });
-    });
   }
 
   async readline(filename: string, callback?: (line: string) => void): Promise<string> {
-    const file = await this.getFile(filename);
-    console.log('file', file);
-
-    // file.resume();
+    const file = await this.getEntry(filename);
 
     let content = '';
 
@@ -158,11 +124,10 @@ export default abstract class Container {
 
     file.on('data', (chunk: Buffer) => {
       content += chunk;
-      console.log('content123', content.split('\n'));
     });
 
     const rl = readline.createInterface({
-      input: file,
+      input: file as unknown as NodeJS.ReadableStream,
       crlfDelay: Infinity,
     });
 
@@ -196,7 +161,10 @@ export default abstract class Container {
 
     const env: Record<string, string> = {};
 
-    await this.readline(filename, (line) => {
+    const { body } = await this.getContent(filename);
+    const lines = body.split('\n');
+
+    lines.forEach((line) => {
       const equalsIndex = line.indexOf('=');
       const heredocIndex = line.indexOf('<<');
 
@@ -243,7 +211,6 @@ export default abstract class Container {
     if (delimiter) {
       throw new Error(`Invalid value. Matching delimiter not found '${delimiter}'`);
     }
-    console.log('env', env);
     return env;
   }
 

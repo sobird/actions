@@ -20,6 +20,7 @@ import log4js from 'log4js';
 import * as tar from 'tar';
 
 import Executor, { Conditional } from '@/pkg/common/executor';
+import Runner from '@/pkg/config/runner';
 import docker from '@/pkg/docker';
 
 import Container, { FileEntry, ContainerExecOptions } from '.';
@@ -682,6 +683,16 @@ class DockerContainer extends Container {
     }
 
     return translatedPath;
+  }
+
+  static Setup(runner: Runner) {
+    return new Executor(() => {
+      // todo
+
+      // runner.container = new DockerContainer({
+      //   workdir: runner.config.workdir,
+      // });
+    });
   }
 }
 

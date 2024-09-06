@@ -8,18 +8,10 @@ const basedir = path.join(os.tmpdir(), 'hosted-test');
 const hostedContainer = new HostedContainer({
   basedir,
   workdir: '/home/runner',
-  cmd: [],
-  env: {
-    RUNNER_TOOL_CACHE: '/opt/hostedtoolcache',
-    RUNNER_OS: 'Linux',
-    RUNNER_TEMP: '/tmp',
-    LANG: 'C.UTF-8',
-  },
-  autoRemove: true,
-  privileged: true,
 });
 
 const fn = vi.fn();
+(fn as any).Setup = HostedContainer.Setup;
 const Mocker = fn.mockImplementation(() => {
   return hostedContainer;
 });
