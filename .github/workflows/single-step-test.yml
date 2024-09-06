@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: print env
         run: env
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          key: ${{ runner.os }}-yarn-${{ hashFiles('package.json') }}
+      # - name: Checkout
+      #   uses: actions/checkout@v4
+      #   with:
+      #     key: ${{ runner.os }}-yarn-${{ hashFiles('package.json') }}

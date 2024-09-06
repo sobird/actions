@@ -1,5 +1,6 @@
 import path from 'node:path';
 
+import Constants from '@/pkg/common/constants';
 import Runner from '@/pkg/runner';
 
 import extensions, { FileCommandExtension } from './extensions';
@@ -14,7 +15,7 @@ class ActionCommandFile {
   private commandExtensions: FileCommandExtension[] = extensions;
 
   constructor(public runner: Runner) {
-    this.fileCommandDirectory = path.join(runner.container!.directory('Temp'), this.folderName);
+    this.fileCommandDirectory = path.join(Constants.Directory.Temp, this.folderName);
   }
 
   public async initialize(fileSuffix: string) {

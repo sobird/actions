@@ -39,10 +39,7 @@ class Executor {
 
   // Executor 的 Then 方法用于链式调用执行器
   next(next: Executor) {
-    return new Executor(async (ctx) => {
-      await this.execute(ctx);
-      await next.execute(ctx);
-    });
+    return Executor.Pipeline(this, next);
   }
 
   // Executor 的 If 方法用于在条件满足时执行执行器
@@ -111,7 +108,7 @@ class Executor {
 
   /** 创建一个总是返回错误的执行器 */
   static Error(err: unknown) {
-    return new Executor(() => { Promise.reject(err); });
+    return new Executor(() => { throw err; });
   }
 
   /** 创建一个并行执行多个执行器的执行器 */
@@ -119,7 +116,7 @@ class Executor {
   static Parallel(size: number, ...executors: Executor[]) {
     let parallel = Math.max(1, size);
     parallel = Math.min(parallel, executors.length);
-    if (executors.length === 0) {
+    if (parallel === 0) {
       return new Executor(() => {});
     }
     return new Executor(async (ctx) => {
@@ -169,7 +166,7 @@ class Executor {
       try {
         await executor.execute(ctx);
       } catch (err) {
-        //
+        // todo
       } finally {
         release();
       }

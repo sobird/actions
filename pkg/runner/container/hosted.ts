@@ -229,7 +229,6 @@ class HostedContainer extends Container {
 
   static Setup(runner: Runner) {
     return new Executor(() => {
-      console.log('121212', 121212);
       runner.container = new HostedContainer({
         basedir: runner.ActionCacheDir,
         workdir: runner.config.workdir,
