@@ -226,8 +226,36 @@ describe('test docker container path', () => {
   }
 });
 
-describe('Container Shared Utils Test', () => {
-  it('', () => {
+const paths = [
+  '/usr/local/opt/mysql-client/bin',
+  '/usr/local/bin',
+  '/usr/bin',
+  '/bin',
+  ' ',
+];
 
+describe('Container Shared Utils Test', () => {
+  it('Join Path', () => {
+    const PATH = hosted.joinPath(...paths);
+    expect(PATH).toBe(paths.join(':'));
+  });
+
+  it('Apply Path', async () => {
+    const env = {
+      PATH: '/test/bin',
+    };
+    const prependPath = paths;
+
+    const newEnv = await hosted.applyPath(prependPath, env);
+    expect(newEnv.PATH).toBe(hosted.joinPath(...prependPath, '/test/bin'));
+  });
+
+  it('Look Path', () => {
+    const env = {
+      PATH: hosted.joinPath(...paths),
+    };
+
+    const cmd = hosted.lookPath('node', env);
+    expect(cmd).not.toBe('');
   });
 });

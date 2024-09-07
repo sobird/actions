@@ -240,36 +240,24 @@ export default abstract class Container {
       }
       return '';
     }
-    const envPath = this.getEnv(env, this.pathVariableName);
-    this.splitPath(envPath).map((dir) => { return dir.trim(); }).forEach((item) => {
-      let dir = item;
-      if (dir === '') {
-        // Unix shell semantics: path element "" means "."
-        dir = '.';
-      }
+    const envPath = Container.GetEnv(env, this.pathVariableName);
+    const dirs = this.splitPath(envPath).map((dir) => {
+      return dir.trim() === '' ? '.' : dir.trim();
+    });
+
+    for (let i = 0; i < dirs.length; i++) {
+      const dir = dirs[i];
       const fullPath = path.join(dir, file);
       if (Container.isExecutable(fullPath)) {
         return fullPath;
       }
-    });
+    }
 
     return '';
   }
 
   get defaultPathVariable() {
     return process.env[this.pathVariableName];
-  }
-
-  getEnv(env:Record<string, string>, name: string) {
-    if (this.platform === 'Windows') {
-      for (const k of Object.keys(env)) {
-        if (k.toLowerCase() === name.toLowerCase()) {
-          return env[k];
-        }
-      }
-      return '';
-    }
-    return env[name];
   }
 
   async applyPath(prependPath: string[], env: Record<string, string>) {
@@ -296,13 +284,13 @@ export default abstract class Container {
         }
 
         cpath = cpath || this.defaultPathVariable || '';
-
         prependPath.push(cpath);
       }
 
       // eslint-disable-next-line no-param-reassign
-      env[pathVariableName] = this.joinPath(...prependPath);
+      env[pathVariableName] = this.joinPath(...prependPath, env[pathVariableName]);
     }
+    return env;
   }
 
   get isCaseSensitive() {
@@ -311,6 +299,18 @@ export default abstract class Container {
 
   directory(directory: keyof typeof Constants.Directory) {
     return this.resolve(Constants.Directory[directory]);
+  }
+
+  static GetEnv(env:Record<string, string>, name: string) {
+    if (process.platform === 'win32') {
+      for (const k of Object.keys(env)) {
+        if (k.toLowerCase() === name.toLowerCase()) {
+          return env[k];
+        }
+      }
+      return '';
+    }
+    return env[name] || '';
   }
 
   static Os(platform: string) {

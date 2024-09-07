@@ -579,9 +579,9 @@ class Job {
         console.log('step', step.constructor.name);
         console.log('step if:', step.if.evaluate(runner));
 
-        console.log(`${runner.run.name} - step:`, step.getName(runner));
+        console.log(`${runner.run.name} - step:`, step.Name(runner));
         console.log('step uses:', step.uses);
-        console.log('step env:', step.getEnv(runner));
+        console.log('step env:', step.Env(runner));
         console.log('step with:', step.with.evaluate(runner));
 
         await asyncFunction(250);

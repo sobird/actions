@@ -6,8 +6,18 @@ on:
 jobs:
   single-step-test:
     runs-on: ubuntu-latest
+    container:
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SOBIRD: sobird
+
     steps:
       - name: print env
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FIRST_NAME: Mona
+          LAST_NAME: Octocat
         # if: ${{ 123 < 1 }}
         run: env
       # - name: Checkout

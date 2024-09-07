@@ -136,7 +136,7 @@ class Step {
    * You can use built-in `shell` keywords, or you can define a custom set of shell options.
    * The shell command that is run internally executes a temporary file that contains the commands specified in the `run` keyword.
    */
-  shell?: string;
+  shell: string;
 
   /**
    * A map of the input parameters defined by the action.
@@ -206,7 +206,7 @@ class Step {
       ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
       ['hashFiles'],
     );
-    this.shell = step.shell;
+    this.shell = step.shell || '';
     this.with = new Expression(
       step.with,
       ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
@@ -242,12 +242,12 @@ class Step {
     return this.#number;
   }
 
-  getName(runner: Runner) {
+  Name(runner: Runner) {
     return this.name.evaluate(runner) || this.uses || this.run.evaluate(runner) || this.id;
   }
 
   // Merge variables from with into env
-  getEnv(runner: Runner) {
+  Env(runner: Runner) {
     const env = { ...this.env.evaluate(runner) };
     const stepWith = this.with.evaluate(runner);
 

@@ -1,8 +1,11 @@
 import * as tar from 'tar';
 
-import { readEntry } from './utils/tar';
+function test() {
+  for (let i = 0; i < 10; i++) {
+    if (i === 5) {
+      return i;
+    }
+  }
+}
 
-const pack = tar.create({ portable: true, cwd: './test' }, ['']);
-
-const gg = await readEntry(pack);
-console.log('gg', gg);
+console.log('test', test());

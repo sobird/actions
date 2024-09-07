@@ -13,13 +13,14 @@ export enum StepActionStage {
 }
 
 abstract class StepAction extends Step {
-  #env: Record<string, string> = {};
+  environment: Record<string, string> = {};
 
   public pre() {
     return new Executor(() => {});
   }
 
   public abstract main(): Executor;
+
   public post() {
     return new Executor(() => {});
   }
@@ -73,20 +74,13 @@ abstract class StepAction extends Step {
 
   setupEnv(runner: Runner) {
     this.mergeEnv(runner);
-    // step env
-    runner.Assign(this.#env, this.getEnv(runner));
+    // assign step env
+    runner.Assign(this.environment, this.Env(runner));
   }
 
   mergeEnv(runner: Runner) {
-    const { job } = runner.run;
-    const { container } = job;
-    if (container) {
-      runner.Assign(this.#env, runner.Env, container.env?.evaluate(runner) || {});
-    } else {
-      runner.Assign(this.#env, runner.Env);
-    }
-
-    Object.assign(this.#env, runner.context.github.Env);
+    runner.Assign(this.environment, runner.Env);
+    Object.assign(this.environment, runner.context.github.Env);
   }
 }
 
