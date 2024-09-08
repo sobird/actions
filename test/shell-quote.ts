@@ -1,7 +1,6 @@
-import { exec, spawn } from 'node:child_process';
 import os from 'os';
 
-import { parse, quote } from 'shell-quote';
+import { parse } from 'shell-quote';
 
 let cmd = ['path\\to\\your\\command', 'arg1', 'arg2']; // 示例命令数组
 
@@ -17,4 +16,4 @@ console.dir(xs);
 
 const xs2 = parse('a "b c" \\$def \'it\\\'s great\'');
 
-console.log('xs2', quote(xs2));
+console.log('xs2', xs2);

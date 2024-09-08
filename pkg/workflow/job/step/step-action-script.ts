@@ -11,30 +11,37 @@ import Runner from '@/pkg/runner';
 import StepAction from './step-action';
 
 class StepActionScript extends StepAction {
+  public command: string = '';
+
   public main() {
     return this.executor(new Executor(async (ctx) => {
       const runner = ctx!;
-      console.log('step action script main');
       this.setupShellCommand(runner);
 
-      await runner.container?.exec(['node', '-v'], {}).execute();
+      const cmd = shellQuote.parse(this.command) as string[];
+      const workdir = this.WorkingDirectory(runner);
+
+      await runner.container?.exec(cmd, { env: this.environment, workdir }).execute();
     }));
   }
 
   setupShellCommand(runner: Runner) {
     const shell = this.setupShell(runner);
     const script = StepActionScript.FixUpScriptContent(shell, this.run.evaluate(runner));
-
     const [command, ext] = StepActionScript.GetShellCommandAndExt(shell);
-    console.log(command, ext);
 
     const scriptFilePath = path.join(Constants.Directory.Temp, `${this.uuid}${ext}`);
     const resolvedScriptPath = runner.container?.resolve(scriptFilePath);
-    console.log('scriptFilePath', scriptFilePath);
-    console.log('resolvedScriptPath', resolvedScriptPath);
 
-    const commands = format(command, resolvedScriptPath);
-    console.log('commands', shellQuote.parse(commands));
+    this.command = format(command, resolvedScriptPath);
+
+    runner.container?.putContent('.', {
+      name: scriptFilePath,
+      mode: 0o755,
+      body: script,
+    }).execute();
+
+    return [resolvedScriptPath, script];
   }
 
   setupShell(runner: Runner) {

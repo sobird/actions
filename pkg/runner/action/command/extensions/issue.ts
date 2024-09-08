@@ -1,7 +1,6 @@
 import path from 'node:path';
 
 import type { CommandExtension } from '.';
-import ActionCommandManager from '../manager';
 
 const Properties = {
   File: 'file',

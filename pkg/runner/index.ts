@@ -109,7 +109,7 @@ class Runner {
     const workflowDirectory = path.join(Constants.Directory.Temp, '_github_workflow');
     return executor.finally(new Executor(() => {
       const { event } = this.context.github;
-      console.log('4444', 4444);
+      this.context.github.event_path = this.container?.resolve(workflowDirectory, 'event.json') || '';
       return this.container?.putContent(workflowDirectory, {
         name: 'event.json',
         mode: 0o644,
@@ -205,13 +205,6 @@ class Runner {
 
   get Assign() {
     return this.container?.isCaseSensitive ? Object.assign : assignIgnoreCase;
-  }
-
-  directory(directory: keyof typeof Constants.Directory) {
-    if (!this.container) {
-      throw Error('Runner container not started yet!');
-    }
-    return this.container.resolve(Constants.Directory[directory]);
   }
 
   get EnhancedAnnotationsEnabled() {

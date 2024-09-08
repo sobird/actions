@@ -13,7 +13,8 @@ jobs:
 
     steps:
       - name: print env
-        shell: bash
+        # shell: bash
+        # working-directory: '.'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FIRST_NAME: Mona
