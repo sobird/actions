@@ -16,6 +16,7 @@ import Context from '@/pkg/runner/context';
 import { asyncFunction, createSafeName, assignIgnoreCase } from '@/utils';
 
 import Container from './container';
+import DockerContainer from './container/docker';
 import HostedContainer from './container/hosted';
 import Executor from '../common/executor';
 import { Run } from '../workflow/plan';
@@ -104,7 +105,7 @@ class Runner {
     const { IsHosted } = this;
     console.log('IsHosted', IsHosted);
 
-    const executor = HostedContainer.Setup(this);
+    const executor = IsHosted ? HostedContainer.Setup(this) : DockerContainer.Setup(this);
 
     const workflowDirectory = path.join(Constants.Directory.Temp, '_github_workflow');
     return executor.finally(new Executor(() => {
@@ -124,6 +125,19 @@ class Runner {
         basedir: this.ActionCacheDir,
       });
     });
+  }
+
+  get Credentials() {
+    const { container } = this.run.job;
+    const username = this.context.secrets.DOCKER_USERNAME;
+    const password = this.context.secrets.DOCKER_PASSWORD;
+    const credentials = container.credentials?.evaluate(this);
+
+    return {
+      username,
+      password,
+      ...credentials,
+    };
   }
 
   get Token() {
@@ -164,7 +178,7 @@ class Runner {
     return { ...workflow.defaults, ...job.defaults };
   }
 
-  private generateContainerName(id?: string) {
+  generateContainerName(id?: string) {
     const { workflow } = this.run;
     const parts = [`WORKFLOW-${workflow.name || workflow.file}`, `JOB-${this.run.name}`];
     if (id) {
@@ -173,10 +187,10 @@ class Runner {
     return createSafeName(...parts);
   }
 
-  private generateNetworkName(id?: string) {
+  generateNetworkName(id?: string) {
     const { jobId } = this.run;
-    if (this.config.container.networkMode) {
-      return [this.config.container.networkMode, false];
+    if (this.config.containerNetworkMode) {
+      return [this.config.containerNetworkMode, false];
     }
     // 如未配置NetworkMode，则手动创建network
     return [`${this.generateContainerName(id)}-${jobId}-network`, true];

@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /**
  * Docker Container
  *
@@ -20,8 +21,8 @@ import log4js from 'log4js';
 import * as tar from 'tar';
 
 import Executor, { Conditional } from '@/pkg/common/executor';
-import Runner from '@/pkg/config/runner';
 import docker from '@/pkg/docker';
+import Runner from '@/pkg/runner';
 
 import Container, { FileEntry, ContainerExecOptions } from '.';
 
@@ -687,10 +688,19 @@ class DockerContainer extends Container {
 
   static Setup(runner: Runner) {
     return new Executor(() => {
-      // todo
+      const image = runner.PlatformImage;
+      const credentials = runner.Credentials;
+
+      logger.info('\u{0001f680}  Start image=%s', image);
+
+      const name = runner.generateContainerName();
+      console.log('name', name, credentials);
 
       // runner.container = new DockerContainer({
       //   workdir: runner.config.workdir,
+      //   authconfig: {
+      //     ...credentials,
+      //   },
       // });
     });
   }

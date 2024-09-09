@@ -15,7 +15,7 @@ import { Options } from '@/cmd/run';
 import Artifact from '@/pkg/artifact';
 import ArtifactCache from '@/pkg/artifact/cache';
 import Git from '@/pkg/common/git';
-import { getSocketAndHost } from '@/pkg/docker';
+import { Docker } from '@/pkg/docker';
 import Labels from '@/pkg/labels';
 import ActionCache from '@/pkg/runner/action/cache';
 import ActionCacheOffline from '@/pkg/runner/action/cache/offline';
@@ -396,7 +396,7 @@ class Runner implements Omit<Options, ''> {
 
   async configure(): Promise<Config> {
     try {
-      const { socket, host } = getSocketAndHost(this.containerDaemonSocket);
+      const { socket, host } = Docker.SocketAndHost(this.containerDaemonSocket);
       process.env.DOCKER_HOST = host;
       this.containerDaemonSocket = socket;
       logger.info("Using docker host '%s', and daemon socket '%s'", host, socket);

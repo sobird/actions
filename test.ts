@@ -1,11 +1,4 @@
-import * as tar from 'tar';
+import path from 'node:path';
 
-function test() {
-  for (let i = 0; i < 10; i++) {
-    if (i === 5) {
-      return i;
-    }
-  }
-}
-
-console.log('test', test());
+const p = path.posix.resolve('C:\\Users\\Example\\Documents');
+console.log('path.posix.delimiter', path.delimiter, path.win32.delimiter, path.win32.sep);

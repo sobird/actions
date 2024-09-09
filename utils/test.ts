@@ -12,3 +12,16 @@ export function testDir(tmp: string = 'test-dir') {
   });
   return baseDir;
 }
+
+export function testFile(name: string = 'test-file') {
+  const file = path.join(os.tmpdir(), 'test', name);
+  const dir = path.dirname(file);
+  beforeAll(() => {
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(file, '');
+  });
+  afterAll(() => {
+    // fs.rmdirSync(dir, { recursive: true });
+  });
+  return file;
+}

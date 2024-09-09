@@ -25,4 +25,4 @@
  * }
  * ```
  */
-export type Secrets = Record<'GITHUB_TOKEN', string> | Record<string, string>;
+export type Secrets = Record<string, string>;

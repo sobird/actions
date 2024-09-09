@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 
-import docker, { dockerSocketLocations } from '@/pkg/docker';
+import docker, { Docker } from '@/pkg/docker';
 
 export async function bugReportOption(version?: string) {
   const reports: string[] = [];
@@ -22,7 +22,7 @@ export async function bugReportOption(version?: string) {
   reports.push(`Docker host: ${dockerHost}`);
   reports.push('Sockets found:');
 
-  dockerSocketLocations.forEach((p) => {
+  Docker.SocketLocations.forEach((p) => {
     if (fs.existsSync(p)) {
       reports.push(`\t${p}`);
     }
