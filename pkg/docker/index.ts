@@ -173,6 +173,23 @@ export class Docker extends Dockerode {
     socketHost.socket = '';
     return socketHost;
   }
+
+  static SocketMountPath(socketPath: string) {
+    const protoIndex = socketPath.indexOf('://');
+    if (protoIndex !== -1) {
+      const scheme = socketPath.substring(0, protoIndex);
+      if (scheme.toLowerCase() === 'npipe') {
+        // Linux container mount on Windows, use the default socket path of the VM / WSL2
+        return '/var/run/docker.sock';
+      } if (scheme.toLowerCase() === 'unix') {
+        return socketPath.substring(protoIndex + 3);
+      } if (/[^a-zA-Z]/.test(scheme)) {
+        // Unknown protocol, use default
+        return '/var/run/docker.sock';
+      }
+    }
+    return socketPath;
+  }
 }
 
 // Docker Singleton

@@ -450,7 +450,7 @@ class Runner implements Omit<Options, ''> {
 
     const config: Config = {
       context: this.context,
-      workdir: this.workdir,
+      workdir: path.resolve(this.workdir),
       bindWorkdir: this.bindWorkdir,
       actionCache,
       platforms,

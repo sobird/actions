@@ -11,6 +11,7 @@ import path from 'node:path';
 import log4js, { Logger } from 'log4js';
 
 import Constants from '@/pkg/common/constants';
+import { Docker } from '@/pkg/docker';
 import Config from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
 import { asyncFunction, createSafeName, assignIgnoreCase } from '@/utils';
@@ -129,8 +130,9 @@ class Runner {
 
   get Credentials() {
     const { container } = this.run.job;
-    const username = this.context.secrets.DOCKER_USERNAME;
-    const password = this.context.secrets.DOCKER_PASSWORD;
+    const { DOCKER_USERNAME: username, DOCKER_PASSWORD: password } = this.context.secrets;
+    // const username = this.context.secrets.DOCKER_USERNAME;
+    // const password = this.context.secrets.DOCKER_PASSWORD;
     const credentials = container.credentials?.evaluate(this);
 
     return {
@@ -138,6 +140,50 @@ class Runner {
       password,
       ...credentials,
     };
+  }
+
+  // DockerContainer Utils
+  get BindsAndMounts() {
+    const name = this.ContainerName();
+    const defaultSocket = '/var/run/docker.sock';
+    const containerDaemonSocket = this.config.containerDaemonSocket || defaultSocket;
+    const binds: string[] = [];
+    if (containerDaemonSocket !== '-') {
+      const daemonPath = Docker.SocketMountPath(containerDaemonSocket);
+      binds.push(`${daemonPath}:${defaultSocket}`);
+    }
+
+    const ToolCacheMount = 'toolcache';
+    const NameMount = `${name}-env`;
+
+    const containerWorkdir = DockerContainer.Resolve(this.config.workdir);
+
+    const mounts = {
+      [ToolCacheMount]: path.join(containerWorkdir, Constants.Directory.Tool),
+      [NameMount]: path.join(containerWorkdir, Constants.Directory.Work),
+    };
+
+    const { volumes = [] } = this.run.job.container;
+    volumes.forEach((volume) => {
+      if (!volume.includes(':') && path.isAbsolute(volume)) {
+        binds.push(volume);
+      } else {
+        const [key, value] = volume.split(':');
+        mounts[key] = value;
+      }
+    });
+
+    if (this.config.bindWorkdir) {
+      let bindModifiers = '';
+      if (process.platform === 'darwin') {
+        bindModifiers = ':delegated';
+      }
+      binds.push(`${this.config.workdir}:${containerWorkdir}${bindModifiers}`);
+    } else {
+      mounts[name] = containerWorkdir;
+    }
+
+    return [binds, mounts];
   }
 
   get Token() {
@@ -178,7 +224,7 @@ class Runner {
     return { ...workflow.defaults, ...job.defaults };
   }
 
-  generateContainerName(id?: string) {
+  ContainerName(id?: string) {
     const { workflow } = this.run;
     const parts = [`WORKFLOW-${workflow.name || workflow.file}`, `JOB-${this.run.name}`];
     if (id) {
@@ -187,13 +233,13 @@ class Runner {
     return createSafeName(...parts);
   }
 
-  generateNetworkName(id?: string) {
+  ContainerNetworkName(id?: string) {
     const { jobId } = this.run;
     if (this.config.containerNetworkMode) {
       return [this.config.containerNetworkMode, false];
     }
     // 如未配置NetworkMode，则手动创建network
-    return [`${this.generateContainerName(id)}-${jobId}-network`, true];
+    return [`${this.ContainerName(id)}-${jobId}-network`, true];
   }
 
   setJobContext(job: Context['job']) {

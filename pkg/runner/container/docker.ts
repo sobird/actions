@@ -660,13 +660,16 @@ class DockerContainer extends Container {
   }
 
   resolve(...paths: string[]) {
+    const { workdir = '/' } = this.options;
+    return DockerContainer.Resolve(workdir, ...paths);
+  }
+
+  static Resolve(...paths: string[]) {
     if (process.platform === 'win32' && paths.includes('/')) {
       throw Error('You cannot specify linux style local paths (/mnt/etc) on Windows as it does not understand them.');
     }
 
-    const { workdir = '/' } = this.options;
-
-    const absPath = path.resolve(workdir, ...paths);
+    const absPath = path.resolve(...paths);
     const windowsPathRegex = /^([a-zA-Z]):(\\.+)$/;
     const windowsPathComponents = windowsPathRegex.exec(absPath);
 
@@ -693,8 +696,11 @@ class DockerContainer extends Container {
 
       logger.info('\u{0001f680}  Start image=%s', image);
 
-      const name = runner.generateContainerName();
+      const name = runner.ContainerName();
       console.log('name', name, credentials);
+
+      const ddd = runner.BindsAndMounts;
+      console.log('ddd', ddd);
 
       // runner.container = new DockerContainer({
       //   workdir: runner.config.workdir,
