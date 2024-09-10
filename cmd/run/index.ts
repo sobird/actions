@@ -126,7 +126,7 @@ export const runCommand = new Command('run')
   .option('--reuse', "don't remove container(s) on successfully completed workflow(s) to maintain state between runs")
   .option('--container-privileged', 'use privileged mode')
   .option('--container-auto-remove', 'automatically remove container(s)/volume(s) after a workflow(s) failure')
-  .option('--container-userns <userns>', 'user namespace to use')
+  .option('--container-userns-mode <userns>', 'user namespace to use')
   .option('--container-network <network>', 'specify the network to which the container will connect')
   .option('--container-platform <string>', 'platform which should be used to run containers, e.g.: linux/amd64. if not specified, will use host default architecture. Requires Docker server API Version 1.41+. Ignored on earlier Docker server platforms.')
   .option('--container-daemon-socket <socket>', 'path to Docker daemon socket which will be mounted to containers')
@@ -195,8 +195,8 @@ export const runCommand = new Command('run')
     if (options.containerPrivileged) {
       logger.warn(deprecationWarning, 'privileged', '--privileged', '--privileged');
     }
-    if (options.containerUserns) {
-      logger.warn(deprecationWarning, 'userns', `--userns=${options.containerUserns}`, `--userns=${options.containerUserns}`);
+    if (options.containerUsernsMode) {
+      logger.warn(deprecationWarning, 'userns', `--userns=${options.containerUsernsMode}`, `--userns=${options.containerUsernsMode}`);
     }
     if (options.containerCapAdd) {
       logger.warn(deprecationWarning, 'container-cap-add', `--cap-add=${options.containerCapAdd.join(' ')}`, `--cap-add=${options.containerCapAdd.join(' ')}`);

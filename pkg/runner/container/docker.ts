@@ -691,6 +691,7 @@ class DockerContainer extends Container {
 
   static Setup(runner: Runner) {
     return new Executor(() => {
+      const { config } = runner;
       const image = runner.PlatformImage;
       const credentials = runner.Credentials;
 
@@ -699,15 +700,30 @@ class DockerContainer extends Container {
       const name = runner.ContainerName();
       console.log('name', name, credentials);
 
-      const ddd = runner.BindsAndMounts;
-      console.log('ddd', ddd);
+      const [binds, mounts] = runner.BindsAndMounts;
 
-      // runner.container = new DockerContainer({
-      //   workdir: runner.config.workdir,
-      //   authconfig: {
-      //     ...credentials,
-      //   },
-      // });
+      runner.container = new DockerContainer({
+        name,
+        image: 'node:lts-slim',
+        workdir: config.workdir,
+        entrypoint: ['/bin/sleep', `${config.containerMaxLifetime}`],
+        cmd: [],
+        authconfig: {
+          ...credentials,
+        },
+        binds,
+        mounts,
+
+        env: {},
+        autoRemove: config.containerAutoRemove,
+        privileged: config.containerPrivileged,
+        usernsMode: config.containerUsernsMode,
+        portBindings: {},
+        exposedPorts: {},
+        platform: '',
+      });
+
+      return runner.container.start();
     });
   }
 }

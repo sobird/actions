@@ -156,7 +156,7 @@ interface Config {
   /**
    * User namespace to use.
    */
-  containerUserns: string;
+  containerUsernsMode: string;
 
   /**
    * Desired OS/architecture platform for running containers.

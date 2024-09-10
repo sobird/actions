@@ -257,7 +257,7 @@ class Runner implements Omit<Options, ''> {
   /**
    * User namespace to use
    */
-  public containerUserns: string;
+  public containerUsernsMode: string;
 
   /**
    * Add Linux capabilities
@@ -338,10 +338,10 @@ class Runner implements Omit<Options, ''> {
     this.containerDaemonSocket = runner.containerDaemonSocket;
     this.containerPrivileged = runner.containerPrivileged;
     this.containerAutoRemove = runner.containerAutoRemove;
-    this.containerUserns = runner.containerUserns;
+    this.containerUsernsMode = runner.containerUsernsMode;
     this.containerCapAdd = runner.containerCapAdd;
     this.containerCapDrop = runner.containerCapDrop;
-    this.containerMaxLifetime = runner.containerMaxLifetime;
+    this.containerMaxLifetime = runner.containerMaxLifetime || 0;
     this.containerOptions = runner.containerOptions;
   }
 
@@ -469,7 +469,7 @@ class Runner implements Omit<Options, ''> {
       matrix: this.matrix,
       pull: this.pull,
       rebuild: this.rebuild,
-      containerUserns: this.containerUserns,
+      containerUsernsMode: this.containerUsernsMode,
       containerPlatform: this.containerPlatform,
       containerDaemonSocket: this.containerDaemonSocket,
       containerCapAdd: this.containerCapAdd,
