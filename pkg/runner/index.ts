@@ -103,29 +103,25 @@ class Runner {
   }
 
   public startContainer() {
-    const { IsHosted } = this;
+    const { IsHosted, context } = this;
     console.log('IsHosted', IsHosted);
 
-    const executor = IsHosted ? HostedContainer.Setup(this) : DockerContainer.Setup(this);
+    const JobContainer = !IsHosted ? HostedContainer : DockerContainer;
+    const executor = JobContainer.Setup(this);
 
     const workflowDirectory = path.join(Constants.Directory.Temp, '_github_workflow');
-    return executor.finally(new Executor(() => {
-      const { event } = this.context.github;
-      this.context.github.event_path = this.container?.resolve(workflowDirectory, 'event.json') || '';
+    return executor.next(new Executor(() => {
+      const { event } = context.github;
+      // set github context
+      context.github.event_path = this.container?.resolve(workflowDirectory, 'event.json') || '';
+      context.github.workspace = this.container!.resolve();
+
       return this.container?.putContent(workflowDirectory, {
         name: 'event.json',
         mode: 0o644,
         body: JSON.stringify(event),
       });
     }));
-  }
-
-  startHostedContainer() {
-    return new Executor(() => {
-      this.container = new HostedContainer({
-        basedir: this.ActionCacheDir,
-      });
-    });
   }
 
   get Credentials() {
@@ -143,7 +139,7 @@ class Runner {
   }
 
   // DockerContainer Utils
-  get BindsAndMounts() {
+  get BindsAndMounts(): [string[], Record<string, string>] {
     const name = this.ContainerName();
     const defaultSocket = '/var/run/docker.sock';
     const containerDaemonSocket = this.config.containerDaemonSocket || defaultSocket;
@@ -178,7 +174,7 @@ class Runner {
       if (process.platform === 'darwin') {
         bindModifiers = ':delegated';
       }
-      binds.push(`${this.config.workdir}:${containerWorkdir}${bindModifiers}`);
+      binds.push(`${this.config.workdir}:${containerWorkdir}/test${bindModifiers}`);
     } else {
       mounts[name] = containerWorkdir;
     }
@@ -233,7 +229,7 @@ class Runner {
     return createSafeName(...parts);
   }
 
-  ContainerNetworkName(id?: string) {
+  ContainerNetworkName(id?: string): [string, boolean] {
     const { jobId } = this.run;
     if (this.config.containerNetworkMode) {
       return [this.config.containerNetworkMode, false];

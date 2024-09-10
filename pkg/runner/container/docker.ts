@@ -698,9 +698,14 @@ class DockerContainer extends Container {
       logger.info('\u{0001f680}  Start image=%s', image);
 
       const name = runner.ContainerName();
-      console.log('name', name, credentials);
+      const [networkName, createAndDeleteNetwork] = runner.ContainerNetworkName();
+      console.log('name', name, credentials, networkName, createAndDeleteNetwork);
 
       const [binds, mounts] = runner.BindsAndMounts;
+
+      console.log('binds', binds);
+      console.log('mounts', mounts);
+      console.log('workflow', runner.run.workflow.file);
 
       runner.container = new DockerContainer({
         name,
@@ -713,14 +718,17 @@ class DockerContainer extends Container {
         },
         binds,
         mounts,
-
-        env: {},
+        env: {
+          LANG: 'C.UTF-8',
+        },
+        networkMode: '',
+        networkAliases: [runner.run.name],
         autoRemove: config.containerAutoRemove,
         privileged: config.containerPrivileged,
         usernsMode: config.containerUsernsMode,
-        portBindings: {},
-        exposedPorts: {},
-        platform: '',
+        platform: config.containerPlatform,
+        // portBindings: {},
+        // exposedPorts: {},
       });
 
       return runner.container.start();

@@ -341,7 +341,7 @@ class Runner implements Omit<Options, ''> {
     this.containerUsernsMode = runner.containerUsernsMode;
     this.containerCapAdd = runner.containerCapAdd;
     this.containerCapDrop = runner.containerCapDrop;
-    this.containerMaxLifetime = runner.containerMaxLifetime || 0;
+    this.containerMaxLifetime = runner.containerMaxLifetime || 3600;
     this.containerOptions = runner.containerOptions;
   }
 
