@@ -21,6 +21,8 @@ jobs:
           LAST_NAME: Octocat
         # if: ${{ 123 < 1 }}
         run: env
+      - name: ls
+        run: ls -l
       # - name: Checkout
       #   uses: actions/checkout@v4
       #   with:

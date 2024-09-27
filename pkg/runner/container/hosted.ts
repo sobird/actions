@@ -36,8 +36,8 @@ class HostedContainer extends Container {
 
   arch = Container.Arch(process.arch);
 
-  constructor(public options: HostedContainerOptions) {
-    super();
+  constructor(public options: HostedContainerOptions, workspace?: string) {
+    super(options, workspace);
 
     const { basedir } = options;
     // like container root
@@ -232,9 +232,11 @@ class HostedContainer extends Container {
 
   static Setup(runner: Runner) {
     return new Executor(() => {
+      const { config } = runner;
+
       runner.container = new HostedContainer({
         basedir: runner.ActionCacheDir,
-        workdir: runner.config.workdir,
+        workdir: config.workdir,
       });
     });
   }

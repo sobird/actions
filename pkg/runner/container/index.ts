@@ -47,6 +47,8 @@ export default abstract class Container {
 
   // constructor(public options: ContainerOptions) {}
 
+  constructor(public options: unknown, public workspace: string = '/home/runner') {}
+
   /** 上传文件/目录 */
   abstract put(destination: string, source: string, useGitIgnore: boolean): Executor;
   abstract putContent(destination: string, ...files: FileEntry[]): Executor;

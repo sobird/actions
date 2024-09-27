@@ -71,9 +71,7 @@ class DockerContainer extends Container {
 
   arch: string = '';
 
-  constructor(public options: DockerContainerOptions) {
-    super();
-  }
+  declare options: DockerContainerOptions;
 
   pull(force: boolean = false) {
     return new Executor(async () => {
@@ -527,7 +525,7 @@ class DockerContainer extends Container {
       if (!container) {
         return;
       }
-      const WorkingDir = this.resolve(inputs.workdir || '');
+      const WorkingDir = this.resolve(this.options.workdir, inputs.workdir || '');
 
       const Env = Object.entries(inputs.env || {}).map(([key, value]) => { return `${key}=${value}`; });
 
@@ -660,8 +658,7 @@ class DockerContainer extends Container {
   }
 
   resolve(...paths: string[]) {
-    const { workdir = '/' } = this.options;
-    return DockerContainer.Resolve(workdir, ...paths);
+    return DockerContainer.Resolve(this.workspace, ...paths);
   }
 
   static Resolve(...paths: string[]) {

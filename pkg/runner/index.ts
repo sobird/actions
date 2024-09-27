@@ -104,17 +104,16 @@ class Runner {
 
   public startContainer() {
     const { IsHosted, context } = this;
-    console.log('IsHosted', IsHosted);
 
-    const JobContainer = !IsHosted ? HostedContainer : DockerContainer;
+    const JobContainer = IsHosted ? HostedContainer : DockerContainer;
     const executor = JobContainer.Setup(this);
 
     const workflowDirectory = path.join(Constants.Directory.Temp, '_github_workflow');
     return executor.next(new Executor(() => {
       const { event } = context.github;
       // set github context
-      context.github.event_path = this.container?.resolve(workflowDirectory, 'event.json') || '';
-      context.github.workspace = this.container!.resolve();
+      context.github.event_path = this.container!.resolve(workflowDirectory, 'event.json') || '';
+      context.github.workspace = this.container!.resolve(this.config.workdir);
 
       return this.container?.putContent(workflowDirectory, {
         name: 'event.json',
@@ -153,6 +152,7 @@ class Runner {
     const NameMount = `${name}-env`;
 
     const containerWorkdir = DockerContainer.Resolve(this.config.workdir);
+    console.log('DockerContainer.Resolve', DockerContainer.Resolve('/test'));
 
     const mounts = {
       [ToolCacheMount]: path.join(containerWorkdir, Constants.Directory.Tool),
@@ -174,7 +174,7 @@ class Runner {
       if (process.platform === 'darwin') {
         bindModifiers = ':delegated';
       }
-      binds.push(`${this.config.workdir}:${containerWorkdir}/test${bindModifiers}`);
+      binds.push(`${this.config.workdir}:${containerWorkdir}${bindModifiers}`);
     } else {
       mounts[name] = containerWorkdir;
     }
