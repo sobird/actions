@@ -20,6 +20,8 @@ interface Config {
    */
   readonly context: Context;
 
+  readonly workspace: string;
+
   /**
    * path to working directory
    */

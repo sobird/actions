@@ -41,7 +41,7 @@ vi.setConfig({
 
 describe('Test Docker Container', () => {
   it('pull image', async () => {
-    const executor = docker.pull();
+    const executor = docker.pullImage();
     await executor.execute();
     // expect(docker.container).not.toBeUndefined();
   });

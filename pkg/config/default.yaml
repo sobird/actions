@@ -32,10 +32,8 @@ runner:
     env:
       name: sobird
   # The parent directory of a job's working directory.
-  # NOTE: There is no need to add the first '/' of the path as runner will add it automatically. 
-  # If the path starts with '/', the '/' will be trimmed.
-  # For example, if the parent directory is /path/to/my/dir, workdir_parent should be path/to/my/dir
-  # If it's empty, /workspace will be used.
+  # If it's empty, /home/runner will be used.
+  workspace: /home/runner
   workdir:
   # Bind the workdir to the job container.
   bindWorkdir: true

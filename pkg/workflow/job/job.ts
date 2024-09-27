@@ -4,6 +4,8 @@
  *
  * sobird<i@sobird.me> at 2024/05/02 20:26:29 created.
  */
+import log4js from 'log4js';
+
 import Executor from '@/pkg/common/executor';
 import Expression from '@/pkg/expression';
 import Runner from '@/pkg/runner';
@@ -20,6 +22,8 @@ import Strategy, { StrategyProps } from './strategy';
 import {
   WorkflowDispatchInput, Permissions, Concurrency,
 } from '../types';
+
+const logger = log4js.getLogger();
 
 export enum JobType {
   /**
@@ -468,7 +472,7 @@ class Job {
       job.total = matrices.length;
 
       if (!name?.includes('${{') || !name.includes('}}')) {
-        job.name = `${name || this.#id} (${Object.values(matrix).join(', ')})`;
+        job.name = `${name || job.#id} (${Object.values(matrix).join(', ')})`;
       }
 
       job.strategy.matrix = Object.entries(matrix).reduce((accu, [key, value]) => {
@@ -560,7 +564,7 @@ class Job {
     }));
 
     stepMainPipeline.push(new Executor(() => {
-      // logger.info('u0001F9EA  Matrix: %v', this.config.matrix);
+      logger.info('\u{0001F9EA} Matrix:', this.strategy.getMatrices());
     }));
 
     stepMainPipeline.push(...steps.map((step, index) => {

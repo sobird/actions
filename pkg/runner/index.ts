@@ -57,6 +57,7 @@ class Runner {
     context.github.workflow = workflow.name || workflow.file || '';
     context.github.workflow_sha = workflow.sha || '';
 
+    console.log('job', job.name);
     // strategy context
     context.strategy['fail-fast'] = job.strategy['fail-fast'];
     context.strategy['max-parallel'] = job.strategy['max-parallel'];
@@ -139,7 +140,7 @@ class Runner {
 
   // DockerContainer Utils
   get BindsAndMounts(): [string[], Record<string, string>] {
-    const name = this.ContainerName();
+    const containerName = this.ContainerName();
     const defaultSocket = '/var/run/docker.sock';
     const containerDaemonSocket = this.config.containerDaemonSocket || defaultSocket;
     const binds: string[] = [];
@@ -149,14 +150,13 @@ class Runner {
     }
 
     const ToolCacheMount = 'toolcache';
-    const NameMount = `${name}-env`;
+    const NameMount = `${containerName}-env`;
 
     const containerWorkdir = DockerContainer.Resolve(this.config.workdir);
-    console.log('DockerContainer.Resolve', DockerContainer.Resolve('/test'));
 
     const mounts = {
-      [ToolCacheMount]: path.join(containerWorkdir, Constants.Directory.Tool),
-      [NameMount]: path.join(containerWorkdir, Constants.Directory.Work),
+      [ToolCacheMount]: DockerContainer.Resolve(this.config.workspace, Constants.Directory.Tool),
+      [NameMount]: DockerContainer.Resolve(this.config.workspace, Constants.Directory.Temp),
     };
 
     const { volumes = [] } = this.run.job.container;
@@ -176,7 +176,7 @@ class Runner {
       }
       binds.push(`${this.config.workdir}:${containerWorkdir}${bindModifiers}`);
     } else {
-      mounts[name] = containerWorkdir;
+      mounts[containerName] = containerWorkdir;
     }
 
     return [binds, mounts];

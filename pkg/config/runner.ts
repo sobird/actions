@@ -42,6 +42,8 @@ class Runner implements Omit<Options, ''> {
 
   public context: Context;
 
+  public workspace: string;
+
   /**
    * Working directory
    */
@@ -277,6 +279,7 @@ class Runner implements Omit<Options, ''> {
     this.workflows = runner.workflows;
     this.recursive = runner.recursive;
     this.context = new Context(runner.context);
+    this.workspace = runner.workspace || '/home/runner';
     this.workdir = runner.workdir;
     this.bindWorkdir = runner.bindWorkdir;
     this.eventFile = runner.eventFile;
@@ -450,6 +453,7 @@ class Runner implements Omit<Options, ''> {
 
     const config: Config = {
       context: this.context,
+      workspace: this.workspace,
       workdir: path.resolve(this.workdir),
       bindWorkdir: this.bindWorkdir,
       actionCache,

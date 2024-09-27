@@ -33,6 +33,8 @@ export interface DockerContainerOptions {
   name?: string;
   /** Name of the image as it was passed by the operator (e.g. could be symbolic) */
   image: string;
+  /** force pull image */
+  forcePull?: boolean;
   /** Current directory (PWD) in the command will be launched */
   workdir: string;
   /** Set platform if server is multi-platform capable */
@@ -60,6 +62,8 @@ export interface DockerContainerOptions {
 
 const hashFilesDir = 'bin/hashFiles';
 const isatty = tty.isatty(process.stdout.fd);
+const isTerminal = process.stdout.isTTY;
+
 class DockerContainer extends Container {
   static docker = docker;
 
@@ -73,12 +77,14 @@ class DockerContainer extends Container {
 
   declare options: DockerContainerOptions;
 
-  pull(force: boolean = false) {
+  pullImage() {
     return new Executor(async () => {
-      const { image, platform, authconfig } = this.options;
+      const {
+        image, platform, authconfig, forcePull,
+      } = this.options;
 
       const stream = await docker.pullImage(image, {
-        force,
+        force: forcePull,
         platform,
         authconfig,
       });
@@ -113,8 +119,9 @@ class DockerContainer extends Container {
   start() {
     return Executor.Pipeline(
       this.findContainer(),
-      this.pull(),
+      this.pullImage(),
       this.createContainer(),
+      // this.attachContainer(),
       this.startContainer(),
       this.info(),
       new Executor(() => {
@@ -124,11 +131,11 @@ class DockerContainer extends Container {
   }
 
   stop() {
-    return Executor.Pipeline(this.findContainer()).finally(this.stopContainer());
+    return this.findContainer().finally(this.stopContainer());
   }
 
   remove() {
-    return Executor.Pipeline(this.findContainer()).finally(this.removeContainer());
+    return this.findContainer().finally(this.removeContainer());
   }
 
   put(destination: string, source: string, useGitIgnore: boolean = true) {
@@ -356,7 +363,7 @@ class DockerContainer extends Container {
     });
   }
 
-  findContainer() {
+  private findContainer() {
     return new Executor(async () => {
       const { name: containerName } = this.options;
 
@@ -379,7 +386,6 @@ class DockerContainer extends Container {
     }));
   }
 
-  // todo update options
   private createContainer() {
     return new Executor(async () => {
       const { options } = this;
@@ -486,15 +492,29 @@ class DockerContainer extends Container {
       }
 
       try {
-        await container.remove({
-          v: true,
-          force: true,
-        });
-
+        await container.remove({ volumes: true, force: true });
         logger.debug('Removed container: %s', container.id);
         delete this.container;
-      } catch (err) {
-        logger.error('Failed to remove container: %s', (err as Error).message);
+      } catch (error) {
+        logger.error('Failed to remove container: %s', (error as Error).message);
+      }
+    });
+  }
+
+  attachContainer() {
+    return new Executor(async () => {
+      const { container } = this;
+      if (!container) {
+        return;
+      }
+
+      try {
+        const output = await container.attach({ stream: true, stdout: true, stderr: true });
+        // todo stdCopy
+
+        output.pipe(process.stdout);
+      } catch (error) {
+        logger.error('Failed to attach to container:: %s', (error as Error).message);
       }
     });
   }
@@ -695,20 +715,30 @@ class DockerContainer extends Container {
       logger.info('\u{0001f680}  Start image=%s', image);
 
       const name = runner.ContainerName();
+      // specify the network to which the container will connect when `docker create` stage. (like execute command line: docker create --network <networkName> <image>)
+      // if using service containers, will create a new network for the containers.
+      // and it will be removed after at last.
       const [networkName, createAndDeleteNetwork] = runner.ContainerNetworkName();
-      console.log('name', name, credentials, networkName, createAndDeleteNetwork);
 
       const [binds, mounts] = runner.BindsAndMounts;
 
       console.log('binds', binds);
       console.log('mounts', mounts);
       console.log('workflow', runner.run.workflow.file);
+      console.log('config', config);
+
+      const containerNetworkMode = config.containerNetworkMode || 'host';
+      if (runner.ContainerImage) {
+        containerNetworkMode = networkName;
+      }
 
       runner.container = new DockerContainer({
         name,
         image: 'node:lts-slim',
+        forcePull: config.pull,
         workdir: config.workdir,
-        entrypoint: ['/bin/sleep', `${config.containerMaxLifetime}`],
+        entrypoint: ['tail', '-f', '/dev/null'],
+        // entrypoint: ['/bin/sleep', `${config.containerMaxLifetime}`],
         cmd: [],
         authconfig: {
           ...credentials,
@@ -718,15 +748,17 @@ class DockerContainer extends Container {
         env: {
           LANG: 'C.UTF-8',
         },
-        networkMode: '',
+        networkMode: containerNetworkMode,
         networkAliases: [runner.run.name],
         autoRemove: config.containerAutoRemove,
         privileged: config.containerPrivileged,
         usernsMode: config.containerUsernsMode,
         platform: config.containerPlatform,
+        capAdd: config.containerCapAdd,
+        capDrop: config.containerCapDrop,
         // portBindings: {},
         // exposedPorts: {},
-      });
+      }, config.workspace);
 
       return runner.container.start();
     });

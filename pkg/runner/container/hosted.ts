@@ -237,7 +237,7 @@ class HostedContainer extends Container {
       runner.container = new HostedContainer({
         basedir: runner.ActionCacheDir,
         workdir: config.workdir,
-      });
+      }, config.workspace);
     });
   }
 }
