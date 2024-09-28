@@ -10,8 +10,9 @@ jobs:
         os: ['ubuntu-latest']
         node: [20]
         actor: [ '${{ github.actor }}' ]
-      fail-fast: false
+      fail-fast: true
+      max-parallel: 2
     runs-on: ubuntu-latest
     steps:
-      - name: print env ${{matrix.actor}}
+      - name: print env ${{matrix.actor}} ${{strategy.max-parallel}}
         run: env
