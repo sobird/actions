@@ -1,0 +1,17 @@
+name: test strategy matrix
+run-name: test-strategy-matrix-${{ github.actor }}
+on:
+  workflow_dispatch:
+
+jobs:
+  test-strategy-matrix-job:
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']
+        node: [20]
+        actor: [ '${{ github.actor }}' ]
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: print env ${{matrix.actor}}
+        run: env
