@@ -14,12 +14,14 @@ import Constants from '@/pkg/common/constants';
 import { Docker } from '@/pkg/docker';
 import Config from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
+import Strategy from '@/pkg/workflow/job/strategy';
 import { asyncFunction, createSafeName, assignIgnoreCase } from '@/utils';
 
 import Container from './container';
 import DockerContainer from './container/docker';
 import HostedContainer from './container/hosted';
 import Executor from '../common/executor';
+import Expression from '../expression';
 import { Run } from '../workflow/plan';
 
 const SetEnvBlockList = ['NODE_OPTIONS'];
@@ -51,13 +53,17 @@ class Runner {
     const { jobId, job, workflow } = run;
     this.config = config;
     const context = new Context(config.context ?? {});
+    this.context = context;
+
+    // Calculate the value of the expression in advance
+    const strategy = new Expression(job.strategy, ['github', 'needs', 'vars', 'inputs']).evaluate(this);
+    job.strategy = new Strategy(strategy);
 
     // github context
     context.github.job = jobId;
     context.github.workflow = workflow.name || workflow.file || '';
     context.github.workflow_sha = workflow.sha || '';
 
-    console.log('job', job.name);
     // strategy context
     context.strategy['fail-fast'] = job.strategy['fail-fast'];
     context.strategy['max-parallel'] = job.strategy['max-parallel'];
@@ -65,15 +71,13 @@ class Runner {
     context.strategy['job-total'] = job.total;
 
     // matrix context
-    const matrix = job.strategy.getMatrices()[0];
+    const matrix = job.strategy.Matrices[0];
     if (matrix) {
       context.matrix = matrix as Context['matrix'];
     }
 
     // Initialize 'echo on action command success' property, default to false, unless Step_Debug is set
     this.echoOnActionCommand = context.secrets[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || context.vars[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || false;
-
-    this.context = context;
   }
 
   executor() {

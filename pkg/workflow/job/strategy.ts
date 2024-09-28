@@ -8,7 +8,7 @@
 
 import { cartesianProduct, lodash } from '@/utils';
 
-export type StrategyProps = Pick<Strategy, 'matrix' | 'fail-fast' | 'max-parallel'>;
+export interface StrategyProps extends Pick<Strategy, 'matrix' | 'fail-fast' | 'max-parallel'> {}
 
 export default class Strategy {
   /**
@@ -47,7 +47,7 @@ export default class Strategy {
    * In this example, you can use `matrix.version` and `matrix.os` to access the current value of `version` and `os` that the job is using.
    * For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/contexts Contexts}."
    */
-  matrix?: {
+  matrix: {
     /**
      * Use `jobs.<job_id>.strategy.matrix.include` to expand existing matrix configurations or to add new configurations.
      * The value of `include` is a list of objects.
@@ -114,16 +114,13 @@ export default class Strategy {
  */
   'max-parallel'?: number;
 
-  constructor(strategy?: StrategyProps) {
-    if (!strategy) {
-      return;
-    }
+  constructor(strategy: StrategyProps = {} as StrategyProps) {
     this.matrix = strategy.matrix;
     this['fail-fast'] = strategy['fail-fast'];
     this['max-parallel'] = strategy['max-parallel'];
   }
 
-  getFailFast() {
+  get FailFast() {
     const failFast = this['fail-fast'];
     if (typeof failFast === 'boolean') {
       return failFast;
@@ -131,11 +128,11 @@ export default class Strategy {
     return Boolean(failFast || true);
   }
 
-  getMaxParallel() {
+  get MaxParallel() {
     return this['max-parallel'] || 1;
   }
 
-  getMatrices() {
+  get Matrices() {
     if (!this.matrix) {
       return [{}];
     }
@@ -245,7 +242,7 @@ export default class Strategy {
    * @returns
    */
   selectMatrices(targetMatrix: Record<string, unknown[]> = {}) {
-    const originalMatrices = this.getMatrices();
+    const originalMatrices = this.Matrices;
     const matrices: Record<string, unknown>[] = [];
     originalMatrices.forEach((original) => {
       const isAllowed = Object.keys(original).every((key) => {

@@ -1,10 +1,10 @@
 import Strategy from './strategy';
 
-describe('Strategy Class test', () => {
+describe('Strategy Class Test', () => {
   it('get matrices empty test case', () => {
-    const strategy = new Strategy({});
+    const strategy = new Strategy();
 
-    expect(strategy.getMatrices()).toEqual([]);
+    expect(strategy.Matrices).toEqual([{}]);
   });
 
   it('get matrices test case', () => {
@@ -20,7 +20,7 @@ describe('Strategy Class test', () => {
       'max-parallel': 2,
     });
 
-    expect(strategy.getMatrices()).toEqual([
+    expect(strategy.Matrices).toEqual([
       {
         datacenter: 'site-c', 'node-version': '14.x', site: 'staging', 'php-version': '5.4',
       },
@@ -47,7 +47,7 @@ describe('Strategy Class test', () => {
       },
     });
 
-    expect(strategy.getMatrices()).toEqual([
+    expect(strategy.Matrices).toEqual([
       {
         fruit: 'apple', animal: 'cat', color: 'pink', shape: 'circle',
       },

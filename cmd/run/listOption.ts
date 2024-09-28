@@ -21,7 +21,7 @@ export async function listOption(filterPlan: Plan) {
       } = run;
       data.push({
         stage: index,
-        matrix: `${job.strategy.getMatrices().length} jobs`,
+        matrix: `${job.strategy.Matrices.length}`,
         jobId,
         jobName: name,
         wfName: workflow.name,

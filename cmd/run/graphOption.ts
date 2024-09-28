@@ -17,7 +17,7 @@ export function graphOption(filterPlan: Plan) {
 
     const lables = stage.runs.map((run) => {
       const { job: { strategy } } = run;
-      const matrices = strategy.getMatrices();
+      const matrices = strategy.Matrices;
 
       if (matrices.length > 0) {
         return `${run.jobId} x [matrix: ${matrices.length}]`;

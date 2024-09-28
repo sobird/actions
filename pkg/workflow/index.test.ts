@@ -394,31 +394,31 @@ describe('job strategy test', () => {
   it('job strategy-only-max-parallel test case', () => {
     const job = workflow.jobs['strategy-only-max-parallel'];
 
-    expect(job.strategy?.getMatrices()).toEqual([]);
-    expect(job.strategy?.getMaxParallel()).toBe(2);
-    expect(job.strategy?.getFailFast()).toBe(true);
+    expect(job.strategy?.Matrices).toEqual([]);
+    expect(job.strategy?.MaxParallel).toBe(2);
+    expect(job.strategy?.FailFast).toBe(true);
   });
 
   it('job strategy-only-fail-fast test case', () => {
     const job = workflow.jobs['strategy-only-fail-fast'];
 
-    expect(job.strategy?.getMatrices()).toEqual([]);
-    expect(job.strategy?.getMaxParallel()).toBe(1);
-    expect(job.strategy?.getFailFast()).toBe(false);
+    expect(job.strategy?.Matrices).toEqual([]);
+    expect(job.strategy?.MaxParallel).toBe(1);
+    expect(job.strategy?.FailFast).toBe(false);
   });
 
   it('job strategy-no-matrix test case', () => {
     const job = workflow.jobs['strategy-no-matrix'];
 
-    expect(job.strategy?.getMatrices()).toEqual([]);
-    expect(job.strategy?.getMaxParallel()).toBe(2);
-    expect(job.strategy?.getFailFast()).toBe(false);
+    expect(job.strategy?.Matrices).toEqual([]);
+    expect(job.strategy?.MaxParallel).toBe(2);
+    expect(job.strategy?.FailFast).toBe(false);
   });
 
   it('job strategy-all test case', () => {
     const job = workflow.jobs['strategy-all'];
 
-    expect(job.strategy?.getMatrices()).toEqual([
+    expect(job.strategy?.Matrices).toEqual([
       {
         datacenter: 'site-c', 'node-version': '14.x', site: 'staging', 'php-version': 5.4,
       },
@@ -434,8 +434,8 @@ describe('job strategy test', () => {
       { datacenter: 'site-a', 'node-version': '10.x', site: 'prod' },
       { datacenter: 'site-b', 'node-version': '12.x', site: 'dev' },
     ]);
-    expect(job.strategy?.getMaxParallel()).toBe(2);
-    expect(job.strategy?.getFailFast()).toBe(false);
+    expect(job.strategy?.MaxParallel).toBe(2);
+    expect(job.strategy?.FailFast).toBe(false);
   });
 
   it('job strategy test case1', () => {

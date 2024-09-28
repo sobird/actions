@@ -67,7 +67,7 @@ export default class Plan {
           const { jobId, workflow } = run;
 
           const jobs = run.job.spread();
-          const maxParallel = run.job.strategy.getMaxParallel();
+          const maxParallel = run.job.strategy.MaxParallel;
 
           const runnerPipeline = jobs.map((job) => {
             workflow.jobs[jobId] = job;
@@ -76,7 +76,7 @@ export default class Plan {
             runner.caller = caller;
 
             /** @todo just todo test */
-            // runner.container = caller?.container;
+            runner.container = caller?.container;
 
             return runner.executor();
           });

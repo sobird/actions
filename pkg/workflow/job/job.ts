@@ -411,7 +411,7 @@ class Job {
     this.steps = createSteps(job.steps);
 
     this['timeout-minutes'] = job['timeout-minutes'];
-    this.strategy = new Strategy(job.strategy);
+    this.strategy = new Strategy(job.strategy || {});
     this['continue-on-error'] = new Expression(job['continue-on-error'], ['github', 'needs', 'strategy', 'vars', 'matrix', 'inputs']);
     this.container = new Container(job.container);
     this.services = job.services;
@@ -460,7 +460,7 @@ class Job {
 
   // 展开作业矩阵
   spread() {
-    const matrices = this.strategy.getMatrices();
+    const matrices = this.strategy.Matrices;
     if (matrices.length === 0) {
       return [this];
     }
@@ -564,7 +564,7 @@ class Job {
     }));
 
     stepMainPipeline.push(new Executor(() => {
-      logger.info('\u{0001F9EA} Matrix:', this.strategy.getMatrices());
+      logger.info('\u{0001F9EA} Matrix:', this.strategy.Matrices);
     }));
 
     stepMainPipeline.push(...steps.map((step, index) => {

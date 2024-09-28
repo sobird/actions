@@ -29,7 +29,7 @@ describe('test workflow job', () => {
       },
     });
 
-    const matrices = job.strategy.getMatrices();
+    const matrices = job.strategy.Matrices;
 
     expect(matrices).toEqual([
       { os: 'ubuntu-latest', node: 18 },

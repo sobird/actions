@@ -33,15 +33,6 @@ class Expression<T> {
   evaluate(runner: Runner): T {
     const { context } = runner;
     const interpret = (source: unknown): any => {
-      if (source === null) {
-        return null;
-      }
-      if (source === undefined) {
-        return undefined;
-      }
-      if (typeof source === 'boolean') {
-        return source;
-      }
       if (typeof source === 'string') {
         let expression = source;
         if (this.isIf && (!source.includes('${{') || !source.includes('}}'))) {
@@ -78,12 +69,15 @@ class Expression<T> {
         });
       }
 
-      // object
-      const output: Record<string, unknown> = {};
-      _.forOwn(source, (item, key) => {
-        output[key] = interpret(item);
-      });
-      return output;
+      if (_.isObject(source)) {
+        const output: Record<string, unknown> = {};
+        _.forOwn(source, (item, key) => {
+          output[key] = interpret(item);
+        });
+        return output;
+      }
+
+      return source;
     };
 
     return interpret(this.source || this.defaultValue);
