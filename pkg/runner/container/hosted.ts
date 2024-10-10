@@ -43,12 +43,13 @@ class HostedContainer extends Container {
     const rootdir = path.join(basedir, randomBytes(8).toString('hex'));
 
     this.rootdir = rootdir;
-    fs.mkdirSync(rootdir, { recursive: true });
+    fs.mkdirSync(path.join(rootdir, options.workdir || ''), { recursive: true });
 
     (options.binds || []).forEach((bind) => {
       const [workdir, containerWorkdir] = bind.split(':');
       const containerWorkdirResolved = this.resolve(containerWorkdir);
       fs.mkdirSync(path.dirname(containerWorkdirResolved), { recursive: true });
+      fs.rmSync(containerWorkdirResolved, { recursive: true });
       fs.symlinkSync(workdir, containerWorkdirResolved);
     });
   }
