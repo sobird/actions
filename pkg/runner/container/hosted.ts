@@ -21,7 +21,7 @@ import Container, { FileEntry, ContainerExecOptions } from '.';
 
 export interface HostedContainerOptions {
   basedir: string;
-  workdir?: string;
+  workdir: string;
   stdout?: NodeJS.WritableStream;
 }
 
@@ -29,8 +29,6 @@ const hashFilesDir = 'bin/hashFiles';
 
 class HostedContainer extends Container {
   rootdir: string;
-
-  workdir: string;
 
   platform = Container.Os(process.platform);
 
@@ -42,14 +40,8 @@ class HostedContainer extends Container {
     const { basedir } = options;
     // like container root
     const rootdir = path.join(basedir, randomBytes(8).toString('hex'));
-    const workdir = path.join(rootdir, options.workdir || '');
 
     this.rootdir = rootdir;
-    this.workdir = workdir;
-
-    [workdir].forEach((dir) => {
-      fs.mkdirSync(dir, { recursive: true });
-    });
   }
 
   put(destination: string, source: string, useGitIgnore: boolean = false) {
@@ -130,7 +122,7 @@ class HostedContainer extends Container {
 
   exec(command: string[], options: ContainerExecOptions = {}) {
     return new Executor(async () => {
-      const workdir = this.resolve((options.workdir as string) || '');
+      const workdir = this.resolve(this.options.workdir, (options.workdir as string) || '');
 
       const [cmd, ...args] = command;
       const cp = spawn(cmd, args, {
@@ -172,9 +164,9 @@ class HostedContainer extends Container {
   }
 
   resolve(...paths: string[]) {
-    const { rootdir, workdir } = this;
+    const { rootdir, workspace } = this;
     const dir = path.join(...paths);
-    return trimSuffix(path.isAbsolute(dir) ? path.join(rootdir, dir) : path.join(workdir, dir), path.sep);
+    return trimSuffix(path.isAbsolute(dir) ? path.join(rootdir, dir) : path.join(rootdir, workspace, dir), path.sep);
   }
 
   // resolve(...paths: string[]) {

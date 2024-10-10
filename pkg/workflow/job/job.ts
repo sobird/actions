@@ -411,7 +411,7 @@ class Job {
     this.steps = createSteps(job.steps);
 
     this['timeout-minutes'] = job['timeout-minutes'];
-    this.strategy = new Strategy(job.strategy || {});
+    this.strategy = new Strategy(job.strategy);
     this['continue-on-error'] = new Expression(job['continue-on-error'], ['github', 'needs', 'strategy', 'vars', 'matrix', 'inputs']);
     this.container = new Container(job.container);
     this.services = job.services;
