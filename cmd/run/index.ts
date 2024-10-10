@@ -78,7 +78,7 @@ export const runCommand = new Command('run')
   .option('--detect-event', 'use first event type from workflow as event that triggered the workflow')
   .option('--workspace <path>', "The parent directory of a job's working directory.")
   .option('-w, --workdir <path>', 'the default working directory on the runner for steps', '.')
-  .option('--bindWorkdir', 'bind working directory to container, rather than copy')
+  .option('--bind-workdir', 'bind working directory to container, rather than copy')
 
   // log
   .option('--log-json', 'output logs in json format')

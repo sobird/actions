@@ -23,6 +23,7 @@ export interface HostedContainerOptions {
   basedir: string;
   workdir: string;
   stdout?: NodeJS.WritableStream;
+  binds?: string[];
 }
 
 const hashFilesDir = 'bin/hashFiles';
@@ -42,6 +43,14 @@ class HostedContainer extends Container {
     const rootdir = path.join(basedir, randomBytes(8).toString('hex'));
 
     this.rootdir = rootdir;
+    fs.mkdirSync(rootdir, { recursive: true });
+
+    (options.binds || []).forEach((bind) => {
+      const [workdir, containerWorkdir] = bind.split(':');
+      const containerWorkdirResolved = this.resolve(containerWorkdir);
+      fs.mkdirSync(path.dirname(containerWorkdirResolved), { recursive: true });
+      fs.symlinkSync(workdir, containerWorkdirResolved);
+    });
   }
 
   put(destination: string, source: string, useGitIgnore: boolean = false) {
@@ -225,10 +234,16 @@ class HostedContainer extends Container {
   static Setup(runner: Runner) {
     return new Executor(() => {
       const { config } = runner;
+      const binds = [];
+
+      if (config.bindWorkdir) {
+        binds.push(`${config.workdir}:${config.workdir}`);
+      }
 
       runner.container = new HostedContainer({
         basedir: runner.ActionCacheDir,
         workdir: config.workdir,
+        binds,
       }, config.workspace);
     });
   }

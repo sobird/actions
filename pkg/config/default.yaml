@@ -36,7 +36,7 @@ runner:
   workspace: /home/runner
   workdir:
   # Bind the workdir to the job container.
-  bindWorkdir: true
+  bindWorkdir: false
   # Path to event JSON file
   eventFile: event.json
   # Extra environment variables to run jobs.

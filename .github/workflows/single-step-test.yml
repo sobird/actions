@@ -6,24 +6,14 @@ on:
 jobs:
   single-step-test:
     runs-on: ubuntu-latest
-    container:
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SOBIRD: sobird
 
     steps:
       - name: print env
         # shell: bash
         # working-directory: '.'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FIRST_NAME: Mona
           LAST_NAME: Octocat
-        # if: ${{ 123 < 1 }}
         run: env
       - name: ls
         run: ls -l
-      # - name: Checkout
-      #   uses: actions/checkout@v4
-      #   with:
-      #     key: ${{ runner.os }}-yarn-${{ hashFiles('package.json') }}
