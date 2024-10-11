@@ -332,7 +332,7 @@ class Job {
    *
    * For more information about the differences between networking service containers, see "{@link https://docs.github.com/en/actions/using-containerized-services/about-service-containers About service containers}."
    */
-  services?: Record<string, Container>;
+  services: Record<string, Container>;
 
   /**
    * The location and version of a reusable workflow file to run as a job. Use one of the following syntaxes:
@@ -414,7 +414,10 @@ class Job {
     this.strategy = new Strategy(job.strategy);
     this['continue-on-error'] = new Expression(job['continue-on-error'], ['github', 'needs', 'strategy', 'vars', 'matrix', 'inputs']);
     this.container = new Container(job.container);
-    this.services = job.services;
+    this.services = Object.fromEntries(Object.entries(job.services || {}).map(([serviceId, service]) => {
+      return [serviceId, new Container(service as any)];
+    }));
+
     this.uses = job.uses;
     this.with = job.with;
     this.secrets = job.secrets;
@@ -555,12 +558,12 @@ class Job {
       return Executor.Debug('No steps found');
     }
 
-    const preSteps: Executor[] = [];
+    const stepPrePipeline: Executor[] = [];
     const stepMainPipeline: Executor[] = [];
-    const postSteps: Executor[] = [];
+    const stepPostPipeline: Executor[] = [];
 
-    preSteps.push(new Executor(() => {
-      // logger.info('Todo:', 'Job env Interpolate');
+    stepPrePipeline.push(new Executor(() => {
+      logger.info('Todo:', 'Job env Interpolate');
     }));
 
     stepMainPipeline.push(new Executor(() => {
@@ -572,10 +575,10 @@ class Job {
       step.number = index;
 
       const stepPreExecutor = step.pre();
-      preSteps.push(stepPreExecutor);
+      stepPrePipeline.push(stepPreExecutor);
 
       const stepPostExecutor = step.post();
-      postSteps.push(stepPostExecutor);
+      stepPostPipeline.push(stepPostExecutor);
 
       return new Executor(async (ctx) => {
         // console.log('ctx', ctx);
@@ -592,7 +595,13 @@ class Job {
       }).finally(step.main());
     }));
 
-    return Executor.Pipeline(runner.startContainer(), ...stepMainPipeline);
+    return Executor.Pipeline(
+      runner.startContainer(),
+      ...stepPrePipeline,
+      ...stepMainPipeline,
+      ...stepPostPipeline,
+      runner.stopContainer(),
+    );
   }
 }
 

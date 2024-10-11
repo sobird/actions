@@ -62,7 +62,7 @@ export interface DockerContainerOptions {
 
 const hashFilesDir = 'bin/hashFiles';
 const isatty = tty.isatty(process.stdout.fd);
-const isTerminal = process.stdout.isTTY;
+// const isTerminal = process.stdout.isTTY;
 
 class DockerContainer extends Container {
   static docker = docker;
@@ -77,14 +77,14 @@ class DockerContainer extends Container {
 
   declare options: DockerContainerOptions;
 
-  pullImage() {
+  pullImage(force?: boolean) {
     return new Executor(async () => {
       const {
         image, platform, authconfig, forcePull,
       } = this.options;
 
       const stream = await docker.pullImage(image, {
-        force: forcePull,
+        force: force ?? forcePull,
         platform,
         authconfig,
       });
@@ -92,11 +92,6 @@ class DockerContainer extends Container {
       if (!stream) {
         return;
       }
-
-      // stream.on('data', (chunk) => {
-      //   console.log('chunk', chunk.toJSON());
-      // });
-      // stream.pipe(process.stdout);
 
       await new Promise((resolve, reject) => {
         docker.modem.followProgress(stream, (err, output) => {
@@ -348,19 +343,24 @@ class DockerContainer extends Container {
   }
 
   removeNetwork(name: string) {
-    return new Executor(async () => {
-      const { network } = this;
-      if (!network) {
-        return;
-      }
-      const networkInspectInfo: NetworkInspectInfo = await network.inspect();
-      if (Object.keys(networkInspectInfo?.Containers || {}).length === 0) {
-        await network.remove();
-        delete this.network;
-      } else {
-        logger.debug('Refusing to remove network %v because it still has active endpoints', name);
-      }
-    });
+    return Executor.Pipeline(
+      this.findNetwork(name),
+      new Executor(async () => {
+        const { network } = this;
+        if (!network) {
+          return;
+        }
+
+        const networkInspectInfo: NetworkInspectInfo = await network.inspect();
+
+        if (Object.keys(networkInspectInfo?.Containers || {}).length === 0) {
+          await network.remove();
+          delete this.network;
+        } else {
+          logger.debug('Refusing to remove network %v because it still has active endpoints', name);
+        }
+      }),
+    );
   }
 
   private findContainer() {
@@ -537,6 +537,15 @@ class DockerContainer extends Container {
       }
       throw new Error(`Container exited with status code: ${StatusCode}`);
     });
+  }
+
+  removeVolume(name: string) {
+    return new Executor(async () => {
+      const volume = docker.getVolume(name);
+      await volume.remove();
+    }).if(new Conditional(() => {
+      return !this.container;
+    }));
   }
 
   exec(command: string[], inputs: ContainerExecOptions = {}) {
@@ -725,14 +734,48 @@ class DockerContainer extends Container {
       console.log('binds', binds);
       console.log('mounts', mounts);
       console.log('workflow', runner.run.workflow.file);
-      console.log('config', config);
+      console.log('createAndDeleteNetwork', createAndDeleteNetwork);
 
-      const containerNetworkMode = config.containerNetworkMode || 'host';
+      let containerNetworkMode = config.containerNetworkMode || 'host';
       if (runner.ContainerImage) {
         containerNetworkMode = networkName;
       }
 
-      runner.container = new DockerContainer({
+      runner.services = Object.entries(runner.run.job.services).map(([serviceId, service]) => {
+        const serviceEnv = service.env?.evaluate(runner);
+        const serviceCredentials = service.credentials?.evaluate(runner);
+        const serviceName = runner.ContainerName(serviceId);
+        const [serviceBinds, serviceMounts] = runner.ServiceBindsAndMounts(service.volumes);
+        const { exposedPorts, portBindings } = service.parsePorts();
+
+        return new DockerContainer({
+          name: serviceName,
+          image: service.image.evaluate(runner),
+          forcePull: config.pull,
+          workdir: config.workdir,
+          entrypoint: ['tail', '-f', '/dev/null'],
+          // entrypoint: ['/bin/sleep', `${config.containerMaxLifetime}`],
+          cmd: [],
+          authconfig: {
+            ...serviceCredentials,
+          },
+          binds: serviceBinds,
+          mounts: serviceMounts,
+          env: serviceEnv,
+          networkMode: containerNetworkMode,
+          networkAliases: [serviceId],
+          autoRemove: config.containerAutoRemove,
+          privileged: config.containerPrivileged,
+          usernsMode: config.containerUsernsMode,
+          platform: config.containerPlatform,
+          capAdd: config.containerCapAdd,
+          capDrop: config.containerCapDrop,
+          portBindings,
+          exposedPorts,
+        }, config.workspace);
+      });
+
+      const dockerContainer = new DockerContainer({
         name,
         image: 'node:lts-slim',
         forcePull: config.pull,
@@ -759,8 +802,39 @@ class DockerContainer extends Container {
         // portBindings: {},
         // exposedPorts: {},
       }, config.workspace);
+      runner.container = dockerContainer;
 
-      return runner.container.start();
+      const reuseContainer = new Conditional(() => {
+        return Boolean(config.reuseContainers);
+      });
+
+      runner.cleanContainerExecutor = Executor.Pipeline(
+        dockerContainer.remove().ifNot(reuseContainer),
+        dockerContainer.removeVolume(runner.ContainerName()).ifNot(reuseContainer),
+        dockerContainer.removeVolume(`${runner.ContainerName()}-env`).ifNot(reuseContainer),
+        new Executor(async () => {
+          if (runner.services.length > 0) {
+            logger.info('Cleaning up services for job %s', runner.run.job.name);
+            await runner.stopServices().execute();
+          }
+
+          if (createAndDeleteNetwork) {
+            // clean network if it has been created by actions
+            // if using service containers
+            // it means that the network to which containers are connecting is created by `act_runner`,
+            // so, we should remove the network at last.
+            logger.info('Cleaning up network for job %s, and network name is: %s', runner.run.job.name, networkName);
+            await dockerContainer.removeNetwork(networkName).execute();
+          }
+        }),
+      );
+
+      return Executor.Pipeline(
+        runner.pullServicesImage(),
+        dockerContainer.createNetwork(networkName).if(new Conditional(() => { return createAndDeleteNetwork; })),
+        runner.startServices(),
+        runner.container.start(),
+      );
     });
   }
 }

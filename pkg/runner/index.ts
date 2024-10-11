@@ -41,6 +41,8 @@ class Runner {
 
   container?: Container;
 
+  services: Container[] = [];
+
   echoOnActionCommand: boolean;
 
   IntraActionState: Record<string, Record<string, string>> = {};
@@ -48,6 +50,8 @@ class Runner {
   masks: string[] = [];
 
   logger: Logger = log4js.getLogger();
+
+  cleanContainerExecutor: Executor = new Executor();
 
   constructor(public run: Run, public config: Config) {
     const { jobId, job, workflow } = run;
@@ -128,6 +132,39 @@ class Runner {
     }));
   }
 
+  public stopContainer() {
+    return new Executor(() => {
+      return this.cleanContainerExecutor;
+    });
+  }
+
+  public pullServicesImage(force?: boolean) {
+    return new Executor(() => {
+      const pipeline = this.services.map((item) => {
+        return item.pullImage(force);
+      });
+      return Executor.Parallel(pipeline.length, ...pipeline);
+    });
+  }
+
+  public startServices() {
+    return new Executor(() => {
+      const pipeline = this.services.map((item) => {
+        return item.start();
+      });
+      return Executor.Parallel(pipeline.length, ...pipeline);
+    });
+  }
+
+  public stopServices() {
+    return new Executor(() => {
+      const pipeline = this.services.map((item) => {
+        return item.remove();
+      });
+      return Executor.Parallel(pipeline.length, ...pipeline);
+    });
+  }
+
   get Credentials() {
     const { container } = this.run.job;
     const { DOCKER_USERNAME: username, DOCKER_PASSWORD: password } = this.context.secrets;
@@ -182,6 +219,29 @@ class Runner {
     } else {
       mounts[containerName] = containerWorkdir;
     }
+
+    return [binds, mounts];
+  }
+
+  ServiceBindsAndMounts(volumes: string[] = []): [string[], Record<string, string>] {
+    const defaultSocket = '/var/run/docker.sock';
+    const containerDaemonSocket = this.config.containerDaemonSocket || defaultSocket;
+    const binds: string[] = [];
+    if (containerDaemonSocket !== '-') {
+      const daemonPath = Docker.SocketMountPath(containerDaemonSocket);
+      binds.push(`${daemonPath}:${defaultSocket}`);
+    }
+
+    const mounts: Record<string, string> = {};
+
+    volumes.forEach((volume) => {
+      if (!volume.includes(':') || path.isAbsolute(volume)) {
+        binds.push(volume);
+      } else {
+        const [key, value] = volume.split(':');
+        mounts[key] = value;
+      }
+    });
 
     return [binds, mounts];
   }

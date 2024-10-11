@@ -35,6 +35,8 @@ class HostedContainer extends Container {
 
   arch = Container.Arch(process.arch);
 
+  emptyExecutor = new Executor();
+
   constructor(public options: HostedContainerOptions, workspace?: string) {
     super(options, workspace);
 
@@ -52,6 +54,10 @@ class HostedContainer extends Container {
       fs.rmSync(containerWorkdirResolved, { recursive: true });
       fs.symlinkSync(workdir, containerWorkdirResolved);
     });
+  }
+
+  pullImage() {
+    return this.emptyExecutor;
   }
 
   put(destination: string, source: string, useGitIgnore: boolean = false) {
@@ -170,7 +176,9 @@ class HostedContainer extends Container {
   }
 
   remove() {
-    fs.rmSync(this.rootdir, { recursive: true, force: true });
+    return new Executor(() => {
+      fs.rmSync(this.rootdir, { recursive: true, force: true });
+    });
   }
 
   resolve(...paths: string[]) {
@@ -246,6 +254,7 @@ class HostedContainer extends Container {
         workdir: config.workdir,
         binds,
       }, config.workspace);
+      runner.cleanContainerExecutor = runner.container.remove();
     });
   }
 }

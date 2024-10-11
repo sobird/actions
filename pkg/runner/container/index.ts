@@ -49,12 +49,16 @@ export default abstract class Container {
 
   constructor(public options: unknown, public workspace: string = '/home/runner') {}
 
+  /** 容器操作相关 */
+  abstract start(): Executor;
+  abstract remove(): Executor;
+  abstract pullImage(force?: boolean): Executor;
+
   /** 上传文件/目录 */
   abstract put(destination: string, source: string, useGitIgnore: boolean): Executor;
   abstract putContent(destination: string, ...files: FileEntry[]): Executor;
   abstract putArchive(destination: string, readStream: NodeJS.ReadableStream): Promise<void>;
   abstract getArchive(destination: string): Promise<NodeJS.ReadableStream>;
-  abstract start(): Executor;
   abstract exec(command: string[], options: ContainerExecOptions): Executor;
   // abstract spawnSync(command: string, args: string[], options: ContainerExecOptions): SpawnSyncReturns<string> | undefined;
   // hashFiles功能应由所在容器提供

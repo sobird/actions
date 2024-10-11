@@ -7,6 +7,18 @@ jobs:
   single-step-test:
     runs-on: ubuntu-latest
 
+    services:
+      nginx:
+        image: nginx
+        # Map port 8080 on the Docker host to port 80 on the nginx container
+        ports:
+          - 8080:80
+      redis:
+        image: redis
+        # Map TCP port 6379 on Docker host to a random free port on the Redis container
+        ports:
+          - 6379/tcp
+
     steps:
       - name: print env
         # shell: bash

@@ -27,7 +27,9 @@ export class Conditional {
 }
 
 class Executor {
-  constructor(public fn: (ctx?: Runner) => Promise<void> | void | InstanceType<typeof Executor> | Promise<InstanceType<typeof Executor>>) {}
+  constructor(
+    public fn: (ctx?: Runner) => Promise<void> | void | InstanceType<typeof Executor> | Promise<InstanceType<typeof Executor>> = () => {},
+  ) {}
 
   async execute(ctx?: Runner) {
     const result = this.fn(ctx);
