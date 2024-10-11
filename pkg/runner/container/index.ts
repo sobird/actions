@@ -313,6 +313,9 @@ export default abstract class Container {
     env.RUNNER_OS = this.platform;
     env.RUNNER_TOOL_CACHE = this.resolve(Constants.Directory.Tool);
     env.RUNNER_TEMP = this.resolve(Constants.Directory.Temp);
+    env.RUNNER_DEBUG = 1;
+    env.RUNNER_ENVIRONMENT = '';
+    env.RUNNER_NAME = '';
 
     return env;
   }
