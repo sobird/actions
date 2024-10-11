@@ -777,7 +777,7 @@ class DockerContainer extends Container {
 
       const dockerContainer = new DockerContainer({
         name,
-        image: 'node:lts-slim',
+        image,
         forcePull: config.pull,
         workdir: config.workdir,
         entrypoint: ['tail', '-f', '/dev/null'],

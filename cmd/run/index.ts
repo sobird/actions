@@ -121,7 +121,7 @@ export const runCommand = new Command('run')
 
   // container
   .option('--labels <labels...>', 'custom image to use per platform (e.g. --labels ubuntu-latest=nektos/act-environments-ubuntu:18.04)', collectArray)
-  .option('--image <image>', 'docker image to use. Use "-self-hosted" to run directly on the host', 'actions/runner-images:ubuntu-latest')
+  .option('--image <image>', 'docker image to use. Use "-self-hosted" to run directly on the host')
   .option('--pull', 'pull docker image(s) even if already present')
   .option('--rebuild', 'rebuild local action docker image(s) even if already present')
   .option('--reuse', "don't remove container(s) on successfully completed workflow(s) to maintain state between runs")
