@@ -307,6 +307,16 @@ export default abstract class Container {
     return this.resolve(Constants.Directory[directory]);
   }
 
+  get Env() {
+    const env: Record<string, unknown> = {};
+    env.RUNNER_ARCH = this.arch;
+    env.RUNNER_OS = this.platform;
+    env.RUNNER_TOOL_CACHE = this.resolve(Constants.Directory.Tool);
+    env.RUNNER_TEMP = this.resolve(Constants.Directory.Temp);
+
+    return env;
+  }
+
   static GetEnv(env:Record<string, string>, name: string) {
     if (process.platform === 'win32') {
       for (const k of Object.keys(env)) {

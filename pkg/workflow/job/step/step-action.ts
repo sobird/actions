@@ -80,7 +80,7 @@ abstract class StepAction extends Step {
 
   mergeEnv(runner: Runner) {
     runner.Assign(this.environment, runner.Env);
-    Object.assign(this.environment, runner.context.github.Env);
+    Object.assign(this.environment, runner.context.github.Env, runner.container?.Env);
   }
 }
 

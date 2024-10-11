@@ -735,6 +735,8 @@ class DockerContainer extends Container {
         containerNetworkMode = networkName;
       }
 
+      containerNetworkMode = networkName;
+
       runner.services = Object.entries(runner.run.job.services).map(([serviceId, service]) => {
         const serviceEnv = service.env?.evaluate(runner);
         const serviceCredentials = service.credentials?.evaluate(runner);
@@ -747,16 +749,13 @@ class DockerContainer extends Container {
           image: service.image.evaluate(runner),
           forcePull: config.pull,
           workdir: config.workdir,
-          entrypoint: ['tail', '-f', '/dev/null'],
-          // entrypoint: ['/bin/sleep', `${config.containerMaxLifetime}`],
-          cmd: [],
           authconfig: {
             ...serviceCredentials,
           },
           binds: serviceBinds,
           mounts: serviceMounts,
           env: serviceEnv,
-          networkMode: containerNetworkMode,
+          networkMode: networkName,
           networkAliases: [serviceId],
           autoRemove: config.containerAutoRemove,
           privileged: config.containerPrivileged,
