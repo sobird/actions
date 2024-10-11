@@ -20,9 +20,8 @@ class StepActionScript extends StepAction {
 
       const cmd = shellQuote.parse(this.command) as string[];
       const workdir = this.WorkingDirectory(runner);
-      console.log('workdir', workdir);
 
-      await runner.container?.exec(cmd, { env: this.environment, workdir }).execute();
+      await runner.container?.exec(cmd, { env: this.environment, workdir }).execute(ctx);
     }));
   }
 

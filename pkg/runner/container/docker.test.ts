@@ -145,6 +145,7 @@ describe('Test Docker Container', () => {
     await putContentExecutor.execute();
 
     const hash = docker.hashFiles('package.json');
+    console.log('hash', hash);
 
     expect(hash.length).toBe(64);
   });

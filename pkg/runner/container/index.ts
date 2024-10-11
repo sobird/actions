@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import readline from 'node:readline';
@@ -30,6 +31,8 @@ export interface ContainerOptions {
   stderr: string;
 }
 
+const hashFilesDir = path.join(Constants.Directory.Bin, 'hashFiles');
+
 export default abstract class Container {
   name = '';
 
@@ -45,6 +48,8 @@ export default abstract class Container {
 
   environment = 'github-hosted';
 
+  putHashFileExecutor = this.put(hashFilesDir, 'pkg/expression/hashFiles/index.cjs');
+
   // constructor(public options: ContainerOptions) {}
 
   constructor(public options: unknown, public workspace: string = '/home/runner') {}
@@ -55,16 +60,45 @@ export default abstract class Container {
   abstract pullImage(force?: boolean): Executor;
 
   /** 上传文件/目录 */
-  abstract put(destination: string, source: string, useGitIgnore: boolean): Executor;
+  abstract put(destination: string, source: string, useGitIgnore?: boolean): Executor;
   abstract putContent(destination: string, ...files: FileEntry[]): Executor;
   abstract putArchive(destination: string, readStream: NodeJS.ReadableStream): Promise<void>;
   abstract getArchive(destination: string): Promise<NodeJS.ReadableStream>;
   abstract exec(command: string[], options: ContainerExecOptions): Executor;
   // abstract spawnSync(command: string, args: string[], options: ContainerExecOptions): SpawnSyncReturns<string> | undefined;
   // hashFiles功能应由所在容器提供
-  abstract hashFiles(...patterns: string[]): string;
+  // abstract hashFiles(...patterns: string[]): string;
   abstract resolve(...paths: string[]): string;
   abstract imageEnv(): Promise<Record<string, string>>;
+
+  // eslint-disable-next-line class-methods-use-this
+  public spawnSync(command: string, args: readonly string[], options: ContainerExecOptions) {
+    const { workdir, ...restOptions } = options;
+    return spawnSync(command, args, { encoding: 'utf8', cwd: workdir, ...restOptions });
+  }
+
+  public hashFiles(...patterns: string[]) {
+    const followSymlink = patterns[0] === '--follow-symbolic-links';
+    if (followSymlink) {
+      patterns.shift();
+    }
+
+    const env = {
+      ...process.env,
+      patterns: patterns.join('\n'),
+    };
+
+    const hashFilesScript = this.resolve(hashFilesDir, 'index.cjs');
+
+    const { stderr } = this.spawnSync('node', [hashFilesScript], { env });
+
+    const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
+    if (matches && matches.length > 0) {
+      return matches[0].slice(10, -10);
+    }
+
+    return '';
+  }
 
   private async getEntry(filename: string): Promise<tar.ReadEntry> {
     const archive = await this.getArchive(filename);

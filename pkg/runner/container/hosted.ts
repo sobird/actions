@@ -5,7 +5,7 @@
  * sobird<i@sobird.me> at 2024/06/06 21:49:44 created.
  */
 
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import fs, { CopySyncOptions } from 'node:fs';
 import path from 'node:path';
@@ -25,8 +25,6 @@ export interface HostedContainerOptions {
   stdout?: NodeJS.WritableStream;
   binds?: string[];
 }
-
-const hashFilesDir = 'bin/hashFiles';
 
 class HostedContainer extends Container {
   rootdir: string;
@@ -131,9 +129,7 @@ class HostedContainer extends Container {
   }
 
   start() {
-    return new Executor(() => {
-
-    }).finally(this.put(hashFilesDir, 'pkg/expression/hashFiles/index.cjs'));
+    return new Executor().finally(this.putHashFileExecutor);
   }
 
   exec(command: string[], options: ContainerExecOptions = {}) {
@@ -213,31 +209,6 @@ class HostedContainer extends Container {
   // eslint-disable-next-line class-methods-use-this
   async imageEnv() {
     return {};
-  }
-
-  hashFiles(...patterns: string[]) {
-    const followSymlink = patterns[0] === '--follow-symbolic-links';
-    if (followSymlink) {
-      patterns.shift();
-    }
-
-    const env = {
-      ...process.env,
-      patterns: patterns.join('\n'),
-    };
-
-    const cwd = this.resolve();
-
-    const hashFilesScript = path.resolve(cwd, hashFilesDir, 'index.cjs');
-
-    const { stderr } = spawnSync('node', [hashFilesScript], { env, cwd, encoding: 'utf8' });
-
-    const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
-    if (matches && matches.length > 0) {
-      return matches[0].slice(10, -10);
-    }
-
-    return '';
   }
 
   static Setup(runner: Runner) {

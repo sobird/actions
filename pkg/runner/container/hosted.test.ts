@@ -168,6 +168,7 @@ describe('Test Hosted Container', () => {
     await putContentExecutor.execute();
 
     const hash = hosted.hashFiles('package.json');
+    console.log('hash', hash);
 
     expect(hash.length).toBe(64);
   });

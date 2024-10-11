@@ -60,7 +60,6 @@ export interface DockerContainerOptions {
   networkAliases?: string[];
 }
 
-const hashFilesDir = 'bin/hashFiles';
 const isatty = tty.isatty(process.stdout.fd);
 // const isTerminal = process.stdout.isTTY;
 
@@ -119,10 +118,7 @@ class DockerContainer extends Container {
       // this.attachContainer(),
       this.startContainer(),
       this.info(),
-      new Executor(() => {
-        //
-      }),
-    ).finally(this.put(hashFilesDir, 'pkg/expression/hashFiles/index.cjs'));
+    ).finally(this.putHashFileExecutor);
   }
 
   stop() {
@@ -661,29 +657,6 @@ class DockerContainer extends Container {
     dockerArgs.push(...args);
 
     return cp.spawnSync('docker', dockerArgs, { encoding: 'utf8' });
-  }
-
-  hashFiles(...patterns: string[]) {
-    const followSymlink = patterns[0] === '--follow-symbolic-links';
-    if (followSymlink) {
-      patterns.shift();
-    }
-
-    const env = {
-      patterns: patterns.join('\n'),
-    };
-
-    const { workdir } = this.options;
-    const hashFilesScript = this.resolve(hashFilesDir, 'index.cjs');
-
-    const { stderr } = this.spawnSync('node', [hashFilesScript], { env, workdir });
-
-    const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
-    if (matches && matches.length > 0) {
-      return matches[0].slice(10, -10);
-    }
-
-    return '';
   }
 
   resolve(...paths: string[]) {
