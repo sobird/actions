@@ -728,13 +728,7 @@ class DockerContainer extends Container {
       // if using service containers, will create a new network for the containers.
       // and it will be removed after at last.
       const [networkName, createAndDeleteNetwork] = runner.ContainerNetworkName();
-
       const [binds, mounts] = runner.BindsAndMounts;
-
-      console.log('binds', binds);
-      console.log('mounts', mounts);
-      console.log('workflow', runner.run.workflow.file);
-      console.log('createAndDeleteNetwork', createAndDeleteNetwork);
 
       let containerNetworkMode = config.containerNetworkMode || 'host';
       if (runner.ContainerImage) {
@@ -833,7 +827,7 @@ class DockerContainer extends Container {
         runner.pullServicesImage(),
         dockerContainer.createNetwork(networkName).if(new Conditional(() => { return createAndDeleteNetwork; })),
         runner.startServices(),
-        runner.container.start(),
+        dockerContainer.start(),
       );
     });
   }
