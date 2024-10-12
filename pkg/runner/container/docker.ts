@@ -710,7 +710,7 @@ class DockerContainer extends Container {
 
       containerNetworkMode = networkName;
 
-      runner.services = Object.entries(runner.run.job.services).map(([serviceId, service]) => {
+      runner.services = Object.entries(runner.run.job.services || {}).map(([serviceId, service]) => {
         const serviceEnv = service.env?.evaluate(runner);
         const serviceCredentials = service.credentials?.evaluate(runner);
         const serviceName = runner.ContainerName(serviceId);

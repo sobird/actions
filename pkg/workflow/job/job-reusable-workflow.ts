@@ -34,6 +34,7 @@ class JobReusableWorkflow extends Job {
     };
 
     const matches = /^(https?:\/\/[^/?#]+\/)?([^/@]+)(?:\/([^/@]+))?(?:\/([^@]*))?(?:@(.*))?$/.exec(uses);
+
     if (matches) {
       const { server_url: serverUrl, sha } = runner.context.github;
       const [,url = serverUrl, owner, repo, filename, ref = sha] = matches;
@@ -72,6 +73,8 @@ class JobReusableWorkflow extends Job {
     } catch (err) {
       //
     }
+
+    console.log('matches', matches, reusable, uses);
 
     if (runner.config.actionCache) {
       return JobReusableWorkflow.ActionCacheReusableWorkflowExecutor(reusable, runner);
