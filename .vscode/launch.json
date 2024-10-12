@@ -5,6 +5,16 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Debug single job",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/cmd",
+      "args": ["run", "-j", "single-step-test"],
+      "env": {
+        "NODE_OPTIONS": "--import=./node_modules/@sobird/ts-node/register.js"
+      }
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "Node.js",
@@ -16,6 +26,6 @@
       "env": {
         "NODE_OPTIONS": "--import=./node_modules/@sobird/ts-node/register.js"
       }
-    }
+    },
   ]
 }
