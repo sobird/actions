@@ -15,6 +15,16 @@
       }
     },
     {
+      "name": "Debug job uses",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/cmd",
+      "args": ["run", "-j", "test-job-uses"],
+      "env": {
+        "NODE_OPTIONS": "--import=./node_modules/@sobird/ts-node/register.js"
+      }
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "Node.js",

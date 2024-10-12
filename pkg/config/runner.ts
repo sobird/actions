@@ -280,7 +280,7 @@ class Runner implements Omit<Options, ''> {
     this.recursive = runner.recursive;
     this.context = new Context(runner.context);
     this.workspace = runner.workspace || '/home/runner';
-    this.workdir = runner.workdir;
+    this.workdir = runner.workdir || '';
     this.bindWorkdir = runner.bindWorkdir;
     this.eventFile = runner.eventFile;
     this.actor = runner.actor;
@@ -408,7 +408,7 @@ class Runner implements Omit<Options, ''> {
     }
 
     if (process.platform === 'darwin' && process.arch === 'arm64' && !this.containerPlatform) {
-      console.warn(" \u26d4 You are using Apple M-series chip and you have not specified container architecture, you might encounter issues while running act. If so, try running it with '--container-architecture linux/amd64'. \u26d4");
+      logger.warn(" \u26d4 You are using Apple M-series chip and you have not specified container architecture, you might encounter issues while running act. If so, try running it with '--container-architecture linux/amd64'. \u26d4");
     }
 
     logger.debug('Loading environment from %s', this.envFile);

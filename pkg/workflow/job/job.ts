@@ -332,7 +332,7 @@ class Job {
    *
    * For more information about the differences between networking service containers, see "{@link https://docs.github.com/en/actions/using-containerized-services/about-service-containers About service containers}."
    */
-  services: Record<string, Container>;
+  services?: Record<string, Container>;
 
   /**
    * The location and version of a reusable workflow file to run as a job. Use one of the following syntaxes:
@@ -583,6 +583,7 @@ class Job {
       return new Executor(async (ctx) => {
         // console.log('ctx', ctx);
         // console.log('step', step);
+        console.log('');
         console.log('step', step.constructor.name);
         console.log('step if:', step.if.evaluate(runner));
 

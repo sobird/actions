@@ -1,6 +1,5 @@
 /* eslint-disable no-template-curly-in-string */
 import Runner from '@/pkg/runner';
-import HostedContainer from '@/pkg/runner/container/hosted';
 
 import JobReusableWorkflow from './job-reusable-workflow';
 
@@ -12,7 +11,6 @@ vi.mock('@/pkg/runner');
 vi.mock('@/pkg/runner/container/hosted');
 
 const runner: Runner = new (Runner as any)();
-const hosted: HostedContainer = new (HostedContainer as any)();
 
 describe('job-reusable-workflow test', () => {
   it('local reusable workflow skipCheckout test case', async () => {
@@ -25,7 +23,6 @@ describe('job-reusable-workflow test', () => {
     (runner.config as any).skipCheckout = true;
     runner.run.jobId = 'job1';
     runner.run.workflow.jobs.job1 = job;
-    runner.container = hosted;
 
     const executor = job.executor(runner);
     await executor.execute();
