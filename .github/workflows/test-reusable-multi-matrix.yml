@@ -14,10 +14,12 @@ jobs:
   job-test-reusable:
     runs-on: ${{ matrix.os }}
     strategy:
+      max-parallel: 3
       matrix:
         os: ['ubuntu-latest']
         node: [16, 18, 20]
       fail-fast: false
+      
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server hosted by !"
