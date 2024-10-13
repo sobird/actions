@@ -5,11 +5,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug single job",
+      "name": "debug for development",
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/cmd",
-      "args": ["run", "-j", "single-step-test"],
+      "args": ["run", "-j", "job-for-development"],
       "env": {
         "NODE_OPTIONS": "--import=./node_modules/@sobird/ts-node/register.js"
       }

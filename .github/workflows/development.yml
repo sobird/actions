@@ -1,10 +1,10 @@
-name: single-step-test
-run-name: single-step-test-${{ github.actor }}
+name: Job for Development
+run-name: Job for Development By ${{ github.actor }}
 on:
-  push:
+  workflow_dispatch:
 
 jobs:
-  single-step-test:
+  job-for-development:
     runs-on: ubuntu-latest
 
     services:

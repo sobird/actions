@@ -74,8 +74,6 @@ class JobReusableWorkflow extends Job {
       //
     }
 
-    console.log('matches', matches, reusable, uses);
-
     if (runner.config.actionCache) {
       return JobReusableWorkflow.ActionCacheReusableWorkflowExecutor(reusable, runner);
     }

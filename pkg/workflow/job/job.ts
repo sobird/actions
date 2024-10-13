@@ -463,6 +463,7 @@ class Job {
 
   // 展开作业矩阵
   spread() {
+    // @todo use selectMatrices()
     const matrices = this.strategy.Matrices;
     if (matrices.length === 0) {
       return [this];
