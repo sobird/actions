@@ -95,7 +95,9 @@ class Runner {
         return;
       }
 
-      await asyncFunction(500);
+      // await asyncFunction(100);
+
+      console.log('start job:', this.run.name);
 
       console.log('job', job === Object.entries(workflow.jobs)[0][1]);
       // todo
