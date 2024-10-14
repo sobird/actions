@@ -35,9 +35,11 @@ describe('job-reusable-workflow test', () => {
       uses: './.github/workflows/test-reusable-multi-matrix.yml',
     });
 
-    (runner.config as any).skipCheckout = true;
+    (runner.config as any).skipCheckout = false;
     runner.run.jobId = 'job1';
     runner.run.workflow.jobs.job1 = job;
+
+    runner.context.github.sha = 'HEAD';
 
     const executor = job.executor(runner);
     await executor.execute();

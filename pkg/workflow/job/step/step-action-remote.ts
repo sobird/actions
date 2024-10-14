@@ -22,7 +22,6 @@ interface Reusable {
 class StepActionRemote extends StepAction {
   public pre() {
     return new Executor(async (runner) => {
-      return;
       const { uses = '' } = this;
 
       const reusable: Reusable = {
@@ -44,6 +43,9 @@ class StepActionRemote extends StepAction {
         reusable.dir = dir;
         reusable.ref = ref;
       }
+
+      console.log('reusable', reusable);
+      return;
 
       try {
         const url = new URL(reusable.repository, reusable.url);
