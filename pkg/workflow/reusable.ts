@@ -27,12 +27,12 @@ export default class Reusable {
     const matches = /^(https?:\/\/[^/?#]+\/)?([^/@]+)(?:\/([^/@]+))?(?:\/([^@]*))?(?:@(.*))?$/.exec(uses);
 
     if (matches) {
-      const [,url, owner, repo, path, ref] = matches;
+      const [,url, owner = '', repo = '', path = '', ref = ''] = matches;
       this.url = url;
       this.owner = owner;
       this.repo = repo;
       this.path = path;
-      this.ref = ref || this.ref;
+      this.ref = ref;
     }
   }
 

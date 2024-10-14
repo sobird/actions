@@ -48,7 +48,7 @@ class JobReusableWorkflow extends Job {
     if (uses.startsWith('./')) {
       uses = uses.substring(2);
       if (runner.config.skipCheckout) {
-        return JobReusableWorkflow.ReusableWorkflowExecutor(uses, runner);
+        return JobReusableWorkflow.ReusableWorkflowExecutor(uses);
       }
 
       // remote resuable workflow
@@ -75,24 +75,24 @@ class JobReusableWorkflow extends Job {
     }
 
     if (runner.config.actionCache) {
-      return JobReusableWorkflow.ActionCacheReusableWorkflowExecutor(reusable, runner);
+      return JobReusableWorkflow.ActionCacheReusableWorkflowExecutor(reusable);
     }
 
     const workflowpath = path.join(repositoryDir, reusable.filename);
-    return Git.CloneExecutor(repositoryDir, reusable.url, reusable.ref).next(JobReusableWorkflow.ReusableWorkflowExecutor(workflowpath, runner));
+    return Git.CloneExecutor(repositoryDir, reusable.url, reusable.ref).next(JobReusableWorkflow.ReusableWorkflowExecutor(workflowpath));
   }
 
-  static ReusableWorkflowExecutor(workflowPath: string, runner: Runner) {
-    return new Executor(async () => {
+  static ReusableWorkflowExecutor(workflowPath: string) {
+    return new Executor(async (runner) => {
       const workflowPlanner = await WorkflowPlanner.Collect(workflowPath);
       const plan = workflowPlanner.planEvent('workflow_call');
-      await plan.executor(runner.config, runner).execute();
+      await plan.executor(runner!.config, runner).execute();
     });
   }
 
-  static ActionCacheReusableWorkflowExecutor(reusable: Reusable, runner: Runner) {
-    return new Executor(async () => {
-      const { actionCache } = runner.config;
+  static ActionCacheReusableWorkflowExecutor(reusable: Reusable) {
+    return new Executor(async (runner) => {
+      const { actionCache } = runner!.config;
       if (actionCache) {
         await actionCache.fetch(reusable.url, reusable.repository, reusable.ref);
         const archive = await actionCache.archive(reusable.repository, reusable.ref, reusable.filename);
@@ -100,7 +100,7 @@ class JobReusableWorkflow extends Job {
 
         const workflowPlanner = WorkflowPlanner.Single(body);
         const plan = workflowPlanner.planEvent('workflow_call');
-        await plan.executor(runner.config, runner).execute();
+        await plan.executor(runner!.config, runner).execute();
       }
     });
   }

@@ -9,13 +9,16 @@ import path from 'node:path';
 
 import Executor from '@/pkg/common/executor';
 import Git from '@/pkg/common/git';
+import Action from '@/pkg/runner/action';
 import Reusable from '@/pkg/workflow/reusable';
 
 import StepAction from './step-action';
 
 class StepActionRemote extends StepAction {
+  action?: Action;
+
   public pre() {
-    return new Executor(async (runner) => {
+    return new Executor((runner) => {
       const reusable = new Reusable(this.uses, runner?.Token);
       const { repository, sha, server_url: serverUrl } = runner!.context.github;
       reusable.url = reusable.url || serverUrl;
