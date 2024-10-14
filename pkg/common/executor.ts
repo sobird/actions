@@ -32,7 +32,7 @@ class Executor {
   ) {}
 
   async execute(ctx?: Runner) {
-    const result = this.fn(ctx);
+    const result = await this.fn(ctx);
     if (result instanceof Executor) {
       await result.execute(ctx);
     }

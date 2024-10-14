@@ -1,5 +1,5 @@
 /**
- * Reusing workflows
+ * Reusing workflows Local & Remote
  *
  * @see https://docs.github.com/en/actions/using-workflows/reusing-workflows
  *

@@ -5,70 +5,42 @@
  *
  * sobird<i@sobird.me> at 2024/05/21 16:20:47 created.
  */
+import path from 'node:path';
 
 import Executor from '@/pkg/common/executor';
+import Git from '@/pkg/common/git';
+import Reusable from '@/pkg/workflow/reusable';
 
 import StepAction from './step-action';
-
-interface Reusable {
-  url: string;
-  owner: string;
-  repo: string;
-  repository: string;
-  dir: string;
-  ref: string;
-}
 
 class StepActionRemote extends StepAction {
   public pre() {
     return new Executor(async (runner) => {
-      const { uses = '' } = this;
+      const reusable = new Reusable(this.uses, runner?.Token);
+      const { repository, sha, server_url: serverUrl } = runner!.context.github;
+      reusable.url = reusable.url || serverUrl;
 
-      const reusable: Reusable = {
-        url: '',
-        owner: '',
-        repo: '',
-        repository: '',
-        dir: '',
-        ref: '',
-      };
-
-      const matches = /^(https?:\/\/[^/?#]+\/)?([^/@]+)(?:\/([^/@]+))?(?:\/([^@]*))?(?:@(.*))?$/.exec(uses);
-      if (matches) {
-        const [,url, owner, repo, dir, ref] = matches;
-        reusable.url = url || 'https://gitea.com' || runner!.context.github.server_url;
-        reusable.owner = owner;
-        reusable.repo = repo;
-        reusable.repository = `${owner}/${repo}`;
-        reusable.dir = dir;
-        reusable.ref = ref;
-      }
-
-      console.log('reusable', reusable);
-      return;
-
-      try {
-        const url = new URL(reusable.repository, reusable.url);
-
-        if (runner!.Token) {
-          url.username = 'token';
-          url.password = runner!.Token;
+      if (reusable.isLocal) {
+        if (runner!.config.skipCheckout) {
+          //
+          return;
         }
-
-        reusable.url = url.toString();
-      } catch (err) {
-        //
+        reusable.repository = repository;
+        reusable.ref = sha;
       }
 
-      console.log('step uses reusable', reusable, uses);
+      console.log('reusable - step', reusable);
+      console.log('repositoryUrl', reusable.repositoryUrl);
 
-      const { actionCache } = runner!.config;
+      // const { actionCache } = runner!.config;
+      // if (actionCache) {
+      //   await actionCache.fetch(reusable.url, reusable.repository, reusable.ref);
+      //   const archive = await actionCache.archive(reusable.repository, reusable.ref);
+      //   console.log('archive', archive);
+      // }
 
-      if (actionCache) {
-        await actionCache.fetch(reusable.url, reusable.repository, reusable.ref);
-        const archive = await actionCache.archive(reusable.repository, reusable.ref);
-        // console.log('archive', archive);
-      }
+      const repositoryDir = path.join(runner!.ActionCacheDir, reusable.repository, reusable.ref);
+      return Git.CloneExecutor(repositoryDir, reusable.repositoryUrl, reusable.ref);
     });
   }
 
