@@ -296,12 +296,21 @@ class DockerContainer extends Container {
   }
 
   createNetwork(name: string) {
-    return new Executor(async () => {
-      const network = await docker.createNetwork({
-        Name: name,
-      });
-      this.network = network;
-    });
+    return Executor.Pipeline(
+      this.findNetwork(name),
+      new Executor(async () => {
+        const { network } = this;
+        if (network) {
+          logger.debug('Network %s exists', name);
+          return;
+        }
+
+        // Only create the network if it doesn't exist
+        this.network = await docker.createNetwork({
+          Name: name,
+        });
+      }),
+    );
   }
 
   connectNetwork(containerName: string, aliases: string[]) {
