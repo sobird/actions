@@ -28,8 +28,8 @@ jobs:
           LAST_NAME: Octocat
         run: env
 
-      # - name: Checkout Step
-      #   uses: actions/checkout@v4
+      - name: Checkout Step
+        uses: actions/checkout@v4
       - name: Hello World Javascript Action Step
         id: hello_world_javascript_action
         uses: ./.github/actions/hello-world-javascript-action

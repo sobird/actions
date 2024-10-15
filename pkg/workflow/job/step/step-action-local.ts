@@ -31,11 +31,6 @@ class StepActionLocal extends StepAction {
   // public post() {
   //   return new Executor(() => {});
   // }
-
-  // put action to container
-  putAction() {
-
-  }
 }
 
 export default StepActionLocal;

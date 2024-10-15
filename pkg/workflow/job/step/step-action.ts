@@ -1,4 +1,6 @@
 /* eslint-disable class-methods-use-this */
+import path from 'node:path';
+
 import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
 import ActionCommandFile from '@/pkg/runner/action/command/file';
@@ -81,6 +83,18 @@ abstract class StepAction extends Step {
   mergeEnv(runner: Runner) {
     runner.Assign(this.environment, runner.Env);
     Object.assign(this.environment, runner.context.github.Env, runner.container?.Env);
+  }
+
+  symlinkJoin(filename: string, sym: string, parent: string) {
+    const dir = path.dirname(filename);
+    const dest = path.join(dir, sym);
+    const prefix = path.normalize(parent) + path.sep;
+
+    if (dest.startsWith(prefix) || prefix === './') {
+      return dest;
+    }
+
+    throw new Error(`symlink tries to access file '${dest}' outside of '${parent}`);
   }
 }
 

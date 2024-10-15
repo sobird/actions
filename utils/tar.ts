@@ -17,6 +17,7 @@ export async function readEntry(pack: NodeJS.ReadableStream): Promise<FileEntry 
 
   return new Promise((resolve) => {
     extract.on('entry', (entry: tar.ReadEntry) => {
+      console.log('entry linkpath', entry.header.linkpath);
       if (entry.size === 0 && entry.type === 'File') {
         resolve({
           name: entry.path,

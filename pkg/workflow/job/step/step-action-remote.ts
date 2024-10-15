@@ -106,7 +106,7 @@ class StepActionRemote extends StepAction {
       const { actionCache } = runner.config;
       if (actionCache) {
         await actionCache.fetch(reusable.repositoryUrl, reusable.repository, reusable.ref);
-        this.action = await Action.Scan(async (filename) => {
+        this.action = await Action.Pick(async (filename) => {
           const archive = await actionCache.archive(reusable.repository, reusable.ref, filename);
           const entry = await readEntry(archive);
           return entry ? entry.body : false;
