@@ -581,9 +581,7 @@ class Job {
       const stepPostExecutor = step.post();
       stepPostPipeline.push(stepPostExecutor);
 
-      return new Executor(async (ctx) => {
-        // console.log('ctx', ctx);
-        // console.log('step', step);
+      return new Executor(async () => {
         console.log('');
         console.log('step', step.constructor.name);
         console.log('step if:', step.if.evaluate(runner));

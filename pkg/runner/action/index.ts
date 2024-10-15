@@ -8,7 +8,6 @@
  *
  * sobird<i@sobird.me> at 2024/06/13 10:55:22 created.
  */
-
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -85,44 +84,60 @@ class Action extends Yaml {
     this.runs = new Runs(action.runs);
   }
 
-  // run() {
-  //   // run action
-  // }
-
+  // run action
   executor() {
     return new Executor(() => {
-      console.log('action:', this.name);
+      console.log('run action:', this.name);
     });
   }
 
-  static Scan(actionPath: string) {
-    const stat = fs.statSync(actionPath);
-
-    if (stat.isDirectory()) {
-      const yml = path.join(actionPath, 'action.yml');
-      if (fs.existsSync(yml)) {
-        return this.Read(yml);
-      }
-
-      const yaml = path.join(actionPath, 'action.yaml');
-      if (fs.existsSync(yaml)) {
-        return this.Read(yaml);
-      }
-
-      const dockerfile = path.join(actionPath, 'Dockerfile');
-      if (fs.existsSync(dockerfile)) {
-        return new this({
-          name: '(Synthetic)',
-          description: 'docker file action',
-          runs: {
-            using: 'docker',
-            image: 'Dockerfile',
-          },
-        });
-      }
+  static async Pick(read: (filename: string) => Promise<string | false> | string | false) {
+    const yml = await read('action.yml');
+    if (yml) {
+      return this.Load(yml);
     }
 
-    // return this.Read(actionPath);
+    const yaml = await read('action.yaml');
+    if (yaml) {
+      return this.Load(yaml);
+    }
+
+    const dockerfile = await read('Dockerfile');
+    if (dockerfile) {
+      return new this({
+        name: '(Synthetic)',
+        description: 'docker file action',
+        runs: {
+          using: 'docker',
+          image: 'Dockerfile',
+        },
+      });
+    }
+  }
+
+  static async Scan(actionDir: string) {
+    return Action.Pick((filename) => {
+      if (!fs.existsSync(actionDir)) {
+        return false;
+      }
+
+      const stat = fs.statSync(actionDir);
+
+      if (stat.isDirectory()) {
+        const file = path.join(actionDir, filename);
+        if (fs.existsSync(file)) {
+          return fs.readFileSync(file, 'utf8');
+        }
+      }
+
+      if (stat.isFile()) {
+        if (fs.existsSync(actionDir)) {
+          return fs.readFileSync(actionDir, 'utf8');
+        }
+      }
+
+      return false;
+    });
   }
 }
 

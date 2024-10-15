@@ -105,7 +105,6 @@ class Runner {
       console.log('job runs-on', job['runs-on'].evaluate(this), job.runsOn(this));
       console.log('workflow file:', this.run.workflow.file);
       console.log('workflow sha:', this.run.workflow.sha);
-
       console.log('job container image:', job.container.image.evaluate(this));
 
       // execute job unit

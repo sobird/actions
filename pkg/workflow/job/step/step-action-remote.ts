@@ -5,6 +5,7 @@
  *
  * sobird<i@sobird.me> at 2024/05/21 16:20:47 created.
  */
+import fs from 'node:fs';
 import path from 'node:path';
 
 import Executor from '@/pkg/common/executor';
@@ -18,14 +19,20 @@ import StepAction from './step-action';
 class StepActionRemote extends StepAction {
   action?: Action;
 
+  // Prepare Action Instance
   public pre() {
-    return new Executor((runner) => {
-      const reusable = new Reusable(this.uses, runner?.Token);
+    return new Executor((ctx) => {
+      const runner = ctx!;
+      const reusable = new Reusable(this.uses, runner.Token);
       const { repository, sha, server_url: serverUrl } = runner!.context.github;
       reusable.url = reusable.url || serverUrl;
 
+      if (reusable.is('actions', 'checkout') && runner.config.skipCheckout) {
+        //
+      }
+
       if (reusable.isLocal) {
-        if (runner!.config.skipCheckout) {
+        if (runner.config.skipCheckout) {
           return this.reusableActionExecutor(reusable.path);
         }
         reusable.repository = repository;
@@ -35,11 +42,19 @@ class StepActionRemote extends StepAction {
       console.log('reusable - step', reusable);
       console.log('repositoryUrl', reusable.repositoryUrl);
 
-      if (runner?.config.actionCache) {
+      const replaceGheActionWithGithubCom = runner.config.replaceGheActionWithGithubCom || [];
+      replaceGheActionWithGithubCom.forEach((action) => {
+        if (reusable.repository === action) {
+          reusable.url = 'https://github.com';
+          reusable.token = runner.config.replaceGheActionTokenWithGithubCom;
+        }
+      });
+
+      if (runner.config.actionCache) {
         return this.actionCacheReusableActionExecutor(reusable);
       }
 
-      const repositoryDir = path.join(runner!.ActionCacheDir, reusable.repository, reusable.ref);
+      const repositoryDir = path.join(runner.ActionCacheDir, reusable.repository, reusable.ref);
       const actionDir = path.join(repositoryDir, reusable.path);
       return Git.CloneExecutor(repositoryDir, reusable.repositoryUrl, reusable.ref).finally(this.reusableActionExecutor(actionDir));
     });
@@ -57,25 +72,45 @@ class StepActionRemote extends StepAction {
     return new Executor(() => {});
   }
 
-  reusableActionExecutor(actionPath: string) {
-    return new Executor(async (runner) => {
-      this.action = Action.Scan(actionPath);
-      console.log('this.action', this.action);
+  reusableActionExecutor(actionDir: string) {
+    return new Executor(async () => {
+      this.action = await Action.Scan((filename) => {
+        if (!fs.existsSync(actionDir)) {
+          return false;
+        }
+
+        const stat = fs.statSync(actionDir);
+
+        if (stat.isDirectory()) {
+          const file = path.join(actionDir, filename);
+          if (fs.existsSync(file)) {
+            return fs.readFileSync(file, 'utf8');
+          }
+        }
+
+        if (stat.isFile()) {
+          if (fs.existsSync(actionDir)) {
+            return fs.readFileSync(actionDir, 'utf8');
+          }
+        }
+
+        return false;
+      });
     });
   }
 
   actionCacheReusableActionExecutor(reusable: Reusable) {
-    return new Executor(async (runner) => {
-      console.log('actionCacheReusableActionExecutor: ');
-      const { actionCache } = runner!.config;
+    return new Executor(async (ctx) => {
+      const runner = ctx!;
+
+      const { actionCache } = runner.config;
       if (actionCache) {
         await actionCache.fetch(reusable.repositoryUrl, reusable.repository, reusable.ref);
-        const archive = await actionCache.archive(reusable.repository, reusable.ref, 'action.yml1');
-        const entry = await readEntry(archive);
-        console.log('entry', entry);
-
-        // const action = Action.Scan(actionPath);
-        // console.log('action', action)
+        this.action = await Action.Scan(async (filename) => {
+          const archive = await actionCache.archive(reusable.repository, reusable.ref, filename);
+          const entry = await readEntry(archive);
+          return entry ? entry.body : false;
+        });
       }
     });
   }
