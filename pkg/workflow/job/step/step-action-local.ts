@@ -4,6 +4,8 @@
  * sobird<i@sobird.me> at 2024/10/15 22:13:49 created.
  */
 
+import path from 'node:path';
+
 import Executor from '@/pkg/common/executor';
 import Action from '@/pkg/runner/action';
 
@@ -13,8 +15,10 @@ class StepActionLocal extends StepAction {
   action?: Action;
 
   public pre() {
-    return new Executor(async () => {
-      this.action = await Action.Scan(this.uses || '');
+    return new Executor(async (ctx) => {
+      const runner = ctx!;
+      const actionDir = path.join(runner.config.workdir, this.uses || '');
+      this.action = await Action.Scan(actionDir);
     });
   }
 
@@ -27,6 +31,11 @@ class StepActionLocal extends StepAction {
   // public post() {
   //   return new Executor(() => {});
   // }
+
+  // put action to container
+  putAction() {
+
+  }
 }
 
 export default StepActionLocal;
