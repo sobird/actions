@@ -96,11 +96,12 @@ class JobReusableWorkflow extends Job {
       if (actionCache) {
         await actionCache.fetch(reusable.url, reusable.repository, reusable.ref);
         const archive = await actionCache.archive(reusable.repository, reusable.ref, reusable.filename);
-        const { body } = await readEntry(archive);
-
-        const workflowPlanner = WorkflowPlanner.Single(body);
-        const plan = workflowPlanner.planEvent('workflow_call');
-        await plan.executor(runner!.config, runner).execute();
+        const entry = await readEntry(archive);
+        if (entry) {
+          const workflowPlanner = WorkflowPlanner.Single(entry.body);
+          const plan = workflowPlanner.planEvent('workflow_call');
+          await plan.executor(runner!.config, runner).execute();
+        }
       }
     });
   }

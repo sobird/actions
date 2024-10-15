@@ -12,6 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import Executor from '@/pkg/common/executor';
 import Yaml from '@/pkg/common/yaml';
 
 import { inputs } from './inputs';
@@ -74,7 +75,7 @@ class Action extends Yaml {
     color: 'white' | 'yello' | 'blue' | 'green' | 'orange' | 'red' | 'purple' | 'gray-dark';
   };
 
-  constructor(action: Omit<Action, 'save' | 'dump'>) {
+  constructor(action: Omit<Action, 'save' | 'dump' | 'executor'>) {
     super(action);
     this.name = action.name;
     this.author = action.author;
@@ -87,6 +88,12 @@ class Action extends Yaml {
   // run() {
   //   // run action
   // }
+
+  executor() {
+    return new Executor(() => {
+      console.log('action:', this.name);
+    });
+  }
 
   static Scan(actionPath: string) {
     const stat = fs.statSync(actionPath);

@@ -11,6 +11,7 @@ import Executor from '@/pkg/common/executor';
 import Git from '@/pkg/common/git';
 import Action from '@/pkg/runner/action';
 import Reusable from '@/pkg/workflow/reusable';
+import { readEntry } from '@/utils/tar';
 
 import StepAction from './step-action';
 
@@ -25,8 +26,7 @@ class StepActionRemote extends StepAction {
 
       if (reusable.isLocal) {
         if (runner!.config.skipCheckout) {
-          //
-          return;
+          return this.reusableActionExecutor(reusable.path);
         }
         reusable.repository = repository;
         reusable.ref = sha;
@@ -35,21 +35,21 @@ class StepActionRemote extends StepAction {
       console.log('reusable - step', reusable);
       console.log('repositoryUrl', reusable.repositoryUrl);
 
-      // const { actionCache } = runner!.config;
-      // if (actionCache) {
-      //   await actionCache.fetch(reusable.url, reusable.repository, reusable.ref);
-      //   const archive = await actionCache.archive(reusable.repository, reusable.ref);
-      //   console.log('archive', archive);
-      // }
+      if (runner?.config.actionCache) {
+        return this.actionCacheReusableActionExecutor(reusable);
+      }
 
       const repositoryDir = path.join(runner!.ActionCacheDir, reusable.repository, reusable.ref);
-      return Git.CloneExecutor(repositoryDir, reusable.repositoryUrl, reusable.ref);
+      const actionDir = path.join(repositoryDir, reusable.path);
+      return Git.CloneExecutor(repositoryDir, reusable.repositoryUrl, reusable.ref).finally(this.reusableActionExecutor(actionDir));
     });
   }
 
   public main() {
     return this.executor(new Executor(() => {
-      console.log('this.uses', this.uses);
+      console.log('this.uses', this.action);
+
+      return this.action?.executor();
     }));
   }
 
@@ -57,15 +57,27 @@ class StepActionRemote extends StepAction {
     return new Executor(() => {});
   }
 
-  static ParseUses(uses: string) {
-    const matches = /^(https?:\/\/[^/?#]+\/)?([^/@]+)(?:\/([^/@]+))?(?:\/([^@]*))?(?:@(.*))?$/.exec(uses);
-    if (matches) {
-      const [,url, owner, repo, dir, ref] = matches;
-      return {
-        url, owner, repo, dir, ref,
-      };
-    }
-    // todo throw Error
+  reusableActionExecutor(actionPath: string) {
+    return new Executor(async (runner) => {
+      this.action = Action.Scan(actionPath);
+      console.log('this.action', this.action);
+    });
+  }
+
+  actionCacheReusableActionExecutor(reusable: Reusable) {
+    return new Executor(async (runner) => {
+      console.log('actionCacheReusableActionExecutor: ');
+      const { actionCache } = runner!.config;
+      if (actionCache) {
+        await actionCache.fetch(reusable.repositoryUrl, reusable.repository, reusable.ref);
+        const archive = await actionCache.archive(reusable.repository, reusable.ref, 'action.yml1');
+        const entry = await readEntry(archive);
+        console.log('entry', entry);
+
+        // const action = Action.Scan(actionPath);
+        // console.log('action', action)
+      }
+    });
   }
 }
 

@@ -274,6 +274,10 @@ class Runner {
   get Env() {
     const { job, workflow } = this.run;
     const env = { ...workflow.env.evaluate(this), ...job.env.evaluate(this), ...job.container.env?.evaluate(this) };
+    if (this.config.skipCheckout) {
+      env.ACTIONS_SKIP_CHECKOUT = 'true';
+    }
+
     this.Assign(this.context.env, env);
     return this.context.env;
   }

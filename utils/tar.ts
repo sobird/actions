@@ -7,7 +7,11 @@ export interface FileEntry {
   size?: number;
 }
 
-export async function readEntry(pack: NodeJS.ReadableStream): Promise<FileEntry> {
+export async function readEntry(pack: NodeJS.ReadableStream): Promise<FileEntry | false> {
+  if (!(pack as unknown as tar.Pack).writable) {
+    return false;
+  }
+
   const extract = tar.t({});
   pack.pipe(extract);
 
