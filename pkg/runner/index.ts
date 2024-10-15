@@ -15,7 +15,7 @@ import { Docker } from '@/pkg/docker';
 import Config from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
 import Strategy from '@/pkg/workflow/job/strategy';
-import { asyncFunction, createSafeName, assignIgnoreCase } from '@/utils';
+import { createSafeName, assignIgnoreCase } from '@/utils';
 
 import Container from './container';
 import DockerContainer from './container/docker';
@@ -82,20 +82,19 @@ class Runner {
 
     // Initialize 'echo on action command success' property, default to false, unless Step_Debug is set
     this.echoOnActionCommand = context.secrets[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || context.vars[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || false;
+
+    if (config.serverInstance) {
+      const serverInstance = /^http(s)?:\/\//i.test(config.serverInstance) ? config.serverInstance : `https://${config.serverInstance}`;
+      context.github.server_url = serverInstance;
+    }
   }
 
   executor() {
     const { job, workflow } = this.run;
-    const jobExecutor = job.executor(this);
-
-    // console.log('runner executor start:', workflow.jobs);
-
     return new Executor(async () => {
       if (!this.Enabled) {
         return;
       }
-
-      // await asyncFunction(100);
 
       console.log('start job:', this.run.name);
 
@@ -109,7 +108,8 @@ class Runner {
 
       console.log('job container image:', job.container.image.evaluate(this));
 
-      await jobExecutor.execute(this);
+      // execute job unit
+      await job.executor(this).execute(this);
     });
   }
 

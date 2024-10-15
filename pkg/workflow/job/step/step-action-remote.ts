@@ -47,7 +47,7 @@ class StepActionRemote extends StepAction {
 
   public main() {
     return this.executor(new Executor(() => {
-      console.log('this.uses', this.action);
+      console.error('this.uses', this.action);
 
       return this.action?.executor();
     }));

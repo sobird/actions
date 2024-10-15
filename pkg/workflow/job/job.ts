@@ -593,7 +593,7 @@ class Job {
         console.log('step env:', step.Env(runner));
         console.log('step with:', step.with.evaluate(runner));
 
-        await asyncFunction(250);
+        await asyncFunction(0);
       }).finally(step.main());
     }));
 

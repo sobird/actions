@@ -16,13 +16,10 @@ const run = new Run(Object.keys(workflow.jobs)[0], workflow);
 const config = await Config.Load().runner.configure();
 // (config as any).platformPicker = () => { return '-self-hosted'; };
 
-const runner = new Runner(run, config);
 // const container = new HostedContainer({} as any);
 
 // start container
 // await container.start().execute();
-
-// vi.mock('@/pkg/runner');
 
 // const mockedConstructor = vi.fn();
 
@@ -32,10 +29,11 @@ const runner = new Runner(run, config);
 //   };
 // });
 
-// console.log('Runner123', new Runner());
-
 const mockRunner = vi.fn().mockImplementation((unknown, conf = {}) => {
-  Object.assign(runner.config, conf);
+  const runner = new Runner(run, {
+    ...config,
+    ...conf,
+  });
 
   // current step setup
   runner.context.github.action = '__run';
@@ -45,8 +43,6 @@ const mockRunner = vi.fn().mockImplementation((unknown, conf = {}) => {
     conclusion: 'success',
   };
   runner.IntraActionState[runner.context.github.action] = {};
-
-  // runner.container = container;
 
   return runner;
 });
