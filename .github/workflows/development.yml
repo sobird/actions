@@ -37,6 +37,12 @@ jobs:
         with:
           who-to-greet: 'hello world javascript action step'
 
+      - name: Hello world Docker Action Step
+        id: hello_world_docker_action
+        uses: ./.github/actions/hello-world-docker-action
+        with:
+          who-to-greet: 'docker action step'
+
       - run: ls -l
       - run: ls $RUNNER_TEMP
       # - run: apt-get -qq update && apt-get -yqq install --no-install-recommends curl net-tools
