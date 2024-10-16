@@ -12,7 +12,7 @@ function StepFactory(step: StepProps) {
 
   if (step.run) {
     if (step.uses) {
-      throw Error('Invalid run/uses syntax for step');
+      throw Error('a step cannot have both the `uses` and `run` keys');
     }
     // step run script
     return new StepActionScript(step);

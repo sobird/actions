@@ -38,8 +38,7 @@ jobs:
           who-to-greet: 'hello world javascript action step'
 
       - name: Test with args action
-        run: ls
-        uses: ./.github/actions/hello-world-javascript-action
+        id: with_args_action
 
       - run: ls -l
       - run: ls $RUNNER_TEMP
