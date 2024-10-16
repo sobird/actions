@@ -16,7 +16,7 @@ vi.mock('@/pkg/runner/container/docker');
 const testDir = createTestDir('runner-action');
 
 const runner: Runner = new (Runner as any)();
-const dockerContainer = new DockerContainer();
+const dockerContainer: DockerContainer = new (DockerContainer as any)();
 
 describe('Test Action Reader', async () => {
   const yaml = `
@@ -131,7 +131,7 @@ describe('Test Action Runner', () => {
   it('with input', () => {
     const step = new StepActionRemote({
       uses: 'org/repo/path@ref',
-    });
+    } as StepProps);
     const action = new Action({
       name: 'test',
       description: 'test',

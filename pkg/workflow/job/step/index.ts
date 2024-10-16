@@ -6,23 +6,26 @@ import StepActionRemote from './step-action-remote';
 import StepActionScript from './step-action-script';
 
 function StepFactory(step: StepProps) {
-  if (step.run === '' && step.uses === '') {
-    throw Error('Invalid run/uses syntax for step');
+  if (!step.run && !step.uses) {
+    throw Error('every step must define a `uses` or `run` key');
+  }
+
+  if (step.run && step.uses) {
+    throw Error('a step cannot have both the `uses` and `run` keys');
   }
 
   if (step.run) {
-    if (step.uses) {
-      throw Error('a step cannot have both the `uses` and `run` keys');
-    }
-    // step run script
     return new StepActionScript(step);
-  } if (step.uses?.startsWith('docker://')) {
-    // docker container
-    return new StepActionDocker(step);
-  } if (step.uses?.startsWith('./')) {
-    return new StepActionLocal(step);
   }
-  return new StepActionRemote(step);
+
+  if (step.uses) {
+    if (step.uses.startsWith('docker://')) {
+      return new StepActionDocker(step);
+    } if (step.uses.startsWith('./') || step.uses.startsWith('.\\')) {
+      return new StepActionLocal(step);
+    }
+    return new StepActionRemote(step);
+  }
 }
 
 export {

@@ -30,15 +30,12 @@ jobs:
 
       - name: Checkout Step
         uses: actions/checkout@v4
-
+        
       - name: Hello World Javascript Action Step
         id: hello_world_javascript_action
         uses: ./.github/actions/hello-world-javascript-action
         with:
           who-to-greet: 'hello world javascript action step'
-
-      - name: Test with args action
-        id: with_args_action
 
       - run: ls -l
       - run: ls $RUNNER_TEMP
