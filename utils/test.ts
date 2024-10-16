@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-export function testDir(tmp: string = 'test-dir') {
-  const baseDir = path.join(os.tmpdir(), tmp);
+export function createTestDir(...name: string[]) {
+  const baseDir = path.join(os.tmpdir(), ...name);
   beforeEach(() => {
     fs.mkdirSync(baseDir, { recursive: true });
   });
@@ -13,7 +13,7 @@ export function testDir(tmp: string = 'test-dir') {
   return baseDir;
 }
 
-export function testFile(name: string = 'test-file') {
+export function createTestFile(name: string = 'test-file') {
   const file = path.join(os.tmpdir(), 'test', name);
   const dir = path.dirname(file);
   beforeAll(() => {

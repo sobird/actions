@@ -13,6 +13,7 @@ import path from 'node:path';
 
 import Executor from '@/pkg/common/executor';
 import Yaml from '@/pkg/common/yaml';
+import StepActionRemote from '@/pkg/workflow/job/step/step-action-remote';
 
 import { inputs } from './inputs';
 import { outputs } from './outputs';
@@ -85,8 +86,11 @@ class Action extends Yaml {
   }
 
   // run action
-  executor() {
-    return new Executor(() => {
+  executor(step: StepActionRemote) {
+    return new Executor((ctx) => {
+      const runner = ctx;
+      console.log('runner', runner);
+      console.log('step', step);
       console.log('run action:', this.name);
     });
   }
@@ -113,6 +117,8 @@ class Action extends Yaml {
         },
       });
     }
+    const fullPath = 'fullPath';
+    throw Error(`Can't find 'action.yml', 'action.yaml' or 'Dockerfile' under '${fullPath}'. Did you forget to run actions/checkout before running your local action?`);
   }
 
   static async Scan(actionDir: string) {

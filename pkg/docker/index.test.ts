@@ -1,4 +1,4 @@
-import { testFile } from '@/utils/test';
+import { createTestFile } from '@/utils/test';
 
 import docker, { Docker } from '.';
 
@@ -63,7 +63,7 @@ describe('Test Get Socket And Host', () => {
     expect(ret).toEqual({ socket: host, host });
   });
 
-  const mySocketFile = testFile('act-test.sock');
+  const mySocketFile = createTestFile('act-test.sock');
   it('No Host No Socket DefaultLocation', () => {
     const unixSocket = `unix://${mySocketFile}`;
     process.env.DOCKER_HOST = '';
