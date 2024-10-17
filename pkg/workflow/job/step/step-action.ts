@@ -96,6 +96,10 @@ abstract class StepAction extends Step {
 
     throw new Error(`symlink tries to access file '${dest}' outside of '${parent}`);
   }
+
+  loadAction() {
+    console.log('first', this.constructor.name);
+  }
 }
 
 export default StepAction;

@@ -8,7 +8,7 @@ import { Step, StepProps } from '@/pkg/workflow/job/step';
 import StepActionRemote from '@/pkg/workflow/job/step/step-action-remote';
 import { createTestDir } from '@/utils/test';
 
-import Action from '.';
+import Action from './action';
 
 vi.mock('@/pkg/runner');
 vi.mock('@/pkg/runner/container/docker');
