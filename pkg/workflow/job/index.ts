@@ -10,14 +10,14 @@ import Executor from '@/pkg/common/executor';
 import Expression from '@/pkg/expression';
 import Runner from '@/pkg/runner';
 import { Needs } from '@/pkg/runner/context/needs';
-import { asyncFunction } from '@/utils';
+import { asyncFunction, createSafeName } from '@/utils';
 
 import Container, { ContainerProps } from './container';
 import Defaults, { DefaultsProps } from './defaults';
 import Environment, { EnvironmentOptions } from './environment';
-import { StepProps } from './step';
+import { StepProps, StepFactory } from './step';
 import StepAction from './step/action';
-import { createSteps } from './steps';
+// import { StepProps } from './step/step';
 import Strategy, { StrategyProps } from './strategy';
 import Uses from './uses';
 import {
@@ -410,7 +410,7 @@ class Job {
     this.env = new Expression(job.env, ['github', 'needs', 'strategy', 'matrix', 'vars', 'secrets', 'inputs']);
     this.defaults = new Defaults(job.defaults);
 
-    this.steps = createSteps(job.steps);
+    this.steps = Job.SetupSteps(job.steps);
 
     this['timeout-minutes'] = job['timeout-minutes'];
     this.strategy = new Strategy(job.strategy);
@@ -609,6 +609,25 @@ class Job {
       ...stepPostPipeline,
       runner.stopContainer(),
     );
+  }
+
+  static SetupSteps(steps: StepProps[] = []) {
+    const map = new Map<string, number>();
+
+    return steps.map((step) => {
+      const id = (step.run ? '__run' : createSafeName(step.uses || '')) || step.id;
+      let oN = map.get(id) || 0;
+      if (map.has(id)) {
+        oN += 1;
+        map.set(id, oN);
+      } else {
+        map.set(id, 0);
+      }
+
+      const stepId = oN === 0 ? id : `${id}_${oN}`;
+      Object.assign(step, { id: stepId });
+      return StepFactory(step);
+    });
   }
 }
 
