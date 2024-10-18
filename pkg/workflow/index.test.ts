@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import Workflow from '.';
-import { JobType } from './job/job';
+import { JobType } from './job';
 import { StepType } from './job/step/step';
 
 const __filename = fileURLToPath(import.meta.url);

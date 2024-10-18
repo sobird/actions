@@ -1,7 +1,7 @@
 /**
  * Reusable - jobs.<job_id>.uses & jobs.<job_id>.steps[*].uses
  *
- * {owner}/{repo}/{path}@{ref}
+ * {url}/{owner}/{repo}/{path}@{ref}
  *
  * sobird<i@sobird.me> at 2024/10/14 11:19:05 created.
  */

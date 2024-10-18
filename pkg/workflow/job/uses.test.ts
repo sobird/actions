@@ -1,7 +1,7 @@
 /* eslint-disable no-template-curly-in-string */
 import Runner from '@/pkg/runner';
 
-import JobReusableWorkflow from './job-reusable-workflow';
+import Uses from './uses';
 
 vi.setConfig({
   testTimeout: 60000,
@@ -16,7 +16,7 @@ const runner: Runner = new (Runner as any)({}, {
 
 describe('job-reusable-workflow test', () => {
   it('local reusable workflow skipCheckout test case', async () => {
-    const job = new JobReusableWorkflow({
+    const job = new Uses({
       id: 'job1',
       'runs-on': '${{ matrix.platform }}',
       uses: './.github/workflows/test-reusable.yml',
@@ -31,7 +31,7 @@ describe('job-reusable-workflow test', () => {
   });
 
   it('local reusable workflow multi matrix test case', async () => {
-    const job = new JobReusableWorkflow({
+    const job = new Uses({
       id: 'job1',
       'runs-on': '${{ matrix.platform }}',
       uses: './.github/workflows/test-reusable-multi-matrix.yml',
@@ -48,7 +48,7 @@ describe('job-reusable-workflow test', () => {
   });
 
   it('local reusable workflow no skipCheckout test case', async () => {
-    const job = new JobReusableWorkflow({
+    const job = new Uses({
       id: 'job1',
       'runs-on': '${{ matrix.platform }}',
       uses: './.gitea/workflows/test-reusable-workflow.yml',
@@ -68,7 +68,7 @@ describe('job-reusable-workflow test', () => {
   });
 
   it('remote other repository reusable workflow test case', async () => {
-    const job = new JobReusableWorkflow({
+    const job = new Uses({
       id: 'job1',
       'runs-on': '${{ matrix.platform }}',
       uses: 'sobird/actions-test/.gitea/workflows/test-reusable-workflow.yml@115f40b9fca317e4b0fec9af66b35d7a37ee69f8',
@@ -83,7 +83,7 @@ describe('job-reusable-workflow test', () => {
   });
 
   it('remote reusable workflow with https test case', async () => {
-    const job = new JobReusableWorkflow({
+    const job = new Uses({
       id: 'job1',
       'runs-on': '${{ matrix.platform }}',
       uses: 'https://gitea.com/sobird/actions-test/.gitea/workflows/test-reusable-workflow.yml@115f40b9fca317e4b0fec9af66b35d7a37ee69f8',

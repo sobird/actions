@@ -2,7 +2,7 @@
 
 import Runner from '@/pkg/runner';
 
-import Job from './job';
+import Job from '.';
 
 vi.setConfig({
   testTimeout: 10000,

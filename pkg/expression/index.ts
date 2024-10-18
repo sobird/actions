@@ -11,7 +11,7 @@
 import _ from 'lodash';
 
 import Runner from '@/pkg/runner';
-import Job from '@/pkg/workflow/job/job';
+import Job from '@/pkg/workflow/job';
 
 import functions from './functions';
 

@@ -10,9 +10,8 @@
 import Yaml from '@/pkg/common/yaml';
 import Expression from '@/pkg/expression';
 
-import { JobFactory } from './job';
+import Job, { JobProps } from './job';
 import Defaults from './job/defaults';
-import Job, { JobProps } from './job/job';
 import Plan, { Stage, Run } from './plan';
 import {
   Concurrency, On, OnEvents, Permissions, // todo
@@ -158,7 +157,7 @@ class Workflow extends Yaml {
     }
     return Object.fromEntries(Object.entries(jobs).map(([jobId, job]) => {
       this.validateJobId(jobId);
-      const newJob = JobFactory(job);
+      const newJob = new Job(job);
       newJob.id = jobId;
       return [jobId, newJob];
     }));
