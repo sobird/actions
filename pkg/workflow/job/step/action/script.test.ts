@@ -1,6 +1,6 @@
 import Runner from '@/pkg/runner';
 
-import StepActionScript from './step-action-script';
+import StepActionScript from './script';
 
 vi.mock('@/pkg/runner');
 

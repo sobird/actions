@@ -9,7 +9,7 @@ import path from 'node:path';
 import Executor from '@/pkg/common/executor';
 import Action from '@/pkg/runner/action';
 
-import StepAction from './step-action';
+import StepAction from '.';
 
 class StepActionLocal extends StepAction {
   action?: Action;

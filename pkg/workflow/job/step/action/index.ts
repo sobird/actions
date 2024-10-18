@@ -6,7 +6,7 @@ import Runner from '@/pkg/runner';
 import ActionCommandFile from '@/pkg/runner/action/command/file';
 import { withTimeout } from '@/utils';
 
-import Step from './step';
+import Step from '../step';
 
 export enum StepActionStage {
   Pre,

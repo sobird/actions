@@ -13,7 +13,7 @@ import path from 'node:path';
 
 import Executor from '@/pkg/common/executor';
 import Yaml from '@/pkg/common/yaml';
-import StepActionRemote from '@/pkg/workflow/job/step/step-action-remote';
+import StepActionRemote from '@/pkg/workflow/job/step/action/step-action-remote';
 
 import { inputs } from './inputs';
 import { outputs } from './outputs';

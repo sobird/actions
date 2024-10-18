@@ -8,7 +8,7 @@ import Constants from '@/pkg/common/constants';
 import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
 
-import StepAction from './step-action';
+import StepAction from '.';
 
 class StepActionScript extends StepAction {
   public command: string = '';

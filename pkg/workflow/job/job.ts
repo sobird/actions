@@ -16,7 +16,7 @@ import Container, { ContainerProps } from './container';
 import Defaults, { DefaultsProps } from './defaults';
 import Environment, { EnvironmentOptions } from './environment';
 import { StepProps } from './step';
-import StepAction from './step/step-action';
+import StepAction from './step/action';
 import { createSteps } from './steps';
 import Strategy, { StrategyProps } from './strategy';
 import {

@@ -14,7 +14,7 @@ import Action from '@/pkg/runner/action';
 import Reusable from '@/pkg/workflow/reusable';
 import { readEntry } from '@/utils/tar';
 
-import StepAction from './step-action';
+import StepAction from '.';
 
 class StepActionRemote extends StepAction {
   action?: Action;

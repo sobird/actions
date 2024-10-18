@@ -1,6 +1,18 @@
 import Action, { ActionProps } from './action';
+import ActionJavaScript from './extensions/action-javascript';
 
 function ActionFactory(action: ActionProps) {
+  const { using, image } = action.runs;
+  if (using) {
+    if (using === 'docker') {
+      if (!image) {
+        // throw new Error(`You are using a Container Action but an image is not provided in ${fileRelativePath}.`);
+      }
+    }
+  }
+
+  throw new Error("Missing 'using' value. 'using' requires 'composite', 'docker', 'node12', 'node16' or 'node20'.");
+
   const ddd = action.runs.using;
   if (!step.run && !step.uses) {
     throw Error('every step must define a `uses` or `run` key');

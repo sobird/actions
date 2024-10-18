@@ -1,6 +1,6 @@
 import Executor from '@/pkg/common/executor';
 
-import StepAction from './step-action';
+import StepAction from '.';
 
 class StepActionDocker extends StepAction {
   public pre() {
