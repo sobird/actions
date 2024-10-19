@@ -1,7 +1,7 @@
 import Config from '@/pkg/config';
 import Runner from '@/pkg/runner';
 // import DockerContainer from '@/pkg/runner/container/docker';
-import HostedContainer from '@/pkg/runner/container/hosted';
+// import HostedContainer from '@/pkg/runner/container/hosted';
 import Workflow from '@/pkg/workflow';
 import Run from '@/pkg/workflow/plan/run';
 
@@ -14,7 +14,8 @@ const workflow = Workflow.Read(`${__dirname}/anything.yaml`);
 const run = new Run(Object.keys(workflow.jobs)[0], workflow);
 
 const config = await Config.Load().runner.configure();
-// (config as any).platformPicker = () => { return '-self-hosted'; };
+// use hosted container test
+(config as any).platformPicker = () => { return '-self-hosted'; };
 
 // const container = new HostedContainer({} as any);
 

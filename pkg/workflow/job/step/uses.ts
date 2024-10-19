@@ -1,5 +1,7 @@
 import path from 'node:path';
 
+import Reusable from '@/pkg/workflow/reusable';
+
 /**
  * Selects an action to run as part of a step in your job. An action is a reusable unit of code.
  * You can use an action defined in the same repository as the workflow, a public repository, or in a {@link https://hub.docker.com/ published Docker container image}.
@@ -18,14 +20,8 @@ import path from 'node:path';
  * If the action you're using is a Docker container you must run the job in a Linux environment.
  * For more details, see {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idruns-on runs-on}.
  */
-class StepUses {
-  #uses;
-
+class StepUses extends Reusable {
   #url = '';
-
-  constructor(uses: string) {
-    this.#uses = uses;
-  }
 
   executor() {
     let uses = this.#uses;
@@ -50,11 +46,11 @@ class StepUses {
   }
 
   toString() {
-    return this.#uses;
+    return this.uses;
   }
 
   toJSON() {
-    return this.#uses;
+    return this.uses;
   }
 }
 
