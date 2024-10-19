@@ -1,0 +1,17 @@
+# action.yml
+name: 'Hello World'
+description: 'docker hub action'
+inputs:
+  who-to-greet:  # id of input
+    description: 'Who to greet'
+    required: true
+    default: 'World'
+outputs:
+  time: # id of output
+    description: 'The time we greeted you'
+runs:
+  using: 'docker'
+  image: 'docker://alpine:3.10'
+  entrypoint: 'entrypoint.sh'
+  args:
+    - ${{ inputs.who-to-greet }}
