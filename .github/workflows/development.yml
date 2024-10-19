@@ -20,7 +20,7 @@ jobs:
           - 6379/tcp
 
     steps:
-      - name: print env
+      - name: Print env
         # shell: bash
         # working-directory: '.'
         env:
@@ -36,6 +36,9 @@ jobs:
         uses: ./.github/actions/hello-world-javascript-action
         with:
           who-to-greet: 'hello world javascript action step'
+
+      - name: Print env
+        run: env
 
       - name: Hello world Docker Action Step
         id: hello_world_docker_action

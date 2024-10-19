@@ -402,8 +402,8 @@ class Runner {
       return;
     }
 
-    this.assign(this.context.env, { [key]: value });
-    this.assign(this.globalEnv, { [key]: value });
+    this.Assign(this.context.env, { [key]: value });
+    this.Assign(this.globalEnv, { [key]: value });
   }
 
   addPath(value: string) {

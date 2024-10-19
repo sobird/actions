@@ -14,10 +14,6 @@ function StepFactory(step: StepProps) {
     throw Error('a step cannot have both the `uses` and `run` keys');
   }
 
-  if (step.run) {
-    return new StepActionScript(step);
-  }
-
   if (step.uses) {
     if (step.uses.startsWith('docker://')) {
       return new StepActionDocker(step);
@@ -26,6 +22,8 @@ function StepFactory(step: StepProps) {
     }
     return new StepActionRemote(step);
   }
+
+  return new StepActionScript(step);
 }
 
 export {
