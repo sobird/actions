@@ -36,7 +36,7 @@ jobs:
         
       - name: Hello World Javascript Action Step
         id: hello_world_javascript_action
-        uses: ./.github/actions/hello-world-javascript-action
+        uses: https://github.com/sobird/act-runner/.github/actions/hello-world-javascript-action
         with:
           who-to-greet: 'hello world javascript action step'
 
