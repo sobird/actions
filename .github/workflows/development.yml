@@ -3,6 +3,9 @@ run-name: Job for Development By ${{ github.actor }}
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   job-for-development:
     runs-on: ubuntu-latest
