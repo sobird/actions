@@ -70,9 +70,11 @@ class DockerContainer extends Container {
 
   network?: Dockerode.Network;
 
-  platform: string = '';
+  OS: string = '';
 
-  arch: string = '';
+  Arch: string = '';
+
+  Environment = 'github-hosted';
 
   declare options: DockerContainerOptions;
 
@@ -219,7 +221,7 @@ class DockerContainer extends Container {
     });
   }
 
-  async putArchive(destination: string, readStream: NodeJS.ReadableStream) {
+  async putArchive(destination: string, archive: NodeJS.ReadableStream) {
     const { container } = this;
 
     if (!container) {
@@ -249,7 +251,7 @@ class DockerContainer extends Container {
     });
 
     try {
-      const stream = await container.putArchive(readStream as unknown as NodeJS.ReadableStream, {
+      const stream = await container.putArchive(archive, {
         path: dest,
       });
 
@@ -621,8 +623,8 @@ class DockerContainer extends Container {
   info() {
     return new Executor(async () => {
       const { OSType, Architecture } = await docker.info();
-      this.platform = Container.Os(OSType);
-      this.arch = Container.Arch(Architecture);
+      this.OS = Container.OS(OSType);
+      this.Arch = Container.Arch(Architecture);
     });
   }
 

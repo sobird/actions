@@ -2,7 +2,6 @@
 import path from 'node:path';
 
 import Executor from '@/pkg/common/executor';
-import Runner from '@/pkg/runner';
 import ActionCommandFile from '@/pkg/runner/action/command/file';
 import { withTimeout } from '@/utils';
 
@@ -47,7 +46,14 @@ abstract class StepAction extends Step {
 
       await actionCommandFile.initialize(this.uuid);
 
-      this.setupEnv(runner);
+      // init action environment
+      runner.Assign(
+        this.environment,
+        runner.Env,
+        runner.context.github.Env,
+        runner.context.runner.Env,
+        this.Env(runner),
+      );
 
       try {
         const enabled = this.if.evaluate(runner);
@@ -72,17 +78,6 @@ abstract class StepAction extends Step {
 
       await actionCommandFile.process();
     });
-  }
-
-  setupEnv(runner: Runner) {
-    this.mergeEnv(runner);
-    // assign step env
-    runner.Assign(this.environment, this.Env(runner));
-  }
-
-  mergeEnv(runner: Runner) {
-    runner.Assign(this.environment, runner.Env);
-    Object.assign(this.environment, runner.context.github.Env, runner.container?.Env);
   }
 
   symlinkJoin(filename: string, sym: string, parent: string) {

@@ -29,9 +29,11 @@ export interface HostedContainerOptions {
 class HostedContainer extends Container {
   rootdir: string;
 
-  platform = Container.Os(process.platform);
+  OS = Container.OS(process.platform);
 
-  arch = Container.Arch(process.arch);
+  Arch = Container.Arch(process.arch);
+
+  Environment = 'self-hosted';
 
   emptyExecutor = new Executor();
 
@@ -95,7 +97,7 @@ class HostedContainer extends Container {
 
         fs.writeFileSync(
           filename,
-          Buffer.from(file.body, 'utf-8'),
+          file.body,
           {
             mode: file.mode,
           },
@@ -108,9 +110,11 @@ class HostedContainer extends Container {
     const dest = this.resolve(destination);
     fs.mkdirSync(dest, { recursive: true });
 
-    const pipeline = readStream.pipe(tar.extract({
+    const extract = tar.extract({
       cwd: dest,
-    }));
+    }) as unknown as NodeJS.WritableStream;
+
+    const pipeline = readStream.pipe(extract);
 
     await new Promise<void>((resolve, reject) => {
       pipeline.on('error', (err) => {

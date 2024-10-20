@@ -89,7 +89,7 @@ describe('Test Docker Container', () => {
   it('get archive from container', async () => {
     const archive = await docker.getArchive('put-archive-test');
 
-    const extract = tar.t({ });
+    const extract = tar.t({}) as unknown as NodeJS.WritableStream;
     archive.pipe(extract);
 
     const archiveFiles: any = [];

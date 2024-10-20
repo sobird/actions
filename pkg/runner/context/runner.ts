@@ -52,7 +52,7 @@ export class Runner {
    * The environment of the runner executing the job.
    * Possible values are: `github-hosted` for GitHub-hosted runners provided by GitHub, and `self-hosted` for self-hosted runners configured by the repository owner.
    */
-  environment: 'github-hosted' | 'self-hosted`';
+  environment: 'github-hosted' | 'self-hosted';
 
   constructor(runner: Runner) {
     this.name = runner.name;
@@ -62,5 +62,18 @@ export class Runner {
     this.tool_cache = runner.tool_cache;
     this.debug = runner.debug;
     this.environment = runner.environment;
+  }
+
+  get Env() {
+    const env: Record<string, unknown> = {};
+    env.RUNNER_NAME = this.name;
+    env.RUNNER_OS = this.os;
+    env.RUNNER_ARCH = this.arch;
+    env.RUNNER_TOOL_CACHE = this.tool_cache;
+    env.RUNNER_TEMP = this.temp;
+    env.RUNNER_ENVIRONMENT = this.environment;
+    env.RUNNER_DEBUG = this.debug;
+
+    return env;
   }
 }

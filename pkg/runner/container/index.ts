@@ -34,25 +34,27 @@ export interface ContainerOptions {
 const hashFilesDir = path.join(Constants.Directory.Bin, 'hashFiles');
 
 export default abstract class Container {
-  name = '';
+  abstract OS: string;
 
-  abstract platform: string;
-
-  abstract arch: string;
-
-  temp = '';
-
-  tool_cache = '';
+  abstract Arch: string;
 
   debug = '';
 
-  environment = 'github-hosted';
+  abstract Environment: string;
 
   putHashFileExecutor = this.put(hashFilesDir, 'pkg/expression/hashFiles/index.cjs');
 
   // constructor(public options: ContainerOptions) {}
 
   constructor(public options: unknown, public workspace: string = '/home/runner') {}
+
+  get ToolCache() {
+    return this.resolve(Constants.Directory.Tool);
+  }
+
+  get Temp() {
+    return this.resolve(Constants.Directory.Temp);
+  }
 
   /** 容器操作相关 */
   abstract start(): Executor;
@@ -62,7 +64,7 @@ export default abstract class Container {
   /** 上传文件/目录 */
   abstract put(destination: string, source: string, useGitIgnore?: boolean): Executor;
   abstract putContent(destination: string, ...files: FileEntry[]): Executor;
-  abstract putArchive(destination: string, readStream: NodeJS.ReadableStream): Promise<void>;
+  abstract putArchive(destination: string, archive: NodeJS.ReadableStream): Promise<void>;
   abstract getArchive(destination: string): Promise<NodeJS.ReadableStream>;
   abstract exec(command: string[], options: ContainerExecOptions): Executor;
   // abstract spawnSync(command: string, args: string[], options: ContainerExecOptions): SpawnSyncReturns<string> | undefined;
@@ -104,7 +106,7 @@ export default abstract class Container {
     const archive = await this.getArchive(filename);
 
     const extract = tar.t({ portable: true, noResume: true });
-    archive.pipe(extract);
+    archive.pipe(extract as NodeJS.WritableStream);
 
     return new Promise((resolve, reject) => {
       extract.on('entry', (entry: tar.ReadEntry) => {
@@ -121,7 +123,7 @@ export default abstract class Container {
   async getContent(filename: string): Promise<FileEntry> {
     const archive = await this.getArchive(filename);
     const extract = tar.t({ portable: true });
-    archive.pipe(extract);
+    archive.pipe(extract as NodeJS.WritableStream);
 
     return new Promise((resolve) => {
       extract.on('entry', (entry: tar.ReadEntry) => {
@@ -146,7 +148,7 @@ export default abstract class Container {
               size: entry.size,
               body,
             });
-            archive.unpipe(extract);
+            archive.unpipe(extract as NodeJS.WritableStream);
           }
         });
       });
@@ -255,22 +257,21 @@ export default abstract class Container {
   }
 
   get pathVariableName() {
-    const { platform } = this;
-    if (platform === 'plan9') {
+    if (this.OS === 'plan9') {
       return 'path';
     }
-    if (platform === 'Windows') {
+    if (this.OS === 'Windows') {
       return 'Path';
     }
     return 'PATH';
   }
 
   joinPath(...paths: string[]) {
-    return paths.join(this.platform === 'Windows' ? ';' : ':');
+    return paths.join(this.OS === 'Windows' ? ';' : ':');
   }
 
   splitPath(pathString: string) {
-    return pathString.split(this.platform === 'Windows' ? ';' : ':');
+    return pathString.split(this.OS === 'Windows' ? ';' : ':');
   }
 
   lookPath(file: string, env: Record<string, string>) {
@@ -304,7 +305,7 @@ export default abstract class Container {
     if (prependPath.length > 0) {
       let { pathVariableName } = this;
 
-      if (this.platform === 'Windows') {
+      if (this.OS === 'Windows') {
         for (const k of Object.keys(env)) {
           if (k.toLowerCase() === pathVariableName.toLowerCase()) {
             pathVariableName = k as 'path' | 'Path' | 'PATH';
@@ -334,7 +335,7 @@ export default abstract class Container {
   }
 
   get isCaseSensitive() {
-    return this.platform !== 'Windows';
+    return this.OS !== 'Windows';
   }
 
   directory(directory: keyof typeof Constants.Directory) {
@@ -343,8 +344,8 @@ export default abstract class Container {
 
   get Env() {
     const env: Record<string, unknown> = {};
-    env.RUNNER_ARCH = this.arch;
-    env.RUNNER_OS = this.platform;
+    env.RUNNER_ARCH = this.Arch;
+    env.RUNNER_OS = this.OS;
     env.RUNNER_TOOL_CACHE = this.resolve(Constants.Directory.Tool);
     env.RUNNER_TEMP = this.resolve(Constants.Directory.Temp);
     env.RUNNER_DEBUG = 1;
@@ -366,7 +367,7 @@ export default abstract class Container {
     return env[name] || '';
   }
 
-  static Os(platform: string) {
+  static OS(platform: string) {
     const map: Record<string, string> = {
       aix: 'Aix',
       darwin: 'macOS',

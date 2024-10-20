@@ -27,6 +27,8 @@ import { Run } from '../workflow/plan';
 const SetEnvBlockList = ['NODE_OPTIONS'];
 
 class Runner {
+  name: string = '';
+
   context: Context;
 
   /**
@@ -121,11 +123,22 @@ class Runner {
     const workflowDirectory = path.join(Constants.Directory.Temp, '_github_workflow');
     return executor.next(new Executor(() => {
       const { event } = context.github;
-      // set github context
-      context.github.event_path = this.container!.resolve(workflowDirectory, 'event.json') || '';
-      context.github.workspace = this.container!.resolve(this.config.workdir);
+      const container = this.container!;
 
-      return this.container?.putContent(workflowDirectory, {
+      // set github context
+      context.github.event_path = container.resolve(workflowDirectory, 'event.json') || '';
+      context.github.workspace = container.resolve(this.config.workdir);
+
+      // set runner context
+      context.runner.name = this.name;
+      context.runner.os = container.OS as 'Linux' | 'Windows' | 'macOS';
+      context.runner.arch = container.Arch as 'X86' | 'X64' | 'ARM' | 'ARM64';
+      context.runner.tool_cache = container.ToolCache;
+      context.runner.temp = container.Temp;
+      context.runner.environment = container.Environment as 'github-hosted' | 'self-hosted';
+      context.runner.debug = '1';
+
+      return container.putContent(workflowDirectory, {
         name: 'event.json',
         mode: 0o644,
         body: JSON.stringify(event),
