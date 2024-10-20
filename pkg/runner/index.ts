@@ -152,14 +152,15 @@ class Runner {
     });
   }
 
-  public pullServicesImage(force?: boolean) {
-    return new Executor(() => {
-      const pipeline = this.services.map((item) => {
-        return item.pullImage(force);
-      });
-      return Executor.Parallel(pipeline.length, ...pipeline);
-    });
-  }
+  // public pullServicesImage(force?: boolean) {
+  //   return new Executor(() => {
+  //     const pipeline = this.services.map((item) => {
+  //       console.log('item', item);
+  //       return new Executor();
+  //     });
+  //     return Executor.Parallel(pipeline.length, ...pipeline);
+  //   });
+  // }
 
   public startServices() {
     return new Executor(() => {

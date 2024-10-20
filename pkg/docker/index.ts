@@ -41,7 +41,7 @@ export class Docker extends Dockerode {
       logger.error("Unable to determine if image already exists for image '%s' (%s): %s", repoTag, inputs.platform, (err as Error).message);
     }
 
-    logger.debug("Pulling image '%s' (%s)", repoTag, inputs.platform);
+    logger.debug(`Pulling image '${repoTag}'${inputs.platform ? `(${inputs.platform})` : ''}`);
     return super.pull(repoTag, options);
   }
 

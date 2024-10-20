@@ -102,7 +102,7 @@ class DockerContainer extends Container {
             resolve(output);
           }
         }, (event) => {
-          console.log('event', event);
+          console.log(`${event.id ? `${event.id}: ` : ''}${event.status}`);
         });
       });
     });
@@ -168,7 +168,7 @@ class DockerContainer extends Container {
       const pack = tar.create(options, [info.base]);
 
       try {
-        logger.debug("Extracting content from '%s' to '%s'", source, '');
+        logger.debug("Extracting content from '%s' to '%s'", source, dest);
         await container.putArchive((pack as unknown as NodeJS.ReadableStream), {
           path: '/',
         });
@@ -807,7 +807,7 @@ class DockerContainer extends Container {
       );
 
       return Executor.Pipeline(
-        runner.pullServicesImage(),
+        // runner.pullServicesImage(),
         dockerContainer.createNetwork(networkName).if(new Conditional(() => { return createAndDeleteNetwork; })),
         runner.startServices(),
         dockerContainer.start(),
