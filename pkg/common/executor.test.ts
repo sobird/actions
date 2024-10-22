@@ -161,7 +161,7 @@ describe('Test Conditional Executor', () => {
     let trueCount = 0;
     let falseCount = 0;
     const conditionalExecutor = Executor.Conditional(new Conditional(async () => {
-      return !!'false';
+      return Boolean('false');
     }), new Executor(() => {
       trueCount += 1;
     }), new Executor(() => {
@@ -268,5 +268,22 @@ describe('Mutex Executor', () => {
     expect(count).toBe(4);
     // 即便并行运行mutexExecutor，也会按顺序一个一个执行
     expect(maxCount).toBe(1);
+  });
+});
+
+describe('Compose Executor', () => {
+  it('should complete executor', async () => {
+    let count = 0;
+    const executor = new Executor(async (ctx, next) => {
+      count += 1;
+      console.log('pre', count);
+      await next?.();
+      count += 1;
+      console.log('post', count);
+    });
+
+    const composeExecutor = Executor.Compose(executor, executor);
+    await composeExecutor.execute();
+    expect(count).toBe(4);
   });
 });

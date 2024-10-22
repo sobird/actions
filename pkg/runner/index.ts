@@ -164,8 +164,8 @@ class Runner {
 
   public startServices() {
     return new Executor(() => {
-      const pipeline = this.services.map((item) => {
-        return item.start();
+      const pipeline = this.services.map((service) => {
+        return service.start();
       });
       return Executor.Parallel(pipeline.length, ...pipeline);
     });

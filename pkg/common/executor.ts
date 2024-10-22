@@ -28,13 +28,14 @@ export class Conditional {
 
 class Executor {
   constructor(
-    public fn: (ctx?: Runner) => Promise<void | InstanceType<typeof Executor>> | void | InstanceType<typeof Executor> = () => {},
+    public fn: (ctx?: Runner, next?: () => Promise<void>)
+    => Promise<void | InstanceType<typeof Executor>> | void | InstanceType<typeof Executor> = () => {},
   ) {}
 
-  async execute(ctx?: Runner) {
-    const result = await this.fn(ctx);
+  async execute(ctx?: Runner, next?: () => Promise<void>) {
+    const result = await this.fn(ctx, next);
     if (result instanceof Executor) {
-      await result.execute(ctx);
+      await result.execute(ctx, next);
     }
     return result;
   }
@@ -172,6 +173,30 @@ class Executor {
       } finally {
         release();
       }
+    });
+  }
+
+  static Compose(...executors: Executor[]) {
+    return new Executor((ctx) => {
+      let index = -1;
+      const dispatch = async (i: number) => {
+        if (i <= index) {
+          throw new Error('next() called multiple times');
+        }
+        index = i;
+        let executor = executors[i];
+        if (i === executors.length) {
+          executor = new Executor();
+        }
+
+        try {
+          await executor.execute(ctx, () => { return dispatch(i + 1); });
+        } catch (err) {
+          return Promise.reject(err);
+        }
+      };
+
+      return dispatch(0);
     });
   }
 }
