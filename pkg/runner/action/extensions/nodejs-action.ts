@@ -18,7 +18,7 @@ class NodeJSAction extends Action {
 
   hasPre() {
     return new Conditional((runner) => {
-      return !!this.runs['pre-if'].evaluate(runner!);
+      return !!this.runs['pre-if'].evaluate(runner!) && !!this.runs.pre;
     });
   }
 

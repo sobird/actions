@@ -47,7 +47,7 @@ afterAll(async () => {
 
 describe('Test NodeJS Action', () => {
   it('run pre', async () => {
-    const preExecutor = nodejsAction.pre();
+    const preExecutor = nodejsAction.pre().if(nodejsAction.hasPre());
     await preExecutor.execute(runner);
   });
 });

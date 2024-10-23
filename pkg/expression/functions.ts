@@ -221,7 +221,7 @@ export default {
   fromJSON,
   // hashFiles,
   // success,
-  // always,
+  always,
   // cancelled,
   // failure,
   objectFilter,
