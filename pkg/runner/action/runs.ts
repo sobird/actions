@@ -1,3 +1,10 @@
+import Expression from '@/pkg/expression';
+
+export interface RunsProps extends Pick<Runs, 'using' | 'main' | 'pre' | 'post' | 'image' | 'env' | 'pre-entrypoint' | 'entrypoint' | 'post-entrypoint' | 'args'> {
+  'pre-if'?: string;
+  'post-if'?: string;
+}
+
 class Runs {
   /**
    * Required The runtime used to execute the code specified in main.
@@ -8,7 +15,7 @@ class Runs {
    * Required The file that contains your action code.
    * The runtime specified in using executes this file.
    */
-  main?: string;
+  main: string;
 
   /**
    * Optional Allows you to run a script at the start of a job, before the main: action begins.
@@ -41,7 +48,7 @@ class Runs {
    *   pre-if: runner.os == 'linux'
    * ```
    */
-  'pre-if'?: () => boolean;
+  'pre-if': Expression<RunsProps['pre-if']>;
 
   /**
    * Optional Allows you to run a script at the end of a job, once the main: action has completed.
@@ -69,7 +76,7 @@ class Runs {
    *   post-if: runner.os == 'linux'
    * ```
    */
-  'post-if'?: () => boolean;
+  'post-if': Expression<RunsProps['post-if']>;
 
   /**
    * Required The Docker image to use as the container to run the action.
@@ -90,18 +97,36 @@ class Runs {
 
   'post-entrypoint'?: string;
 
-  constructor(runs: Runs) {
+  args?: string[];
+
+  constructor(runs: RunsProps) {
     this.using = runs.using;
     this.main = runs.main;
+
+    this['pre-if'] = new Expression(
+      runs['pre-if'],
+      ['github', 'needs', 'vars', 'inputs'],
+      ['always', 'cancelled', 'success', 'failure'],
+      'always()',
+      true,
+    );
     this.pre = runs.pre;
-    this['pre-if'] = runs['pre-if'];
+
+    this['post-if'] = new Expression(
+      runs['post-if'],
+      ['github', 'needs', 'vars', 'inputs'],
+      ['always', 'cancelled', 'success', 'failure'],
+      'always()',
+      true,
+    );
     this.post = runs.post;
-    this['post-if'] = runs['post-if'];
+
     this.image = runs.image;
     this.env = runs.env;
     this['pre-entrypoint'] = runs['pre-entrypoint'];
     this.entrypoint = runs.entrypoint;
     this['post-entrypoint'] = runs['post-entrypoint'];
+    this.args = runs.args;
   }
 }
 

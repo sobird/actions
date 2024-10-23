@@ -1,4 +1,10 @@
-export class Input {
+import Expression from '@/pkg/expression';
+
+export interface InputProps extends Pick<Input, 'description' | 'required' | 'deprecationMessage' > {
+  default: string;
+}
+
+export default class Input {
   /**
    * **Required** A string description of the input parameter.
    */
@@ -13,7 +19,7 @@ export class Input {
   /**
    * **Optional** A string representing the default value. The default value is used when an input parameter isn't specified in a workflow file.
    */
-  default?: string;
+  default: Expression<InputProps['default']>;
 
   /**
    * **Optional** If the input parameter is used, this string is logged as a warning message.
@@ -21,19 +27,24 @@ export class Input {
    */
   deprecationMessage?: string;
 
-  constructor(input: Input) {
+  constructor(input: InputProps) {
     this.description = input.description;
     this.required = input.required;
-    this.default = input.default;
+    this.default = new Expression(
+      input.default,
+      ['github', 'needs', 'vars', 'inputs'],
+      ['always', 'cancelled', 'success', 'failure'],
+      '',
+    );
     this.deprecationMessage = input.deprecationMessage;
   }
-}
 
-export function inputs(nodes?: Record<string, Input>) {
-  if (!nodes) {
-    return;
+  static inputs(inputs?: Record<string, InputProps>) {
+    if (!inputs) {
+      return;
+    }
+    return Object.fromEntries(Object.entries(inputs).map(([inputId, input]) => {
+      return [inputId, new Input(input)];
+    }));
   }
-  return Object.fromEntries(Object.entries(nodes).map(([inputId, input]) => {
-    return [inputId, new Input(input)];
-  }));
 }

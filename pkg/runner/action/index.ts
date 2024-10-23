@@ -1,5 +1,5 @@
 import Action, { ActionProps } from './action';
-import ActionJavaScript from './extensions/action-javascript';
+import ActionJavaScript from './extensions/nodejs-action';
 
 function ActionFactory(action: ActionProps) {
   const { using, image } = action.runs;

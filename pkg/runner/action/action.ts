@@ -11,16 +11,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import Executor from '@/pkg/common/executor';
 import Yaml from '@/pkg/common/yaml';
-import StepActionRemote from '@/pkg/workflow/job/step/action/step-action-remote';
+import Runner from '@/pkg/runner';
 
-import { inputs } from './inputs';
-import { outputs } from './outputs';
-import Runs from './runs';
+import Input, { InputProps } from './input';
+import Output, { OutputProps } from './output';
+import Runs, { RunsProps } from './runs';
 
-export interface ActionProps extends Omit<Action, 'save' | 'dump' | 'executor'> {
-
+export interface ActionProps extends Pick<Action, 'name' | 'author' | 'description'> {
+  inputs: Record<string, InputProps>;
+  runs: RunsProps;
+  outputs: Record<string, OutputProps>;
 }
 
 /**
@@ -46,6 +47,8 @@ export interface ActionProps extends Omit<Action, 'save' | 'dump' | 'executor'> 
  *
  */
 class Action extends Yaml {
+  #dir: string = '';
+
   /**
    * **Required** The name of your action.
    * GitHub displays the name in the Actions tab to help visually identify actions in each input.
@@ -68,9 +71,9 @@ class Action extends Yaml {
    * Input ids with uppercase letters are converted to lowercase during runtime.
    * We recommend using lowercase input ids.
    */
-  inputs?;
+  inputs?: Record<string, Input>;
 
-  outputs?;
+  outputs?: Record<string, Output>;
 
   runs: Runs;
 
@@ -84,18 +87,28 @@ class Action extends Yaml {
     this.name = action.name;
     this.author = action.author;
     this.description = action.description;
-    this.inputs = inputs(action.inputs);
-    this.outputs = outputs(action.outputs);
+    this.inputs = Input.inputs(action.inputs);
+    this.outputs = Output.outputs(action.outputs);
     this.runs = new Runs(action.runs);
   }
 
-  // run action
-  executor(step: StepActionRemote) {
-    return new Executor((ctx) => {
-      const runner = ctx;
-      // console.log('runner', runner);
-      // console.log('step', step);
-      console.log('run action:', this.name);
+  /**
+   * action container dir
+   */
+  get Dir() {
+    return this.#dir;
+  }
+
+  set Dir(dir: string) {
+    this.#dir = dir;
+  }
+
+  composeInputs(runner: Runner, env: Record<string, string>) {
+    const { inputs = {} } = this;
+    Object.entries(inputs).forEach(([inputId, input]) => {
+      const key = `INPUT_${inputId.toUpperCase().replace(/[^A-Z0-9-]/g, '_')}`;
+      // eslint-disable-next-line no-param-reassign
+      env[key] = input.default.evaluate(runner);
     });
   }
 
