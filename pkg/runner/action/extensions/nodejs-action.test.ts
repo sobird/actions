@@ -1,13 +1,17 @@
 import path from 'node:path';
 
 import Constants from '@/pkg/common/constants';
+import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
+import HostedContainer from '@/pkg/runner/container/hosted';
 
 import NodeJSAction from './nodejs-action';
 
 vi.mock('@/pkg/runner');
+vi.mock('@/pkg/runner/container/hosted');
 
 const runner: Runner = new (Runner as any)();
+const hostedContainer: HostedContainer = new (HostedContainer as any)();
 
 const nodejsAction = new NodeJSAction({
   name: 'Hello World Javascript Action',
@@ -46,8 +50,18 @@ afterAll(async () => {
 });
 
 describe('Test NodeJS Action', () => {
-  it('run pre', async () => {
+  it('runs pre & pre-if has set', async () => {
+    runner.container = hostedContainer;
+    const containerExecMock = vi.spyOn(runner.container, 'exec').mockImplementation((command, options) => {
+      console.log('command', command);
+      console.log('options', options);
+
+      return new Executor();
+    });
+
     const preExecutor = nodejsAction.pre().if(nodejsAction.hasPre());
     await preExecutor.execute(runner);
+
+    expect(containerExecMock).toHaveBeenCalled();
   });
 });

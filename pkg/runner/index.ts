@@ -390,6 +390,10 @@ class Runner {
     return '';
   }
 
+  get ActionStates() {
+    return this.IntraActionState[this.context.github.action] || {};
+  }
+
   // action command
   saveState(key: string, value: string) {
     const { action } = this.context.github;

@@ -8,13 +8,32 @@ import path from 'node:path';
 
 import Executor, { Conditional } from '@/pkg/common/executor';
 
-import Action from '../action';
+import Action, { ActionProps } from '../action';
+
+interface Output {
+  description: string;
+  value?: string
+}
+
+interface Runs {
+  using: string;
+  main: string;
+  pre?: string;
+  'pre-if'?: string;
+  post?: string;
+  'post-if'?: string;
+}
+
+export interface NodeJSActionProps extends Omit<ActionProps, 'outputs' | 'runs'> {
+  outputs: Record<string, Output>;
+  runs: Runs;
+}
 
 class NodeJSAction extends Action {
-  // constructor(action: NodeJSAction) {
-  //   super(action);
-  //   this.runs = action.runs;
-  // }
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(action: NodeJSActionProps) {
+    super(action as ActionProps);
+  }
 
   hasPre() {
     return new Conditional((runner) => {
@@ -26,18 +45,11 @@ class NodeJSAction extends Action {
     return new Executor(async (runner) => {
       const { container } = runner!;
       // step action env
-      const env = await container?.applyPath(runner!.prependPath, {});
-
+      const env = {};
+      await container?.applyPath(runner!.prependPath, env);
       this.composeInputs(runner!, env);
 
-      console.log('env ', env);
-
-      const runsPreFile = path.join(this.Dir, this.runs.pre);
-
-      console.log('preFile', runsPreFile);
-
-      const ddd = container?.exec(['node', runsPreFile], { env });
-      await ddd?.execute(runner);
+      return container?.exec(['node', path.join(this.Dir, this.runs.pre)], { env });
     });
   }
 
@@ -52,7 +64,19 @@ class NodeJSAction extends Action {
   }
 
   post() {
-    //
+    return new Executor(async (ctx) => {
+      const runner = ctx!;
+      const { container } = runner!;
+
+      // action env
+      const env = {};
+      Action.ApplyStates(runner, env);
+
+      // step action env
+      await container?.applyPath(runner!.prependPath, env);
+
+      return container?.exec(['node', path.join(this.Dir, this.runs.post)], { env });
+    });
   }
 }
 

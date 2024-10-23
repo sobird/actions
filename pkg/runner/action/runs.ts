@@ -32,7 +32,7 @@ class Runs {
    *   post: 'cleanup.js'
    * ```
    */
-  pre?: string;
+  pre: string;
 
   /**
    * Optional Allows you to define conditions for the pre: action execution.
@@ -63,7 +63,7 @@ class Runs {
    *   post: 'cleanup.js'
    * ```
    */
-  post?: string;
+  post: string;
 
   /**
    * Optional Allows you to define conditions for the post: action execution.
@@ -84,20 +84,20 @@ class Runs {
    * To reference a Dockerfile local to your repository, the file must be named Dockerfile and you must use a path relative to your action metadata file.
    * The docker application will execute this file.
    */
-  image?: string;
+  image: string;
 
   /**
    * Optional Specifies a key/value map of environment variables to set in the container environment.
    */
-  env?: Record<string, string>;
+  env: Record<string, string>;
 
-  'pre-entrypoint'?: string;
+  'pre-entrypoint': string;
 
-  entrypoint?: string;
+  entrypoint: string;
 
-  'post-entrypoint'?: string;
+  'post-entrypoint': string;
 
-  args?: string[];
+  args: string[];
 
   constructor(runs: RunsProps) {
     this.using = runs.using;

@@ -112,6 +112,15 @@ class Action extends Yaml {
     });
   }
 
+  static ApplyStates(runner: Runner, env: Record<string, string>) {
+    const states = runner.ActionStates;
+    Object.entries(states).forEach(([stateId, state]) => {
+      const key = `INPUT_${stateId.toUpperCase().replace(/[^A-Z0-9-]/g, '_')}`;
+      // eslint-disable-next-line no-param-reassign
+      env[key] = state;
+    });
+  }
+
   static async Pick(read: (filename: string) => Promise<string | false> | string | false) {
     const yml = await read('action.yml');
     if (yml) {
