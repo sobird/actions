@@ -1,37 +1,27 @@
-/* eslint-disable class-methods-use-this */
-import path from 'node:path';
-
 import Executor from '@/pkg/common/executor';
 import ActionCommandFile from '@/pkg/runner/action/command/file';
+import Step from '@/pkg/workflow/job/step/step';
 import { withTimeout } from '@/utils';
 
-import Step from '../step';
+import Action from '../action';
 
-export enum StepActionStage {
-  Pre,
-  Main,
-  Post,
-}
-
-abstract class StepAction extends Step {
+class ActionStep {
   environment: Record<string, string> = {};
 
-  public pre() {
-    return new Executor(() => {});
+  action?: Action;
+
+  constructor(public step: Step) {}
+
+  public prepareAction() {
+    //
   }
 
-  public abstract main(): Executor;
-
-  public post() {
-    return new Executor(() => {});
-  }
-
-  // executor
   protected executor(main: Executor) {
     return new Executor(async (ctx) => {
       const runner = ctx!;
+      const { step } = this;
 
-      const { id } = this;
+      const { id } = step;
       const { context, IntraActionState } = runner;
       // set current step
       context.github.action = id;
@@ -44,7 +34,7 @@ abstract class StepAction extends Step {
 
       const actionCommandFile = new ActionCommandFile(runner);
 
-      await actionCommandFile.initialize(this.uuid);
+      await actionCommandFile.initialize(step.uuid);
 
       // init action environment
       runner.Assign(
@@ -52,11 +42,11 @@ abstract class StepAction extends Step {
         runner.Env,
         runner.context.github.Env,
         runner.context.runner.Env,
-        this.Env(runner),
+        step.Env(runner),
       );
 
       try {
-        const enabled = this.if.evaluate(runner);
+        const enabled = step.if.evaluate(runner);
 
         if (!enabled) {
           context.StepResult = {
@@ -73,28 +63,12 @@ abstract class StepAction extends Step {
         throw err;
       }
 
-      const timeoutMinutes = Number(this['timeout-minutes'].evaluate(runner)) || 60;
+      const timeoutMinutes = Number(step['timeout-minutes'].evaluate(runner)) || 60;
       await withTimeout(main.execute(runner), timeoutMinutes * 60 * 1000);
 
       await actionCommandFile.process();
     });
   }
-
-  symlinkJoin(filename: string, sym: string, parent: string) {
-    const dir = path.dirname(filename);
-    const dest = path.join(dir, sym);
-    const prefix = path.normalize(parent) + path.sep;
-
-    if (dest.startsWith(prefix) || prefix === './') {
-      return dest;
-    }
-
-    throw new Error(`symlink tries to access file '${dest}' outside of '${parent}`);
-  }
-
-  loadAction() {
-    console.log('first', this.constructor.name);
-  }
 }
 
-export default StepAction;
+export default ActionStep;
