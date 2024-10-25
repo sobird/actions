@@ -12,15 +12,15 @@ abstract class StepAction extends Step {
 
   action?: Action;
 
+  public prepareAction() {
+    //
+  }
+
   public pre() { return new Executor(); }
 
   public abstract main(): Executor;
 
   public post() { return new Executor(); }
-
-  public prepareAction() {
-    //
-  }
 
   protected executor(main: Executor) {
     return new Executor(async (ctx) => {

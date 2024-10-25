@@ -136,7 +136,7 @@ class Step {
    * You can use built-in `shell` keywords, or you can define a custom set of shell options.
    * The shell command that is run internally executes a temporary file that contains the commands specified in the `run` keyword.
    */
-  shell: string;
+  shell?: string;
 
   /**
    * A map of the input parameters defined by the action.
