@@ -6,14 +6,14 @@ import Runner from '@/pkg/runner';
 import DockerContainer from '@/pkg/runner/container/docker';
 import { Step, StepProps } from '@/pkg/workflow/job/step/index.bak';
 import StepActionRemote from '@/pkg/workflow/job/step/action/step-action-remote';
-import { createTestDir } from '@/utils/test';
+import { createEachDir } from '@/utils/test';
 
 import Action from '.';
 
 vi.mock('@/pkg/runner');
 vi.mock('@/pkg/runner/container/docker');
 
-const testDir = createTestDir('runner-action');
+const testDir = createEachDir('runner-action');
 
 const runner: Runner = new (Runner as any)();
 const dockerContainer: DockerContainer = new (DockerContainer as any)();

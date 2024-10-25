@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import { SimpleGit } from 'simple-git';
 
-import { createTestDir } from '@/utils/test';
+import { createEachDir } from '@/utils/test';
 
 import Git from './git';
 
@@ -16,7 +16,7 @@ interface TestCase {
 }
 
 describe('Test Git', () => {
-  const testTmp = createTestDir();
+  const testTmp = createEachDir();
   it('get git first log', async () => {
     const git = new Git(path.join(testTmp, 'first-log'));
     await git.git.init();
@@ -103,7 +103,7 @@ describe('Test Git', () => {
 });
 
 describe('Test Get Git Ref', () => {
-  const testTmp = createTestDir();
+  const testTmp = createEachDir();
 
   const testCases: Record<string, TestCase> = {
     new_repo: {
@@ -196,7 +196,7 @@ describe('Test Get Git Ref', () => {
 });
 
 describe('Git Clone Executor', () => {
-  const testTmp = createTestDir();
+  const testTmp = createEachDir();
 
   const testCases = {
     tag: {

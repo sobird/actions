@@ -1,10 +1,10 @@
+import { ActionProps } from '..';
 import CompositeAction from './composite';
 import DockerAction from './docker';
 import NodeJSAction from './nodejs';
-import { ActionProps } from '..';
 
 class ActionFactory {
-  static ActionFactory(action: ActionProps) {
+  static create(action: ActionProps) {
     const { runs } = action;
     const { using, image, main } = action.runs;
     if (using) {

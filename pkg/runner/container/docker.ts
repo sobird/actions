@@ -548,8 +548,13 @@ class DockerContainer extends Container {
 
   removeVolume(name: string) {
     return new Executor(async () => {
-      const volume = docker.getVolume(name);
-      await volume.remove();
+      try {
+        const volume = docker.getVolume(name);
+        await volume.remove();
+        logger.debug('Removed volume: %s', name);
+      } catch (err) {
+        //
+      }
     }).if(new Conditional(() => {
       return !this.container;
     }));

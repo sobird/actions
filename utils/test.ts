@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-export function createTestDir(...name: string[]) {
+export function createEachDir(...name: string[]) {
   const baseDir = path.join(os.tmpdir(), ...name);
   beforeEach(() => {
     fs.mkdirSync(baseDir, { recursive: true });

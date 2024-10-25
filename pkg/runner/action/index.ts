@@ -1,3 +1,4 @@
+/* eslint-disable class-methods-use-this */
 /**
  * All actions require a metadata file.
  *
@@ -11,6 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import Executor from '@/pkg/common/executor';
 import Yaml from '@/pkg/common/yaml';
 import Runner from '@/pkg/runner';
 
@@ -46,7 +48,7 @@ export interface ActionProps extends Pick<Action, 'Dir' | 'name' | 'author' | 'd
  * * Composite Actions
  *
  */
-class Action extends Yaml {
+abstract class Action extends Yaml {
   #dir: string = '';
 
   /**
@@ -103,6 +105,16 @@ class Action extends Yaml {
     this.#dir = dir;
   }
 
+  public pre() {
+    return new Executor();
+  }
+
+  public abstract main(): Executor;
+
+  public post() {
+    return new Executor();
+  }
+
   composeInputs(runner: Runner, env: Record<string, string>) {
     const { inputs = {} } = this;
     Object.entries(inputs).forEach(([inputId, input]) => {
@@ -118,57 +130,6 @@ class Action extends Yaml {
       const key = `INPUT_${stateId.toUpperCase().replace(/[^A-Z0-9-]/g, '_')}`;
       // eslint-disable-next-line no-param-reassign
       env[key] = state;
-    });
-  }
-
-  static async Pick(read: (filename: string) => Promise<string | false> | string | false) {
-    const yml = await read('action.yml');
-    if (yml) {
-      return this.Load(yml);
-    }
-
-    const yaml = await read('action.yaml');
-    if (yaml) {
-      return this.Load(yaml);
-    }
-
-    const dockerfile = await read('Dockerfile');
-    if (dockerfile) {
-      return new this({
-        name: '(Synthetic)',
-        description: 'docker file action',
-        runs: {
-          using: 'docker',
-          image: 'Dockerfile',
-        },
-      });
-    }
-    const fullPath = 'fullPath';
-    throw Error(`Can't find 'action.yml', 'action.yaml' or 'Dockerfile' under '${fullPath}'. Did you forget to run actions/checkout before running your local action?`);
-  }
-
-  static async Scan(actionDir: string) {
-    return Action.Pick((filename) => {
-      if (!fs.existsSync(actionDir)) {
-        return false;
-      }
-
-      const stat = fs.statSync(actionDir);
-
-      if (stat.isDirectory()) {
-        const file = path.join(actionDir, filename);
-        if (fs.existsSync(file)) {
-          return fs.readFileSync(file, 'utf8');
-        }
-      }
-
-      if (stat.isFile()) {
-        if (fs.existsSync(actionDir)) {
-          return fs.readFileSync(actionDir, 'utf8');
-        }
-      }
-
-      return false;
     });
   }
 }

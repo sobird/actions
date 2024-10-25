@@ -1,16 +1,18 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 
 import * as tar from 'tar';
 
+import { createEachDir } from '@/utils/test';
+
 import HostedContainer from './hosted';
 
 vi.mock('./hosted');
-const workdir = '/home/runner';
-const testdir = path.join(os.tmpdir(), 'hosted-test');
-const filedir = path.join(testdir, 'file');
 const hosted: HostedContainer = new (HostedContainer as any)();
+
+const workdir = '/home/runner';
+const testdir = createEachDir('hosted-test');
+const filedir = createEachDir('hosted-test', 'file');
 
 const files = [
   {
@@ -25,23 +27,25 @@ const files = [
   },
 ];
 
-beforeAll(() => {
-  fs.mkdirSync(filedir, { recursive: true });
+console.log('filedir', filedir);
 
+beforeAll(() => {
   for (const file of files) {
     fs.writeFileSync(path.join(filedir, file.name), file.body);
   }
 });
 
-afterAll(async () => {
+afterAll(() => {
   console.log('testdir', testdir);
-  // fs.rmdirSync(testdir, { recursive: true });
 });
 
 describe('Test Hosted Container', () => {
-  it('docker start container test case', async () => {
+  it('start hosted container', async () => {
     const executor = hosted.start();
-    await executor.execute();
+
+    expect(async () => {
+      await executor.execute();
+    }).not.throw();
 
     // const id = hosted.container?.id;
     // expect(id).not.toBeUndefined();
@@ -195,7 +199,7 @@ describe('Test Hosted Container', () => {
   });
 });
 
-describe('test docker container path', () => {
+describe('test docker container path resolve', () => {
   if (process.platform === 'win32') {
     const testCases = [
       ['/mnt/c/Users/act/go/src/github.com/nektos/act', 'C:\\Users\\act\\go\\src\\github.com\\nektos\\act\\'],
