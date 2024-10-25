@@ -257,7 +257,13 @@ class Step {
       env[envKey] = value;
     });
 
-    return env;
+    return runner.Assign(
+      {},
+      runner.Env,
+      runner.context.github.Env,
+      runner.context.runner.Env,
+      env,
+    );
   }
 
   type(runner: Runner) {

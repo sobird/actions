@@ -56,8 +56,15 @@ class NodeJSAction extends Action {
   main() {
     return new Executor(async (ctx) => {
       const runner = ctx!;
-      // step action env
-      const env = await runner.container?.applyPath(runner.prependPath, {});
+      const env = runner.step?.Env(runner);
+      await runner.container?.applyPath(runner.prependPath, env);
+
+      console.log('env.', env.GITHUB_TOKEN);
+
+      env.TOKEN = 'ddd';
+      env.INPUT_TOKEN = 'ddd';
+
+      console.log('this.Dir', this.Dir, env, runner.step);
 
       return runner.container?.exec(['node', path.join(this.Dir, this.runs.main)], { env });
     });
@@ -68,12 +75,11 @@ class NodeJSAction extends Action {
       const runner = ctx!;
       const { container } = runner!;
 
-      // action env
-      const env = {};
+      const env = runner.step?.Env(runner);
       Action.ApplyStates(runner, env);
-
-      // step action env
       await container?.applyPath(runner!.prependPath, env);
+
+      console.log('this.Dir', this.Dir, env);
 
       return container?.exec(['node', path.join(this.Dir, this.runs.post)], { env });
     });

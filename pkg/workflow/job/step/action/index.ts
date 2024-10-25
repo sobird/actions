@@ -1,9 +1,13 @@
 /* eslint-disable class-methods-use-this */
+import fs from 'node:fs';
 import path from 'node:path';
 
+import { parse } from 'yaml';
+
 import Executor from '@/pkg/common/executor';
-import Action from '@/pkg/runner/action';
+import Action, { ActionProps } from '@/pkg/runner/action';
 import ActionCommandFile from '@/pkg/runner/action/command/file';
+import ActionFactory from '@/pkg/runner/action/factory';
 import Step from '@/pkg/workflow/job/step';
 import { withTimeout } from '@/utils';
 
@@ -28,6 +32,7 @@ abstract class StepAction extends Step {
       const { context, IntraActionState } = runner;
       // set current step
       context.github.action = id;
+      runner.step = this;
       IntraActionState[id] = {};
       context.StepResult = {
         outcome: 'success',
@@ -83,6 +88,93 @@ abstract class StepAction extends Step {
     }
 
     throw new Error(`symlink tries to access file '${dest}' outside of '${parent}`);
+  }
+
+  // load action from container
+  LoadAction(actionDir: string) {
+    return new Executor(async (ctx) => {
+      const runner = ctx!;
+      const actionContainerDir = runner.container?.resolve(actionDir) || '';
+      const ymlFile = path.join(actionDir, 'action.yml');
+      const ymlEntry = await runner.container?.getContent(ymlFile);
+      if (ymlEntry) {
+        this.action = ActionFactory.create(parse(ymlEntry.body));
+        this.action.Dir = actionContainerDir;
+        return;
+      }
+      const yamlEntry = await runner.container?.getContent(path.join(actionDir, 'action.yaml'));
+      if (yamlEntry) {
+        this.action = ActionFactory.create(parse(yamlEntry.body));
+        this.action.Dir = actionContainerDir;
+        return;
+      }
+
+      const dockerFileEntry = await runner.container?.getContent(path.join(actionDir, 'Dockerfile'));
+      if (dockerFileEntry) {
+        this.action = ActionFactory.create({
+          name: '(Synthetic)',
+          description: 'docker file action',
+          runs: {
+            using: 'docker',
+            image: 'Dockerfile',
+          },
+        } as ActionProps);
+        this.action.Dir = actionContainerDir;
+        return;
+      }
+      throw Error(`Can't find 'action.yml', 'action.yaml' or 'Dockerfile' under '${actionDir}'. Did you forget to run actions/checkout before running your local action?`);
+    });
+  }
+
+  private static async PickAction(read: (filename: string) => Promise<string | false> | string | false) {
+    const yml = await read('action.yml');
+    if (yml) {
+      return ActionFactory.create(parse(yml));
+    }
+
+    const yaml = await read('action.yaml');
+    if (yaml) {
+      return ActionFactory.create(parse(yaml));
+    }
+
+    const dockerfile = await read('Dockerfile');
+    if (dockerfile) {
+      return ActionFactory.create({
+        name: '(Synthetic)',
+        description: 'docker file action',
+        runs: {
+          using: 'docker',
+          image: 'Dockerfile',
+        },
+      } as ActionProps);
+    }
+    const fullPath = 'fullPath';
+    throw Error(`Can't find 'action.yml', 'action.yaml' or 'Dockerfile' under '${fullPath}'. Did you forget to run actions/checkout before running your local action?`);
+  }
+
+  private static async ScanAction(actionDir: string) {
+    return this.PickAction((filename) => {
+      if (!fs.existsSync(actionDir)) {
+        return false;
+      }
+
+      const stat = fs.statSync(actionDir);
+
+      if (stat.isDirectory()) {
+        const file = path.join(actionDir, filename);
+        if (fs.existsSync(file)) {
+          return fs.readFileSync(file, 'utf8');
+        }
+      }
+
+      if (stat.isFile()) {
+        if (fs.existsSync(actionDir)) {
+          return fs.readFileSync(actionDir, 'utf8');
+        }
+      }
+
+      return false;
+    });
   }
 }
 

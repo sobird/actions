@@ -379,11 +379,11 @@ export class Github {
   constructor(github: Partial<Github>) {
     Object.assign(this, github);
 
-    this.setBaseAndHeadRef();
-    this.setRef(github.ref || '');
-    this.setRefTypeAndName();
-    this.setSha(github.sha || '');
-    this.setRepository();
+    // this.setBaseAndHeadRef();
+    // this.setRef(github.ref || '');
+    // this.setRefTypeAndName();
+    // this.setSha(github.sha || '');
+    // this.setRepository();
   }
 
   setBaseAndHeadRef() {

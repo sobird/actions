@@ -14,6 +14,7 @@ import Constants from '@/pkg/common/constants';
 import { Docker } from '@/pkg/docker';
 import Config from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
+import Step from '@/pkg/workflow/job/step';
 import Strategy from '@/pkg/workflow/job/strategy';
 import { createSafeName, assignIgnoreCase } from '@/utils';
 
@@ -54,6 +55,8 @@ class Runner {
   logger: Logger = log4js.getLogger();
 
   cleanContainerExecutor: Executor = new Executor();
+
+  step?: Step;
 
   constructor(public run: Run, public config: Config) {
     const { jobId, job, workflow } = run;

@@ -5,14 +5,13 @@
  *
  * sobird<i@sobird.me> at 2024/05/21 16:20:47 created.
  */
-import fs from 'node:fs';
+
 import path from 'node:path';
 
+import Constants from '@/pkg/common/constants';
 import Executor from '@/pkg/common/executor';
 import Git from '@/pkg/common/git';
-import Action from '@/pkg/runner/action';
 import Reusable from '@/pkg/workflow/reusable';
-import { readEntry } from '@/utils/tar';
 
 import StepAction from '.';
 
@@ -22,19 +21,11 @@ class StepActionRemote extends StepAction {
     return new Executor((ctx) => {
       const runner = ctx!;
       const reusable = new Reusable(this.uses, runner.Token);
-      const { repository, sha, server_url: serverUrl } = runner!.context.github;
-      reusable.url = reusable.url || serverUrl;
+      const { server_url: serverUrl } = runner!.context.github;
+      reusable.url = 'https://gitea.com' || reusable.url || serverUrl;
 
       if (reusable.is('actions', 'checkout') && runner.config.skipCheckout) {
         //
-      }
-
-      if (reusable.isLocal) {
-        if (runner.config.skipCheckout) {
-          return this.reusableActionExecutor(reusable.path);
-        }
-        reusable.repository = repository;
-        reusable.ref = sha;
       }
 
       console.log('reusable - step', reusable);
@@ -48,31 +39,40 @@ class StepActionRemote extends StepAction {
         }
       });
 
-      if (runner.config.actionCache) {
+      if (!runner.config.actionCache) {
         return this.actionCacheReusableActionExecutor(reusable);
       }
 
       const repositoryDir = path.join(runner.ActionCacheDir, reusable.repository, reusable.ref);
-      const actionDir = path.join(repositoryDir, reusable.path);
-      return Git.CloneExecutor(repositoryDir, reusable.repositoryUrl, reusable.ref).finally(this.reusableActionExecutor(actionDir));
+      return Git.CloneExecutor(repositoryDir, reusable.repositoryUrl, reusable.ref).finally(this.reusableActionExecutor(reusable));
     });
   }
 
   public main() {
     return this.executor(new Executor(() => {
-      console.error('this.uses', this.action);
-
-      // return this.action?.executor();
+      return this.action?.main();
     }));
   }
 
   public post() {
-    return new Executor(() => {});
+    return new Executor(() => {
+      return this.action?.post();
+    });
   }
 
-  reusableActionExecutor(actionDir: string) {
-    return new Executor(async () => {
-      this.action = await Action.Scan(actionDir);
+  reusableActionExecutor(reusable: Reusable) {
+    return new Executor(async (ctx) => {
+      const runner = ctx!;
+
+      const repositoryDir = path.join(runner.ActionCacheDir, reusable.repository, reusable.ref);
+      const actionLocalDir = path.join(repositoryDir, reusable.path);
+
+      const actionDir = path.join(Constants.Directory.Actions, reusable.repository, reusable.ref);
+
+      const exe = runner.container?.put(actionDir, actionLocalDir);
+      await exe?.execute();
+
+      return this.LoadAction(actionDir);
     });
   }
 
@@ -83,11 +83,13 @@ class StepActionRemote extends StepAction {
       const { actionCache } = runner.config;
       if (actionCache) {
         await actionCache.fetch(reusable.repositoryUrl, reusable.repository, reusable.ref);
-        this.action = await Action.Pick(async (filename) => {
-          const archive = await actionCache.archive(reusable.repository, reusable.ref, filename);
-          const entry = await readEntry(archive);
-          return entry ? entry.body : false;
-        });
+        const archive = await actionCache.archive(reusable.repository, reusable.ref, '.');
+
+        const actionDir = path.join(Constants.Directory.Actions, reusable.repository, reusable.ref);
+
+        await runner.container?.putArchive(actionDir, archive);
+
+        return this.LoadAction(actionDir);
       }
     });
   }

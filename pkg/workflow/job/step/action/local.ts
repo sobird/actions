@@ -7,7 +7,6 @@
 import path from 'node:path';
 
 import Executor from '@/pkg/common/executor';
-import Action from '@/pkg/runner/action';
 
 import StepAction from '.';
 
@@ -17,13 +16,14 @@ class StepActionLocal extends StepAction {
     return new Executor(async (ctx) => {
       const runner = ctx!;
       const actionDir = path.join(runner.config.workdir, this.uses || '');
-      this.action = await Action.Scan(actionDir);
+      return this.LoadAction(actionDir);
     });
   }
 
   public main() {
     return this.executor(new Executor(async () => {
-      // return this.action?.executor();
+      console.log('this.action', this.action);
+      return this.action?.main();
     }));
   }
 
