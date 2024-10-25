@@ -8,7 +8,7 @@ import path from 'node:path';
 
 import Executor, { Conditional } from '@/pkg/common/executor';
 
-import Action, { ActionProps } from '../action';
+import Action, { ActionProps } from '..';
 
 interface Output {
   description: string;
@@ -31,9 +31,9 @@ export interface NodeJSActionProps extends Omit<ActionProps, 'outputs' | 'runs'>
 
 class NodeJSAction extends Action {
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-  constructor(action: NodeJSActionProps) {
-    super(action as ActionProps);
-  }
+  // constructor(action: NodeJSActionProps) {
+  //   super(action as ActionProps);
+  // }
 
   hasPre() {
     return new Conditional((runner) => {

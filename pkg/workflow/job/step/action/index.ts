@@ -2,7 +2,7 @@
 import path from 'node:path';
 
 import Executor from '@/pkg/common/executor';
-import Action from '@/pkg/runner/action/action';
+import Action from '@/pkg/runner/action';
 import ActionCommandFile from '@/pkg/runner/action/command/file';
 import Step from '@/pkg/workflow/job/step';
 import { withTimeout } from '@/utils';
@@ -12,9 +12,7 @@ abstract class StepAction extends Step {
 
   action?: Action;
 
-  public prepareAction() {
-    //
-  }
+  public prepareAction() { return new Executor(); }
 
   public pre() { return new Executor(); }
 

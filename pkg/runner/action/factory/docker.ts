@@ -1,4 +1,4 @@
-import Action from '../action';
+import Action from '..';
 
 class DockerAction extends Action {
 

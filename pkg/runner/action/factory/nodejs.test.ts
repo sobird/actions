@@ -5,7 +5,7 @@ import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
 import HostedContainer from '@/pkg/runner/container/hosted';
 
-import NodeJSAction from './nodejs-action';
+import NodeJSAction from './nodejs';
 
 vi.mock('@/pkg/runner');
 vi.mock('@/pkg/runner/container/hosted');

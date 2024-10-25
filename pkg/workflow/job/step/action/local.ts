@@ -1,5 +1,5 @@
 /**
- * Action Step Local
+ * Step Action Local
  *
  * sobird<i@sobird.me> at 2024/10/15 22:13:49 created.
  */
@@ -12,6 +12,7 @@ import Action from '@/pkg/runner/action';
 import StepAction from '.';
 
 class StepActionLocal extends StepAction {
+  // `pre` execution is not supported for local action from './.github/actions/hello-world-javascript-action'
   public pre() {
     return new Executor(async (ctx) => {
       const runner = ctx!;

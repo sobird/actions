@@ -72,28 +72,7 @@ class StepActionRemote extends StepAction {
 
   reusableActionExecutor(actionDir: string) {
     return new Executor(async () => {
-      this.action = await Action.Scan((filename) => {
-        if (!fs.existsSync(actionDir)) {
-          return false;
-        }
-
-        const stat = fs.statSync(actionDir);
-
-        if (stat.isDirectory()) {
-          const file = path.join(actionDir, filename);
-          if (fs.existsSync(file)) {
-            return fs.readFileSync(file, 'utf8');
-          }
-        }
-
-        if (stat.isFile()) {
-          if (fs.existsSync(actionDir)) {
-            return fs.readFileSync(actionDir, 'utf8');
-          }
-        }
-
-        return false;
-      });
+      this.action = await Action.Scan(actionDir);
     });
   }
 
