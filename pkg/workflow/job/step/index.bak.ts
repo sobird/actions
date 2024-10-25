@@ -1,9 +1,9 @@
 // import StepActionLocal from './step-action';
 import Step, { type StepProps } from '.';
-import StepActionDocker from '../../../runner/action/step/docker';
-import StepActionLocal from '../../../runner/action/step/local';
-import StepActionRemote from '../../../runner/action/step/remote';
-import StepActionScript from '../../../runner/action/step/script';
+import StepActionDocker from './action/docker';
+import StepActionLocal from './action/local';
+import StepActionRemote from './action/remote';
+import StepActionScript from './action/script';
 
 function StepFactory(step: StepProps) {
   if (!step.run && !step.uses) {

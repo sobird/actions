@@ -2,31 +2,26 @@
 import path from 'node:path';
 
 import Executor from '@/pkg/common/executor';
+import Action from '@/pkg/runner/action/action';
 import ActionCommandFile from '@/pkg/runner/action/command/file';
+import Step from '@/pkg/workflow/job/step';
 import { withTimeout } from '@/utils';
-
-import Step from '..';
-
-export enum StepActionStage {
-  Pre,
-  Main,
-  Post,
-}
 
 abstract class StepAction extends Step {
   environment: Record<string, string> = {};
 
-  public pre() {
-    return new Executor(() => {});
-  }
+  action?: Action;
+
+  public pre() { return new Executor(); }
 
   public abstract main(): Executor;
 
-  public post() {
-    return new Executor(() => {});
+  public post() { return new Executor(); }
+
+  public prepareAction() {
+    //
   }
 
-  // executor
   protected executor(main: Executor) {
     return new Executor(async (ctx) => {
       const runner = ctx!;
@@ -80,7 +75,7 @@ abstract class StepAction extends Step {
     });
   }
 
-  symlinkJoin(filename: string, sym: string, parent: string) {
+  static SymlinkJoin(filename: string, sym: string, parent: string) {
     const dir = path.dirname(filename);
     const dest = path.join(dir, sym);
     const prefix = path.normalize(parent) + path.sep;
@@ -90,10 +85,6 @@ abstract class StepAction extends Step {
     }
 
     throw new Error(`symlink tries to access file '${dest}' outside of '${parent}`);
-  }
-
-  loadAction() {
-    console.log('first', this.constructor.name);
   }
 }
 

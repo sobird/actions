@@ -8,9 +8,9 @@ import Constants from '@/pkg/common/constants';
 import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
 
-import ActionStep from '.';
+import StepAction from '.';
 
-class ActionStepScript extends ActionStep {
+class StepActionScript extends StepAction {
   public command: string = '';
 
   public main() {
@@ -27,10 +27,10 @@ class ActionStepScript extends ActionStep {
 
   setupShellCommand(runner: Runner) {
     const shell = this.setupShell(runner);
-    const script = ActionStepScript.FixUpScriptContent(shell, this.step.run.evaluate(runner));
-    const [command, ext] = ActionStepScript.GetShellCommandAndExt(shell);
+    const script = StepActionScript.FixUpScriptContent(shell, this.run.evaluate(runner));
+    const [command, ext] = StepActionScript.GetShellCommandAndExt(shell);
 
-    const scriptFilePath = path.join(Constants.Directory.Temp, `${this.step.uuid}${ext}`);
+    const scriptFilePath = path.join(Constants.Directory.Temp, `${this.uuid}${ext}`);
     const resolvedScriptPath = runner.container?.resolve(scriptFilePath);
 
     this.command = format(command, resolvedScriptPath);
@@ -45,7 +45,7 @@ class ActionStepScript extends ActionStep {
   }
 
   setupShell(runner: Runner) {
-    let { shell } = this.step;
+    let { shell } = this;
     if (!shell) {
       shell = runner.Defaults.run.evaluate(runner)?.shell || '';
     }
@@ -72,7 +72,7 @@ class ActionStepScript extends ActionStep {
   }
 
   WorkingDirectory(runner: Runner) {
-    return this.step['working-directory'].evaluate(runner) || runner.Defaults.run.evaluate(runner)?.['working-directory'];
+    return this['working-directory'].evaluate(runner) || runner.Defaults.run.evaluate(runner)?.['working-directory'];
   }
 
   static FixUpScriptContent(scriptType: string, content: string) {
@@ -104,4 +104,4 @@ class ActionStepScript extends ActionStep {
   }
 }
 
-export default ActionStepScript;
+export default StepActionScript;

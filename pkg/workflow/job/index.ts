@@ -9,14 +9,16 @@ import log4js from 'log4js';
 import Executor from '@/pkg/common/executor';
 import Expression from '@/pkg/expression';
 import Runner from '@/pkg/runner';
-import ActionStepFactory from '@/pkg/runner/action/step/factory';
 import { Needs } from '@/pkg/runner/context/needs';
 import { asyncFunction, createSafeName } from '@/utils';
 
 import Container, { ContainerProps } from './container';
 import Defaults, { DefaultsProps } from './defaults';
 import Environment, { EnvironmentOptions } from './environment';
-import Step, { StepProps } from './step';
+import { StepProps } from './step';
+import StepAction from './step/action';
+import StepActionFactory from './step/action/factory';
+// import { StepProps } from './step/step';
 import Strategy, { StrategyProps } from './strategy';
 import Uses from './uses';
 import {
@@ -281,7 +283,7 @@ class Job {
    * GitHub only displays the first 1,000 checks, however, you can run an unlimited number of steps as long as you are within the workflow usage limits.
    * For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration Usage limits, billing, and administration}" for GitHub-hosted runners and "{@link https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#usage-limits About self-hosted runners}" for self-hosted runner usage limits.
    */
-  steps?: Step[] = [];
+  steps?: StepAction[] = [];
 
   /**
    * The maximum number of minutes to let a job run before GitHub automatically cancels it. Default: 360
@@ -581,12 +583,10 @@ class Job {
       // eslint-disable-next-line no-param-reassign
       step.number = index;
 
-      const stepAction = ActionStepFactory.create(step);
-
-      const stepPreExecutor = stepAction.pre();
+      const stepPreExecutor = step.pre();
       stepPrePipeline.push(stepPreExecutor);
 
-      const stepPostExecutor = stepAction.post();
+      const stepPostExecutor = step.post();
       stepPostPipeline.push(stepPostExecutor);
 
       return new Executor(async () => {
@@ -600,7 +600,7 @@ class Job {
         console.log('step with:', step.with.evaluate(runner));
 
         await asyncFunction(0);
-      }).finally(stepAction.main());
+      }).finally(step.main());
     }));
 
     return Executor.Pipeline(
@@ -627,7 +627,7 @@ class Job {
 
       const stepId = oN === 0 ? id : `${id}_${oN}`;
       Object.assign(step, { id: stepId });
-      return new Step(step);
+      return StepActionFactory.create(step);
     });
   }
 }

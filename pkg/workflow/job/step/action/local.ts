@@ -9,9 +9,9 @@ import path from 'node:path';
 import Executor from '@/pkg/common/executor';
 import Action from '@/pkg/runner/action';
 
-import ActionStep from '.';
+import StepAction from '.';
 
-class ActionStepLocal extends ActionStep {
+class StepActionLocal extends StepAction {
   public pre() {
     return new Executor(async (ctx) => {
       const runner = ctx!;
@@ -22,7 +22,7 @@ class ActionStepLocal extends ActionStep {
 
   public main() {
     return this.executor(new Executor(async () => {
-      return this.action?.executor();
+      // return this.action?.executor();
     }));
   }
 
@@ -31,4 +31,4 @@ class ActionStepLocal extends ActionStep {
   // }
 }
 
-export default ActionStepLocal;
+export default StepActionLocal;

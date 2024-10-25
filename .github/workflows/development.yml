@@ -45,7 +45,6 @@ jobs:
 
       - name: Hello world Docker File Step
         id: hello_world_docker_file
-        run: ""
         uses: ./.github/actions/hello-world-docker-file
         with:
           who-to-greet: 'docker file'

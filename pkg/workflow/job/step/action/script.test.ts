@@ -1,12 +1,12 @@
 import Runner from '@/pkg/runner';
 
-import ActionStepScript from './script';
+import StepActionScript from './script';
 
 vi.mock('@/pkg/runner');
 
 const runner: Runner = new (Runner as any)();
 
-const step = new ActionStepScript({
+const step = new StepActionScript({
   id: '__run',
   run: 'echo hello world!',
   env: {

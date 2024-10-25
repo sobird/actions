@@ -1,13 +1,12 @@
-import type Step from '@/pkg/workflow/job/step';
+import { StepProps } from '@/pkg/workflow/job/step';
 
 import StepActionDocker from './docker';
 import StepActionLocal from './local';
 import StepActionRemote from './remote';
 import StepActionScript from './script';
 
-class ActionStepFactory {
-  static create(step: Step) {
-    console.log('step', step);
+class StepActionFactory {
+  static create(step: StepProps) {
     if (!step.run && !step.uses) {
       throw Error('every step must define a `uses` or `run` key');
     }
@@ -29,4 +28,4 @@ class ActionStepFactory {
   }
 }
 
-export default ActionStepFactory;
+export default StepActionFactory;

@@ -14,9 +14,9 @@ import Action from '@/pkg/runner/action';
 import Reusable from '@/pkg/workflow/reusable';
 import { readEntry } from '@/utils/tar';
 
-import ActionStep from '.';
+import StepAction from '.';
 
-class ActionStepRemote extends ActionStep {
+class StepActionRemote extends StepAction {
   // Prepare Action Instance
   public pre() {
     return new Executor((ctx) => {
@@ -60,10 +60,9 @@ class ActionStepRemote extends ActionStep {
 
   public main() {
     return this.executor(new Executor(() => {
-      this.loadAction();
       console.error('this.uses', this.action);
 
-      return this.action?.executor();
+      // return this.action?.executor();
     }));
   }
 
@@ -115,4 +114,4 @@ class ActionStepRemote extends ActionStep {
   }
 }
 
-export default ActionStepRemote;
+export default StepActionRemote;
