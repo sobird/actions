@@ -8,9 +8,9 @@ import Constants from '@/pkg/common/constants';
 import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
 
-import StepAction from '.';
+import ActionStep from '.';
 
-class StepActionScript extends StepAction {
+class ActionStepScript extends ActionStep {
   public command: string = '';
 
   public main() {
@@ -27,10 +27,10 @@ class StepActionScript extends StepAction {
 
   setupShellCommand(runner: Runner) {
     const shell = this.setupShell(runner);
-    const script = StepActionScript.FixUpScriptContent(shell, this.run.evaluate(runner));
-    const [command, ext] = StepActionScript.GetShellCommandAndExt(shell);
+    const script = ActionStepScript.FixUpScriptContent(shell, this.step.run.evaluate(runner));
+    const [command, ext] = ActionStepScript.GetShellCommandAndExt(shell);
 
-    const scriptFilePath = path.join(Constants.Directory.Temp, `${this.uuid}${ext}`);
+    const scriptFilePath = path.join(Constants.Directory.Temp, `${this.step.uuid}${ext}`);
     const resolvedScriptPath = runner.container?.resolve(scriptFilePath);
 
     this.command = format(command, resolvedScriptPath);
@@ -45,7 +45,7 @@ class StepActionScript extends StepAction {
   }
 
   setupShell(runner: Runner) {
-    let { shell } = this;
+    let { shell } = this.step;
     if (!shell) {
       shell = runner.Defaults.run.evaluate(runner)?.shell || '';
     }
@@ -54,7 +54,7 @@ class StepActionScript extends StepAction {
       //
       if (runner.container) {
         let shellWithFallback = ['bash', 'sh'];
-        if (runner.container.platform === 'Windows') {
+        if (runner.container.OS === 'Windows') {
           shellWithFallback = ['pwsh', 'powershell'];
         }
         [shell] = shellWithFallback;
@@ -72,7 +72,7 @@ class StepActionScript extends StepAction {
   }
 
   WorkingDirectory(runner: Runner) {
-    return this['working-directory'].evaluate(runner) || runner.Defaults.run.evaluate(runner)?.['working-directory'];
+    return this.step['working-directory'].evaluate(runner) || runner.Defaults.run.evaluate(runner)?.['working-directory'];
   }
 
   static FixUpScriptContent(scriptType: string, content: string) {
@@ -104,4 +104,4 @@ class StepActionScript extends StepAction {
   }
 }
 
-export default StepActionScript;
+export default ActionStepScript;

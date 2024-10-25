@@ -45,6 +45,7 @@ jobs:
 
       - name: Hello world Docker File Step
         id: hello_world_docker_file
+        run: ""
         uses: ./.github/actions/hello-world-docker-file
         with:
           who-to-greet: 'docker file'
@@ -58,14 +59,14 @@ jobs:
       # - name: Get the Docker output time
       #   run: echo "The time was ${{ steps.hello_world_docker_action.outputs.time }}"
 
-      - name: Hello world Docker Hub Action Step
-        id: hello_world_docker_hub_action
-        uses: ./.github/actions/hello-world-docker-hub-action
-        with:
-          who-to-greet: 'docker hub action step'
+      # - name: Hello world Docker Hub Action Step
+      #   id: hello_world_docker_hub_action
+      #   uses: ./.github/actions/hello-world-docker-hub-action
+      #   with:
+      #     who-to-greet: 'docker hub action step'
 
-      - name: Get the Docker Hub output time
-        run: echo "The time was ${{ steps.hello_world_docker_hub_action.outputs.time }}"
+      # - name: Get the Docker Hub output time
+      #   run: echo "The time was ${{ steps.hello_world_docker_hub_action.outputs.time }}"
       # - run: apt-get -qq update && apt-get -yqq install --no-install-recommends curl net-tools
       # - run: netstat -tlpen
       # - run: curl -v http://nginx

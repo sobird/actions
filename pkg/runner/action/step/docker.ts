@@ -1,8 +1,8 @@
 import Executor from '@/pkg/common/executor';
 
-import StepAction from '.';
+import ActionStep from '.';
 
-class StepActionDocker extends StepAction {
+class ActionStepDocker extends ActionStep {
   public pre() {
     return new Executor(() => {});
   }
@@ -16,4 +16,4 @@ class StepActionDocker extends StepAction {
   }
 }
 
-export default StepActionDocker;
+export default ActionStepDocker;

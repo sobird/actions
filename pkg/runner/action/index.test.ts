@@ -4,7 +4,7 @@ import path from 'node:path';
 import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
 import DockerContainer from '@/pkg/runner/container/docker';
-import { Step, StepProps } from '@/pkg/workflow/job/step';
+import { Step, StepProps } from '@/pkg/workflow/job/step/index.bak';
 import StepActionRemote from '@/pkg/workflow/job/step/action/step-action-remote';
 import { createTestDir } from '@/utils/test';
 

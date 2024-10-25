@@ -14,11 +14,9 @@ import Action from '@/pkg/runner/action';
 import Reusable from '@/pkg/workflow/reusable';
 import { readEntry } from '@/utils/tar';
 
-import StepAction from '.';
+import ActionStep from '.';
 
-class StepActionRemote extends StepAction {
-  action?: Action;
-
+class ActionStepRemote extends ActionStep {
   // Prepare Action Instance
   public pre() {
     return new Executor((ctx) => {
@@ -117,4 +115,4 @@ class StepActionRemote extends StepAction {
   }
 }
 
-export default StepActionRemote;
+export default ActionStepRemote;
