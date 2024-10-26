@@ -8,6 +8,7 @@ import * as tar from 'tar';
 
 import Constants from '@/pkg/common/constants';
 import Executor from '@/pkg/common/executor';
+import { trimPrefix } from '@/utils/trimPrefix';
 
 export interface FileEntry {
   name: string;
@@ -34,6 +35,8 @@ export interface ContainerOptions {
 const hashFilesDir = path.join(Constants.Directory.Bin, 'hashFiles');
 
 export default abstract class Container {
+  rootdir: string = '';
+
   abstract OS: string;
 
   abstract Arch: string;
@@ -64,7 +67,7 @@ export default abstract class Container {
   /** 上传文件/目录 */
   abstract put(destination: string, source: string, useGitIgnore?: boolean): Executor;
   abstract putContent(destination: string, ...files: FileEntry[]): Executor;
-  abstract putArchive(destination: string, archive: NodeJS.ReadableStream): Promise<void>;
+  abstract putArchive(destination: string, archive: NodeJS.ReadableStream): Executor;
   abstract getArchive(destination: string): Promise<NodeJS.ReadableStream>;
   abstract exec(command: string[], options: ContainerExecOptions): Executor;
   // abstract spawnSync(command: string, args: string[], options: ContainerExecOptions): SpawnSyncReturns<string> | undefined;
@@ -360,6 +363,10 @@ export default abstract class Container {
     env.RUNNER_NAME = '';
 
     return env;
+  }
+
+  Resolve(...paths: string[]) {
+    return trimPrefix(this.resolve(...paths), this.rootdir);
   }
 
   static GetEnv(env:Record<string, string>, name: string) {

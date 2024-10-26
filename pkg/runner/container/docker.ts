@@ -147,7 +147,7 @@ class DockerContainer extends Container {
         info.base = '.';
       }
 
-      const options: Parameters<typeof tar.create>[0] = {
+      const options: tar.TarOptionsWithAliasesAsyncNoFile = {
         cwd: info.dir,
         prefix: dest,
         portable: true,
@@ -169,7 +169,7 @@ class DockerContainer extends Container {
 
       try {
         logger.debug("Extracting content from '%s' to '%s'", source, dest);
-        await container.putArchive((pack as unknown as NodeJS.ReadableStream), {
+        return await container.putArchive((pack as unknown as NodeJS.ReadableStream), {
           path: '/',
         });
       } catch (err) {
@@ -221,57 +221,59 @@ class DockerContainer extends Container {
     });
   }
 
-  async putArchive(destination: string, archive: NodeJS.ReadableStream) {
-    const { container } = this;
+  putArchive(destination: string, archive: NodeJS.ReadableStream) {
+    return new Executor(async () => {
+      const { container } = this;
 
-    if (!container) {
-      return;
-    }
+      if (!container) {
+        return;
+      }
 
-    const dest = this.resolve(destination);
+      const dest = this.resolve(destination);
 
-    const pack = new tar.Pack({});
-    const header = new tar.Header({
-      path: dest,
-      mode: 0o777,
-      // uid: this.uid,
-      // gid: this.gid,
-      type: 'Directory',
-    });
-    header.encode();
-    const entry = new tar.ReadEntry(header);
-    entry.end();
-    pack.add(entry);
-    pack.end();
-
-    container.putArchive(pack as unknown as NodeJS.ReadableStream, {
-      path: '/',
-    }).catch((err) => {
-      logger.error('Failed to mkdir to copy content to container: %s', (err as Error).message);
-    });
-
-    try {
-      const stream = await container.putArchive(archive, {
+      const pack = new tar.Pack({});
+      const header = new tar.Header({
         path: dest,
+        mode: 0o777,
+        // uid: this.uid,
+        // gid: this.gid,
+        type: 'Directory',
+      });
+      header.encode();
+      const entry = new tar.ReadEntry(header);
+      entry.end();
+      pack.add(entry);
+      pack.end();
+
+      container.putArchive(pack as unknown as NodeJS.ReadableStream, {
+        path: '/',
+      }).catch((err) => {
+        logger.error('Failed to mkdir to copy content to container: %s', (err as Error).message);
       });
 
-      await new Promise<void>((resolve, reject) => {
-        stream.on('error', (err) => {
-          reject(err);
+      try {
+        const stream = await container.putArchive(archive, {
+          path: dest,
         });
-        stream.on('finish', () => {
-          resolve();
+
+        await new Promise<void>((resolve, reject) => {
+          stream.on('error', (err) => {
+            reject(err);
+          });
+          stream.on('finish', () => {
+            resolve();
+          });
         });
-      });
-    } catch (err) {
-      logger.error('Failed to copy content to container: %s', (err as Error).message);
-    }
+      } catch (err) {
+        logger.error('Failed to copy content to container: %s', (err as Error).message);
+      }
+    });
   }
 
-  async getArchive(source: string) {
+  async getArchive(destination: string) {
     const { container } = this;
 
-    const dest = this.resolve(source);
+    const dest = this.resolve(destination);
 
     return container!.getArchive({
       path: dest,

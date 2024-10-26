@@ -110,7 +110,7 @@ abstract class StepAction extends Step {
         this.action.Dir = actionContainerDir;
         return;
       }
-      throw Error(`Can't find 'action.yml', 'action.yaml' or 'Dockerfile' under '${actionDir}'. Did you forget to run actions/checkout before running your local action?`);
+      throw Error(`Can't find 'action.yml', 'action.yaml' or 'Dockerfile' under ${actionDir}. Did you forget to run actions/checkout before running your local action?`);
     });
   }
 

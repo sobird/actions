@@ -106,22 +106,24 @@ class HostedContainer extends Container {
     });
   }
 
-  async putArchive(destination: string, readStream: NodeJS.ReadableStream) {
-    const dest = this.resolve(destination);
-    fs.mkdirSync(dest, { recursive: true });
+  putArchive(destination: string, readStream: NodeJS.ReadableStream) {
+    return new Executor(async () => {
+      const dest = this.resolve(destination);
+      fs.mkdirSync(dest, { recursive: true });
 
-    const extract = tar.extract({
-      cwd: dest,
-    }) as unknown as NodeJS.WritableStream;
+      const extract = tar.extract({
+        cwd: dest,
+      }) as unknown as NodeJS.WritableStream;
 
-    const pipeline = readStream.pipe(extract);
+      const pipeline = readStream.pipe(extract);
 
-    await new Promise<void>((resolve, reject) => {
-      pipeline.on('error', (err) => {
-        reject(err);
-      });
-      pipeline.on('finish', () => {
-        resolve();
+      await new Promise<void>((resolve, reject) => {
+        pipeline.on('error', (err) => {
+          reject(err);
+        });
+        pipeline.on('finish', () => {
+          resolve();
+        });
       });
     });
   }

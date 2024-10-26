@@ -1,3 +1,6 @@
+/**
+ * @deprecated
+ */
 import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -77,8 +80,8 @@ describe('Test Docker Container', () => {
   });
 
   it('get content from container', async () => {
-    const { body } = await docker.getContent('put-content-test/test1.txt');
-    expect(body).toBe('test1 content');
+    const fileEntry = await docker.getContent('put-content-test/test1.txt');
+    expect(fileEntry?.body).toBe('test1 content');
   });
 
   it('put archive to container', async () => {

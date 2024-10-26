@@ -41,7 +41,9 @@ export interface StepProps extends Pick<Step, 'id' | 'uses' | 'shell'> {
      * but you can also use it with JavaScript actions that don't define any inputs.
      */
     entrypoint: string;
-  } | Record<string, string>;
+
+    [key: string]: string;
+  };
   env?: Record<string, string>;
   'continue-on-error'?: boolean;
   'timeout-minutes'?: string;

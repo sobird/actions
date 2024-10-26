@@ -64,7 +64,7 @@ describe('Test Static Method', () => {
 });
 
 describe('Test Member Method', () => {
-  it('Then Executor: return true case', async () => {
+  it('Then Executor: return true', async () => {
     let trueCount = 0;
     // 链式调佣，支持异步
     await new Executor(() => {
@@ -79,7 +79,7 @@ describe('Test Member Method', () => {
     expect(trueCount).toBe(3);
   });
 
-  it('If Executor: return true case', async () => {
+  it('If Executor: return true', async () => {
     let trueCount = 0;
     await new Executor(() => {
       trueCount += 1;
@@ -89,7 +89,7 @@ describe('Test Member Method', () => {
     expect(trueCount).toBe(1);
   });
 
-  it('If Executor: return false case', async () => {
+  it('If Executor: return false', async () => {
     let falseCount = 0;
     await new Executor(() => {
       falseCount += 1;
@@ -99,7 +99,22 @@ describe('Test Member Method', () => {
     expect(falseCount).toBe(0);
   });
 
-  it('IfNot Executor: not true case', async () => {
+  it('Multi If Executor: final return false', async () => {
+    let falseCount = 0;
+    await new Executor(() => {
+      falseCount += 1;
+    }).if(new Conditional(async () => {
+      return true;
+    })).if(new Conditional(async () => {
+      return true;
+    })).if(new Conditional(async () => {
+      return false;
+    }))
+      .execute();
+    expect(falseCount).toBe(0);
+  });
+
+  it('IfNot Executor: not true', async () => {
     let falseCount = 0;
     await new Executor(() => {
       falseCount += 1;
@@ -109,7 +124,7 @@ describe('Test Member Method', () => {
     expect(falseCount).toBe(0);
   });
 
-  it('IfBoolean Executor: true case', async () => {
+  it('IfBoolean Executor: true', async () => {
     let count = 0;
     await new Executor(() => {
       count += 1;
@@ -117,7 +132,7 @@ describe('Test Member Method', () => {
     expect(count).toBe(1);
   });
 
-  it('IfBoolean Executor: false case', async () => {
+  it('IfBoolean Executor: false', async () => {
     let count = 0;
     await new Executor(() => {
       count += 1;

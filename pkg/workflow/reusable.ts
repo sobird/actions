@@ -71,4 +71,8 @@ export default class Reusable {
   get isLocal() {
     return this.uses.startsWith('./');
   }
+
+  get isCheckout() {
+    return this.is('actions', 'checkout');
+  }
 }

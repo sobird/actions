@@ -116,7 +116,8 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
       const destination = 'put-archive-test';
 
       const archive = tar.create({ cwd: filedir, portable: true }, ['.']) as unknown as NodeJS.ReadableStream;
-      await container.putArchive(destination, archive);
+      const putArchiveExecutor = container.putArchive(destination, archive);
+      await putArchiveExecutor.execute();
 
       const archive2 = await container.getArchive(destination);
       const fileFiles = await listEntry(archive2);
@@ -239,8 +240,7 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
       testCases.forEach((item) => {
         const [destination, source] = item;
         it(source, () => {
-          console.log('container.resolve(source)', container.resolve(source));
-          expect(container.resolve(source)).toBe(destination);
+          expect(container.Resolve(source)).toBe(destination);
         });
       });
     }
