@@ -210,8 +210,8 @@ export default abstract class Container {
 
     const env: Record<string, string> = {};
 
-    const { body } = await this.getContent(filename);
-    const lines = body.split('\n');
+    const fileEntry = await this.getContent(filename);
+    const lines = fileEntry?.body.split('\n') || [];
 
     lines.forEach((line) => {
       const equalsIndex = line.indexOf('=');

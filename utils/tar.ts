@@ -44,3 +44,24 @@ export async function readEntry(pack: NodeJS.ReadableStream): Promise<FileEntry 
     });
   });
 }
+
+export async function listEntry(pack: NodeJS.ReadableStream): Promise<string[] | undefined> {
+  const extract = tar.t({});
+  pack.pipe(extract);
+
+  const list: string[] = [];
+
+  extract.on('entry', (entry: tar.ReadEntry) => {
+    entry.on('end', () => {
+      if (entry.type !== 'Directory') {
+        list.push(entry.path);
+      }
+    });
+  });
+
+  return new Promise((resolve) => {
+    extract.on('finish', () => {
+      resolve(list);
+    });
+  });
+}
