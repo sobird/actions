@@ -2,26 +2,45 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+const projectName = path.basename(process.cwd());
+
+export function createAllDir(...name: string[]) {
+  const dir = path.join(os.tmpdir(), `${projectName}-test`, ...name);
+  beforeAll(() => {
+    fs.mkdirSync(dir, { recursive: true });
+  });
+  afterAll(() => {
+    try {
+      fs.rmdirSync(dir, { recursive: true });
+    } catch (err) {
+      //
+    }
+  });
+  return dir;
+}
+
 export function createEachDir(...name: string[]) {
-  const baseDir = path.join(os.tmpdir(), ...name);
+  const dir = path.join(os.tmpdir(), `${projectName}-test`, ...name);
   beforeEach(() => {
-    fs.mkdirSync(baseDir, { recursive: true });
+    fs.mkdirSync(dir, { recursive: true });
   });
   afterEach(() => {
-    fs.rmdirSync(baseDir, { recursive: true });
+    try {
+      fs.rmdirSync(dir, { recursive: true });
+    } catch (err) {
+      //
+    }
   });
-  return baseDir;
+  return dir;
 }
 
 export function createTestFile(name: string = 'test-file') {
-  const file = path.join(os.tmpdir(), 'test', name);
+  const file = path.join(os.tmpdir(), `${projectName}-test`, name);
   const dir = path.dirname(file);
-  beforeAll(() => {
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(file, '');
-  });
-  afterAll(() => {
-    // fs.rmdirSync(dir, { recursive: true });
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(file, '');
+  onTestFinished(() => {
+    fs.rmdirSync(dir, { recursive: true });
   });
   return file;
 }

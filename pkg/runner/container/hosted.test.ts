@@ -3,40 +3,48 @@ import path from 'node:path';
 
 import * as tar from 'tar';
 
-import { createEachDir } from '@/utils/test';
+import { createAllDir } from '@/utils/test';
 
+import { FileEntry } from '.';
 import HostedContainer from './hosted';
 
 vi.mock('./hosted');
 const hosted: HostedContainer = new (HostedContainer as any)();
 
 const workdir = '/home/runner';
-const testdir = createEachDir('hosted-test');
-const filedir = createEachDir('hosted-test', 'file');
+const testdir = createAllDir('hosted-test');
+const filedir = createAllDir('hosted-test', 'file');
 
 const files = [
   {
     name: 'test1.txt',
+    linkName: 'link-test1.txt',
+    symlinkName: 'symlink-test1.txt',
     // mode: 0o700,
     body: 'test1 content',
   },
   {
     name: 'test2.txt',
+    linkName: 'link-test2.txt',
+    symlinkName: 'symlink-test2.txt',
     // mode: 0o700,
     body: 'test2 content',
   },
 ];
 
-console.log('filedir', filedir);
-
 beforeAll(() => {
   for (const file of files) {
-    fs.writeFileSync(path.join(filedir, file.name), file.body);
+    const fileName = path.join(filedir, file.name);
+    fs.writeFileSync(fileName, file.body);
+    fs.symlinkSync(file.name, path.join(filedir, file.symlinkName));
+    fs.linkSync(fileName, path.join(filedir, file.linkName));
   }
 });
 
-afterAll(() => {
+afterAll(async () => {
   console.log('testdir', testdir);
+  const removeExecutor = hosted.remove();
+  await removeExecutor.execute();
 });
 
 describe('Test Hosted Container', () => {
@@ -45,25 +53,22 @@ describe('Test Hosted Container', () => {
 
     expect(async () => {
       await executor.execute();
-    }).not.throw();
-
-    // const id = hosted.container?.id;
-    // expect(id).not.toBeUndefined();
+    }).not.toThrowError();
   });
 
-  it('hosted put file to container test case', async () => {
+  it('put file to container', async () => {
     const destination = 'put-file-test';
     const file = files[0];
+    const sourceFile = path.join(filedir, file.name);
 
-    const executor = hosted.put(destination, path.join(filedir, file.name));
+    const executor = hosted.put(destination, sourceFile);
     await executor.execute();
 
     const destBody = fs.readFileSync(path.join(hosted.resolve(destination), file.name), 'utf8');
-
     expect(destBody).toEqual(file.body);
   });
 
-  it('hosted put dir to container test case', async () => {
+  it('put dir to container', async () => {
     const destination = 'put-dir-test';
 
     const executor = hosted.put(destination, filedir);
@@ -74,7 +79,7 @@ describe('Test Hosted Container', () => {
     expect(destFiles).toEqual(sourceFiles);
   });
 
-  it('put content to container relative directory test case', async () => {
+  it('put content to container relative directory', async () => {
     const destination = 'put-content-relative-test';
     const containerdir = hosted.resolve(destination);
 
@@ -87,7 +92,7 @@ describe('Test Hosted Container', () => {
     }
   });
 
-  it('put content to container absolute directory test case', async () => {
+  it('put content to container absolute directory', async () => {
     const destination = '/put-content-absolute-test';
     const containerdir = hosted.resolve(destination);
 
@@ -100,12 +105,11 @@ describe('Test Hosted Container', () => {
     }
   });
 
-  it('put archive to container test case', async () => {
+  it('put archive to container', async () => {
     const destination = 'put-archive-test';
     const containerdir = hosted.resolve(destination);
 
     const archive = tar.create({ cwd: filedir, portable: true }, ['.']) as unknown as NodeJS.ReadableStream;
-
     await hosted.putArchive(destination, archive);
 
     const sourceFiles = fs.readdirSync(filedir);
@@ -114,21 +118,21 @@ describe('Test Hosted Container', () => {
     expect(destFiles).toEqual(sourceFiles);
   });
 
-  it('get archive to container test case', async () => {
+  it('get archive to container', async () => {
     const destination = 'put-archive-test';
     const archive = await hosted.getArchive(destination);
 
-    const extract = tar.t({ });
+    const extract = tar.t({});
     archive.pipe(extract);
 
-    const archiveFiles: any = [];
-    extract.on('entry', (entry) => {
+    const archiveFiles: FileEntry[] = [];
+    extract.on('entry', (entry: tar.ReadEntry) => {
       let body = '';
       entry.on('data', (chunk: Buffer) => {
         body += chunk;
       });
       entry.on('end', () => {
-        if (entry.type === 'File') {
+        if (entry.type !== 'Directory') {
           archiveFiles.push({
             name: path.basename(entry.path),
             body,
@@ -143,10 +147,38 @@ describe('Test Hosted Container', () => {
       });
     });
 
-    expect(archiveFiles).toEqual(files);
+    const expectedFiles = archiveFiles.map((item) => { return item.name; });
+    const testFiles = files.reduce((a: string[], b) => {
+      return a.concat([b.name, b.linkName, b.symlinkName]);
+    }, []);
+
+    expect(expectedFiles.sort()).toEqual(testFiles.sort());
   });
 
-  it('container exec test case', async () => {
+  it('get file content from container', async () => {
+    const destination = 'put-file-test';
+    const file = files[0];
+
+    const fileEntry = await hosted.getContent(path.join(destination, file.name));
+    expect(fileEntry?.body).toBe(file.body);
+  });
+
+  it('get no exist file content from container', async () => {
+    const fileEntry = await hosted.getContent('no-exist-file');
+    expect(fileEntry).toBeUndefined();
+  });
+
+  it('get symlink file content from container', async () => {
+    const fileEntry = await hosted.getContent(path.join('put-archive-test', files[0].symlinkName));
+    expect(fileEntry?.body).toBe(files[0].body);
+  });
+
+  it('get link file content from container', async () => {
+    const fileEntry = await hosted.getContent(path.join('put-archive-test', files[0].linkName));
+    expect(fileEntry?.body).toBe(files[0].body);
+  });
+
+  it('container exec command', async () => {
     const scriptName = process.platform === 'win32' ? 'print_message.ps1' : 'print_message.sh';
     const body = fs.readFileSync(path.join(__dirname, `__mocks__/${scriptName}`), 'utf8');
     const putContentExecutor = hosted.putContent('', {
@@ -163,7 +195,7 @@ describe('Test Hosted Container', () => {
     // });
   });
 
-  it('container hashFiles test case', async () => {
+  it('container hashFiles function', async () => {
     const putContentExecutor = hosted.putContent('', {
       name: 'package.json',
       mode: 0o777,
@@ -172,17 +204,15 @@ describe('Test Hosted Container', () => {
     await putContentExecutor.execute();
 
     const hash = hosted.hashFiles('package.json');
-    console.log('hash', hash);
-
     expect(hash.length).toBe(64);
   });
 
-  it('container hashFiles with --follow-symbolic-links test case', async () => {
+  it('container hashFiles with --follow-symbolic-links', async () => {
     const hash = hosted.hashFiles('--follow-symbolic-links', 'package.json');
     expect(hash.length).toBe(64);
   });
 
-  it('container getFileEnv test case', async () => {
+  it('container get file env', async () => {
     const putContentExecutor = hosted.putContent('.', {
       name: 'env',
       mode: 0o777,
@@ -199,7 +229,7 @@ describe('Test Hosted Container', () => {
   });
 });
 
-describe('test docker container path resolve', () => {
+describe('Test Hosted Container Path Resolve', () => {
   if (process.platform === 'win32') {
     const testCases = [
       ['/mnt/c/Users/act/go/src/github.com/nektos/act', 'C:\\Users\\act\\go\\src\\github.com\\nektos\\act\\'],

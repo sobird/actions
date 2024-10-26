@@ -1,6 +1,13 @@
-// import { bench, describe } from 'vitest';
+import { createEachDir, createTestFile } from '@/utils/test';
+
+const eachDir = createEachDir('test-dir');
+
+console.log('eachDir', eachDir);
+console.log('__filename', process.cwd(), __filename, __dirname);
 
 test('should work as expected', () => {
+  const testFile = createTestFile('test.txt');
+  console.log('testFile', testFile);
   expect(Math.sqrt(4)).toBe(2);
 }, 100);
 

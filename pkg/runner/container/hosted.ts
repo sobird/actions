@@ -129,6 +129,9 @@ class HostedContainer extends Container {
   async getArchive(destination: string) {
     const dest = this.resolve(destination);
     const info = path.parse(dest);
+    if (!fs.existsSync(dest)) {
+      return tar.create({ cwd: info.dir }, []) as unknown as NodeJS.ReadableStream;
+    }
     return tar.create({ cwd: info.dir }, [info.base]) as unknown as NodeJS.ReadableStream;
   }
 

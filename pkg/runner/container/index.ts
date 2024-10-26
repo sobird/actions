@@ -120,39 +120,46 @@ export default abstract class Container {
     });
   }
 
-  async getContent(filename: string): Promise<FileEntry> {
-    const archive = await this.getArchive(filename);
-    const extract = tar.t({ portable: true });
-    archive.pipe(extract as NodeJS.WritableStream);
+  async getContent(filename: string): Promise<FileEntry | undefined> {
+    try {
+      const archive = await this.getArchive(filename);
+      const extract = tar.t({ portable: true });
+      archive.pipe(extract as NodeJS.WritableStream);
 
-    return new Promise((resolve) => {
-      extract.on('entry', (entry: tar.ReadEntry) => {
-        if (entry.size === 0) {
-          resolve({
-            name: entry.path,
-            mode: entry.mode,
-            size: entry.size,
-            body: '',
-          });
-        }
-
-        let body = '';
-        entry.on('data', (chunk: Buffer) => {
-          body += chunk;
-        });
-        entry.on('end', () => {
-          if (entry.type === 'File') {
+      return await new Promise((resolve) => {
+        extract.on('entry', (entry: tar.ReadEntry) => {
+          if (entry.type === 'SymbolicLink') {
+            resolve(this.getContent(Container.SymlinkJoin(filename, entry.header.linkpath || '', '.')));
+          }
+          if (entry.size === 0) {
             resolve({
               name: entry.path,
               mode: entry.mode,
               size: entry.size,
-              body,
+              body: '',
             });
-            archive.unpipe(extract as NodeJS.WritableStream);
           }
+
+          let body = '';
+          entry.on('data', (chunk: Buffer) => {
+            body += chunk;
+          });
+          entry.on('end', () => {
+            if (entry.type === 'File') {
+              resolve({
+                name: entry.path,
+                mode: entry.mode,
+                size: entry.size,
+                body,
+              });
+              archive.unpipe(extract as NodeJS.WritableStream);
+            }
+          });
         });
       });
-    });
+    } catch (error) {
+      //
+    }
   }
 
   async readline(filename: string, callback?: (line: string) => void): Promise<string> {
@@ -411,5 +418,17 @@ export default abstract class Container {
     } catch (err) {
       return false;
     }
+  }
+
+  static SymlinkJoin(filename: string, sym: string, parent: string) {
+    const dir = path.dirname(filename);
+    const dest = path.join(dir, sym);
+    const prefix = path.normalize(parent) + path.sep;
+
+    if (dest.startsWith(prefix) || prefix === './') {
+      return dest;
+    }
+
+    throw new Error(`symlink tries to access file '${dest}' outside of '${parent}`);
   }
 }
