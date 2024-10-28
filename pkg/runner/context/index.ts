@@ -120,4 +120,9 @@ export default class Context {
       this.job.status = step.conclusion;
     }
   }
+
+  get StepResult() {
+    const { action } = this.github;
+    return this.steps[action];
+  }
 }

@@ -82,7 +82,7 @@ class StepActionRemote extends StepAction {
   public post() {
     return this.executor(new Executor(() => {
       return this.action?.post();
-    }));
+    })).if(this.ShouldRunPost);
   }
 
   public skipCheckoutSelf() {
@@ -94,7 +94,6 @@ class StepActionRemote extends StepAction {
         if (stepWith?.repository && stepWith.repository !== runner.context.github.repository) {
           return false;
         }
-
         if (stepWith?.ref && stepWith?.ref !== runner.context.github.ref) {
           return false;
         }
@@ -116,7 +115,7 @@ class StepActionRemote extends StepAction {
     });
   }
 
-  reusableCacheAction(reusable: Reusable) {
+  private reusableCacheAction(reusable: Reusable) {
     return new Executor(async (ctx) => {
       const runner = ctx!;
 

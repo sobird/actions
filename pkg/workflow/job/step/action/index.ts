@@ -2,14 +2,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import log4js from 'log4js';
 import { parse } from 'yaml';
 
-import Executor from '@/pkg/common/executor';
+import Executor, { Conditional } from '@/pkg/common/executor';
 import Action, { ActionProps } from '@/pkg/runner/action';
 import ActionCommandFile from '@/pkg/runner/action/command/file';
 import ActionFactory from '@/pkg/runner/action/factory';
 import Step from '@/pkg/workflow/job/step';
 import { withTimeout } from '@/utils';
+
+const logger = log4js.getLogger();
 
 abstract class StepAction extends Step {
   environment: Record<string, string> = {};
@@ -40,10 +43,6 @@ abstract class StepAction extends Step {
         outputs: {},
       };
 
-      const actionCommandFile = new ActionCommandFile(runner);
-
-      await actionCommandFile.initialize(this.uuid);
-
       // init action environment
       runner.Assign(
         this.environment,
@@ -71,10 +70,46 @@ abstract class StepAction extends Step {
         throw err;
       }
 
+      const actionCommandFile = new ActionCommandFile(runner);
+      await actionCommandFile.initialize(this.uuid);
       const timeoutMinutes = Number(this['timeout-minutes'].evaluate(runner)) || 60;
       await withTimeout(main.execute(runner), timeoutMinutes * 60 * 1000);
 
       await actionCommandFile.process();
+    });
+  }
+
+  protected get ShouldRunPre() {
+    return new Conditional((ctx) => {
+      const runner = ctx!;
+      if (!this.action) {
+        logger.debug("skip pre step for '%s': no action model available", this.Name(runner));
+        return false;
+      }
+      return true;
+    });
+  }
+
+  protected get ShouldRunPost() {
+    return new Conditional((ctx) => {
+      const runner = ctx!;
+      const { StepResult } = runner.context;
+
+      if (!StepResult) {
+        logger.debug("skipping post step for '%s'; step was not executed", this.Name(runner));
+        return false;
+      }
+
+      if (StepResult.conclusion === 'skipped') {
+        logger.debug("skipping post step for '%s'; main step was skipped", this.Name(runner));
+        return false;
+      }
+
+      if (!this.action) {
+        logger.debug("skipping post step for '%s': no action model available", this.Name(runner));
+        return false;
+      }
+      return true;
     });
   }
 
@@ -114,6 +149,9 @@ abstract class StepAction extends Step {
     });
   }
 
+  /**
+   * @deprecated
+   */
   private static async PickAction(read: (filename: string) => Promise<string | false> | string | false) {
     const yml = await read('action.yml');
     if (yml) {
@@ -140,6 +178,9 @@ abstract class StepAction extends Step {
     throw Error(`Can't find 'action.yml', 'action.yaml' or 'Dockerfile' under '${fullPath}'. Did you forget to run actions/checkout before running your local action?`);
   }
 
+  /**
+   * @deprecated
+   */
   private static async ScanAction(actionDir: string) {
     return this.PickAction((filename) => {
       if (!fs.existsSync(actionDir)) {
