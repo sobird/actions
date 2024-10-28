@@ -14,15 +14,17 @@ class StepActionLocal extends StepAction {
   // `pre` execution is not supported for local action from './.github/actions/hello-world-javascript-action'
   public pre() {
     return new Executor(async (ctx) => {
-      const runner = ctx!;
-      const actionDir = path.join(runner.config.workdir, this.uses || '');
-      return this.LoadAction(actionDir);
+
     });
   }
 
   public main() {
-    return this.executor(new Executor(async () => {
-      console.log('this.action', this.action);
+    return this.executor(new Executor(async (ctx) => {
+      const runner = ctx!;
+      const actionDir = path.join(runner.config.workdir, this.uses || '');
+      await this.LoadAction(actionDir).execute(ctx);
+
+      console.log('first', this.uses, this.action);
       return this.action?.main();
     }));
   }

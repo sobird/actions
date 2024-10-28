@@ -97,7 +97,7 @@ export const runCommand = new Command('run')
 
   .option('--matrix <list...>', 'specify which matrix configuration to include (e.g. --matrix java:13 node:20 node:18', collectMatrix, {})
   .option('--insecure-secrets', "NOT RECOMMENDED! Doesn't hide secrets while printing logs")
-  .option('--use-gitignore', 'controls whether paths specified in .gitignore should be copied into container')
+  .option('--no-use-gitignore', 'controls whether paths specified in .gitignore should be copied into container')
   .option('--no-skip-checkout', 'do not skip actions/checkout')
   .option('--server-instance <url>', 'server instance to use')
 

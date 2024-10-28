@@ -583,8 +583,7 @@ class Job {
       // eslint-disable-next-line no-param-reassign
       step.number = index;
 
-      const stepPreExecutor = step.pre();
-      stepPrePipeline.push(stepPreExecutor);
+      stepPrePipeline.push(step.prepareAction(), step.pre());
 
       const stepPostExecutor = step.post();
       stepPostPipeline.push(stepPostExecutor);

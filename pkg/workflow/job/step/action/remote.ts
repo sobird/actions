@@ -8,12 +8,16 @@
 
 import path from 'node:path';
 
+import log4js from 'log4js';
+
 import Constants from '@/pkg/common/constants';
 import Executor, { Conditional } from '@/pkg/common/executor';
 import Git from '@/pkg/common/git';
 import Reusable from '@/pkg/workflow/reusable';
 
 import StepAction from '.';
+
+const logger = log4js.getLogger();
 
 class StepActionRemote extends StepAction {
   // Prepare Action Instance
@@ -45,12 +49,26 @@ class StepActionRemote extends StepAction {
   public pre() {
     return new Executor(async (ctx) => {
       const ddd = this.skipCheckoutSelf();
-      console.log('skipCheckoutSelf', await ddd.evaluate(ctx));
+      console.log('skipCheckoutSelf', await ddd.evaluate(ctx), this.uses);
     });
   }
 
   public main() {
-    return this.executor(new Executor(() => {
+    return this.executor(new Executor(async (ctx) => {
+      const runner = ctx!;
+      const skipCheckoutSelfExecutor = this.skipCheckoutSelf();
+
+      if (await skipCheckoutSelfExecutor.evaluate(runner)) {
+        if (runner?.config.bindWorkdir) {
+          logger.debug('Skipping local actions/checkout because you bound your workspace');
+          return;
+        }
+        const workdir = runner.container?.resolve(runner.config.workdir) || '';
+        const copyToPath = path.join(workdir, this.with.evaluate(runner)?.path || '');
+
+        return runner.container?.put(copyToPath, runner.config.workdir, runner.config.useGitignore);
+      }
+
       return this.action?.main();
     }));
   }
