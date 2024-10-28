@@ -9,7 +9,7 @@
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/cmd",
-      "args": ["run", "-j", "job-for-development"],
+      "args": ["run", "-j", "job-for-development", "--no-skip-checkout"],
       "env": {
         "NODE_OPTIONS": "--import=./node_modules/@sobird/ts-node/register.js"
       }

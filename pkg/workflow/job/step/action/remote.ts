@@ -25,7 +25,13 @@ class StepActionRemote extends StepAction {
   public prepareAction(): Executor {
     return new Executor((ctx) => {
       const runner = ctx!;
-      const reusable = new Reusable(this.uses, runner.Token);
+      /**
+       * Shouldn't provide token when cloning actions,
+       * the token comes from the instance which triggered the task,
+       * however, it might be not the same instance which provides actions.
+       * For GitHub, they are the same, always github.com.
+       */
+      const reusable = new Reusable(this.uses);
       const { server_url: serverUrl } = runner!.context.github;
       reusable.url = reusable.url || serverUrl;
 

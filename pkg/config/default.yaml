@@ -58,7 +58,7 @@ runner:
   # If it's empty when registering, it will ask for inputting labels.
   # If it's empty when execute `daemon`, will use labels in `.runner` file.
   labels:
-    - ubuntu-latest=node:lts-slim
+    - ubuntu-latest=catthehacker/ubuntu:act-latest
     - ubuntu-22.04=gitea/runner-images:ubuntu-22.04
     - ubuntu-20.04=gitea/runner-images:ubuntu-20.04
     - self-hosted=-self-hosted

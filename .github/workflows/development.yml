@@ -33,6 +33,8 @@ jobs:
 
       - name: Checkout Step
         uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
         
       - name: Hello World Javascript Action Step
         id: hello_world_javascript_action
@@ -40,14 +42,14 @@ jobs:
         with:
           who-to-greet: 'hello world javascript action step'
 
-      - name: Print env
-        run: env
+      # - name: Print env
+      #   run: env
 
-      - name: Hello world Docker File Step
-        id: hello_world_docker_file
-        uses: ./.github/actions/hello-world-docker-file
-        with:
-          who-to-greet: 'docker file'
+      # - name: Hello world Docker File Step
+      #   id: hello_world_docker_file
+      #   uses: ./.github/actions/hello-world-docker-file
+      #   with:
+      #     who-to-greet: 'docker file'
 
       # - name: Hello world Docker Action Step
       #   id: hello_world_docker_action

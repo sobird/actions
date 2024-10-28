@@ -59,12 +59,7 @@ class NodeJSAction extends Action {
       const env = runner.step?.Env(runner);
       await runner.container?.applyPath(runner.prependPath, env);
 
-      console.log('env.', env.GITHUB_TOKEN);
-
-      env.TOKEN = 'ddd';
-      env.INPUT_TOKEN = 'ddd';
-
-      console.log('this.Dir', this.Dir, env, runner.step);
+      // console.log('this.Dir', this.Dir, env, runner.step);
 
       return runner.container?.exec(['node', path.join(this.Dir, this.runs.main)], { env });
     });
