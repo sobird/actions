@@ -59,7 +59,7 @@ describe('Test NodeJS Action', () => {
       return new Executor();
     });
 
-    const preExecutor = nodejsAction.pre().if(nodejsAction.hasPre());
+    const preExecutor = nodejsAction.pre().if(nodejsAction.HasPre);
     await preExecutor.execute(runner);
 
     expect(containerExecMock).toHaveBeenCalled();

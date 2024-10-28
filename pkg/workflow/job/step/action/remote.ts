@@ -80,9 +80,9 @@ class StepActionRemote extends StepAction {
   }
 
   public post() {
-    return new Executor(() => {
+    return this.executor(new Executor(() => {
       return this.action?.post();
-    });
+    }));
   }
 
   public skipCheckoutSelf() {

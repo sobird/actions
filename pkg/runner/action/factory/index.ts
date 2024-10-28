@@ -1,7 +1,7 @@
 import { ActionProps } from '..';
 import CompositeAction from './composite';
 import DockerAction from './docker';
-import NodeJSAction from './nodejs';
+import NodeJSAction, { NodeJSActionProps } from './nodejs';
 
 class ActionFactory {
   static create(action: ActionProps) {
@@ -20,7 +20,7 @@ class ActionFactory {
         if (!main) {
           throw new Error(`You are using a JavaScript Action but there is not an entry JavaScript file provided in ${action.Dir}.`);
         } else {
-          return new NodeJSAction(action);
+          return new NodeJSAction(action as NodeJSActionProps);
         }
       } else if (using === 'composite') {
         if (!runs.steps) {

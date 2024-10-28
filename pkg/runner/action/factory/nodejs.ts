@@ -1,5 +1,5 @@
 /**
- * action javascript
+ * javascript action handler
  *
  * sobird<i@sobird.me> at 2024/10/16 21:08:02 created.
  */
@@ -24,20 +24,26 @@ interface Runs {
   'post-if'?: string;
 }
 
-export interface NodeJSActionProps extends Omit<ActionProps, 'outputs' | 'runs'> {
+export interface NodeJSActionProps extends Omit<ActionProps, 'outputs' | 'runs' | 'Dir'> {
   outputs: Record<string, Output>;
   runs: Runs;
 }
 
 class NodeJSAction extends Action {
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-  // constructor(action: NodeJSActionProps) {
-  //   super(action as ActionProps);
-  // }
+  constructor(action: NodeJSActionProps) {
+    super(action as ActionProps);
+  }
 
-  hasPre() {
+  public get HasPre() {
     return new Conditional((runner) => {
       return !!this.runs['pre-if'].evaluate(runner!) && !!this.runs.pre;
+    });
+  }
+
+  public get HasPost() {
+    return new Conditional((runner) => {
+      return !!this.runs['post-if'].evaluate(runner!) && !!this.runs.post;
     });
   }
 
@@ -50,7 +56,7 @@ class NodeJSAction extends Action {
       this.composeInputs(runner!, env);
 
       return container?.exec(['node', path.join(this.Dir, this.runs.pre)], { env });
-    });
+    }).if(this.HasPost);
   }
 
   main() {
@@ -58,8 +64,6 @@ class NodeJSAction extends Action {
       const runner = ctx!;
       const env = runner.step?.Env(runner);
       await runner.container?.applyPath(runner.prependPath, env);
-
-      // console.log('this.Dir', this.Dir, env, runner.step);
 
       return runner.container?.exec(['node', path.join(this.Dir, this.runs.main)], { env });
     });
@@ -74,10 +78,8 @@ class NodeJSAction extends Action {
       Action.ApplyStates(runner, env);
       await container?.applyPath(runner!.prependPath, env);
 
-      console.log('this.Dir', this.Dir, env);
-
       return container?.exec(['node', path.join(this.Dir, this.runs.post)], { env });
-    });
+    }).if(this.HasPost);
   }
 }
 
