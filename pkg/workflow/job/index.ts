@@ -591,7 +591,7 @@ class Job {
       return new Executor(async () => {
         console.log('');
         console.log('step', step.constructor.name);
-        console.log('step if:', step.if.evaluate(runner));
+        // console.log('step if:', step.if.evaluate(runner));
 
         console.log(`${runner.run.name} - step:`, step.Name(runner));
         console.log('step uses:', step.uses);

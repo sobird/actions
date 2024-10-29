@@ -24,6 +24,7 @@ jobs:
 
     steps:
       - name: Print env
+        # if: ${{ ddd }}
         # shell: bash
         # working-directory: '.'
         env:

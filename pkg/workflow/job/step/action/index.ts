@@ -60,6 +60,7 @@ abstract class StepAction extends Step {
             outcome: 'skipped',
             conclusion: 'skipped',
           };
+          logger.debug("Skipping step '%s' due to '%s'", this.Name(runner), this.if.source);
           return;
         }
       } catch (err) {
@@ -67,13 +68,46 @@ abstract class StepAction extends Step {
           outcome: 'failure',
           conclusion: 'failure',
         };
-        throw err;
+        logger.error('\u274C Error in if-expression: "if: %s" (%s)', this.if.source, (err as Error).message);
+        return;
       }
+
+      logger.info('\u2B50 Run %s %s', 'Main', this.Name(runner));
 
       const actionCommandFile = new ActionCommandFile(runner);
       await actionCommandFile.initialize(this.uuid);
       const timeoutMinutes = Number(this['timeout-minutes'].evaluate(runner)) || 60;
-      await withTimeout(main.execute(runner), timeoutMinutes * 60 * 1000);
+
+      try {
+        await withTimeout(main.execute(runner), timeoutMinutes * 60 * 1000);
+        logger.debug('\u2705 Success - %s %s', 'Main', this.Name(runner));
+      } catch (error) {
+        context.StepResult = {
+          outcome: 'failure',
+        };
+
+        try {
+          const continueOnError = this['continue-on-error'].evaluate(runner);
+          if (continueOnError) {
+            logger.info('Failed but continue next step');
+            context.StepResult = {
+              conclusion: 'success',
+            };
+          } else {
+            context.StepResult = {
+              conclusion: 'failure',
+            };
+          }
+        } catch (err) {
+          context.StepResult = {
+            conclusion: 'failure',
+          };
+
+          logger.error('\u274C  Error in continue-on-error-expression: "continue-on-error: %s" (%s)', this['continue-on-error'].source, (err as Error).message);
+
+          return;
+        }
+      }
 
       await actionCommandFile.process();
     });

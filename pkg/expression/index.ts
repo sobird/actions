@@ -59,7 +59,8 @@ class Expression<T> {
           }
           return output;
         } catch (err) {
-          return '';
+          // todo
+          throw new Error((err as Error).message);
         }
       }
 
