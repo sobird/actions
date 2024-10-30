@@ -127,7 +127,7 @@ abstract class Action extends Yaml {
   static ApplyStates(runner: Runner, env: Record<string, string>) {
     const states = runner.ActionStates;
     Object.entries(states).forEach(([stateId, state]) => {
-      const key = `INPUT_${stateId.toUpperCase().replace(/[^A-Z0-9-]/g, '_')}`;
+      const key = `STATE_${stateId.toUpperCase().replace(/[^A-Z0-9-]/g, '_')}`;
       // eslint-disable-next-line no-param-reassign
       env[key] = state;
     });
