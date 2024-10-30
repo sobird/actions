@@ -9,8 +9,6 @@
  *
  * sobird<i@sobird.me> at 2024/06/13 10:55:22 created.
  */
-import fs from 'node:fs';
-import path from 'node:path';
 
 import Executor from '@/pkg/common/executor';
 import Yaml from '@/pkg/common/yaml';
@@ -115,21 +113,21 @@ abstract class Action extends Yaml {
     return new Executor();
   }
 
-  composeInputs(runner: Runner, env: Record<string, string>) {
+  applyInput(runner: Runner, out: Record<string, string>) {
     const { inputs = {} } = this;
     Object.entries(inputs).forEach(([inputId, input]) => {
       const key = `INPUT_${inputId.toUpperCase().replace(/[^A-Z0-9-]/g, '_')}`;
       // eslint-disable-next-line no-param-reassign
-      env[key] = input.default.evaluate(runner);
+      out[key] = input.default.evaluate(runner);
     });
   }
 
-  static ApplyStates(runner: Runner, env: Record<string, string>) {
+  static ApplyState(runner: Runner, out: Record<string, string>) {
     const states = runner.ActionStates;
     Object.entries(states).forEach(([stateId, state]) => {
       const key = `STATE_${stateId.toUpperCase().replace(/[^A-Z0-9-]/g, '_')}`;
       // eslint-disable-next-line no-param-reassign
-      env[key] = state;
+      out[key] = state;
     });
   }
 }

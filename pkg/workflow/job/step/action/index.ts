@@ -42,7 +42,7 @@ abstract class StepAction extends Step {
       const { context, IntraActionState } = runner;
       // set current step
       context.github.action = id;
-      runner.step = this;
+      runner.currentStep = this;
       IntraActionState[id] = {};
       context.StepResult = {
         outcome: 'success',
@@ -50,14 +50,8 @@ abstract class StepAction extends Step {
         outputs: {},
       };
 
-      // init action environment
-      runner.Assign(
-        this.environment,
-        runner.Env,
-        runner.context.github.Env,
-        runner.context.runner.Env,
-        this.Env(runner),
-      );
+      // init step action env
+      this.Env(runner, this.environment);
 
       try {
         const enabled = this.if.evaluate(runner);

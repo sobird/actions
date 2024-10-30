@@ -56,7 +56,10 @@ class Runner {
 
   cleanContainerExecutor: Executor = new Executor();
 
-  step?: Step;
+  /**
+   * current step
+   */
+  currentStep?: Step;
 
   constructor(public run: Run, public config: Config) {
     const { jobId, job, workflow } = run;

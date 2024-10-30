@@ -249,7 +249,7 @@ class Step {
   }
 
   // Merge variables from with into env
-  Env(runner: Runner) {
+  Env(runner: Runner, out: Record<string, unknown> = {}) {
     const env = { ...this.env.evaluate(runner) };
     const stepWith = this.with.evaluate(runner);
 
@@ -260,7 +260,7 @@ class Step {
     });
 
     return runner.Assign(
-      {},
+      out,
       runner.Env,
       runner.context.github.Env,
       runner.context.runner.Env,
