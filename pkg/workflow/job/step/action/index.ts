@@ -27,6 +27,13 @@ abstract class StepAction extends Step {
 
   public post() { return new Executor(); }
 
+  // Main Stage
+  public Main() {
+    return new Executor(async () => {
+      //
+    });
+  }
+
   protected executor(main: Executor) {
     return new Executor(async (ctx) => {
       const runner = ctx!;
