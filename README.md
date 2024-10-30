@@ -72,6 +72,11 @@ npx buf generate https://gitea.com/gitea/actions-proto-def.git
 actions config > actions.config.yaml
 ```
 
+## Emoji
+
+* 火焰 🔥 `\u{1F525}`
+* 喷水的鲸 🐳 `\u{1F433}`
+
 <!-- Badges -->
 [npm]: https://img.shields.io/npm/v/@sobird/act-runner.svg
 [npm-url]: https://www.npmjs.com/package/@sobird/act-runner
