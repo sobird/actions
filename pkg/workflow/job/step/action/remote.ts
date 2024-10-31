@@ -81,6 +81,7 @@ class StepActionRemote extends StepAction {
 
   public post() {
     return this.executor(new Executor(() => {
+      console.log('run post');
       return this.action?.post();
     })).if(this.ShouldRunPost);
   }

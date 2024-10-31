@@ -403,12 +403,14 @@ class Runner {
   // action command
   saveState(key: string, value: string) {
     const { action } = this.context.github;
-
+    console.log('this.caller', this.caller);
     if (this.caller) {
       // todo
     } else if (action) {
+      console.log('action', action, key, value);
       this.IntraActionState[action][key] = value;
     }
+    console.log('this.IntraActionState', this.IntraActionState);
     console.debug(`Save intra-action state ${key} = ${value}`);
   }
 

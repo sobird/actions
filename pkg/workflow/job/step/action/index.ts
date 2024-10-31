@@ -73,7 +73,7 @@ abstract class StepAction extends Step {
         return;
       }
 
-      logger.info('\u{1F525} Run %s %s', 'Main', this.Name(runner));
+      logger.info('\u{1F525} Starting: %s', this.Name(runner));
 
       const actionCommandFile = new ActionCommandFile(runner);
       await actionCommandFile.initialize(this.uuid);
@@ -81,7 +81,7 @@ abstract class StepAction extends Step {
 
       try {
         await withTimeout(main.execute(runner), timeoutMinutes * 60 * 1000);
-        logger.info('\u2705 Success - %s %s', 'Main', this.Name(runner));
+        logger.info('\u2705 Finishing: %s', this.Name(runner));
       } catch (error) {
         context.StepResult = {
           outcome: 'failure',

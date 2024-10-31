@@ -18,6 +18,7 @@ import Dockerode, {
 import dotenv from 'dotenv';
 import ignore from 'ignore';
 import log4js from 'log4js';
+import shellQuote from 'shell-quote';
 import * as tar from 'tar';
 
 import Executor, { Conditional } from '@/pkg/common/executor';
@@ -568,6 +569,10 @@ class DockerContainer extends Container {
       if (!container) {
         return;
       }
+
+      // todo
+      logger.debug(shellQuote.quote(command));
+
       const WorkingDir = this.resolve(this.options.workdir, inputs.workdir || '');
 
       const Env = Object.entries(inputs.env || {}).map(([key, value]) => { return `${key}=${value}`; });
@@ -712,7 +717,7 @@ class DockerContainer extends Container {
       const image = runner.PlatformImage;
       const credentials = runner.Credentials;
 
-      logger.info('\u{0001f680}  Start image=%s', image);
+      logger.info('\u{1F338} Start image=%s', image);
 
       const name = runner.ContainerName();
       // specify the network to which the container will connect when `docker create` stage. (like execute command line: docker create --network <networkName> <image>)

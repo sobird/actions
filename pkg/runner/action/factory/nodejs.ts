@@ -80,6 +80,7 @@ class NodeJSAction extends Action {
       NodeJSAction.ApplyState(runner, env);
       await container?.applyPath(runner!.prependPath, env);
 
+      console.log('env', runner.IntraActionState);
       return container?.exec(['node', path.join(this.Dir, this.runs.post)], { env });
     }).if(this.HasPost);
   }

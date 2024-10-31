@@ -124,6 +124,7 @@ export default abstract class Container {
   }
 
   async getContent(filename: string): Promise<FileEntry | undefined> {
+    // todo should catch error?
     try {
       const archive = await this.getArchive(filename);
       const extract = tar.t({ portable: true });
@@ -223,6 +224,8 @@ export default abstract class Container {
       if (delimiter) {
         if (delimiter === line) {
           env[key] = delimiterValues.join(os.EOL);
+          key = '';
+          value = '';
           delimiter = '';
           delimiterValues = [];
         } else {

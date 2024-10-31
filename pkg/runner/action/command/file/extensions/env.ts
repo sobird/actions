@@ -9,7 +9,6 @@ const SetEnvFileCommand: FileCommandExtension = {
     const env = await runner.container!.getFileEnv(filename);
     Object.entries(env).forEach(([key, value]) => {
       runner.setEnv(key, value);
-      console.debug(`Set env ${key} = ${value}`);
     });
   },
 };
