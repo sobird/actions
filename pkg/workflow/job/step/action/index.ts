@@ -39,11 +39,10 @@ abstract class StepAction extends Step {
       const runner = ctx!;
 
       const { id } = this;
-      const { context, IntraActionState } = runner;
+      const { context } = runner;
       // set current step
       context.github.action = id;
       runner.currentStep = this;
-      IntraActionState[id] = {};
       context.StepResult = {
         outcome: 'success',
         conclusion: 'success',

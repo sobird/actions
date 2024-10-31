@@ -33,9 +33,12 @@ jobs:
         run: env
 
       - name: Checkout Step
-        uses: actions/checkout@v4
-        with:
-          token: ${{ github.token }}
+        uses: https://gitea.com/actions/checkout@v4
+        # with:
+        #   token: "f00777300d6fee37b9f913f4f7f0ba9fba07e1d3"
+        #   ref: 'refs/heads/main'
+        #   repository: 'sobird/actions-test'
+        #   github-server-url: 'http://192.168.50.100:3000'
         
       - name: Hello World Javascript Action Step
         id: hello_world_javascript_action

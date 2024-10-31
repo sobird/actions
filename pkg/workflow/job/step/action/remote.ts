@@ -33,7 +33,7 @@ class StepActionRemote extends StepAction {
        */
       const reusable = new Reusable(this.uses);
       const { server_url: serverUrl } = runner!.context.github;
-      reusable.url = reusable.url || serverUrl;
+      reusable.url = reusable.url || runner.config.actionInstance || serverUrl;
 
       const replaceGheActionWithGithubCom = runner.config.replaceGheActionWithGithubCom || [];
       replaceGheActionWithGithubCom.forEach((action) => {

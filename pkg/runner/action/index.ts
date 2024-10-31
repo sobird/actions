@@ -113,22 +113,33 @@ abstract class Action extends Yaml {
     return new Executor();
   }
 
-  applyInput(runner: Runner, out: Record<string, string>) {
+  public async applyEnv(runner: Runner) {
+    const env = this.applyInput(runner);
+    Action.ApplyState(runner, env);
+    runner.currentStep?.Env(runner, env);
+
+    return env;
+  }
+
+  applyInput(runner: Runner, out: Record<string, string> = {}) {
     const { inputs = {} } = this;
     Object.entries(inputs).forEach(([inputId, input]) => {
       const key = `INPUT_${inputId.toUpperCase().replace(/[^A-Z0-9-]/g, '_')}`;
       // eslint-disable-next-line no-param-reassign
       out[key] = input.default.evaluate(runner);
     });
+
+    return out;
   }
 
-  static ApplyState(runner: Runner, out: Record<string, string>) {
+  static ApplyState(runner: Runner, out: Record<string, string> = {}) {
     const states = runner.ActionStates;
     Object.entries(states).forEach(([stateId, state]) => {
       const key = `STATE_${stateId.toUpperCase().replace(/[^A-Z0-9-]/g, '_')}`;
       // eslint-disable-next-line no-param-reassign
       out[key] = state;
     });
+    return out;
   }
 }
 
