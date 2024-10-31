@@ -14,7 +14,7 @@ import Constants from '@/pkg/common/constants';
 import { Docker } from '@/pkg/docker';
 import Config from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
-import Step from '@/pkg/workflow/job/step';
+import StepAction from '@/pkg/workflow/job/step/action';
 import Strategy from '@/pkg/workflow/job/strategy';
 import { createSafeName, assignIgnoreCase } from '@/utils';
 
@@ -59,7 +59,7 @@ class Runner {
   /**
    * current step
    */
-  currentStep?: Step;
+  stepAction?: StepAction;
 
   constructor(public run: Run, public config: Config) {
     const { jobId, job, workflow } = run;

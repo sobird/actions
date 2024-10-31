@@ -43,7 +43,6 @@ class ActionCommandFile {
       try {
         await fileCommand.process(this.runner, path.join(this.fileCommandDirectory, fileCommand.filePrefix + this.fileSuffix));
       } catch (err) {
-        console.log('err', err);
         console.error(`Unable to process file command '${fileCommand.contextKey}' successfully.`);
         // context.CommandResult = TaskResult.Failed;
       }

@@ -595,7 +595,7 @@ class Job {
 
         console.log(`${runner.run.name} - step:`, step.Name(runner));
         console.log('step uses:', step.uses);
-        console.log('step env:', step.Env(runner));
+        // console.log('step env:', step.Env(runner));
         console.log('step with:', step.with.evaluate(runner));
 
         await asyncFunction(0);

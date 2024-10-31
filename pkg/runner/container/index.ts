@@ -314,7 +314,7 @@ export default abstract class Container {
     return process.env[this.pathVariableName];
   }
 
-  async applyPath(prependPath: string[], env: Record<string, string>) {
+  async applyPath(prependPath: string[], env: Record<string, string> = {}) {
     if (prependPath.length > 0) {
       let { pathVariableName } = this;
 

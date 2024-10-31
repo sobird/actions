@@ -15,6 +15,9 @@ import { withTimeout } from '@/utils';
 const logger = log4js.getLogger();
 
 abstract class StepAction extends Step {
+  /**
+   * for pre/main/post stage use
+   */
   environment: Record<string, string> = {};
 
   action?: Action;
@@ -42,15 +45,12 @@ abstract class StepAction extends Step {
       const { context } = runner;
       // set current step
       context.github.action = id;
-      runner.currentStep = this;
+      runner.stepAction = this;
       context.StepResult = {
         outcome: 'success',
         conclusion: 'success',
         outputs: {},
       };
-
-      // init step action env
-      this.Env(runner, this.environment);
 
       try {
         const enabled = this.if.evaluate(runner);
@@ -79,6 +79,7 @@ abstract class StepAction extends Step {
       const timeoutMinutes = Number(this['timeout-minutes'].evaluate(runner)) || 60;
 
       try {
+        this.applyEnv(runner, this.environment);
         await withTimeout(main.execute(runner), timeoutMinutes * 60 * 1000);
         logger.info('\u2705 Finishing: %s', this.Name(runner));
       } catch (error) {
@@ -108,7 +109,6 @@ abstract class StepAction extends Step {
           return;
         }
       }
-
       await actionCommandFile.process();
     });
   }

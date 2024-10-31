@@ -52,7 +52,7 @@ class NodeJSAction extends Action {
       const runner = ctx!;
       const { container } = runner!;
       // no state
-      const env = runner.currentStep?.Env(runner);
+      const env = runner.stepAction?.environment;
       this.applyInput(runner!, env);
       await container?.applyPath(runner!.prependPath, env);
 
@@ -63,8 +63,12 @@ class NodeJSAction extends Action {
   main() {
     return new Executor(async (ctx) => {
       const runner = ctx!;
-      const env = await this.applyEnv(runner);
+      const env = runner.stepAction?.environment;
+
+      await this.applyEnv(runner, env);
       await runner.container?.applyPath(runner.prependPath, env);
+
+      console.log('env', env);
 
       return runner.container?.exec(['node', path.join(this.Dir, this.runs.main)], { env });
     });
@@ -74,11 +78,12 @@ class NodeJSAction extends Action {
     return new Executor(async (ctx) => {
       const runner = ctx!;
       const { container } = runner!;
-      const env = runner.currentStep?.Env(runner);
+      const env = runner.stepAction?.environment;
 
       NodeJSAction.ApplyState(runner, env);
       await container?.applyPath(runner.prependPath, env);
 
+      console.log('post env', env);
       return container?.exec(['node', path.join(this.Dir, this.runs.post)], { env });
     }).if(this.HasPost);
   }
