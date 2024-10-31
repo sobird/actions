@@ -16,7 +16,7 @@ beforeEach(() => {
   runner.context.env = {};
 });
 
-describe('set env file command test', () => {
+describe('Set Env File Command Test', () => {
   it('directory not found', async () => {
     const envFile = path.join(rootDirectory, 'directory-not-found', 'env');
 
@@ -310,5 +310,34 @@ describe('set env file command test', () => {
     putContentExecutor.execute();
 
     expect(SetEnvFileCommand.process(runner, filename)).rejects.toThrow();
+  });
+
+  it('real actions/checkout state', async () => {
+    const basename = 'checkout';
+    const filename = path.join(rootDirectory, basename);
+
+    const putContentExecutor = runner.container!.putContent(rootDirectory, {
+      name: basename,
+      body: [
+        'isPost<<ghadelimiter_45b205fe-8633-4225-9bca-91f507231615',
+        'true',
+        'ghadelimiter_45b205fe-8633-4225-9bca-91f507231615',
+        'setSafeDirectory<<ghadelimiter_fbb4f3e0-55ca-4079-b720-9c49918de5b1',
+        'true',
+        'ghadelimiter_fbb4f3e0-55ca-4079-b720-9c49918de5b1',
+        'repositoryPath<<ghadelimiter_6ce0c9c1-3735-4ebb-8f38-ac001e84e6ea',
+        '/home/runner/work/respository',
+        'ghadelimiter_6ce0c9c1-3735-4ebb-8f38-ac001e84e6ea',
+      ].join(os.EOL),
+    });
+    putContentExecutor.execute();
+
+    await SetEnvFileCommand.process(runner, filename);
+
+    expect(runner.context.env).toEqual({
+      isPost: 'true',
+      repositoryPath: '/home/runner/work/respository',
+      setSafeDirectory: 'true',
+    });
   });
 });
