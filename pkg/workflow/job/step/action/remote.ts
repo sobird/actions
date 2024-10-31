@@ -75,12 +75,12 @@ class StepActionRemote extends StepAction {
         return runner.container?.put(copyToPath, runner.config.workdir, runner.config.useGitignore);
       }
 
-      return this.action?.main();
+      return this.action?.Main;
     }));
   }
 
   public post() {
-    return this.executor(new Executor(() => { return this.action?.post(); })).if(this.ShouldRunPost);
+    return this.executor(new Executor(() => { return this.action?.Post; })).if(this.ShouldRunPost);
   }
 
   public skipCheckoutSelf() {

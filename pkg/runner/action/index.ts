@@ -103,14 +103,32 @@ abstract class Action extends Yaml {
     this.#dir = dir;
   }
 
-  public pre() {
+  protected pre() {
     return new Executor();
   }
 
-  public abstract main(): Executor;
+  protected abstract main(): Executor;
 
-  public post() {
+  protected post() {
     return new Executor();
+  }
+
+  public get Pre() {
+    return new Executor(() => {
+
+    }).next(this.pre());
+  }
+
+  public get Main() {
+    return new Executor(() => {
+
+    }).next(this.main());
+  }
+
+  public get Post() {
+    return new Executor(() => {
+
+    }).next(this.post());
   }
 
   public async applyEnv(runner: Runner, out: Record<string, string> = {}) {
@@ -137,7 +155,8 @@ abstract class Action extends Yaml {
   static ApplyState(runner: Runner, out: Record<string, string> = {}) {
     const states = runner.ActionStates;
     Object.entries(states).forEach(([stateId, state]) => {
-      const key = `STATE_${stateId.toUpperCase().replace(/[^A-Z0-9-]/g, '_')}`;
+      // stateId do not toUpperCase
+      const key = `STATE_${stateId}`;
       // eslint-disable-next-line no-param-reassign
       out[key] = state;
     });

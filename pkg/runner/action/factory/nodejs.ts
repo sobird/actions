@@ -30,11 +30,6 @@ export interface NodeJSActionProps extends Omit<ActionProps, 'outputs' | 'runs' 
 }
 
 class NodeJSAction extends Action {
-  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-  constructor(action: NodeJSActionProps) {
-    super(action as ActionProps);
-  }
-
   public get HasPre() {
     return new Conditional((runner) => {
       return !!this.runs['pre-if'].evaluate(runner!) && !!this.runs.pre;
@@ -47,11 +42,11 @@ class NodeJSAction extends Action {
     });
   }
 
-  pre() {
+  protected pre() {
     return new Executor(async (ctx) => {
       const runner = ctx!;
       const { container } = runner!;
-      // no state
+
       const env = runner.stepAction?.environment;
       this.applyInput(runner!, env);
       await container?.applyPath(runner!.prependPath, env);
@@ -60,7 +55,7 @@ class NodeJSAction extends Action {
     }).if(this.HasPost);
   }
 
-  main() {
+  protected main() {
     return new Executor(async (ctx) => {
       const runner = ctx!;
       const env = runner.stepAction?.environment;
@@ -68,13 +63,11 @@ class NodeJSAction extends Action {
       await this.applyEnv(runner, env);
       await runner.container?.applyPath(runner.prependPath, env);
 
-      console.log('env', env);
-
       return runner.container?.exec(['node', path.join(this.Dir, this.runs.main)], { env });
     });
   }
 
-  post() {
+  protected post() {
     return new Executor(async (ctx) => {
       const runner = ctx!;
       const { container } = runner!;
@@ -83,7 +76,6 @@ class NodeJSAction extends Action {
       NodeJSAction.ApplyState(runner, env);
       await container?.applyPath(runner.prependPath, env);
 
-      console.log('post env', env);
       return container?.exec(['node', path.join(this.Dir, this.runs.post)], { env });
     }).if(this.HasPost);
   }
