@@ -9,18 +9,9 @@ import { type UUID, randomUUID } from 'node:crypto';
 import Expression from '@/pkg/expression';
 import Runner from '@/pkg/runner';
 
-/**
- * describes what type of step we are about to run
- */
-export enum StepType {
-  Run, // 所有具有 'run' 属性的步骤
-  UsesDockerURL, // 所有具有形如 'docker://...' 的 'uses' 的步骤
-  UsesActionLocal, // 所有具有指向子目录中本地Action的 'uses' 的步骤
-  UsesActionRemote, // 所有具有指向GitHub仓库中Action的 'uses' 的步骤
-  Invalid, // 所有具有无效步骤动作的步骤
-}
+import Uses from './uses';
 
-export interface StepProps extends Pick<Step, 'id' | 'uses' | 'shell'> {
+export interface StepProps extends Pick<Step, 'id' | 'shell'> {
   if?: string;
   name?: string;
   run: string;
@@ -47,6 +38,8 @@ export interface StepProps extends Pick<Step, 'id' | 'uses' | 'shell'> {
   env?: Record<string, string>;
   'continue-on-error'?: boolean;
   'timeout-minutes'?: string;
+
+  uses?: string
 }
 
 class Step {
@@ -97,7 +90,7 @@ class Step {
    *
    * Actions are either JavaScript files or Docker containers. If the action you're using is a Docker container you must run the job in a Linux environment. For more details, see {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idruns-on runs-on}.
    */
-  uses?: string;
+  uses: Uses;
 
   /**
    * Runs command-line programs that do not exceed 21,000 characters using the operating system's shell.
@@ -195,7 +188,7 @@ class Step {
       ['hashFiles'],
     );
 
-    this.uses = step.uses;
+    this.uses = new Uses(step.uses);
 
     this.run = new Expression(
       step.run,
@@ -245,7 +238,7 @@ class Step {
   }
 
   Name(runner: Runner) {
-    return this.name.evaluate(runner) || this.uses || this.run.evaluate(runner) || this.id;
+    return this.name.evaluate(runner) || this.uses.toString() || this.run.evaluate(runner) || this.id;
   }
 
   // Merge variables from with into env
@@ -266,24 +259,6 @@ class Step {
       runner.context.runner.Env,
       env,
     );
-  }
-
-  type(runner: Runner) {
-    if (this.run.evaluate(runner) === '' && this.uses === '') {
-      return StepType.Invalid;
-    }
-
-    if (this.run) {
-      if (this.uses) {
-        return StepType.Invalid;
-      }
-      return StepType.Run;
-    } if (this.uses?.startsWith('docker://')) {
-      return StepType.UsesDockerURL;
-    } if (this.uses?.startsWith('./')) {
-      return StepType.UsesActionLocal;
-    }
-    return StepType.UsesActionRemote;
   }
 }
 

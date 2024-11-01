@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import path from 'node:path';
 
 import * as tar from 'tar';
@@ -6,7 +5,6 @@ import * as tar from 'tar';
 import Executor from '@/pkg/common/executor';
 import docker from '@/pkg/docker';
 import { createSafeName } from '@/utils';
-import { readEntry } from '@/utils/tar';
 
 import Action from '..';
 
@@ -14,22 +12,39 @@ class DockerAction extends Action {
   protected main() {
     return new Executor(async (ctx) => {
       const runner = ctx!;
+      const { stepAction } = runner;
+      const { uses } = stepAction!;
 
       let { image } = this.runs;
       if (DockerAction.IsDockerfile(image)) {
-        const actionName = path.basename(this.Dir);
-        image = `${createSafeName('actions', actionName)}:latest`;
+        let actionPath = path.basename(this.Dir);
+        image = `${createSafeName('actions', actionPath)}:latest`;
 
         try {
           const dockerImage = docker.getImage(image);
           const imageInspect = await dockerImage.inspect();
-          console.log('imageInspect', imageInspect.Os, imageInspect.Architecture);
-          return;
+          const platform = `${imageInspect.Os}/${imageInspect.Architecture}`;
+
+          if ((!runner.config.containerPlatform || runner.config.containerPlatform === platform) && !runner.config.rebuild) {
+            return;
+          }
+
+          await dockerImage.remove();
         } catch (error) {
           //
         }
 
-        const archive = await runner.container!.getArchive(`${this.Dir}/.`);
+        let archive = new tar.Pack() as unknown as NodeJS.ReadableStream;
+        try {
+          archive = await runner.container!.getArchive(`${this.Dir}`);
+        } catch (error) {
+          if (runner.config.actionCache) {
+            await runner.config.actionCache.fetch(uses.repositoryUrl, uses.repository, uses.ref);
+            archive = await runner.config.actionCache.archive(uses.repository, uses.ref, uses.path);
+            actionPath = uses.path;
+          }
+        }
+
         const parser = new tar.Parser({ strip: 1 });
         const pack = new tar.Pack();
         archive.pipe(parser);
@@ -37,7 +52,7 @@ class DockerAction extends Action {
         parser.on('entry', (entry: tar.ReadEntry) => {
           // strip action dir
           // eslint-disable-next-line no-param-reassign
-          entry.path = path.relative(actionName, entry.path);
+          entry.path = path.relative(actionPath, entry.path);
           pack.add(entry);
         });
         parser.on('finish', () => {

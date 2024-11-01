@@ -25,30 +25,25 @@ class StepActionRemote extends StepAction {
   public prepareAction(): Executor {
     return new Executor((ctx) => {
       const runner = ctx!;
-      /**
-       * Shouldn't provide token when cloning actions,
-       * the token comes from the instance which triggered the task,
-       * however, it might be not the same instance which provides actions.
-       * For GitHub, they are the same, always github.com.
-       */
-      const reusable = new Reusable(this.uses);
+      const { uses } = this;
+
       const { server_url: serverUrl } = runner!.context.github;
-      reusable.url = reusable.url || runner.config.actionInstance || serverUrl;
+      uses.url = uses.url || runner.config.actionInstance || serverUrl;
 
       const replaceGheActionWithGithubCom = runner.config.replaceGheActionWithGithubCom || [];
       replaceGheActionWithGithubCom.forEach((action) => {
-        if (reusable.repository === action) {
-          reusable.url = 'https://github.com';
-          reusable.token = runner.config.replaceGheActionTokenWithGithubCom;
+        if (uses.repository === action) {
+          uses.url = 'https://github.com';
+          uses.token = runner.config.replaceGheActionTokenWithGithubCom;
         }
       });
 
       if (!runner.config.actionCache) {
-        return this.reusableCacheAction(reusable);
+        return this.reusableCacheAction(uses);
       }
 
-      const repositoryDir = path.join(runner.ActionCacheDir, reusable.repository, reusable.ref);
-      return Git.CloneExecutor(repositoryDir, reusable.repositoryUrl, reusable.ref).finally(this.reusableAction(reusable));
+      const repositoryDir = path.join(runner.ActionCacheDir, uses.repository, uses.ref);
+      return Git.CloneExecutor(repositoryDir, uses.repositoryUrl, uses.ref).finally(this.reusableAction(uses));
     }).ifNot(this.skipCheckoutSelf());
   }
 
@@ -86,8 +81,9 @@ class StepActionRemote extends StepAction {
   public skipCheckoutSelf() {
     return new Conditional(async (ctx) => {
       const runner = ctx!;
-      const reusable = new Reusable(this.uses, runner.Token);
-      if (reusable.isCheckout && runner.config.skipCheckout) {
+      const { uses } = this;
+
+      if (uses.isCheckout && runner.config.skipCheckout) {
         const stepWith = this.with.evaluate(runner);
         if (stepWith?.repository && stepWith.repository !== runner.context.github.repository) {
           return false;

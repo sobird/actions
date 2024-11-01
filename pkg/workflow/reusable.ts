@@ -75,4 +75,12 @@ export default class Reusable {
   get isCheckout() {
     return this.is('actions', 'checkout');
   }
+
+  toString() {
+    return this.uses;
+  }
+
+  toJSON() {
+    return this.uses;
+  }
 }

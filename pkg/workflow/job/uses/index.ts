@@ -50,14 +50,6 @@ class Uses extends Reusable {
     return this.uses.match(/\.(ya?ml)(?:$|@)/);
   }
 
-  toJSON() {
-    return this.uses;
-  }
-
-  toString() {
-    return this.uses;
-  }
-
   static ReusableWorkflowExecutor(workflowPath: string) {
     return new Executor(async (runner) => {
       const workflowPlanner = await WorkflowPlanner.Collect(workflowPath);

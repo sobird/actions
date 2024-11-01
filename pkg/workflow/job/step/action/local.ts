@@ -21,10 +21,10 @@ class StepActionLocal extends StepAction {
   public main() {
     return this.executor(new Executor(async (ctx) => {
       const runner = ctx!;
-      const actionDir = path.join(runner.config.workdir, this.uses || '');
+      const actionDir = path.join(runner.config.workdir, this.uses.path);
       await this.LoadAction(actionDir).execute(ctx);
 
-      return this.action?.main();
+      return this.action?.Main;
     }));
   }
 

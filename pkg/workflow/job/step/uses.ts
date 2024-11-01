@@ -1,5 +1,3 @@
-import path from 'node:path';
-
 import Reusable from '@/pkg/workflow/reusable';
 
 /**
@@ -20,38 +18,6 @@ import Reusable from '@/pkg/workflow/reusable';
  * If the action you're using is a Docker container you must run the job in a Linux environment.
  * For more details, see {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idruns-on runs-on}.
  */
-class StepUses extends Reusable {
-  #url = '';
+class Uses extends Reusable {}
 
-  executor() {
-    let uses = this.#uses;
-    if (!uses) {
-      return;
-    }
-    // local
-    if (uses.startsWith('./')) {
-      uses = uses.substring(2);
-      // todo
-    }
-
-    // remote
-    const matches = /^(https?:\/\/[^/?#]+\/)?([^/@]+)(?:\/([^/@]+))?(?:\/([^@]*))?(?:@(.*))?$/.exec(uses);
-    if (matches && matches.length === 6) {
-      const [,url, owner, repo, dir, ref] = matches;
-      this.#url = url;
-      this.#repository = path.join(owner, repo);
-      this.#dir = dir;
-      this.#ref = ref;
-    }
-  }
-
-  toString() {
-    return this.uses;
-  }
-
-  toJSON() {
-    return this.uses;
-  }
-}
-
-export default StepUses;
+export default Uses;
