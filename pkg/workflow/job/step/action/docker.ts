@@ -25,8 +25,10 @@ class StepActionDocker extends StepAction {
       const container = this.Container(runner, image, cmd, entrypoint);
 
       return Executor.Pipeline(
-        // runner.pullServicesImage(),
-        container.start(),
+        container.remove().ifBool(!runner.config.reuseContainers),
+        container.start(true),
+      ).finally(
+        container.remove().ifBool(!runner.config.reuseContainers),
       );
     }));
   }

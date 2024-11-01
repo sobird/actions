@@ -113,12 +113,12 @@ class DockerContainer extends Container {
     return Executor.Pipeline(this.findContainer()).finally(this.createContainer());
   }
 
-  start() {
+  start(attach: boolean = false) {
     return Executor.Pipeline(
       this.findContainer(),
       this.pullImage(),
       this.createContainer(),
-      // this.attachContainer(),
+      this.attachContainer().ifBool(attach),
       this.startContainer(),
       this.info(),
     ).finally(this.putHashFileExecutor);
@@ -524,7 +524,7 @@ class DockerContainer extends Container {
 
         output.pipe(process.stdout);
       } catch (error) {
-        logger.error('Failed to attach to container:: %s', (error as Error).message);
+        logger.error('Failed to attach to container: %s', (error as Error).message);
       }
     });
   }

@@ -49,8 +49,8 @@ jobs:
       - name: Docker Hub Action
         uses: docker://alpine:3.8
         with:
-          entrypoint: /bin/echo
-          args: The ${{ github.event_name }} event triggered this step.
+          entrypoint: env
+          args: "The ${{ github.event_name }} event triggered this step. runner os: $RUNNER_OS"
 
       # - name: Hello world Docker File Step
       #   id: hello_world_docker_file
