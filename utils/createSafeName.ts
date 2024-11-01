@@ -6,5 +6,5 @@ export function createSafeName(...parts: string[]) {
     v = v.replaceAll(/--+/g, '-');
     return v;
   }).filter((part) => { return part; });
-  return name.join('_');
+  return name.join('-');
 }

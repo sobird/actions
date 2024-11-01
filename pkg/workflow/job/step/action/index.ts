@@ -83,6 +83,7 @@ abstract class StepAction extends Step {
         await withTimeout(main.execute(runner), timeoutMinutes * 60 * 1000);
         logger.info('\u2705 Finishing: %s', this.Name(runner));
       } catch (error) {
+        console.log('error', error);
         context.StepResult = {
           outcome: 'failure',
         };
