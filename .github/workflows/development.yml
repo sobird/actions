@@ -32,8 +32,8 @@ jobs:
       #     LAST_NAME: Octocat
       #   run: env
 
-      # - name: Checkout Step
-      #   uses: https://gitea.com/actions/checkout@v4
+      - name: Checkout Step
+        uses: actions/checkout@v4
         # with:
         #   token: "f00777300d6fee37b9f913f4f7f0ba9fba07e1d3"
         #   ref: 'refs/heads/main'
@@ -46,17 +46,19 @@ jobs:
       #   with:
       #     who-to-greet: 'hello world javascript action step'
 
-      - name: Docker Hub Action
-        uses: docker://alpine:3.8
-        with:
-          entrypoint: echo
-          args: "The ${{ github.event_name }} event triggered this step. runner os: ${{runner.os}}"
-
-      # - name: Hello world Docker File Step
-      #   id: hello_world_docker_file
-      #   uses: ./.github/actions/hello-world-docker-file
+      # - name: Docker Hub Action
+      #   uses: docker://alpine:3.8
       #   with:
-      #     who-to-greet: 'docker file'
+      #     entrypoint: echo
+      #     args: "The ${{ github.event_name }} event triggered this step. runner os: ${{runner.os}}"
+
+      - name: Hello world Docker File Step
+        id: hello_world_docker_file
+        uses: ./.github/actions/hello-world-docker-file
+        with:
+          who-to-greet: 'docker file'
+          entrypoint: sh -c 'echo $GITHUB_SHA'
+          args: docker123 file
 
       # - name: Hello world Docker Action Step
       #   id: hello_world_docker_action

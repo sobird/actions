@@ -1,12 +1,13 @@
 import path from 'node:path';
 
 import log4js from 'log4js';
-import shellQuote from 'shell-quote';
+import shellQuote, { ParseEntry } from 'shell-quote';
 import * as tar from 'tar';
 
 import Executor from '@/pkg/common/executor';
 import docker from '@/pkg/docker';
 import Runner from '@/pkg/runner';
+import DockerContainer from '@/pkg/runner/container/docker';
 import { createSafeName } from '@/utils';
 
 import Action from '..';
@@ -21,6 +22,7 @@ class DockerAction extends Action {
       const { uses } = stepAction!;
 
       let { image } = this.runs;
+      // let forcePull = false;
       if (DockerAction.IsDockerfile(image)) {
         let actionPath = path.basename(this.Dir);
         image = `${createSafeName('actions', actionPath)}:latest`;
@@ -70,26 +72,35 @@ class DockerAction extends Action {
         }
       } else {
         image = image.substring('docker://'.length);
+        // forcePull = runner.config.pull;
       }
-
+      // todo
       const stepWith = stepAction?.with.evaluate(runner);
-      let args = shellQuote.parse(stepWith?.args || '');
-      if (!args) {
-        args = this.runs.args;
+      let cmd = shellQuote.parse(stepWith?.args || '');
+      console.log('cmd', cmd, runner.context.inputs);
+      if (cmd.length === 0) {
+        cmd = this.runs.args.evaluate(runner);
+        // this.applyArgs(runner);
         // todo
       }
 
-      const { entrypoint } = stepWith;
-
-      if (!entrypoint) {
-        // todo
+      let entrypoint = shellQuote.parse(stepWith?.entrypoint || '');
+      if (entrypoint.length === 0) {
+        entrypoint = shellQuote.parse(this.runs.entrypoint || '');
       }
+
+      const container = DockerAction.Container(runner, image, cmd, entrypoint);
+      return Executor.Pipeline(
+        container.remove().ifBool(!runner.config.reuseContainers),
+        container.start(true),
+      ).finally(
+        container.remove().ifBool(!runner.config.reuseContainers),
+      );
     });
   }
 
   applyArgs(runner: Runner) {
-    const rc = runner;
-    const stepModel = runner.stepAction;
+    const { stepAction } = runner;
 
     const inputs: Record<string, string> = {};
     // Set Defaults
@@ -98,26 +109,14 @@ class DockerAction extends Action {
       inputs[k] = this.inputs[k].default.evaluate(runner);
     }
 
-    if (stepModel?.with) {
+    if (stepAction?.with) {
       // eslint-disable-next-line no-restricted-syntax, guard-for-in
-      for (const k in stepModel.with) {
-        inputs[k] = stepModel.with.evaluate(runner)?.[k] || '';
+      for (const k in stepAction.with) {
+        inputs[k] = stepAction.with.evaluate(runner)?.[k] || '';
       }
     }
 
-    // mergeIntoMap(step, step.getEnv(), inputs);
-
-    // const stepEE = rc.newStepExpressionEvaluator(ctx, step);
-    // for (let i = 0; i < cmd.length; i++) {
-    //   cmd[i] = await stepEE.interpolate(ctx, cmd[i]);
-    // }
-
-    // mergeIntoMap(step, step.getEnv(), this.runs.env);
-
-    // const ee = rc.newStepExpressionEvaluator(ctx, step);
-    // for (const k in step.getEnv()) {
-    //   (step.getEnv())[k] = await ee.interpolate(ctx, (step.getEnv())[k]);
-    // }
+    runner.Assign(stepAction!.environment, inputs, this.runs.env);
   }
 
   public static IsDockerfile(image: string) {
@@ -126,6 +125,38 @@ class DockerAction extends Action {
     }
     const imageWithoutPath = image.split('/').pop();
     return imageWithoutPath?.startsWith('Dockerfile.') || imageWithoutPath?.endsWith('Dockerfile');
+  }
+
+  static Container(runner: Runner, image: string, cmd: ParseEntry[], entrypoint: ParseEntry[]) {
+    const { environment } = runner.stepAction!;
+
+    console.log('entrypoint', image, cmd, entrypoint);
+
+    const { config } = runner;
+    const [binds, mounts] = runner.BindsAndMounts;
+    const credentials = runner.Credentials;
+
+    const name = runner.ContainerName(runner.context.github.action);
+
+    return new DockerContainer({
+      name,
+      image,
+      env: environment,
+      cmd: 'ddd',
+      // entrypoint: entrypoint.length === 0 ? undefined : entrypoint,
+      workdir: config.workdir,
+      authconfig: {
+        ...credentials,
+      },
+      binds,
+      mounts,
+      networkMode: `container:${runner.ContainerName()}`,
+      privileged: config.containerPrivileged,
+      usernsMode: config.containerUsernsMode,
+      platform: config.containerPlatform,
+      capAdd: config.containerCapAdd,
+      capDrop: config.containerCapDrop,
+    }, config.workspace);
   }
 }
 

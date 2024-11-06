@@ -143,7 +143,7 @@ interface Config {
   /**
    * Force pulling of the image, even if already present.
    */
-  pull?: boolean;
+  pull: boolean;
 
   /**
    * Force rebuilding local docker image action.

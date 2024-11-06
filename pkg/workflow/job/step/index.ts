@@ -244,13 +244,13 @@ class Step {
   // Merge variables from with into env
   protected applyEnv(runner: Runner, out: Record<string, unknown> = {}) {
     const env = { ...this.env.evaluate(runner) };
-    const stepWith = this.with.evaluate(runner);
+    // const stepWith = this.with.evaluate(runner);
 
-    Object.entries(stepWith || {}).forEach(([key, value]) => {
-      let envKey = key.toUpperCase().replace(/[^A-Z0-9-]/g, '_');
-      envKey = `INPUT_${envKey}`;
-      env[envKey] = value;
-    });
+    // Object.entries(stepWith || {}).forEach(([key, value]) => {
+    //   let envKey = key.toUpperCase().replace(/[^A-Z0-9-]/g, '_');
+    //   envKey = `INPUT_${envKey}`;
+    //   env[envKey] = value;
+    // });
 
     return runner.Assign(
       out,

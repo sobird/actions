@@ -1,17 +1,5 @@
-import path from 'node:path';
+import shellQuote from 'shell-quote';
 
-console.log('first', path.resolve('sobird/test'));
+const args = shellQuote.parse('');
 
-type Route = {
-  path: string;
-  children?: Routes;
-};
-type Routes = Record<string, Route>;
-
-const routes = {
-  AUTH: {
-    path: '/auth',
-  },
-} satisfies Routes;
-
-console.log('routes', routes.NONSENSE.path);
+console.log('args', args);

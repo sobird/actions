@@ -140,16 +140,21 @@ abstract class Action extends Yaml {
 
   applyInput(runner: Runner, out: Record<string, string> = {}) {
     const { inputs = {} } = this;
+    const { stepAction } = runner;
+    const stepWith = stepAction?.with.evaluate(runner);
+    const output: Record<string, string> = {};
     Object.entries(inputs).forEach(([inputId, input]) => {
+      const value = stepWith && (stepWith[inputId] || input.default.evaluate(runner));
       const key = `INPUT_${inputId.toUpperCase().replace(/[^A-Z0-9-]/g, '_')}`;
       if (!out[key]) {
         // apply input default value
         // eslint-disable-next-line no-param-reassign
-        out[key] = input.default.evaluate(runner);
+        out[key] = value || '';
       }
+      output[inputId] = value || '';
     });
 
-    return out;
+    return output;
   }
 
   static ApplyState(runner: Runner, out: Record<string, string> = {}) {

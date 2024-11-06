@@ -11,6 +11,7 @@
 import _ from 'lodash';
 
 import Runner from '@/pkg/runner';
+import Context from '@/pkg/runner/context';
 import Job from '@/pkg/workflow/job';
 
 import functions from './functions';
@@ -30,8 +31,8 @@ class Expression<T> {
     public type: string = 'job',
   ) {}
 
-  evaluate(runner: Runner): T {
-    const { context } = runner;
+  evaluate(runner: Runner, ctx?: Context): T {
+    const context = ctx || runner.context;
     const interpret = (source: unknown): any => {
       if (typeof source === 'string') {
         let expression = source;
