@@ -77,11 +77,10 @@ class DockerAction extends Action {
       // todo
       const stepWith = stepAction?.with.evaluate(runner);
       let cmd = shellQuote.parse(stepWith?.args || '');
-      console.log('cmd', cmd, runner.context.inputs);
+
       if (cmd.length === 0) {
-        cmd = this.runs.args.evaluate(runner);
-        // this.applyArgs(runner);
-        // todo
+        const inputs = this.applyInput(runner, stepAction?.environment);
+        cmd = this.runs.args.evaluate(runner, { inputs });
       }
 
       let entrypoint = shellQuote.parse(stepWith?.entrypoint || '');
@@ -89,6 +88,7 @@ class DockerAction extends Action {
         entrypoint = shellQuote.parse(this.runs.entrypoint || '');
       }
 
+      runner.Assign(stepAction!.environment, this.runs.env);
       const container = DockerAction.Container(runner, image, cmd, entrypoint);
       return Executor.Pipeline(
         container.remove().ifBool(!runner.config.reuseContainers),
@@ -130,8 +130,6 @@ class DockerAction extends Action {
   static Container(runner: Runner, image: string, cmd: ParseEntry[], entrypoint: ParseEntry[]) {
     const { environment } = runner.stepAction!;
 
-    console.log('entrypoint', image, cmd, entrypoint);
-
     const { config } = runner;
     const [binds, mounts] = runner.BindsAndMounts;
     const credentials = runner.Credentials;
@@ -142,8 +140,8 @@ class DockerAction extends Action {
       name,
       image,
       env: environment,
-      cmd: 'ddd',
-      // entrypoint: entrypoint.length === 0 ? undefined : entrypoint,
+      cmd,
+      entrypoint: entrypoint.length === 0 ? undefined : entrypoint,
       workdir: config.workdir,
       authconfig: {
         ...credentials,

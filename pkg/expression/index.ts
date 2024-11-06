@@ -31,7 +31,7 @@ class Expression<T> {
     public type: string = 'job',
   ) {}
 
-  evaluate(runner: Runner, ctx?: Context): T {
+  evaluate(runner: Runner, ctx?: Partial<Context>): T {
     const context = ctx || runner.context;
     const interpret = (source: unknown): any => {
       if (typeof source === 'string') {
