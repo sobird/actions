@@ -50,7 +50,7 @@ export class Docker extends Dockerode {
       const container = await this.createContainer(options);
 
       logger.debug('Created container name=%s id=%s from image %s (platform: %s)', options.name, container.id, options.Image, options.platform);
-      logger.debug('ENV ==> %o', options.Env);
+      logger.debug('ENV ==>', options.Env);
     });
   }
 

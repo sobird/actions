@@ -1,4 +1,4 @@
-import shellQuote from 'shell-quote';
+import shellQuote, { ParseEntry } from 'shell-quote';
 
 import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
@@ -20,8 +20,6 @@ class StepActionDocker extends StepAction {
         entrypoint = [stepWith.entrypoint];
       }
 
-      console.log('cmd', cmd, entrypoint);
-
       const container = this.Container(runner, image, cmd, entrypoint);
 
       return Executor.Pipeline(
@@ -33,7 +31,7 @@ class StepActionDocker extends StepAction {
     }));
   }
 
-  Container(runner: Runner, image: string, cmd: string[], entrypoint: string[]) {
+  Container(runner: Runner, image: string, cmd: ParseEntry[], entrypoint: string[]) {
     const { environment } = this;
 
     const { config } = runner;

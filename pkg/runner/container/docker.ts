@@ -449,8 +449,8 @@ class DockerContainer extends Container {
         },
       });
 
-      logger.debug('Created container name=%s id=%s from image %s (platform: %s)', options.name, container.id, options.image, options.platform);
-      logger.debug('ENV ==> %o', Env);
+      logger.debug('Created container name=%s id=%s from image %s (platform: %s)', options.name, container.id, options.image, options.platform || '');
+      logger.debug('ENV ==>', Env);
 
       this.container = container;
     }).if(new Conditional(() => {
