@@ -1,5 +1,14 @@
-import shellQuote from 'shell-quote';
+let expression = 'ddd ${{ inputs.who-to-greet }}';
 
-const args = shellQuote.parse('');
+expression = expression.replace(/(?:\w+)(?:\.[\w-]+)+/g, (a) => {
+  const [first, ...parts] = a.split('.');
 
-console.log('args', args);
+  const output = parts.map((item) => {
+    return `['${item}']`;
+  });
+  output.unshift(first);
+
+  return output.join('');
+});
+
+console.log('expression:', expression);

@@ -24,6 +24,8 @@ class StepActionLocal extends StepAction {
       const actionDir = path.join(runner.config.workdir, this.uses.path);
       await this.LoadAction(actionDir).execute(ctx);
 
+      console.log('this.action', this.action);
+
       return this.action?.Main;
     }));
   }

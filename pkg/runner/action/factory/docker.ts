@@ -128,6 +128,7 @@ class DockerAction extends Action {
   }
 
   static Container(runner: Runner, image: string, cmd: ParseEntry[], entrypoint: ParseEntry[]) {
+    console.log('docker', image, cmd, entrypoint);
     const { environment } = runner.stepAction!;
 
     const { config } = runner;
