@@ -22,7 +22,7 @@ const logger = log4js.getLogger();
 class StepActionRemote extends StepAction {
   // Prepare Action Instance
 
-  public prepareAction(): Executor {
+  public prepareAction() {
     return new Executor((ctx) => {
       const runner = ctx!;
       const { uses } = this;

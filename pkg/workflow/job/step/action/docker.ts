@@ -2,31 +2,29 @@ import shellQuote, { ParseEntry } from 'shell-quote';
 
 import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
+import { ActionProps } from '@/pkg/runner/action';
+import DockerAction from '@/pkg/runner/action/factory/docker';
 import DockerContainer from '@/pkg/runner/container/docker';
 
 import StepAction from '.';
 
 class StepActionDocker extends StepAction {
+  public prepareAction() {
+    return new Executor(() => {
+      this.action = new DockerAction({
+        name: '(Synthetic)',
+        description: 'docker hub action',
+        runs: {
+          using: 'docker',
+          image: this.uses.uses,
+        },
+      } as ActionProps);
+    });
+  }
+
   public main() {
     return this.executor(new Executor(async (ctx) => {
-      const runner = ctx!;
-      const image = this.uses.toString().substring('docker://'.length);
-      const stepWith = this.with.evaluate(runner);
-      const cmd = shellQuote.parse(stepWith?.args || '');
-
-      let entrypoint: string[] = [];
-
-      if (stepWith?.entrypoint) {
-        entrypoint = [stepWith.entrypoint];
-      }
-
-      const container = this.Container(runner, image, cmd, entrypoint);
-      return Executor.Pipeline(
-        container.remove().ifBool(!runner.config.reuseContainers),
-        container.start(true),
-      ).finally(
-        container.remove().ifBool(!runner.config.reuseContainers),
-      );
+      return this.action?.Main;
     }));
   }
 

@@ -1,14 +1,18 @@
-let expression = 'ddd ${{ inputs.who-to-greet }}';
+// 传入一个类型，得到这个类型的所有可选(必选)字段
+interface Options {
+  option1: string;
+  options2?: number;
+  options3?: boolean;
+}
 
-expression = expression.replace(/(?:\w+)(?:\.[\w-]+)+/g, (a) => {
-  const [first, ...parts] = a.split('.');
+// let a: Required<Options>;
 
-  const output = parts.map((item) => {
-    return `['${item}']`;
-  });
-  output.unshift(first);
+type GetOptional<T> = {
+  [K in keyof T as T[K] extends Required<T>[K] ? never : K]: T[K];
+};
 
-  return output.join('');
-});
+const keys: GetOptional<Options> = {
+  options2: 123,
+};
 
-console.log('expression:', expression);
+console.log('keys', keys);

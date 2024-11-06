@@ -46,11 +46,11 @@ jobs:
       #   with:
       #     who-to-greet: 'hello world javascript action step'
 
-      # - name: Docker Hub Action
-      #   uses: docker://alpine:3.8
-      #   with:
-      #     entrypoint: echo
-      #     args: "The ${{ github.event_name }} event triggered this step. runner os: ${{runner.os}}"
+      - name: Docker Hub Action
+        uses: docker://alpine:3.8
+        with:
+          entrypoint: echo
+          args: "The ${{ github.event_name }} event triggered this step. runner os: ${{runner.os}}"
 
       # - name: Hello world Docker File Step
       #   id: hello_world_docker_file
@@ -69,11 +69,11 @@ jobs:
       # - name: Get the Docker output time
       #   run: echo "The time was ${{ steps.hello_world_docker_action.outputs.time }}"
 
-      - name: Hello world Docker Hub Action Step
-        id: hello_world_docker_hub_action
-        uses: ./.github/actions/hello-world-docker-hub-action
-        with:
-          who-to-greet: 'docker hub action step'
+      # - name: Hello world Docker Hub Action Step
+      #   id: hello_world_docker_hub_action
+      #   uses: ./.github/actions/hello-world-docker-hub-action
+      #   with:
+      #     who-to-greet: 'docker hub action step'
 
       # - name: Get the Docker Hub output time
       #   run: echo "The time was ${{ steps.hello_world_docker_hub_action.outputs.time }}"
