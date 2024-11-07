@@ -66,8 +66,8 @@ jobs:
       #   with:
       #     who-to-greet: 'docker action step'
       
-      # - name: Get the Docker output time
-      #   run: echo "The time was ${{ steps.hello_world_docker_action.outputs.time }}"
+      - name: Get the Docker output time
+        run: echo "The time was ${{ steps.hello_world_docker_file.outputs.time }}"
 
       # - name: Hello world Docker Hub Action Step
       #   id: hello_world_docker_hub_action

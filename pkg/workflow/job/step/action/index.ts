@@ -43,6 +43,7 @@ abstract class StepAction extends Step {
 
       const { id } = this;
       const { context } = runner;
+      console.log('id: ', id);
       // set current step
       context.github.action = id;
       runner.stepAction = this;

@@ -615,7 +615,7 @@ class Job {
     const map = new Map<string, number>();
 
     return steps.map((step) => {
-      const id = (step.run ? '__run' : createSafeName(step.uses || '')) || step.id;
+      const id = (step.run ? '__run' : step.id) || createSafeName(step.uses || '');
       let oN = map.get(id) || 0;
       if (map.has(id)) {
         oN += 1;
