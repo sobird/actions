@@ -22,10 +22,23 @@ class StepActionDocker extends StepAction {
     });
   }
 
+  public pre() {
+    // console.log('1212', 1212, this.ShouldRunPre.evaluate());
+
+    return new Executor();
+  }
+
   public main() {
     return this.executor(new Executor(async (ctx) => {
       return this.action?.Main;
     }));
+  }
+
+  public post() {
+    return new Executor((ctx) => {
+      const runner = ctx!;
+      console.log('this.context.steps', runner.context.steps);
+    });
   }
 
   Container(runner: Runner, image: string, cmd: ParseEntry[], entrypoint: string[]) {

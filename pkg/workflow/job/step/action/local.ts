@@ -30,9 +30,12 @@ class StepActionLocal extends StepAction {
     }));
   }
 
-  // public post() {
-  //   return new Executor(() => {});
-  // }
+  public post() {
+    return new Executor((ctx) => {
+      const runner = ctx!;
+      console.log('local post', runner.context.steps);
+    });
+  }
 }
 
 export default StepActionLocal;

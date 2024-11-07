@@ -4,7 +4,7 @@ import log4js from 'log4js';
 import shellQuote, { ParseEntry } from 'shell-quote';
 import * as tar from 'tar';
 
-import Executor from '@/pkg/common/executor';
+import Executor, { Conditional } from '@/pkg/common/executor';
 import docker from '@/pkg/docker';
 import Runner from '@/pkg/runner';
 import DockerContainer from '@/pkg/runner/container/docker';
@@ -14,8 +14,22 @@ import Action from '..';
 
 const logger = log4js.getLogger();
 
+type EntrypointStage = 'pre-entrypoint' | 'entrypoint' | 'post-entrypoint';
+
 class DockerAction extends Action {
+  protected pre() {
+    return this.run('pre-entrypoint').if(this.HasPre);
+  }
+
   protected main() {
+    return this.run('entrypoint');
+  }
+
+  protected post() {
+    return this.run('post-entrypoint').if(this.HasPost);
+  }
+
+  private run(entrypointStage: EntrypointStage) {
     return new Executor(async (ctx) => {
       const runner = ctx!;
       const { stepAction } = runner;
@@ -83,9 +97,9 @@ class DockerAction extends Action {
         cmd = this.runs.args.evaluate(runner, { inputs });
       }
 
-      let entrypoint = shellQuote.parse(stepWith?.entrypoint || '');
+      let entrypoint = shellQuote.parse(stepWith?.[entrypointStage] || '');
       if (entrypoint.length === 0) {
-        entrypoint = shellQuote.parse(this.runs.entrypoint || '');
+        entrypoint = shellQuote.parse(this.runs[entrypointStage] || '');
       }
 
       runner.Assign(stepAction!.environment, this.runs.env);
@@ -96,6 +110,18 @@ class DockerAction extends Action {
       ).finally(
         container.remove().ifBool(!runner.config.reuseContainers),
       );
+    });
+  }
+
+  public get HasPre() {
+    return new Conditional((runner) => {
+      return !!this.runs['pre-if'].evaluate(runner!) && !!this.runs['pre-entrypoint'];
+    });
+  }
+
+  public get HasPost() {
+    return new Conditional((runner) => {
+      return !!this.runs['post-if'].evaluate(runner!) && !!this.runs['post-entrypoint'];
     });
   }
 
@@ -124,11 +150,10 @@ class DockerAction extends Action {
       return false;
     }
     const imageWithoutPath = image.split('/').pop();
-    return imageWithoutPath?.startsWith('Dockerfile.') || imageWithoutPath?.endsWith('Dockerfile');
+    return imageWithoutPath?.startsWith('Dockerfile') || imageWithoutPath?.endsWith('Dockerfile');
   }
 
   static Container(runner: Runner, image: string, cmd: ParseEntry[], entrypoint: ParseEntry[]) {
-    console.log('docker', image, cmd, entrypoint);
     const { environment } = runner.stepAction!;
 
     const { config } = runner;
