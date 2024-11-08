@@ -112,7 +112,7 @@ class Runs {
     this['pre-if'] = new Expression(
       runs['pre-if'],
       ['github', 'needs', 'vars', 'inputs'],
-      ['always', 'cancelled', 'success', 'failure'],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'steps', 'inputs'],
       'always()',
       true,
     );
@@ -120,7 +120,7 @@ class Runs {
 
     this['post-if'] = new Expression(
       runs['post-if'],
-      ['github', 'needs', 'vars', 'inputs'],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'steps', 'inputs'],
       ['always', 'cancelled', 'success', 'failure'],
       'always()',
       true,

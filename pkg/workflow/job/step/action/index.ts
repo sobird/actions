@@ -14,6 +14,8 @@ import { withTimeout } from '@/utils';
 
 const logger = log4js.getLogger();
 
+type StepStage = 'Pre' | 'Main' | 'Post';
+
 abstract class StepAction extends Step {
   /**
    * for pre/main/post stage use
@@ -37,13 +39,12 @@ abstract class StepAction extends Step {
     });
   }
 
-  protected executor(main: Executor) {
+  protected runtime(main: Executor, stage: StepStage = 'Main') {
     return new Executor(async (ctx) => {
       const runner = ctx!;
 
       const { id } = this;
       const { context } = runner;
-      console.log('id: ', id);
       // set current step
       context.github.action = id;
       runner.stepAction = this;
@@ -73,7 +74,7 @@ abstract class StepAction extends Step {
         return;
       }
 
-      logger.info('\u{1F525} Starting: %s', this.Name(runner));
+      logger.info('\u{1F525} %s %s', stage, this.Name(runner));
 
       const actionCommandFile = new ActionCommandFile(runner);
       await actionCommandFile.initialize(this.uuid);
@@ -122,6 +123,10 @@ abstract class StepAction extends Step {
         logger.debug("skip pre step for '%s': no action model available", this.Name(runner));
         return false;
       }
+      if (!this.action.HasPre) {
+        logger.debug("skipping post step for '%s': no action pre available", this.Name(runner));
+        return false;
+      }
       return true;
     });
   }
@@ -145,6 +150,10 @@ abstract class StepAction extends Step {
         logger.debug("skipping post step for '%s': no action model available", this.Name(runner));
         return false;
       }
+      if (!this.action.HasPost.evaluate(ctx)) {
+        logger.debug("skipping post step for '%s': no action post available", this.Name(runner));
+        return false;
+      }
       return true;
     });
   }
@@ -152,6 +161,7 @@ abstract class StepAction extends Step {
   // load action from container
   LoadAction(actionDir: string) {
     return new Executor(async (ctx) => {
+      console.log('actionDir', actionDir);
       const runner = ctx!;
       const actionContainerDir = runner.container?.resolve(actionDir) || '';
       const ymlFile = path.join(actionDir, 'action.yml');

@@ -88,6 +88,13 @@ class Executor<T = unknown> {
     });
   }
 
+  /** 创建一个记录警告日志的执行器 */
+  static Warn(info: string) {
+    return new Executor(() => {
+      logger.warn(info);
+    });
+  }
+
   /** 创建一个按顺序执行多个执行器的执行器 */
   static Pipeline(...executors: Executor[]) {
     return new Executor(async (ctx) => {

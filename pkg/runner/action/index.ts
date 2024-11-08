@@ -10,7 +10,7 @@
  * sobird<i@sobird.me> at 2024/06/13 10:55:22 created.
  */
 
-import Executor from '@/pkg/common/executor';
+import Executor, { Conditional } from '@/pkg/common/executor';
 import Yaml from '@/pkg/common/yaml';
 import Runner from '@/pkg/runner';
 
@@ -114,15 +114,13 @@ abstract class Action extends Yaml {
   }
 
   public get Pre() {
-    return new Executor(() => {
-
+    return new Executor((runner) => {
+      // this.applyInput(runner);
     }).next(this.pre());
   }
 
   public get Main() {
-    return new Executor(() => {
-
-    }).next(this.main());
+    return this.SetEnvironment.next(this.main());
   }
 
   public get Post() {
@@ -131,11 +129,26 @@ abstract class Action extends Yaml {
     }).next(this.post());
   }
 
-  public async applyEnv(runner: Runner, out: Record<string, string> = {}) {
-    this.applyInput(runner, out);
-    Action.ApplyState(runner, out);
+  public get HasPre() {
+    return new Conditional((runner) => {
+      return !!this.runs['pre-if'].evaluate(runner!) && !!this.runs.pre;
+    });
+  }
 
-    return out;
+  public get HasPost() {
+    return new Conditional((runner) => {
+      return !!this.runs['post-if'].evaluate(runner!) && !!this.runs.post;
+    });
+  }
+
+  public get SetEnvironment() {
+    return new Executor((ctx) => {
+      const runner = ctx!;
+      const env = runner.stepAction?.environment;
+
+      this.applyInput(runner, env);
+      Action.ApplyState(runner, env);
+    });
   }
 
   applyInput(runner: Runner, out: Record<string, string> = {}) {
@@ -147,7 +160,6 @@ abstract class Action extends Yaml {
       const value = stepWith && (stepWith[inputId] || input.default.evaluate(runner));
       const key = `INPUT_${inputId.toUpperCase().replace(/[^A-Z0-9-]/g, '_')}`;
       if (!out[key]) {
-        // apply input default value
         // eslint-disable-next-line no-param-reassign
         out[key] = value || '';
       }

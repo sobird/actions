@@ -717,7 +717,7 @@ class DockerContainer extends Container {
       const image = runner.PlatformImage;
       const credentials = runner.Credentials;
 
-      logger.info('\u{1F338} Start image=%s', image);
+      logger.debug('\u{1F338} Start image=%s', image);
 
       const name = runner.ContainerName();
       // specify the network to which the container will connect when `docker create` stage. (like execute command line: docker create --network <networkName> <image>)

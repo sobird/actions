@@ -59,8 +59,6 @@ class NodeJSAction extends Action {
     return new Executor(async (ctx) => {
       const runner = ctx!;
       const env = runner.stepAction?.environment;
-
-      await this.applyEnv(runner, env);
       await runner.container?.applyPath(runner.prependPath, env);
 
       return runner.container?.exec(['node', path.join(this.Dir, this.runs.main)], { env });

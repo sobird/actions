@@ -51,11 +51,13 @@ class StepActionRemote extends StepAction {
     return new Executor(async (ctx) => {
       const ddd = this.skipCheckoutSelf();
       console.log('skipCheckoutSelf', await ddd.evaluate(ctx), this.uses);
+      console.log('1212', 1212);
     });
   }
 
   public main() {
-    return this.executor(new Executor(async (ctx) => {
+    return this.runtime(new Executor(async (ctx) => {
+      console.log('3333', 3333);
       const runner = ctx!;
       const skipCheckoutSelfExecutor = this.skipCheckoutSelf();
 
@@ -67,6 +69,8 @@ class StepActionRemote extends StepAction {
         const workdir = runner.container?.resolve(runner.config.workdir) || '';
         const copyToPath = path.join(workdir, this.with.evaluate(runner)?.path || '');
 
+        console.log('copyToPath', copyToPath);
+
         return runner.container?.put(copyToPath, runner.config.workdir, runner.config.useGitignore);
       }
 
@@ -75,7 +79,7 @@ class StepActionRemote extends StepAction {
   }
 
   public post() {
-    return this.executor(new Executor(() => { return this.action?.Post; })).if(this.ShouldRunPost);
+    return this.runtime(new Executor(() => { return this.action?.Post; })).if(this.ShouldRunPost);
   }
 
   public skipCheckoutSelf() {

@@ -32,19 +32,19 @@ jobs:
       #     LAST_NAME: Octocat
       #   run: env
 
-      # - name: Checkout Step
-      #   uses: actions/checkout@v4
+      - name: Checkout Step
+        uses: actions/checkout@v4
         # with:
         #   token: "f00777300d6fee37b9f913f4f7f0ba9fba07e1d3"
         #   ref: 'refs/heads/main'
         #   repository: 'sobird/actions-test'
         #   github-server-url: 'http://192.168.50.100:3000'
         
-      # - name: Hello World Javascript Action Step
-      #   id: hello_world_javascript_action
-      #   uses: ./.github/actions/hello-world-javascript-action
-      #   with:
-      #     who-to-greet: 'hello world javascript action step'
+      - name: Hello World Javascript Action Step
+        id: hello_world_javascript_action
+        uses: ./.github/actions/hello-world-javascript-action
+        with:
+          who-to-greet: 'hello world javascript action step'
 
       # - name: Docker Hub Action
       #   uses: docker://alpine:3.8
@@ -52,11 +52,11 @@ jobs:
       #     entrypoint: echo
       #     args: "The ${{ github.event_name }} event triggered this step. runner os: ${{runner.os}}"
 
-      - name: Hello world Docker File Step
-        id: hello_world_docker_file
-        uses: ./.github/actions/hello-world-docker-file
-        with:
-          who-to-greet: 'docker file'
+      # - name: Hello world Docker File Step
+      #   id: hello_world_docker_file
+      #   uses: ./.github/actions/hello-world-docker-file
+      #   with:
+      #     who-to-greet: 'docker file'
           # entrypoint: sh -c 'echo $GITHUB_SHA'
           # args: docker123 file
 
@@ -66,8 +66,8 @@ jobs:
       #   with:
       #     who-to-greet: 'docker action step'
       
-      - name: Get the Docker output time
-        run: echo "The time was ${{ steps.hello_world_docker_file.outputs.time }}"
+      # - name: Get the Docker output time
+      #   run: echo "The time was ${{ steps.hello_world_docker_file.outputs.time }}"
 
       # - name: Hello world Docker Hub Action Step
       #   id: hello_world_docker_hub_action
