@@ -24,22 +24,27 @@ abstract class StepAction extends Step {
 
   action?: Action;
 
-  public prepareAction() { return new Executor(); }
+  protected get PrepareAction() { return new Executor(); }
 
-  public pre() { return new Executor(); }
+  protected pre() { return new Executor(); }
 
-  public abstract main(): Executor;
+  protected abstract main(): Executor;
 
-  public post() { return new Executor(); }
+  protected post() { return new Executor(); }
 
-  // Main Stage
-  public Main() {
-    return new Executor(async () => {
-      //
-    });
+  public get Pre() {
+    return Executor.Pipeline(this.PrepareAction, this.runtime(this.pre(), 'Pre').if(this.ShouldRunPre));
   }
 
-  protected runtime(main: Executor, stage: StepStage = 'Main') {
+  public get Main() {
+    return this.runtime(this.main(), 'Main');
+  }
+
+  public get Post() {
+    return this.runtime(new Executor(() => { return this.action?.Post; }), 'Post').if(this.ShouldRunPost);
+  }
+
+  protected runtime(main: Executor, stage: StepStage) {
     return new Executor(async (ctx) => {
       const runner = ctx!;
 
@@ -56,6 +61,7 @@ abstract class StepAction extends Step {
 
       try {
         const enabled = this.if.evaluate(runner);
+        console.log('enabled', this.if.source, enabled);
 
         if (!enabled) {
           context.StepResult = {
@@ -74,7 +80,7 @@ abstract class StepAction extends Step {
         return;
       }
 
-      logger.info('\u{1F525} %s %s', stage, this.Name(runner));
+      logger.info('\u{1F525} Starting: %s %s', stage, this.Name(runner));
 
       const actionCommandFile = new ActionCommandFile(runner);
       await actionCommandFile.initialize(this.uuid);
@@ -83,7 +89,7 @@ abstract class StepAction extends Step {
       try {
         this.applyEnv(runner, this.environment);
         await withTimeout(main.execute(runner), timeoutMinutes * 60 * 1000);
-        logger.info('\u2705 Finishing: %s', this.Name(runner));
+        logger.info('\u2705 Finishing: %s %s', stage, this.Name(runner));
       } catch (error) {
         console.log('error', error);
         context.StepResult = {
@@ -123,7 +129,7 @@ abstract class StepAction extends Step {
         logger.debug("skip pre step for '%s': no action model available", this.Name(runner));
         return false;
       }
-      if (!this.action.HasPre) {
+      if (!this.action.HasPost.evaluate(ctx)) {
         logger.debug("skipping post step for '%s': no action pre available", this.Name(runner));
         return false;
       }
@@ -161,7 +167,6 @@ abstract class StepAction extends Step {
   // load action from container
   LoadAction(actionDir: string) {
     return new Executor(async (ctx) => {
-      console.log('actionDir', actionDir);
       const runner = ctx!;
       const actionContainerDir = runner.container?.resolve(actionDir) || '';
       const ymlFile = path.join(actionDir, 'action.yml');

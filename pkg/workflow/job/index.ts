@@ -583,10 +583,8 @@ class Job {
       // eslint-disable-next-line no-param-reassign
       step.number = index;
 
-      stepPrePipeline.push(step.prepareAction(), step.pre());
-
-      const stepPostExecutor = step.post();
-      stepPostPipeline.push(stepPostExecutor);
+      stepPrePipeline.push(step.Pre);
+      stepPostPipeline.unshift(step.Post);
 
       return new Executor(async () => {
         console.log('');
@@ -599,7 +597,7 @@ class Job {
         console.log('step with:', step.with.evaluate(runner));
 
         await asyncFunction(0);
-      }).finally(step.main());
+      }).finally(step.Main);
     }));
 
     return Executor.Pipeline(

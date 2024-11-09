@@ -23,14 +23,14 @@ jobs:
     #       - 6379/tcp
 
     steps:
-      # - name: Print env
-      #   # if: ${{ ddd }}
-      #   # shell: bash
-      #   # working-directory: '.'
-      #   env:
-      #     FIRST_NAME: Mona
-      #     LAST_NAME: Octocat
-      #   run: env
+      - name: Print env
+        # if: ${{ ddd }}
+        # shell: bash
+        # working-directory: '.'
+        # env:
+        #   FIRST_NAME: Mona
+        #   LAST_NAME: Octocat
+        run: cat "$GITHUB_STATE"
 
       - name: Checkout Step
         uses: actions/checkout@v4
@@ -39,6 +39,10 @@ jobs:
         #   ref: 'refs/heads/main'
         #   repository: 'sobird/actions-test'
         #   github-server-url: 'http://192.168.50.100:3000'
+
+      - name: Test Actions 1
+        if: runner.os == 'linux1'
+        uses: sobird/actions-test@1cb40cff047a5892397986ed61dfbcfc4020fe74
         
       - name: Hello World Javascript Action Step
         id: hello_world_javascript_action
@@ -46,6 +50,8 @@ jobs:
         with:
           who-to-greet: 'hello world javascript action step'
 
+      - name: Test Actions 2
+        uses: sobird/actions-test@1cb40cff047a5892397986ed61dfbcfc4020fe74
       # - name: Docker Hub Action
       #   uses: docker://alpine:3.8
       #   with:

@@ -20,9 +20,7 @@ import StepAction from '.';
 const logger = log4js.getLogger();
 
 class StepActionRemote extends StepAction {
-  // Prepare Action Instance
-
-  public prepareAction() {
+  protected get PrepareAction() {
     return new Executor((ctx) => {
       const runner = ctx!;
       const { uses } = this;
@@ -44,24 +42,18 @@ class StepActionRemote extends StepAction {
 
       const repositoryDir = path.join(runner.ActionCacheDir, uses.repository, uses.ref);
       return Git.CloneExecutor(repositoryDir, uses.repositoryUrl, uses.ref).finally(this.reusableAction(uses));
-    }).ifNot(this.skipCheckoutSelf());
+    }).ifNot(this.SkipCheckoutSelf);
   }
 
   public pre() {
-    return new Executor(async (ctx) => {
-      const ddd = this.skipCheckoutSelf();
-      console.log('skipCheckoutSelf', await ddd.evaluate(ctx), this.uses);
-      console.log('1212', 1212);
-    });
+    return new Executor(() => { return this.action?.Pre; });
   }
 
   public main() {
-    return this.runtime(new Executor(async (ctx) => {
-      console.log('3333', 3333);
+    return new Executor(async (ctx) => {
       const runner = ctx!;
-      const skipCheckoutSelfExecutor = this.skipCheckoutSelf();
 
-      if (await skipCheckoutSelfExecutor.evaluate(runner)) {
+      if (await this.SkipCheckoutSelf.evaluate(runner)) {
         if (runner?.config.bindWorkdir) {
           logger.debug('Skipping local actions/checkout because you bound your workspace');
           return;
@@ -69,20 +61,14 @@ class StepActionRemote extends StepAction {
         const workdir = runner.container?.resolve(runner.config.workdir) || '';
         const copyToPath = path.join(workdir, this.with.evaluate(runner)?.path || '');
 
-        console.log('copyToPath', copyToPath);
-
         return runner.container?.put(copyToPath, runner.config.workdir, runner.config.useGitignore);
       }
 
       return this.action?.Main;
-    }));
+    });
   }
 
-  public post() {
-    return this.runtime(new Executor(() => { return this.action?.Post; })).if(this.ShouldRunPost);
-  }
-
-  public skipCheckoutSelf() {
+  public get SkipCheckoutSelf() {
     return new Conditional(async (ctx) => {
       const runner = ctx!;
       const { uses } = this;

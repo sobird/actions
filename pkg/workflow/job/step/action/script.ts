@@ -14,7 +14,7 @@ class StepActionScript extends StepAction {
   public command: string = '';
 
   public main() {
-    return this.executor(new Executor(async (ctx) => {
+    return new Executor(async (ctx) => {
       const runner = ctx!;
       this.setupShellCommand(runner);
 
@@ -22,7 +22,7 @@ class StepActionScript extends StepAction {
       const workdir = this.WorkingDirectory(runner);
 
       await runner.container?.exec(cmd, { env: this.environment, workdir }).execute(ctx);
-    }));
+    });
   }
 
   setupShellCommand(runner: Runner) {

@@ -30,18 +30,6 @@ export interface NodeJSActionProps extends Omit<ActionProps, 'outputs' | 'runs' 
 }
 
 class NodeJSAction extends Action {
-  public get HasPre() {
-    return new Conditional((runner) => {
-      return !!this.runs['pre-if'].evaluate(runner!) && !!this.runs.pre;
-    });
-  }
-
-  public get HasPost() {
-    return new Conditional((runner) => {
-      return !!this.runs['post-if'].evaluate(runner!) && !!this.runs.post;
-    });
-  }
-
   protected pre() {
     return new Executor(async (ctx) => {
       const runner = ctx!;
