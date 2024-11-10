@@ -32,8 +32,8 @@ jobs:
       #   #   LAST_NAME: Octocat
       #   run: cat "$GITHUB_STATE"
 
-      # - name: Checkout Step
-      #   uses: actions/checkout@v4
+      - name: Checkout Step
+        uses: actions/checkout@v4
         # with:
         #   token: "f00777300d6fee37b9f913f4f7f0ba9fba07e1d3"
         #   ref: 'refs/heads/main'
@@ -53,11 +53,11 @@ jobs:
       # - name: Test Actions 2
       #   uses: sobird/actions-test@1cb40cff047a5892397986ed61dfbcfc4020fe74
 
-      - name: Docker Hub Action
-        uses: docker://alpine:3.8
-        with:
-          entrypoint: echo
-          args: "The ${{ github.event_name }} event triggered this step. runner os: ${{runner.os}}"
+      # - name: Docker Hub Action
+      #   uses: docker://alpine:3.8
+      #   with:
+      #     entrypoint: echo
+      #     args: "The ${{ github.event_name }} event triggered this step. runner os: ${{runner.os}}"
 
       # - name: Hello world Docker File Step
       #   id: hello_world_docker_file
@@ -88,8 +88,8 @@ jobs:
       # - run: netstat -tlpen
       # - run: curl -v http://nginx
 
-      # - name: Hello World Composite Action
-      #   id: hello_world_composite_hub_action
-      #   uses: ./.github/actions/hello-world-composite-action
-      #   with:
-      #     who-to-greet: 'composite action step'
+      - name: Hello World Composite Action
+        id: hello_world_composite_hub_action
+        uses: sobird/actions-test@5af1e59445fd3a2d02f668c20f925aaa0ef4aa94
+        with:
+          who-to-greet: 'composite action step'

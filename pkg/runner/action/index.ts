@@ -114,7 +114,7 @@ abstract class Action extends Yaml {
   }
 
   public get Pre() {
-    return new Executor((runner) => {
+    return new Executor(() => {
       // this.applyInput(runner);
     }).next(this.pre());
   }
