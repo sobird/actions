@@ -44,7 +44,7 @@ abstract class StepAction extends Step {
     return this.runtime(new Executor(() => { return this.action?.Post; }), 'Post').if(this.ShouldRunPost);
   }
 
-  protected runtime(main: Executor, stage: StepStage) {
+  protected runtime(executor: Executor, stage: StepStage) {
     return new Executor(async (ctx) => {
       const runner = ctx!;
 
@@ -88,7 +88,7 @@ abstract class StepAction extends Step {
 
       try {
         this.applyEnv(runner, this.environment);
-        await withTimeout(main.execute(runner), timeoutMinutes * 60 * 1000);
+        await withTimeout(executor.execute(runner), timeoutMinutes * 60 * 1000);
         logger.info('\u2705 Finishing: %s %s', stage, this.Name(runner));
       } catch (error) {
         console.log('error', error);
@@ -130,7 +130,7 @@ abstract class StepAction extends Step {
         return false;
       }
       if (!this.action.HasPost.evaluate(ctx)) {
-        logger.debug("skipping post step for '%s': no action pre available", this.Name(runner));
+        logger.debug("skipping pre step for '%s': no action pre available", this.Name(runner));
         return false;
       }
       return true;

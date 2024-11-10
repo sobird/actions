@@ -88,6 +88,7 @@ class DockerAction extends Action {
         image = image.substring('docker://'.length);
         // forcePull = runner.config.pull;
       }
+
       // todo
       const stepWith = stepAction?.with.evaluate(runner);
       let cmd = shellQuote.parse(stepWith?.args || '');

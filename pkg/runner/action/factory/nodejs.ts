@@ -6,7 +6,7 @@
 
 import path from 'node:path';
 
-import Executor, { Conditional } from '@/pkg/common/executor';
+import Executor from '@/pkg/common/executor';
 
 import Action, { ActionProps } from '..';
 
