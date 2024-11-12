@@ -212,6 +212,21 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
         hello: 'world',
       });
     });
+
+    it('container readline', async () => {
+      const filename = 'filename';
+      const putContentExecutor = container.putContent('', {
+        name: filename,
+        mode: 0o777,
+        body: ['test', 'hello'].join('\n'),
+      });
+      await putContentExecutor.execute();
+
+      const callback = vi.fn();
+      await container.readline(filename, callback);
+
+      expect(callback).toBeCalledTimes(2);
+    });
   });
 
   describe('Test Container Path Resolve', () => {

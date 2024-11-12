@@ -105,24 +105,6 @@ export default abstract class Container {
     return '';
   }
 
-  private async getEntry(filename: string): Promise<tar.ReadEntry> {
-    const archive = await this.getArchive(filename);
-
-    const extract = tar.t({ portable: true, noResume: true });
-    archive.pipe(extract as NodeJS.WritableStream);
-
-    return new Promise((resolve, reject) => {
-      extract.on('entry', (entry: tar.ReadEntry) => {
-        // archive.unpipe(extract);
-        entry.pause();
-        resolve(entry);
-      });
-      archive.on('error', (err) => {
-        reject(err);
-      });
-    });
-  }
-
   async getContent(filename: string): Promise<FileEntry | undefined> {
     // todo should catch error?
     try {
@@ -166,41 +148,38 @@ export default abstract class Container {
     }
   }
 
-  async readline(filename: string, callback?: (line: string) => void): Promise<string> {
-    const file = await this.getEntry(filename);
+  async readline(filename: string, callback?: (line: string) => void) {
+    const archive = await this.getArchive(filename);
 
-    let content = '';
+    const extract = tar.t({ portable: true, noResume: true });
+    archive.pipe(extract as NodeJS.WritableStream);
 
-    if (file.size === 0) {
-      return content;
-    }
+    return new Promise<void>((resolve, reject) => {
+      extract.on('entry', (entry: tar.ReadEntry) => {
+        if (entry.size === 0) {
+          resolve();
+        }
 
-    file.on('data', (chunk: Buffer) => {
-      content += chunk;
-    });
+        const rl = readline.createInterface({
+          input: entry as unknown as NodeJS.ReadableStream,
+          crlfDelay: Infinity,
+        });
 
-    const rl = readline.createInterface({
-      input: file as unknown as NodeJS.ReadableStream,
-      crlfDelay: Infinity,
-    });
+        rl.on('line', (line) => {
+          if (line.trim()) {
+            callback?.(line);
+          }
+        });
 
-    // rl.pause();
+        rl.on('close', () => {
+          resolve();
+        });
 
-    rl.on('line', (line) => {
-      console.log('line', line);
-      if (line.trim()) {
-        callback?.(line);
-      }
-
-      // file.resume();
-    });
-
-    return new Promise((resolve, reject) => {
-      rl.on('close', () => {
-        resolve(content);
+        rl.on('error', (err) => {
+          reject(err);
+        });
       });
-
-      rl.on('error', (err) => {
+      archive.on('error', (err) => {
         reject(err);
       });
     });
