@@ -16,8 +16,8 @@ import Container, { ContainerProps } from './container';
 import Defaults, { DefaultsProps } from './defaults';
 import Environment, { EnvironmentOptions } from './environment';
 import { StepProps } from './step';
-import StepAction from './step/action';
 import StepActionFactory from './step/action/factory';
+import Steps from './steps';
 // import { StepProps } from './step/step';
 import Strategy, { StrategyProps } from './strategy';
 import Uses from './uses';
@@ -283,7 +283,7 @@ class Job {
    * GitHub only displays the first 1,000 checks, however, you can run an unlimited number of steps as long as you are within the workflow usage limits.
    * For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration Usage limits, billing, and administration}" for GitHub-hosted runners and "{@link https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#usage-limits About self-hosted runners}" for self-hosted runner usage limits.
    */
-  steps?: StepAction[] = [];
+  steps: Steps;
 
   /**
    * The maximum number of minutes to let a job run before GitHub automatically cancels it. Default: 360
@@ -411,7 +411,7 @@ class Job {
     this.env = new Expression(job.env, ['github', 'needs', 'strategy', 'matrix', 'vars', 'secrets', 'inputs']);
     this.defaults = new Defaults(job.defaults);
 
-    this.steps = Job.SetupSteps(job.steps);
+    this.steps = new Steps(job.steps);
 
     this['timeout-minutes'] = job['timeout-minutes'];
     this.strategy = new Strategy(job.strategy);
@@ -562,71 +562,69 @@ class Job {
       return usesExecutor;
     }
 
-    const { steps } = this;
-    if (!steps || steps.length === 0) {
-      return Executor.Debug('No steps found');
-    }
+    // const { steps } = this;
+    // if (!steps || steps.length === 0) {
+    //   return Executor.Debug('No steps found');
+    // }
 
-    const stepPrePipeline: Executor[] = [];
-    const stepMainPipeline: Executor[] = [];
-    const stepPostPipeline: Executor[] = [];
+    // const stepPrePipeline: Executor[] = [];
+    // const stepMainPipeline: Executor[] = [];
+    // const stepPostPipeline: Executor[] = [];
 
-    stepPrePipeline.push(new Executor(() => {
-      logger.info('Todo:', 'Job env Interpolate');
-    }));
+    // stepPrePipeline.push(new Executor(() => {
+    //   logger.info('Todo:', 'Job env Interpolate');
+    // }));
 
-    stepMainPipeline.push(new Executor(() => {
-      logger.info('\u{0001F9EA} Matrix:', this.strategy.Matrices);
-    }));
+    // stepMainPipeline.push(new Executor(() => {
+    //   logger.info('\u{0001F9EA} Matrix:', this.strategy.Matrices);
+    // }));
 
-    stepMainPipeline.push(...steps.map((step, index) => {
-      // eslint-disable-next-line no-param-reassign
-      step.number = index;
+    // stepMainPipeline.push(...steps.map((step, index) => {
+    //   // eslint-disable-next-line no-param-reassign
+    //   step.number = index;
 
-      stepPrePipeline.push(step.Pre);
-      stepPostPipeline.unshift(step.Post);
+    //   stepPrePipeline.push(step.Pre);
+    //   stepPostPipeline.unshift(step.Post);
 
-      return new Executor(async () => {
-        console.log('');
-        console.log('step', step.constructor.name);
-        // console.log('step if:', step.if.evaluate(runner));
+    //   return new Executor(async () => {
+    //     console.log('');
+    //     console.log('step', step.constructor.name);
+    //     // console.log('step if:', step.if.evaluate(runner));
 
-        console.log(`${runner.run.name} - step:`, step.Name(runner));
-        // console.log('step uses:', step.uses);
-        // console.log('step env:', step.Env(runner));
-        console.log('step with:', step.with.evaluate(runner));
+    //     console.log(`${runner.run.name} - step:`, step.Name(runner));
+    //     // console.log('step uses:', step.uses);
+    //     // console.log('step env:', step.Env(runner));
+    //     console.log('step with:', step.with.evaluate(runner));
 
-        await asyncFunction(0);
-      }).finally(step.Main);
-    }));
+    //     await asyncFunction(0);
+    //   }).finally(step.Main);
+    // }));
 
     return Executor.Pipeline(
       runner.startContainer(),
-      ...stepPrePipeline,
-      ...stepMainPipeline,
-      ...stepPostPipeline,
+      this.steps.run(),
       runner.stopContainer(),
     );
   }
 
-  static SetupSteps(steps: StepProps[] = []) {
-    const map = new Map<string, number>();
+  // static SetupSteps(steps: StepProps[] = []) {
+  //   const map = new Map<string, number>();
 
-    return steps.map((step) => {
-      const id = (step.run ? '__run' : step.id) || createSafeName(step.uses || '');
-      let oN = map.get(id) || 0;
-      if (map.has(id)) {
-        oN += 1;
-        map.set(id, oN);
-      } else {
-        map.set(id, 0);
-      }
+  //   return steps.map((step) => {
+  //     const id = (step.run ? '__run' : step.id) || createSafeName(step.uses || '');
+  //     let oN = map.get(id) || 0;
+  //     if (map.has(id)) {
+  //       oN += 1;
+  //       map.set(id, oN);
+  //     } else {
+  //       map.set(id, 0);
+  //     }
 
-      const stepId = oN === 0 ? id : `${id}_${oN}`;
-      Object.assign(step, { id: stepId });
-      return StepActionFactory.create(step);
-    });
-  }
+  //     const stepId = oN === 0 ? id : `${id}_${oN}`;
+  //     Object.assign(step, { id: stepId });
+  //     return StepActionFactory.create(step);
+  //   });
+  // }
 }
 
 export default Job;

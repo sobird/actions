@@ -1,6 +1,6 @@
 import Expression from '@/pkg/expression';
-import Job from '@/pkg/workflow/job';
-import Step, { StepProps } from '@/pkg/workflow/job/step';
+import { StepProps } from '@/pkg/workflow/job/step';
+import Steps from '@/pkg/workflow/job/steps';
 
 export interface RunsProps extends Pick<Runs, 'using' | 'main' | 'pre' | 'post' | 'image' | 'env' | 'pre-entrypoint' | 'entrypoint' | 'post-entrypoint'> {
   'pre-if'?: string;
@@ -103,7 +103,7 @@ class Runs {
 
   args: Expression<RunsProps['args']>;
 
-  steps: Step[] = [];
+  steps: Steps;
 
   constructor(runs: RunsProps) {
     this.using = runs.using;
@@ -133,7 +133,7 @@ class Runs {
     this.entrypoint = runs.entrypoint;
     this['post-entrypoint'] = runs['post-entrypoint'];
     this.args = new Expression(runs.args, ['inputs']);
-    this.steps = Job.SetupSteps(runs.steps);
+    this.steps = new Steps(runs.steps);
   }
 }
 
