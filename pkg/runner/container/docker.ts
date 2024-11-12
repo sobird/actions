@@ -595,7 +595,7 @@ class DockerContainer extends Container {
 
       const out = new Writable({
         write: (chunk, enc, next) => {
-          // console.log('chunk', chunk.toString());
+          console.log('chunk', chunk.toString());
 
           next();
         },

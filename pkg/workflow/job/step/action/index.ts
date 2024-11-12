@@ -61,7 +61,6 @@ abstract class StepAction extends Step {
 
       try {
         const enabled = this.if.evaluate(runner);
-        console.log('enabled', this.if.source, enabled);
 
         if (!enabled) {
           context.StepResult = {
