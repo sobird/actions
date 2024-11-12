@@ -90,6 +90,12 @@ jobs:
 
       - name: Hello World Composite Action
         id: hello_world_composite_hub_action
-        uses: sobird/actions-test@5af1e59445fd3a2d02f668c20f925aaa0ef4aa94
+        uses: ./.github/actions/hello-world-composite-action
         with:
           who-to-greet: 'composite action step'
+
+      # - name: Hello World Composite Action Remote
+      #   id: hello_world_composite_hub_action_remote
+      #   uses: sobird/actions-test@5af1e59445fd3a2d02f668c20f925aaa0ef4aa94
+      #   with:
+      #     who-to-greet: 'composite action step'

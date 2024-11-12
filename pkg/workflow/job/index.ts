@@ -4,19 +4,16 @@
  *
  * sobird<i@sobird.me> at 2024/05/02 20:26:29 created.
  */
-import log4js from 'log4js';
 
 import Executor from '@/pkg/common/executor';
 import Expression from '@/pkg/expression';
 import Runner from '@/pkg/runner';
 import { Needs } from '@/pkg/runner/context/needs';
-import { asyncFunction, createSafeName } from '@/utils';
 
 import Container, { ContainerProps } from './container';
 import Defaults, { DefaultsProps } from './defaults';
 import Environment, { EnvironmentOptions } from './environment';
 import { StepProps } from './step';
-import StepActionFactory from './step/action/factory';
 import Steps from './steps';
 // import { StepProps } from './step/step';
 import Strategy, { StrategyProps } from './strategy';
@@ -24,8 +21,6 @@ import Uses from './uses';
 import {
   WorkflowDispatchInput, Permissions, Concurrency,
 } from '../types';
-
-const logger = log4js.getLogger();
 
 export enum JobType {
   /**
