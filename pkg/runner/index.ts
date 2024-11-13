@@ -37,6 +37,8 @@ class Runner {
    */
   caller?: Runner;
 
+  parent?: Runner;
+
   // addPath
   prependPath: string[] = [];
 
@@ -276,8 +278,14 @@ class Runner {
   }
 
   clone() {
-    // const cloned = structuredClone(this);
-    console.log('this', this);
+    const run = new Run(this.run.jobId, this.run.workflow.clone());
+    const runner = new Runner(run, this.config);
+    runner.parent = this;
+    runner.context = this.context.clone();
+    runner.container = this.container;
+    runner.prependPath = this.prependPath;
+
+    return runner;
   }
 
   // get env() {
@@ -417,6 +425,7 @@ class Runner {
   setOutput(key: string, value: string) {
     const { action } = this.context.github;
     if (action) {
+      console.log('action', action);
       this.context.steps[action].outputs[key] = value;
     }
   }

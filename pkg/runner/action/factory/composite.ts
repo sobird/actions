@@ -4,14 +4,16 @@ import Action from '..';
 
 class CompositeAction extends Action {
   protected main() {
-    return new Executor((ctx) => {
+    return new Executor(async (ctx) => {
       const runner = ctx!;
 
-      // console.log('context', runner.context.inputs);
-      // runner.context.inputs['who-to-greet'] = 'who-to-greet sss';
-      // console.log('composite env:', runner.stepAction?.environment);
+      const compositeRunner = runner.clone();
+      compositeRunner.context.steps = {};
 
-      return Executor.Pipeline(...this.runs.steps.MainPipeline);
+      await Executor.Pipeline(...this.runs.steps.MainPipeline).execute(compositeRunner);
+
+      // console.log('compositeRunner', compositeRunner.context);
+      // console.log('compositeRunner', runner.context);
     });
   }
 }

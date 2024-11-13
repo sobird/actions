@@ -101,8 +101,8 @@ export default class Context {
     this.inputs = context.inputs ?? {};
   }
 
-  test?() {
-    return this.env;
+  clone() {
+    return new Context(structuredClone(this));
   }
 
   set StepResult(step: Partial<Step>) {

@@ -92,6 +92,10 @@ abstract class StepAction extends Step {
 
       try {
         this.applyEnv(runner, this.environment);
+        const name = this.Name(runner);
+        const env12 = runner.context.github.Env;
+        console.log('env12', env12);
+        console.log(name, this.environment, runner.context);
         await withTimeout(executor.execute(runner), timeoutMinutes * 60 * 1000);
         logger.info('\u2705 Finishing: %s %s', stage, this.Name(runner));
       } catch (error) {
