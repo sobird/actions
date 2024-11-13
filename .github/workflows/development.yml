@@ -23,14 +23,14 @@ jobs:
     #       - 6379/tcp
 
     steps:
-      - name: Print env
+      # - name: Print env
         # if: ${{ ddd }}
         # shell: bash
         # working-directory: '.'
         # env:
         #   FIRST_NAME: Mona
         #   LAST_NAME: Octocat
-        run: env
+        # run: env
 
       - name: Checkout Step
         uses: actions/checkout@v4
@@ -67,11 +67,11 @@ jobs:
           # entrypoint: sh -c 'echo $GITHUB_SHA'
           # args: docker123 file
 
-      # - name: Hello world Docker Action Step
-      #   id: hello_world_docker_action
-      #   uses: ./.github/actions/hello-world-docker-action
-      #   with:
-      #     who-to-greet: 'docker action step'
+      - name: Hello world Docker Action Step
+        id: hello_world_docker_action
+        uses: ./.github/actions/hello-world-docker-action
+        with:
+          who-to-greet: 'docker action step'
       
       # - name: Get the Docker output time
       #   run: echo "The time was ${{ steps.hello_world_docker_file.outputs.time }}"

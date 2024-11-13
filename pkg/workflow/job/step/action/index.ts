@@ -59,8 +59,6 @@ abstract class StepAction extends Step {
         outputs: {},
       };
 
-      console.log('this.uses', this.uses);
-
       if (this.uses.ref) {
         context.github.action_ref = this.uses.ref;
         context.github.action_repository = this.uses.repository;

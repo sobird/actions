@@ -94,8 +94,7 @@ class DockerAction extends Action {
       let cmd = shellQuote.parse(stepWith?.args || '');
 
       if (cmd.length === 0) {
-        const inputs = this.applyInput(runner, stepAction?.environment);
-        cmd = this.runs.args.evaluate(runner, { inputs });
+        cmd = this.runs.args.evaluate(runner);
       }
 
       let entrypoint = shellQuote.parse(stepWith?.[entrypointStage] || '');

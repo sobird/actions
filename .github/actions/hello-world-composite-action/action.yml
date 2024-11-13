@@ -4,7 +4,7 @@ inputs:
   who-to-greet:  # id of input
     description: 'Who to greet'
     required: true
-    default: 'World'
+    default: 'inputs default'
 outputs:
   random-number:
     description: "Random number"
@@ -14,7 +14,7 @@ runs:
   steps:
     - run: env
       shell: bash
-      
+
     - name: Set Greeting
       run: echo "Hello $INPUT_WHO_TO_GREET."
       shell: bash
