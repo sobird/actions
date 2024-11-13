@@ -16,7 +16,7 @@ class StepActionScript extends StepAction {
   public main() {
     return new Executor(async (ctx) => {
       const runner = ctx!;
-      this.setupShellCommand(runner);
+      await this.setupShellCommand(runner);
 
       const cmd = shellQuote.parse(this.command) as string[];
       const workdir = this.WorkingDirectory(runner);
@@ -25,8 +25,8 @@ class StepActionScript extends StepAction {
     });
   }
 
-  setupShellCommand(runner: Runner) {
-    const shell = this.setupShell(runner);
+  async setupShellCommand(runner: Runner) {
+    const shell = await this.setupShell(runner);
     const script = StepActionScript.FixUpScriptContent(shell, this.run.evaluate(runner));
     const [command, ext] = StepActionScript.GetShellCommandAndExt(shell);
 
@@ -44,11 +44,13 @@ class StepActionScript extends StepAction {
     return [resolvedScriptPath, script];
   }
 
-  setupShell(runner: Runner) {
+  async setupShell(runner: Runner) {
     let { shell } = this;
     if (!shell) {
       shell = runner.Defaults.run.evaluate(runner)?.shell || '';
     }
+
+    await runner.container?.applyPath(runner.prependPath, this.environment);
 
     if (!shell) {
       //
@@ -58,7 +60,6 @@ class StepActionScript extends StepAction {
           shellWithFallback = ['pwsh', 'powershell'];
         }
         [shell] = shellWithFallback;
-        runner.container.applyPath(runner.prependPath, this.environment);
         const cmd = runner.container.lookPath(shellWithFallback[0], this.environment);
         if (!cmd) {
           [,shell] = shellWithFallback;
@@ -68,6 +69,7 @@ class StepActionScript extends StepAction {
         shell = 'sh';
       }
     }
+
     return shell;
   }
 

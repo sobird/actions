@@ -67,11 +67,11 @@ jobs:
           # entrypoint: sh -c 'echo $GITHUB_SHA'
           # args: docker123 file
 
-      - name: Hello world Docker Action Step
-        id: hello_world_docker_action
-        uses: ./.github/actions/hello-world-docker-action
-        with:
-          who-to-greet: 'docker action step'
+      # - name: Hello world Docker Action Step
+      #   id: hello_world_docker_action
+      #   uses: ./.github/actions/hello-world-docker-action
+      #   with:
+      #     who-to-greet: 'docker action step'
       
       # - name: Get the Docker output time
       #   run: echo "The time was ${{ steps.hello_world_docker_file.outputs.time }}"
@@ -88,17 +88,20 @@ jobs:
       # - run: netstat -tlpen
       # - run: curl -v http://nginx
 
-      - name: Set GitHub Path
-        run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
-        shell: bash
-        env:
-          GITHUB_ACTION_PATH: ${{ github.action_path }}
+      # - name: Set GitHub Path
+      #   run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
+      #   shell: bash
+      #   env:
+      #     GITHUB_ACTION_PATH: ${{ github.action_path }}
 
       - name: Hello World Composite Action
-        id: hello_world_composite_hub_action
+        id: hello_world_composite_action
         uses: ./.github/actions/hello-world-composite-action
         with:
           who-to-greet: 'composite action step'
+
+      - name: Print Composite Action Output
+        run: echo "The random number was ${{ steps.hello_world_composite_action.outputs.random-number }}"
 
       # - name: Hello World Composite Action Remote
       #   id: hello_world_composite_hub_action_remote

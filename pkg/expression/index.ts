@@ -41,14 +41,17 @@ class Expression<T> {
         }
 
         expression = expression.replace(/((?:\w+\.)*?\w+)\.\*\.(\w+)/g, "objectFilter($1, '$2')");
-        expression = expression.replace(/(?:\w+)(?:\.[\w-]+)+/g, (a) => {
-          const [first, ...parts] = a.split('.');
-          const output = parts.map((item) => {
-            return `['${item}']`;
+
+        if (source.includes('${{') && source.includes('}}')) {
+          expression = expression.replace(/(?:\w+)(?:\.[\w-]+)+/g, (a) => {
+            const [first, ...parts] = a.split('.');
+            const output = parts.map((item) => {
+              return `['${item}']`;
+            });
+            output.unshift(first);
+            return output.join('');
           });
-          output.unshift(first);
-          return output.join('');
-        });
+        }
 
         const availability = _.pick(context, ...this.scopes);
 
