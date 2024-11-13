@@ -59,6 +59,13 @@ abstract class StepAction extends Step {
         outputs: {},
       };
 
+      console.log('this.uses', this.uses);
+
+      if (this.uses.ref) {
+        context.github.action_ref = this.uses.ref;
+        context.github.action_repository = this.uses.repository;
+      }
+
       try {
         const enabled = this.if.evaluate(runner);
 
@@ -87,7 +94,6 @@ abstract class StepAction extends Step {
 
       try {
         this.applyEnv(runner, this.environment);
-        console.log('this.uses', this.uses);
         await withTimeout(executor.execute(runner), timeoutMinutes * 60 * 1000);
         logger.info('\u2705 Finishing: %s %s', stage, this.Name(runner));
       } catch (error) {

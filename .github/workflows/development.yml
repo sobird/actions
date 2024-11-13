@@ -23,14 +23,14 @@ jobs:
     #       - 6379/tcp
 
     steps:
-      # - name: Print env
-      #   # if: ${{ ddd }}
-      #   # shell: bash
-      #   # working-directory: '.'
-      #   # env:
-      #   #   FIRST_NAME: Mona
-      #   #   LAST_NAME: Octocat
-      #   run: cat "$GITHUB_STATE"
+      - name: Print env
+        # if: ${{ ddd }}
+        # shell: bash
+        # working-directory: '.'
+        # env:
+        #   FIRST_NAME: Mona
+        #   LAST_NAME: Octocat
+        run: env
 
       - name: Checkout Step
         uses: actions/checkout@v4
@@ -88,11 +88,11 @@ jobs:
       # - run: netstat -tlpen
       # - run: curl -v http://nginx
 
-      # - name: Set GitHub Path
-      #   run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
-      #   shell: bash
-      #   env:
-      #     GITHUB_ACTION_PATH: ${{ github.action_path }}
+      - name: Set GitHub Path
+        run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
+        shell: bash
+        env:
+          GITHUB_ACTION_PATH: ${{ github.action_path }}
 
       - name: Hello World Composite Action
         id: hello_world_composite_hub_action

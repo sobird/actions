@@ -482,7 +482,7 @@ export class Github {
     env.GITHUB_ACTION = this.action;
     env.GITHUB_ACTION_PATH = this.action_path;
     env.GITHUB_ACTION_REPOSITORY = this.action_repository;
-    // env.GITHUB_ACTION_REF = this.action_ref;
+    env.GITHUB_ACTION_REF = this.action_ref;
     env.GITHUB_ACTIONS = true;
     env.GITHUB_ACTOR = this.actor;
     env.GITHUB_ACTOR_ID = this.actor_id;

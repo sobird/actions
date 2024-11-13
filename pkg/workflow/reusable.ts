@@ -15,7 +15,7 @@ export default class Reusable {
 
   public path: string = '';
 
-  public ref: string = 'HEAD';
+  public ref: string = '';
 
   constructor(public uses: string = '', public token: string = '') {
     if (this.isLocal) {
