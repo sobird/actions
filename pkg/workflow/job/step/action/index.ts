@@ -87,6 +87,7 @@ abstract class StepAction extends Step {
 
       try {
         this.applyEnv(runner, this.environment);
+        console.log('this.uses', this.uses);
         await withTimeout(executor.execute(runner), timeoutMinutes * 60 * 1000);
         logger.info('\u2705 Finishing: %s %s', stage, this.Name(runner));
       } catch (error) {
@@ -170,6 +171,10 @@ abstract class StepAction extends Step {
       const actionContainerDir = runner.container?.resolve(actionDir) || '';
       const ymlFile = path.join(actionDir, 'action.yml');
       const ymlEntry = await runner.container?.getContent(ymlFile);
+
+      // set context github action path
+      runner.context.github.action_path = actionContainerDir;
+
       if (ymlEntry) {
         this.action = ActionFactory.create(parse(ymlEntry.body));
         this.action.Dir = actionContainerDir;

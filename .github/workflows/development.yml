@@ -88,11 +88,11 @@ jobs:
       # - run: netstat -tlpen
       # - run: curl -v http://nginx
 
-      - name: Set GitHub Path
-        run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
-        shell: bash
-        env:
-          GITHUB_ACTION_PATH: ${{ github.action_path }}
+      # - name: Set GitHub Path
+      #   run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
+      #   shell: bash
+      #   env:
+      #     GITHUB_ACTION_PATH: ${{ github.action_path }}
 
       - name: Hello World Composite Action
         id: hello_world_composite_hub_action

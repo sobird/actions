@@ -572,6 +572,7 @@ class DockerContainer extends Container {
 
       // todo
       logger.debug(shellQuote.quote(command));
+      logger.debug('exec env:', inputs.env);
 
       const WorkingDir = this.resolve(this.options.workdir, inputs.workdir || '');
 

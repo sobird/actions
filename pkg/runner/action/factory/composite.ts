@@ -4,7 +4,13 @@ import Action from '..';
 
 class CompositeAction extends Action {
   protected main() {
-    return Executor.Pipeline(...this.runs.steps.MainPipeline);
+    return new Executor((ctx) => {
+      const runner = ctx!;
+
+      console.log('this.env', runner.stepAction?.environment);
+
+      return Executor.Pipeline(...this.runs.steps.MainPipeline);
+    });
   }
 }
 
