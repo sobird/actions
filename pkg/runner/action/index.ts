@@ -73,7 +73,7 @@ abstract class Action extends Yaml {
    */
   inputs?: Record<string, Input>;
 
-  outputs?: Record<string, Output>;
+  outputs: Record<string, Output>;
 
   runs: Runs;
 

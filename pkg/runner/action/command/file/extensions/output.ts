@@ -6,7 +6,6 @@ const SetOutputFileCommand: FileCommandExtension = {
   filePrefix: 'set_output_',
 
   async process(runner, filename) {
-    console.log('filename', filename);
     const env = await runner.container!.getFileEnv(filename);
     Object.entries(env).forEach(([key, value]) => {
       runner.setOutput(key, value);

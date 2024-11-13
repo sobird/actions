@@ -1,7 +1,7 @@
 import Expression from '@/pkg/expression';
 
 export interface OutputProps extends Pick<Output, 'description'> {
-  value: unknown;
+  value: string;
 }
 
 export default class Output {
@@ -21,7 +21,7 @@ export default class Output {
     this.description = output.description;
     this.value = new Expression(
       output.value,
-      ['github', 'needs', 'vars', 'inputs'],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
       ['always', 'cancelled', 'success', 'failure'],
       'always()',
       true,
@@ -30,7 +30,7 @@ export default class Output {
 
   static outputs(outputs?: Record<string, OutputProps>) {
     if (!outputs) {
-      return;
+      return {};
     }
     return Object.fromEntries(Object.entries(outputs).map(([outputId, output]) => {
       return [outputId, new Output(output)];

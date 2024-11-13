@@ -12,8 +12,10 @@ class CompositeAction extends Action {
 
       await Executor.Pipeline(...this.runs.steps.MainPipeline).execute(compositeRunner);
 
-      // console.log('compositeRunner', compositeRunner.context);
-      // console.log('compositeRunner', runner.context);
+      // set composite outputs
+      Object.entries(this.outputs).forEach(([outputId, output]) => {
+        runner.setOutput(outputId, output.value.evaluate(compositeRunner) as string);
+      });
     });
   }
 }

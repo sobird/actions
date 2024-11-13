@@ -24,7 +24,7 @@ class Steps {
     const map = new Map<string, number>();
 
     steps.forEach((step) => {
-      const id = (step.run ? '__run' : step.id) || createSafeName(step.uses || '');
+      const id = step.run ? step.id || '__run' : step.id || createSafeName(step.uses || '');
       let oN = map.get(id) || 0;
       if (map.has(id)) {
         oN += 1;

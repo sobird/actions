@@ -425,7 +425,6 @@ class Runner {
   setOutput(key: string, value: string) {
     const { action } = this.context.github;
     if (action) {
-      console.log('action', action);
       this.context.steps[action].outputs[key] = value;
     }
   }
