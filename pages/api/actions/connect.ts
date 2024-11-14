@@ -6,7 +6,7 @@ export default (router: ConnectRouter) => {
   // implement rpc Say(SayRequest) returns (SayResponse)
   router.rpc(PingService, PingService.methods.ping, async (req) => {
     return {
-      sentence: `you said: ${req}`,
+      data: `you said: ${req}`,
     };
   });
 };
