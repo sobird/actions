@@ -2,6 +2,7 @@ module.exports = {
   root: true,
   extends: [
     'sobird/typescript-react.cjs',
+    'sobird/typescript.cjs',
     'plugin:@next/next/recommended',
     'plugin:@next/next/core-web-vitals',
     // 'plugin:@next/next/typescript',
