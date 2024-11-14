@@ -13,7 +13,7 @@
     "start": "next start",
     "lint": "next lint",
     "dev:runner": "rollup -cw --environment NODE_ENV:development",
-    "build:buf": "buf generate https://gitea.com/gitea/actions-proto-def.git",
+    "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",
     "build:runner": "rollup -c --environment NODE_ENV:production",
     "eslint:fix": "eslint src --fix",
     "test": "vitest",

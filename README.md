@@ -56,7 +56,7 @@ npx buf generate
 或者，生成远程git仓库中所有protobuf文件到本地
 
 ```sh
-npx buf generate https://gitea.com/gitea/actions-proto-def.git
+npx buf generate https://gitea.com/sobird/actions-proto-def.git
 ```
 
 ### 插件选项
