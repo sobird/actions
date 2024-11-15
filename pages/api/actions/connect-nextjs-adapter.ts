@@ -73,6 +73,7 @@ interface NextJsApiRouterOptions extends ConnectRouterOptions {
  */
 export function nextJsApiRouter(options: NextJsApiRouterOptions): ApiRoute {
   if (options.acceptCompression === undefined) {
+    // eslint-disable-next-line no-param-reassign
     options.acceptCompression = [compressionGzip, compressionBrotli];
   }
   const router = createConnectRouter(options);

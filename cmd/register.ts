@@ -82,7 +82,7 @@ const registerAction = async (options: RegisterArgs, program: typeof Command.pro
       type: 'text',
       name: 'instance',
       message: 'Enter the runner instance URL',
-      initial: 'https://gitea.com',
+      initial: 'http://localhost:3000',
     });
   }
   if (!token) {
