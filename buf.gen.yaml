@@ -10,6 +10,7 @@ plugins:
     opt:
       # Add more plugin options here
       - target=ts
+      - import_extension=
   # dependencies This will invoke protoc-gen-es and write output to pkg/client
   - remote: buf.build/bufbuild/es:v1.10.0
     out: pkg/client
