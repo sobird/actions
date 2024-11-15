@@ -12,29 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// https://github.com/connectrpc/connect-es/issues/542
+
 import { createConnectRouter } from '@connectrpc/connect';
+import {
+  UniversalHandler,
+  universalServerRequestFromFetch,
+  universalServerResponseToFetch,
+} from '@connectrpc/connect/protocol';
 import {
   compressionBrotli,
   compressionGzip,
-  universalRequestFromNodeRequest,
-  universalResponseToNodeResponse,
 } from '@connectrpc/connect-node';
+import { NextRequest } from 'next/server';
 
-import type { JsonValue } from '@bufbuild/protobuf';
 import type {
   ConnectRouter,
   ConnectRouterOptions,
-  ContextValues,
 } from '@connectrpc/connect';
-import type { UniversalHandler } from '@connectrpc/connect/protocol';
-import type { NextApiRequest, NextApiResponse, PageConfig } from 'next';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type NextApiHandler<T = any> = (
-  req: NextApiRequest,
-  res: NextApiResponse<T>,
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-) => unknown | Promise<unknown>;
 
 interface NextJsApiRouterOptions extends ConnectRouterOptions {
   /**
@@ -43,7 +38,7 @@ interface NextJsApiRouterOptions extends ConnectRouterOptions {
    * Create a file `connect.ts` with a default export such as this:
    *
    * ```ts
-   * import {ConnectRouter} from "@connectrpc/connect";
+   * import { ConnectRouter } from "@connectrpc/connect";
    *
    * export default (router: ConnectRouter) => {
    *   router.service(ElizaService, {});
@@ -53,7 +48,6 @@ interface NextJsApiRouterOptions extends ConnectRouterOptions {
    * Then pass this function here.
    */
   routes: (router: ConnectRouter) => void;
-
   /**
    * Serve all handlers under this prefix. For example, the prefix "/something"
    * will serve the RPC foo.FooService/Bar under "/something/foo.FooService/Bar".
@@ -61,17 +55,12 @@ interface NextJsApiRouterOptions extends ConnectRouterOptions {
    * This is `/api` by default for Next.js.
    */
   prefix?: string;
-  /**
-   * Context values to extract from the request. These values are passed to
-   * the handlers.
-   */
-  contextValues?: (req: NextApiRequest) => ContextValues;
 }
 
 /**
  * Provide your Connect RPCs via Next.js API routes.
  */
-export function nextJsApiRouter(options: NextJsApiRouterOptions): ApiRoute {
+export function nextJsApiRouter(options: NextJsApiRouterOptions) {
   if (options.acceptCompression === undefined) {
     // eslint-disable-next-line no-param-reassign
     options.acceptCompression = [compressionGzip, compressionBrotli];
@@ -84,45 +73,33 @@ export function nextJsApiRouter(options: NextJsApiRouterOptions): ApiRoute {
     paths.set(prefix + uHandler.requestPath, uHandler);
   }
 
-  async function handler(req: NextApiRequest, res: NextApiResponse) {
-    // Strip the query parameter when matching paths.
-    const requestPath = req.url?.split('?', 2)[0] ?? '';
-    const uHandler = paths.get(requestPath);
+  async function handler(req: NextRequest) {
+    const uHandler = paths.get(req.nextUrl.pathname);
+
     if (!uHandler) {
-      res.writeHead(404);
-      res.end();
-      return;
+      return new Response(undefined, { status: 404 });
     }
+
     try {
-      const uRes = await uHandler(
-        universalRequestFromNodeRequest(
-          req,
-          res,
-          req.body as JsonValue | undefined,
-          options.contextValues?.(req),
-        ),
-      );
-      await universalResponseToNodeResponse(uRes, res);
-    } catch (e) {
+      const uReq = universalServerRequestFromFetch(req, {});
+      const uRes = await uHandler(uReq);
+      return universalServerResponseToFetch(uRes);
+    } catch (error) {
       // eslint-disable-next-line no-console
       console.error(
         `handler for rpc ${uHandler.method.name} of ${uHandler.service.typeName} failed`,
-        e,
+        error,
       );
     }
   }
 
   return {
-    handler,
+    POST: handler,
+    GET: handler,
     config: {
       api: {
         bodyParser: false,
       },
     },
   };
-}
-
-interface ApiRoute {
-  handler: NextApiHandler;
-  config: PageConfig;
 }
