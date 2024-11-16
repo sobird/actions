@@ -1,11 +1,12 @@
 import { ConnectRouter, ConnectError } from '@connectrpc/connect';
 import log4js from 'log4js';
 
-import { ActionsRunnerTokenModel } from '@/models';
+import { ActionsRunnerModel, ActionsRunnerTokenModel } from '@/models';
 import { PingResponse } from '@/pkg/service/ping/v1/messages_pb';
 import { PingService } from '@/pkg/service/ping/v1/services_connect';
 import { RegisterResponse, Runner } from '@/pkg/service/runner/v1/messages_pb';
 import { RunnerService } from '@/pkg/service/runner/v1/services_connect';
+import { tryCatch } from '@/utils/test';
 
 const logger = log4js.getLogger('connect');
 
@@ -50,9 +51,32 @@ export default (router: ConnectRouter) => {
 
       // create new runner
 
+      await tryCatch(async () => {
+
+      });
+
+      const { name } = req;
+
+      const actionsRunner = await ActionsRunnerModel.create({
+        name: req.name,
+        ownerId: actionsRunnerToken.ownerId,
+        repositoryId: actionsRunnerToken.repositoryId,
+        version: req.version,
+        labels: req.labels,
+
+        token: 'token',
+        tokenHash: 'tokenHash',
+        tokenSalt: 'tokenSalt',
+      });
+
       return new RegisterResponse({
         runner: new Runner({
-          name: 'sobird111',
+          id: actionsRunner.id,
+          uuid: actionsRunner.uuid,
+          token: actionsRunner.token,
+          name,
+          version: actionsRunner.version,
+          labels: actionsRunner.labels,
         }),
       });
     },

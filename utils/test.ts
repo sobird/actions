@@ -44,3 +44,12 @@ export function createTestFile(name: string = 'test-file') {
   });
   return file;
 }
+
+export async function tryCatch(fn: () => void | Promise<void>) {
+  try {
+    await fn();
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error);
+  }
+}

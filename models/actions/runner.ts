@@ -28,11 +28,11 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
 
   declare repositoryId: number;
 
-  declare description: string;
+  declare description: CreationOptional<string>;
 
-  declare base: number;
+  declare base: CreationOptional<number>;
 
-  declare repoRange: string;
+  declare repoRange: CreationOptional<string>;
 
   declare token: string;
 
@@ -40,11 +40,11 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
 
   declare tokenSalt: string;
 
-  declare lastOnline: Date;
+  declare lastOnline: CreationOptional<Date>;
 
-  declare lastActive: Date;
+  declare lastActive: CreationOptional<Date>;
 
-  declare labels: string;
+  declare labels: string[];
 
   // static associate({ User }) {
   //   this.belongsTo(User, { onDelete: 'cascade' });
@@ -54,8 +54,9 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
 ActionsRunner.init(
   {
     uuid: {
-      type: DataTypes.CHAR(36),
+      type: DataTypes.UUIDV4,
       unique: true,
+      defaultValue: DataTypes.UUIDV4(),
     },
     name: {
       type: DataTypes.STRING(255),
@@ -86,21 +87,26 @@ ActionsRunner.init(
     },
     tokenHash: {
       type: DataTypes.STRING,
-      unique: true,
     },
     tokenSalt: {
       type: DataTypes.STRING,
     },
     lastOnline: {
       type: DataTypes.DATE,
-      allowNull: false,
+      defaultValue: DataTypes.DATE(),
     },
     lastActive: {
       type: DataTypes.DATE,
-      allowNull: false,
+      defaultValue: DataTypes.DATE(),
     },
     labels: {
       type: DataTypes.TEXT,
+      get() {
+        return JSON.parse(this.dataValues.labels as unknown as string);
+      },
+      set(value: string) {
+        this.setDataValue('labels', JSON.stringify(value) as unknown as string[]);
+      },
       comment: 'Store labels defined in state file (default: .runner file) of `runner`',
     },
   },
