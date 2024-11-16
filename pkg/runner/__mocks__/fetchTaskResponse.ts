@@ -2,7 +2,7 @@ import fs from 'node:fs';
 
 import { JsonValue, Struct } from '@bufbuild/protobuf';
 
-import { FetchTaskResponse, Task, TaskNeed } from '@/pkg/client/runner/v1/messages_pb';
+import { FetchTaskResponse, Task, TaskNeed } from '@/pkg/service/runner/v1/messages_pb';
 
 import contextJson from './data/context';
 

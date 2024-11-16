@@ -1,4 +1,4 @@
-import githubContext from '@/pkg/client/__mocks__/data/context';
+import githubContext from '@/pkg/service/__mocks__/data/context';
 
 import Context from '.';
 

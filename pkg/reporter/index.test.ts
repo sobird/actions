@@ -6,7 +6,7 @@
 import log4js from 'log4js';
 
 import Reporter from './index';
-import Client from '../client';
+import Client from '../service';
 
 vi.mock('log4js');
 vi.mock('../client');

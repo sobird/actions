@@ -14,7 +14,7 @@ import retry from 'retry';
 import type { Client } from '@/pkg';
 import {
   LogRow, Task, TaskState, StepState, Result, UpdateTaskRequest, UpdateLogRequest,
-} from '@/pkg/client/runner/v1/messages_pb';
+} from '@/pkg/service/runner/v1/messages_pb';
 import { Replacer } from '@/utils';
 
 import { LoggerHook, LogEntry } from '../common/logger';

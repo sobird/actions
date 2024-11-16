@@ -1,6 +1,6 @@
 import { URL } from 'node:url';
 
-import { createPromiseClient, PromiseClient } from '@connectrpc/connect';
+import { createClient, Client } from '@connectrpc/connect';
 import { createConnectTransport, ConnectTransportOptions } from '@connectrpc/connect-node';
 
 import { PingService } from './ping/v1/services_connect';
@@ -11,10 +11,10 @@ const TokenHeader = 'x-runner-token';
 /**  @deprecated could be removed after Gitea 1.20 released */
 const VersionHeader = 'x-runner-version';
 
-export default class Client {
-  PingServiceClient: PromiseClient<typeof PingService>;
+export default class ServiceClient {
+  PingServiceClient: Client<typeof PingService>;
 
-  RunnerServiceClient: PromiseClient<typeof RunnerService>;
+  RunnerServiceClient: Client<typeof RunnerService>;
 
   constructor(
     public endpoint: string,
@@ -49,7 +49,7 @@ export default class Client {
       ...options,
     });
 
-    this.PingServiceClient = createPromiseClient(PingService, transport);
-    this.RunnerServiceClient = createPromiseClient(RunnerService, transport);
+    this.PingServiceClient = createClient(PingService, transport);
+    this.RunnerServiceClient = createClient(RunnerService, transport);
   }
 }
