@@ -112,6 +112,8 @@ class Constants {
   public static readonly Directory = Directory;
 
   public static readonly CompositeActionsMaxDepth = 9;
+
+  public static readonly ServerPathPrefix = '/api/actions';
 }
 
 export default Constants;

@@ -3,6 +3,7 @@ import { URL } from 'node:url';
 import { createClient, Client } from '@connectrpc/connect';
 import { createConnectTransport, ConnectTransportOptions } from '@connectrpc/connect-node';
 
+import Constants from '../common/constants';
 import { PingService } from './ping/v1/services_connect';
 import { RunnerService } from './runner/v1/services_connect';
 
@@ -24,7 +25,7 @@ export default class ServiceClient {
     public version?: string,
     public options?: ConnectTransportOptions,
   ) {
-    const baseUrl = new URL('/api/actions', endpoint).toString();
+    const baseUrl = new URL(Constants.ServerPathPrefix, endpoint).toString();
 
     // A transport for clients using the Connect protocol with Node.js `http` module
     const transport = createConnectTransport({

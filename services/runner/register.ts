@@ -4,7 +4,7 @@ import { ActionsRunnerModel, ActionsRunnerTokenModel } from '@/models';
 import { RegisterResponse, Runner } from '@/pkg/service/runner/v1/messages_pb';
 import { tryCatch } from '@/utils/test';
 
-import { ServiceMethodImpl } from '.';
+import type { ServiceMethodImpl } from '.';
 
 // Register register a new runner in server.
 export const register: ServiceMethodImpl<'register'> = async (req) => {
