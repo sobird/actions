@@ -29,3 +29,11 @@ Object.values(models).forEach((model: any) => {
 export type Models = typeof models;
 export { sequelize };
 export default models;
+
+// declare module 'sequelize' {
+//   interface Sequelize {
+//     readonly models: {
+//       [key: string]: ModelCtor<Model>;
+//     }
+//   }
+// }

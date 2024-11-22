@@ -104,6 +104,16 @@ const Directory = {
   get Update() { return path.join(Directory.Work, 'update'); },
 };
 
+class Protocol {
+  public static readonly PathPrefix = '/api/actions';
+
+  public static readonly XRunnerUUID = 'x-runner-uuid';
+
+  public static readonly XRunnerToken = 'x-runner-token';
+
+  public static readonly XRunnerVersion = 'x-runner-version';
+}
+
 class Constants {
   public static readonly Runner = Runner;
 
@@ -114,6 +124,8 @@ class Constants {
   public static readonly CompositeActionsMaxDepth = 9;
 
   public static readonly ServerPathPrefix = '/api/actions';
+
+  public static readonly Protocol = Protocol;
 }
 
 export default Constants;

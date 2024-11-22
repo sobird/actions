@@ -7,10 +7,7 @@ import Constants from '../common/constants';
 import { PingService } from './ping/v1/services_connect';
 import { RunnerService } from './runner/v1/services_connect';
 
-const UUIDHeader = 'x-runner-uuid';
-const TokenHeader = 'x-runner-token';
-/**  @deprecated could be removed after Gitea 1.20 released */
-const VersionHeader = 'x-runner-version';
+const { XRunnerUUID, XRunnerToken, XRunnerVersion } = Constants.Protocol;
 
 export default class ServiceClient {
   PingServiceClient: Client<typeof PingService>;
@@ -35,13 +32,13 @@ export default class ServiceClient {
         (next) => {
           return async (req) => {
             if (uuid) {
-              req.header.set(UUIDHeader, uuid);
+              req.header.set(XRunnerUUID, uuid);
             }
             if (token) {
-              req.header.set(TokenHeader, token);
+              req.header.set(XRunnerToken, token);
             }
             if (version) {
-              req.header.set(VersionHeader, version);
+              req.header.set(XRunnerVersion, version);
             }
             return next(req);
           };
