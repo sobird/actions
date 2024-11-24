@@ -1,4 +1,4 @@
-import { ConnectError } from '@connectrpc/connect';
+import { ConnectError, createContextKey } from '@connectrpc/connect';
 
 import { ActionsRunnerModel } from '@/models';
 import Constants from '@/pkg/common/constants';
@@ -8,12 +8,10 @@ import type { ServiceMethodImpl } from '.';
 
 const { XRunnerUUID, XRunnerToken, XRunnerVersion } = Constants.Protocol;
 
-export const fetchTask: ServiceMethodImpl<'fetchTask'> = async (req, { requestHeader }) => {
-  console.log('requestHeader', requestHeader);
-  const runnerUUID = requestHeader.get(XRunnerUUID);
-  console.log('runnerUUID', runnerUUID);
-
+export const fetchTask: ServiceMethodImpl<'fetchTask'> = async (req, res) => {
   // todo task version
+
+  console.log('req', res);
 
   return new FetchTaskResponse({
 

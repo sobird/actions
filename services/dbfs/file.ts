@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 
 import { sequelize } from '@/models';
@@ -6,6 +7,8 @@ import DbfsMeta from '@/models/dbfs/meta';
 import { trimSuffix } from '@/utils';
 
 const DefaultFileBlockSize: number = 32 * 1024;
+
+// fs.Stats(dev, mode, nlink, uid, gid, rdev, blksize, ino, size, blocks, atimeMs, mtimeMs, ctimeMs, birthtimeMs)
 
 class DbFile {
   public metaId: number = 0;
@@ -22,44 +25,42 @@ class DbFile {
 
   }
 
-  async open(flag: string) {
-    if (flag === 'w' || flag === 'w+') {
+  async open(flags: number) {
+    if ((flags & fs.constants.O_WRONLY) !== 0) {
       this.allowWrite = true;
-    } else if (flag === 'r' || flag === 'r+') {
+    } else if ((flags & fs.constants.O_RDWR) !== 0) {
       this.allowRead = true;
       this.allowWrite = true;
     } else {
       this.allowRead = true;
     }
 
-    try {
-      if (this.allowWrite) {
-        if (flag.includes('w')) {
-          if (flag.includes('x')) {
-            // File must not exist
-            if (this.metaId !== 0) {
-              throw new Error('EEXIST: file already exists');
-            }
-          } else {
-            // Create a new file if none exists
-            await this.createEmpty();
+    if (this.allowWrite) {
+      if (flags & fs.constants.O_CREAT) {
+        if (flags & fs.constants.O_EXCL) {
+          // File must not exist
+          if (this.metaId !== 0) {
+            throw new Error('EEXIST: file already exists');
           }
-        }
-
-        if (flag.includes('w')) {
-          await this.truncate();
-        }
-        if (flag.includes('a')) {
-          await this.seek(0, 'SeekEnd');
+        } else {
+          // Create a new file if none exists
+          await this.createEmpty();
         }
       }
 
-      // Read-only mode
-      if (!this.allowWrite && this.metaId === 0) {
-        throw new Error('ENOENT: no such file or directory');
+      if (flags & fs.constants.O_TRUNC) {
+        await this.truncate();
       }
-    } catch (err) {
-      return err;
+      if (flags & fs.constants.O_APPEND) {
+        await this.seek(0, 'SeekEnd');
+      }
+
+      return;
+    }
+
+    // Read-only mode
+    if (this.metaId === 0) {
+      throw new Error('ENOENT: no such file or directory');
     }
   }
 
@@ -105,7 +106,7 @@ class DbFile {
 
     for (let i = realRead; i < needRead; i++) {
       // eslint-disable-next-line no-param-reassign
-      buffer[i] = 0;
+      // buffer[i] = 0;
     }
 
     return needRead;
@@ -118,6 +119,8 @@ class DbFile {
 
     const fileMeta = await DbFile.findFileMetaById(this.metaId);
     const readBytes = await this.readAt(fileMeta, this.offset, buffer);
+
+    console.log('readBytes', readBytes);
 
     this.offset += readBytes;
 
@@ -226,14 +229,10 @@ class DbFile {
       throw new Error('ErrExist');
     }
 
-    try {
-      await DbfsMeta.create({
-        fullPath: this.fullPath,
-        blockSize: this.blockSize,
-      });
-    } catch (error) {
-      console.log('error', error);
-    }
+    await DbfsMeta.create({
+      fullPath: this.fullPath,
+      blockSize: this.blockSize,
+    });
 
     await this.loadMetaByPath();
   }
@@ -283,10 +282,16 @@ class DbFile {
 
   async stat() {
     if (this.metaId === 0) {
-      return 0;
+      throw Error('ErrInvalid');
     }
 
-    return DbFile.findFileMetaById(this.metaId);
+    const fileMeta = await DbFile.findFileMetaById(this.metaId);
+    const stat = new fs.Stats();
+    stat.blksize = fileMeta?.blockSize || 0;
+    stat.size = fileMeta?.fileSize || 0;
+    stat.ctime = fileMeta?.createdAt || new Date();
+    stat.mtime = fileMeta?.updatedAt || new Date();
+    return stat;
   }
 
   async loadMetaByPath() {

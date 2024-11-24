@@ -12,15 +12,19 @@ const defaultBufSize = MaxLineSize;
 
 class Log {
   static async write(filename: string, offset: number, rows: LogRow[]) {
-    let flag = 'w';
+    let flags = 'w';
     if (offset !== 0) {
-      flag = 'r+';
+      flags = 'r+';
     }
     const name = DBFSPrefix + filename;
-    const fd = await fsP.open(name, flag);
+    const fd = await fsP.open(name, flags);
 
     const stat = await fd.stat();
     console.log('stat', stat);
+
+    if (stat.size < offset) {
+      throw Error(`size of ${name} is less than offset`);
+    }
 
     // if (offset === 0) {
     //   await fd.write(Buffer.alloc(0), 0, undefined, 0);
@@ -31,11 +35,15 @@ class Log {
     const ns = [];
     for await (const row of rows) {
       const line = `${this.format(row.time!.toDate(), row.content)}\n`;
-      const n = await fd.write(Buffer.from(line), 0, line.length, null);
+      const n = await fd.write(Buffer.from(line), offset, line.length, null);
       ns.push(n);
     }
     await fd.close();
     return ns;
+  }
+
+  static read(filename: string, offset: number, limit: number) {
+
   }
 
   static format(timestamp: Date, content: string) {

@@ -25,6 +25,10 @@ class DbfsMeta extends BaseModel<DbfsMetaAttributes, DbfsMetaCreationAttributes>
   declare blockSize: number;
 
   declare fileSize: CreationOptional<number>;
+
+  declare createdAt: CreationOptional<Date>;
+
+  declare updatedAt: CreationOptional<Date>;
 }
 
 DbfsMeta.init(
@@ -48,6 +52,8 @@ DbfsMeta.init(
       defaultValue: 0,
       allowNull: false,
     },
+    createdAt: DataTypes.DATE,
+    updatedAt: DataTypes.DATE,
   },
   {
     sequelize,

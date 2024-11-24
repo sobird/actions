@@ -15,7 +15,7 @@
 // https://github.com/connectrpc/connect-es/blob/main/packages/connect-next/src/connect-nextjs-adapter.ts
 // https://github.com/connectrpc/connect-es/issues/542
 
-import { createConnectRouter } from '@connectrpc/connect';
+import { createConnectRouter, ConnectError, createContextKey } from '@connectrpc/connect';
 import {
   UniversalHandler,
   universalServerRequestFromFetch,
@@ -27,11 +27,15 @@ import {
 } from '@connectrpc/connect-node';
 import { NextRequest } from 'next/server';
 
+import { ActionsRunnerModel } from '@/models';
+import Constants from '@/pkg/common/constants';
+
 import type {
   ConnectRouter,
   ConnectRouterOptions,
 } from '@connectrpc/connect';
 
+const { XRunnerUUID, XRunnerToken, XRunnerVersion } = Constants.Protocol;
 interface NextJsApiRouterOptions extends ConnectRouterOptions {
   /**
    * Route definitions. We recommend the following pattern:
@@ -66,6 +70,45 @@ export function nextJsApiRouter(options: NextJsApiRouterOptions) {
     // eslint-disable-next-line no-param-reassign
     options.acceptCompression = [compressionGzip, compressionBrotli];
   }
+
+  // eslint-disable-next-line no-param-reassign
+  options.interceptors = [
+    (next) => {
+      return async (req) => {
+        const methodName = req.method.name;
+        if (methodName === 'Register') {
+          return next(req);
+        }
+        const uuid = req.header.get(XRunnerUUID)!;
+        const token = req.header.get(XRunnerToken)!;
+
+        const runner = await ActionsRunnerModel.findOne({ where: { uuid } });
+
+        if (!runner) {
+          throw new ConnectError('unregistered runner', 16);
+        }
+
+        // auth token
+
+        runner.lastOnline = new Date();
+        if (methodName === 'UpdateTask' || methodName === 'UpdateLog') {
+          runner.lastActive = new Date();
+        }
+
+        req.header.set('x-test', 'test');
+
+        console.log('req.contextValues', req);
+
+        // req.contextValues.set(createContextKey('runner1'), 'dddd');
+
+        // console.log('runner save', req);
+        await runner.save();
+
+        return next(req);
+      };
+    },
+  ];
+
   const router = createConnectRouter(options);
   options.routes(router);
   const prefix = options.prefix ?? '/api';

@@ -2,6 +2,7 @@ import { ConnectError } from '@connectrpc/connect';
 
 import { ActionsTaskModel } from '@/models';
 import Constants from '@/pkg/common/constants';
+import Log from '@/pkg/log';
 import { UpdateLogResponse } from '@/pkg/service/runner/v1/messages_pb';
 
 import type { ServiceMethodImpl } from '.';
@@ -29,8 +30,21 @@ export const updateLog: ServiceMethodImpl<'updateLog'> = async (req, { requestHe
   }
 
   const rows = req.rows.slice(ack - Number(req.index));
+  const ns = await Log.write('test.log', task?.logSize || 0, rows);
 
-  return new UpdateLogResponse({
-
+  task!.logLength += rows.length;
+  ns.forEach((item) => {
+    // task!.logIndexes =
+    task!.logSize += item.bytesWritten;
   });
+
+  response.ackIndex = BigInt(task!.logLength);
+
+  if (req.noMore) {
+    task!.logInStorage = true;
+  }
+
+  await task?.save();
+
+  return response;
 };
