@@ -13,16 +13,21 @@ import { sequelize } from '@/lib/sequelize';
 import ActionsRunner from './actions/runner';
 import ActionsRunnerToken from './actions/runner_token';
 import ActionsTask from './actions/task';
+import { DbfsData, DbfsMeta } from './dbfs';
 
 // Model alias
 export { ActionsRunnerToken as ActionsRunnerTokenModel };
 export { ActionsRunner as ActionsRunnerModel };
 export { ActionsTask as ActionsTaskModel };
+export { DbfsData as DbfsDataModel };
+export { DbfsMeta as DbfsMetaModel };
 
 const models = {
   ActionsRunnerToken,
   ActionsRunner,
   ActionsTask,
+  DbfsData,
+  DbfsMeta,
 };
 
 Object.values(models).forEach((model: any) => {

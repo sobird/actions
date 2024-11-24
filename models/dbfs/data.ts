@@ -40,6 +40,7 @@ DbfsData.init(
     },
     revision: {
       type: DataTypes.INTEGER,
+      defaultValue: 0,
       allowNull: false,
     },
     metaId: {
@@ -48,10 +49,12 @@ DbfsData.init(
     },
     blobOffset: {
       type: DataTypes.INTEGER,
+      defaultValue: 0,
       allowNull: false,
     },
     blobSize: {
       type: DataTypes.INTEGER,
+      defaultValue: 0,
       allowNull: false,
     },
     blobData: {

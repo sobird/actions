@@ -34,16 +34,19 @@ class DbFile {
 
     try {
       if (this.allowWrite) {
-        if (flag.includes('c')) {
-          // File must not exist
-          if (this.metaId !== 0) {
-            throw new Error('EEXIST: file already exists');
+        if (flag.includes('w')) {
+          if (flag.includes('x')) {
+            // File must not exist
+            if (this.metaId !== 0) {
+              throw new Error('EEXIST: file already exists');
+            }
+          } else {
+            // Create a new file if none exists
+            await this.createEmpty();
           }
-        } else if (!flag.includes('x') && this.metaId === 0) {
-          // Create a new file if none exists
-          await this.createEmpty();
         }
-        if (flag.includes('t')) {
+
+        if (flag.includes('w')) {
           await this.truncate();
         }
         if (flag.includes('a')) {
@@ -159,7 +162,7 @@ class DbFile {
 
       // eslint-disable-next-line no-await-in-loop
       const [affectedCount] = await DbfsData.update({
-        revision: 1,
+        revision: sequelize.literal('revision + 1'),
         blobData: buf,
       }, {
         where: {
@@ -219,14 +222,18 @@ class DbFile {
   }
 
   async createEmpty() {
-    if (this.metaId === 0) {
-      return;
+    if (this.metaId !== 0) {
+      throw new Error('ErrExist');
     }
 
-    await DbfsMeta.create({
-      fullPath: this.fullPath,
-      blockSize: this.blockSize,
-    });
+    try {
+      await DbfsMeta.create({
+        fullPath: this.fullPath,
+        blockSize: this.blockSize,
+      });
+    } catch (error) {
+      console.log('error', error);
+    }
 
     await this.loadMetaByPath();
   }
@@ -303,6 +310,12 @@ class DbFile {
     cleanedPath = trimSuffix(cleanedPath, '/');
     const count = (cleanedPath.match(/\//g) || []).length;
     return `${count}:${cleanedPath}`;
+  }
+
+  static async New(p: string) {
+    const df = new DbFile(this.buildPath(p));
+    await df.loadMetaByPath();
+    return df;
   }
 }
 
