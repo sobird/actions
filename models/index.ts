@@ -12,14 +12,17 @@ import { sequelize } from '@/lib/sequelize';
 
 import ActionsRunner from './actions/runner';
 import ActionsRunnerToken from './actions/runner_token';
+import ActionsTask from './actions/task';
 
 // Model alias
 export { ActionsRunnerToken as ActionsRunnerTokenModel };
 export { ActionsRunner as ActionsRunnerModel };
+export { ActionsTask as ActionsTaskModel };
 
 const models = {
-  ActionsRunner,
   ActionsRunnerToken,
+  ActionsRunner,
+  ActionsTask,
 };
 
 Object.values(models).forEach((model: any) => {
