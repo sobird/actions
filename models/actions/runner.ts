@@ -36,11 +36,11 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
 
   declare repoRange: CreationOptional<string>;
 
-  declare token: string;
+  declare token: CreationOptional<string>;
 
-  declare tokenHash: string;
+  declare tokenHash: CreationOptional<string>;
 
-  declare tokenSalt: string;
+  declare tokenSalt: CreationOptional<string>;
 
   declare lastOnline: CreationOptional<Date>;
 

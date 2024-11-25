@@ -41,9 +41,9 @@ export const register: ServiceMethodImpl<'register'> = async (req) => {
     version: req.version,
     labels: req.labels,
 
-    token: 'token',
-    tokenHash: 'tokenHash',
-    tokenSalt: 'tokenSalt',
+    // token: 'token',
+    // tokenHash: 'tokenHash',
+    // tokenSalt: 'tokenSalt',
   });
 
   return new RegisterResponse({
