@@ -4,11 +4,11 @@ import { ActionsRunnerModel } from '@/models';
 import Constants from '@/pkg/common/constants';
 import { DeclareResponse } from '@/pkg/service/runner/v1/messages_pb';
 
-import type { ServiceMethodImpl } from '.';
+import type { RunnerServiceMethodImpl } from '.';
 
 const { XRunnerUUID, XRunnerToken, XRunnerVersion } = Constants.Protocol;
 
-export const declare: ServiceMethodImpl<'declare'> = async (req, { requestHeader }) => {
+export const declare: RunnerServiceMethodImpl<'declare'> = async (req, { requestHeader }) => {
   console.log('requestHeader', requestHeader);
   const runnerUUID = requestHeader.get(XRunnerUUID);
   console.log('runnerUUID', runnerUUID);

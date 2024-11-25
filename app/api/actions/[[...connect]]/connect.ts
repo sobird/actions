@@ -3,7 +3,7 @@ import { ConnectRouter } from '@connectrpc/connect';
 import { PingResponse } from '@/pkg/service/ping/v1/messages_pb';
 import { PingService } from '@/pkg/service/ping/v1/services_connect';
 import { RunnerService } from '@/pkg/service/runner/v1/services_connect';
-import { RunnerServiceImpl } from '@/services/runner';
+import { RunnerServiceImpl, RunnerInterceptors } from '@/services/runner';
 
 export default (router: ConnectRouter) => {
   // Register your service implementations here
@@ -21,5 +21,7 @@ export default (router: ConnectRouter) => {
     },
   });
 
-  router.service(RunnerService, RunnerServiceImpl);
+  router.service(RunnerService, RunnerServiceImpl, {
+    interceptors: RunnerInterceptors,
+  });
 };
