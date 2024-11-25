@@ -4,6 +4,8 @@
  * sobird<i@sobird.me> at 2024/11/16 23:31:19 created.
  */
 
+import { randomBytes, pbkdf2Sync } from 'node:crypto';
+
 import {
   DataTypes,
   type InferAttributes, InferCreationAttributes, CreationOptional,
@@ -84,12 +86,22 @@ ActionsRunner.init(
     },
     token: {
       type: DataTypes.STRING,
-    },
-    tokenHash: {
-      type: DataTypes.STRING,
+      defaultValue: randomBytes(20).toString('hex'),
+      allowNull: false,
+      comment: 'runner token',
     },
     tokenSalt: {
       type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: randomBytes(16).toString('hex'),
+      comment: 'token salt',
+    },
+    tokenHash: {
+      type: DataTypes.STRING,
+      defaultValue: (ee) => {
+        console.log('ee', ee);
+        return 'dddd';
+      },
     },
     lastOnline: {
       type: DataTypes.DATE,

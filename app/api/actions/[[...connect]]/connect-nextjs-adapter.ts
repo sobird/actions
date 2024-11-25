@@ -15,7 +15,7 @@
 // https://github.com/connectrpc/connect-es/blob/main/packages/connect-next/src/connect-nextjs-adapter.ts
 // https://github.com/connectrpc/connect-es/issues/542
 
-import { createConnectRouter, ConnectError, createContextKey } from '@connectrpc/connect';
+import { createConnectRouter, ConnectError } from '@connectrpc/connect';
 import {
   UniversalHandler,
   universalServerRequestFromFetch,
@@ -29,6 +29,7 @@ import { NextRequest } from 'next/server';
 
 import { ActionsRunnerModel } from '@/models';
 import Constants from '@/pkg/common/constants';
+import { runnerModelContextKey } from '@/services/runner';
 
 import type {
   ConnectRouter,
@@ -97,9 +98,9 @@ export function nextJsApiRouter(options: NextJsApiRouterOptions) {
 
         req.header.set('x-test', 'test');
 
-        console.log('req.contextValues', req);
+        console.log('req.contextValues', runnerModelContextKey);
 
-        // req.contextValues.set(createContextKey('runner1'), 'dddd');
+        req.contextValues.set(runnerModelContextKey, runner);
 
         // console.log('runner save', req);
         await runner.save();

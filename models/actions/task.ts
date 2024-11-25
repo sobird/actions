@@ -11,6 +11,8 @@ import {
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
+import ActionsRunner from './runner';
+
 /** These are all the attributes in the ActionsTask model */
 export type ActionsTaskAttributes = InferAttributes<ActionsTask>;
 
@@ -61,6 +63,11 @@ class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAt
   // static associate({ User }) {
   //   this.belongsTo(User, { onDelete: 'cascade' });
   // }
+
+  public static async createForRunner(runner: ActionsRunner) {
+    const t = sequelize.transaction();
+    const { ownerId, repositoryId } = runner;
+  }
 }
 
 ActionsTask.init(

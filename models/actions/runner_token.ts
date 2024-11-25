@@ -4,6 +4,8 @@
  * sobird<i@sobird.me> at 2024/11/16 20:02:24 created.
  */
 
+import { randomBytes } from 'crypto';
+
 import {
   DataTypes,
   type InferAttributes, InferCreationAttributes, CreationOptional,
@@ -29,14 +31,52 @@ class ActionsRunnerToken extends BaseModel<ActionsRunnerTokenAttributes, Actions
   // static associate({ User }) {
   //   this.belongsTo(User, { onDelete: 'cascade' });
   // }
+
+  // creates a new active runner token and invalidate all old tokens
+  public static async createForScope(ownerId: number, repositoryId: number) {
+    const runnerToken = this.build({
+      ownerId,
+      repositoryId,
+      enabled: true,
+    });
+
+    await sequelize.transaction(async () => {
+      await this.update({ enabled: false }, { where: { ownerId, repositoryId } });
+      await runnerToken.save();
+    });
+
+    return runnerToken;
+  }
+
+  /**
+   * returns the latest runner registration token
+   */
+  public static async findLatestByScope(ownerId: number, repositoryId: number) {
+    const runnerToken = await this.findOne({
+      where: {
+        ownerId,
+        repositoryId,
+      },
+      order: [
+        ['id', 'DESC'],
+      ],
+    });
+
+    if (!runnerToken) {
+      throw Error('runner registration token does not exist');
+    }
+
+    return runnerToken;
+  }
 }
 
 ActionsRunnerToken.init(
   {
     token: {
       type: DataTypes.STRING,
+      defaultValue: randomBytes(40).toString('hex'),
       allowNull: false,
-      comment: 'actions runner token',
+      comment: 'actions runner registration token',
     },
     ownerId: {
       type: DataTypes.INTEGER,
