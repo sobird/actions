@@ -15,24 +15,20 @@
 // https://github.com/connectrpc/connect-es/blob/main/packages/connect-next/src/connect-nextjs-adapter.ts
 // https://github.com/connectrpc/connect-es/issues/542
 
-import { createConnectRouter } from '@connectrpc/connect';
 import {
-  UniversalHandler,
+  createConnectRouter,
+  type ConnectRouter,
+  type ConnectRouterOptions,
+} from '@connectrpc/connect';
+import {
+  type UniversalHandler,
   universalServerRequestFromFetch,
   universalServerResponseToFetch,
 } from '@connectrpc/connect/protocol';
-import {
-  compressionBrotli,
-  compressionGzip,
-} from '@connectrpc/connect-node';
-import { NextRequest } from 'next/server';
+import { compressionBrotli, compressionGzip } from '@connectrpc/connect-node';
+import { type NextRequest } from 'next/server';
 
-import type {
-  ConnectRouter,
-  ConnectRouterOptions,
-} from '@connectrpc/connect';
-
-interface NextJsApiRouterOptions extends ConnectRouterOptions {
+interface NextConnectRouterOptions extends ConnectRouterOptions {
   /**
    * Route definitions. We recommend the following pattern:
    *
@@ -61,7 +57,7 @@ interface NextJsApiRouterOptions extends ConnectRouterOptions {
 /**
  * Provide your Connect RPCs via Next.js API routes.
  */
-export function nextJsApiRouter(options: NextJsApiRouterOptions) {
+export function createConnectHandler(options: NextConnectRouterOptions) {
   if (options.acceptCompression === undefined) {
     // eslint-disable-next-line no-param-reassign
     options.acceptCompression = [compressionGzip, compressionBrotli];
@@ -71,6 +67,7 @@ export function nextJsApiRouter(options: NextJsApiRouterOptions) {
   options.routes(router);
   const prefix = options.prefix ?? '/api';
   const paths = new Map<string, UniversalHandler>();
+
   for (const uHandler of router.handlers) {
     paths.set(prefix + uHandler.requestPath, uHandler);
   }
@@ -98,10 +95,5 @@ export function nextJsApiRouter(options: NextJsApiRouterOptions) {
   return {
     POST: handler,
     GET: handler,
-    config: {
-      api: {
-        bodyParser: false,
-      },
-    },
   };
 }

@@ -8,6 +8,8 @@ import { declare } from './declare';
 import { fetchTask } from './fetchTask';
 import { register } from './register';
 
+export { RunnerService } from '@/pkg/service/runner/v1/services_connect';
+
 export { default as RunnerInterceptors } from './interceptors';
 
 export type ServiceMethodImpl2<T extends keyof typeof RunnerService.methods> = ServiceImpl< typeof RunnerService >[T];
