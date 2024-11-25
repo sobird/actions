@@ -2,7 +2,7 @@ import { ConnectRouter } from '@connectrpc/connect';
 
 import { PingResponse } from '@/pkg/service/ping/v1/messages_pb';
 import { PingService } from '@/pkg/service/ping/v1/services_connect';
-import { RunnerService, RunnerServiceImpl, RunnerInterceptors } from '@/services/runner';
+import { RunnerService, RunnerServiceImpl, RunnerServiceInterceptors } from '@/services/runner';
 
 export const routes = (router: ConnectRouter) => {
   // Register your service implementations here
@@ -21,6 +21,6 @@ export const routes = (router: ConnectRouter) => {
   });
 
   router.service(RunnerService, RunnerServiceImpl, {
-    interceptors: RunnerInterceptors,
+    interceptors: RunnerServiceInterceptors,
   });
 };
