@@ -12,12 +12,14 @@ export { RunnerService } from '@/pkg/service/runner/v1/services_connect';
 
 export { default as RunnerInterceptors } from './interceptors';
 
-export type ServiceMethodImpl2<T extends keyof typeof RunnerService.methods> = ServiceImpl< typeof RunnerService >[T];
+export type ServiceMethodImpl<T extends keyof typeof RunnerService.methods> = ServiceImpl< typeof RunnerService >[T];
 
-export type ServiceMethodImpl<T extends ServiceType, K extends keyof T['methods']> = ServiceImpl<T>[K];
-export type RunnerServiceMethodImpl<M extends keyof typeof RunnerService.methods > = ServiceMethodImpl<typeof RunnerService, M>;
+export type ServiceMethodImpl2<T extends ServiceType, K extends keyof T['methods']> = ServiceImpl<T>[K];
+export type RunnerServiceMethodImpl<M extends keyof typeof RunnerService.methods > = ServiceMethodImpl2<typeof RunnerService, M>;
 
-export type Test<T extends ServiceType, K extends keyof T['methods']> = MethodImpl<T['methods'][K]>;
+export type Test< K extends keyof typeof RunnerService.methods> = MethodImpl<typeof RunnerService.methods[K]>;
+
+export type Test2 = typeof RunnerService.methods;
 
 export const runnerModelContextKey = createContextKey<ActionsRunnerModel | null>(null, {
   description: 'current runner model',
