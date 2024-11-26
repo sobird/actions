@@ -1,8 +1,13 @@
-import { Interceptor, ConnectError } from '@connectrpc/connect';
+import {
+  Interceptor, ConnectError, createContextKey, HandlerContext,
+} from '@connectrpc/connect';
 
 import { ActionsRunnerModel } from '@/models';
 import Constants from '@/pkg/common/constants';
-import { runnerModelContextKey } from '@/services/runner';
+
+const runnerModelContextKey = createContextKey<ActionsRunnerModel | null>(null, {
+  description: 'current runner model',
+});
 
 const { XRunnerUUID, XRunnerToken } = Constants.Protocol;
 const withRunner: Interceptor = (next) => {
@@ -34,5 +39,9 @@ const withRunner: Interceptor = (next) => {
     return next(req);
   };
 };
+
+export function RunnerModelFrom(values: HandlerContext['values']) {
+  return values.get(runnerModelContextKey);
+}
 
 export default withRunner;

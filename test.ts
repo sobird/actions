@@ -8,16 +8,11 @@ import {
 const algorithm: CipherCCMTypes = 'aes-128-ccm';
 const iv: BinaryLike = randomBytes(16);
 
-const key: CipherKey = pbkdf2Sync('secret', 'salt', 100000, 64, 'sha1');
-console.log('key', key);
-// console.log(key.toString('hex')); // '3745e48...08d59ae'
-
-const nonce = randomBytes(12);
+const key = pbkdf2Sync('secret', 'salt', 100000, 64, 'sha512').toString('hex');
+console.log(key.toString('hex')); // '3745e48...08d59ae'
 
 try {
-  const cipher = createCipheriv('aes-256-cbc', key.toString(), nonce, {
-    authTagLength: 16,
-  });
+  const cipher = createCipheriv('aes-256-cbc', key, iv);
   // ...
 } catch (e) {
   console.error('Error creating cipher:', e.message);

@@ -3,7 +3,6 @@ import { ConnectError } from '@connectrpc/connect';
 import { ActionsRunnerModel, ActionsRunnerTokenModel } from '@/models';
 import { RegisterResponse, Runner } from '@/pkg/service/runner/v1/messages_pb';
 import lodash from '@/utils/lodash';
-import { tryCatch } from '@/utils/test';
 
 import type { ServiceMethodImpl } from '.';
 
@@ -27,23 +26,22 @@ export const register: ServiceMethodImpl<'register'> = async (req) => {
     throw new ConnectError('runner registration token has been invalidated, please use the latest one', 4);
   }
 
+  if (runnerToken.ownerId > 0) {
+    //
+  }
+
+  if (runnerToken.repositoryId > 0) {
+    //
+  }
+
   // create new runner
   const name = lodash.truncate(req.name, { length: 255 });
-
-  await tryCatch(async () => {
-
-  });
-
   const runner = await ActionsRunnerModel.create({
     name,
     ownerId: runnerToken.ownerId,
     repositoryId: runnerToken.repositoryId,
     version: req.version,
     labels: req.labels,
-
-    // token: 'token',
-    // tokenHash: 'tokenHash',
-    // tokenSalt: 'tokenSalt',
   });
 
   return new RegisterResponse({
@@ -51,7 +49,7 @@ export const register: ServiceMethodImpl<'register'> = async (req) => {
       id: runner.id,
       uuid: runner.uuid,
       token: runner.token,
-      name,
+      name: runner.name,
       version: runner.version,
       labels: runner.labels,
     }),

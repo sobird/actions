@@ -51,6 +51,21 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
   // static associate({ User }) {
   //   this.belongsTo(User, { onDelete: 'cascade' });
   // }
+
+  public VerifyToken(token: string) {
+    if (!token) {
+      return false;
+    }
+    return ActionsRunner.hashToken(token, this.tokenSalt) === this.token;
+  }
+
+  /**
+   * 通过安全散列算法生成一个64位长度的hash串
+   */
+  public static hashToken(token: string, salt: string): string {
+    return pbkdf2Sync(token, salt, 100000, 64, 'sha512').toString('hex');
+    // return createHmac('sha256', salt).update(password).digest('hex');
+  }
 }
 
 ActionsRunner.init(
@@ -85,7 +100,7 @@ ActionsRunner.init(
       type: DataTypes.STRING,
     },
     token: {
-      type: DataTypes.STRING,
+      type: DataTypes.VIRTUAL,
       defaultValue: randomBytes(20).toString('hex'),
       allowNull: false,
       comment: 'runner token',
@@ -98,10 +113,6 @@ ActionsRunner.init(
     },
     tokenHash: {
       type: DataTypes.STRING,
-      defaultValue: (ee) => {
-        console.log('ee', ee);
-        return 'dddd';
-      },
     },
     lastOnline: {
       type: DataTypes.DATE,
@@ -128,8 +139,10 @@ ActionsRunner.init(
   },
 );
 
-// ActionsRunner.beforeCreate((model) => {
-
-// });
+ActionsRunner.beforeCreate((model) => {
+  // eslint-disable-next-line no-param-reassign
+  console.log('model.token', model.token);
+  model.tokenHash = ActionsRunner.hashToken(model.token, model.tokenSalt);
+});
 
 export default ActionsRunner;

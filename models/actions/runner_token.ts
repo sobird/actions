@@ -76,6 +76,7 @@ ActionsRunnerToken.init(
       type: DataTypes.STRING,
       defaultValue: randomBytes(40).toString('hex'),
       allowNull: false,
+      unique: true,
       comment: 'actions runner registration token',
     },
     ownerId: {
