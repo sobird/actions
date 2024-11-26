@@ -4,7 +4,7 @@
  * sobird<i@sobird.me> at 2024/11/16 23:31:19 created.
  */
 
-import { randomBytes, pbkdf2Sync } from 'node:crypto';
+import { randomBytes, pbkdf2Sync, timingSafeEqual } from 'node:crypto';
 
 import {
   DataTypes,
@@ -56,15 +56,12 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
     if (!token) {
       return false;
     }
-    return ActionsRunner.hashToken(token, this.tokenSalt) === this.token;
+    const tokenHash = ActionsRunner.hashToken(token, this.tokenSalt);
+    return timingSafeEqual(Buffer.from(tokenHash), Buffer.from(this.tokenHash));
   }
 
-  /**
-   * 通过安全散列算法生成一个64位长度的hash串
-   */
-  public static hashToken(token: string, salt: string): string {
+  public static hashToken(token: string, salt: string) {
     return pbkdf2Sync(token, salt, 100000, 64, 'sha512').toString('hex');
-    // return createHmac('sha256', salt).update(password).digest('hex');
   }
 }
 
@@ -113,6 +110,7 @@ ActionsRunner.init(
     },
     tokenHash: {
       type: DataTypes.STRING,
+      comment: 'token hash',
     },
     lastOnline: {
       type: DataTypes.DATE,
@@ -141,7 +139,6 @@ ActionsRunner.init(
 
 ActionsRunner.beforeCreate((model) => {
   // eslint-disable-next-line no-param-reassign
-  console.log('model.token', model.token);
   model.tokenHash = ActionsRunner.hashToken(model.token, model.tokenSalt);
 });
 
