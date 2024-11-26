@@ -17,6 +17,9 @@ export type ActionsTaskVersionAttributes = InferAttributes<ActionsTaskVersion>;
 /** Some attributes are optional in `ActionsTaskVersion.build` and `ActionsTaskVersion.create` calls */
 export type ActionsTaskVersionCreationAttributes = InferCreationAttributes<ActionsTaskVersion>;
 
+// If both ownerID and repoID is zero, its scope is global.
+// If ownerID is not zero and repoID is zero, its scope is org (there is no user-level runner currrently).
+// If ownerID is zero and repoID is not zero, its scope is repo.
 class ActionsTaskVersion extends BaseModel<ActionsTaskVersionAttributes, ActionsTaskVersionCreationAttributes> {
   declare token: CreationOptional<string>;
 
@@ -33,7 +36,10 @@ class ActionsTaskVersion extends BaseModel<ActionsTaskVersionAttributes, Actions
         repositoryId,
       },
     });
-    return taskVersion?.version || 0;
+
+    if (taskVersion) {
+      return BigInt(taskVersion.version);
+    }
   }
 
   public static async increaseVersionByScope(ownerId: number, repositoryId: number) {
@@ -88,7 +94,7 @@ ActionsTaskVersion.init(
     },
     version: {
       type: DataTypes.INTEGER,
-      defaultValue: 0,
+      defaultValue: 1,
       comment: 'task version',
     },
   },

@@ -12,23 +12,23 @@ import { RunnerModelFrom } from './interceptors/with_runner';
 // });
 
 export const fetchTask: ServiceMethodImpl<'fetchTask'> = async (req, { values }) => {
-  const runner = RunnerModelFrom(values);
-  console.log('runner', runner);
-  // console.log('runner', runner);
-  // const { ownerId = 0, repositoryId = 0 } = runner;
+  const runner = RunnerModelFrom(values)!;
+  const { ownerId = 0, repositoryId = 0 } = runner;
 
-  // const taskVersion = req.tasksVersion;
-  // const latestVersion = await ActionsTaskVersionModel.findOneVersionByScope(ownerId, repositoryId);
+  const taskVersion = req.tasksVersion;
+  let latestVersion = await ActionsTaskVersionModel.findOneVersionByScope(ownerId, repositoryId);
 
-  // console.log('latestVersion', latestVersion);
+  if (latestVersion === undefined) {
+    throw new ConnectError('query tasks version failed', 13);
+  }
 
-  // if (latestVersion === 0) {
-  //   await ActionsTaskVersionModel.increaseVersion(ownerId, repositoryId);
+  if (latestVersion === 0n) {
+    await ActionsTaskVersionModel.increaseVersion(ownerId, repositoryId);
 
-  //   latestVersion += 1;
-  // }
+    latestVersion += 1n;
+  }
 
-  // console.log('latestVersion', taskVersion, latestVersion);
+  console.log('latestVersion', taskVersion, latestVersion);
 
   // if (taskVersion !== BigInt(latestVersion)) {
   //   // if the task version in request is not equal to the version in db,
@@ -38,6 +38,6 @@ export const fetchTask: ServiceMethodImpl<'fetchTask'> = async (req, { values })
   // }
 
   return new FetchTaskResponse({
-
+    tasksVersion: latestVersion,
   });
 };
