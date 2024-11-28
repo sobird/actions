@@ -1,3 +1,6 @@
+export { default as lodash } from './lodash';
+export { default as secret } from './secret';
+
 export { prompt } from './prompt';
 export { Replacer } from './replacer';
 export { withTimeout } from './withTimeout';
@@ -17,4 +20,3 @@ export { readIgnoreSync } from './readIgnoreSync';
 export { assignIgnoreCase } from './assignIgnoreCase';
 export { trimSuffix } from './trimSuffix';
 export { trimPrefix } from './trimPrefix';
-export { default as lodash } from './lodash';

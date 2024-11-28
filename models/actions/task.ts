@@ -6,11 +6,15 @@
 
 import {
   DataTypes,
-  type InferAttributes, InferCreationAttributes, CreationOptional,
+  Association,
+  type InferAttributes,
+  type InferCreationAttributes,
+  type NonAttribute,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
+import ActionsRunJob from './run_job';
 import ActionsRunner from './runner';
 
 /** These are all the attributes in the ActionsTask model */
@@ -60,9 +64,15 @@ class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAt
 
   declare logExpired: Date;
 
-  // static associate({ User }) {
-  //   this.belongsTo(User, { onDelete: 'cascade' });
-  // }
+  declare Job?: NonAttribute<ActionsRunJob>;
+
+  static associate({ Job }) {
+    this.belongsTo(Job, { onDelete: 'cascade' });
+  }
+
+  declare static associations: {
+    Job: Association<ActionsTask, ActionsRunJob>;
+  };
 
   public static async createForRunner(runner: ActionsRunner) {
     const t = sequelize.transaction();

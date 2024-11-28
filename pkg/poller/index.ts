@@ -12,9 +12,9 @@ import RunnerConfig from '@/pkg/runner/config';
 import { Needs } from '@/pkg/runner/context/needs';
 import { withTimeout } from '@/utils';
 
-import { FetchTaskRequest, Task } from '../service/runner/v1/messages_pb';
 import { WithLoggerHook } from '../common/logger';
 import Reporter from '../reporter';
+import { FetchTaskRequest, Task } from '../service/runner/v1/messages_pb';
 import Workflow from '../workflow';
 
 const logger = log4js.getLogger();

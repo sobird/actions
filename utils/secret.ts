@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 const algorithm = 'aes-256-cfb';
 const separate = ':';
 
-// encrypts a string and given key with AES into a hex string
+/** encrypts a string and given key with AES into a hex string */
 export function encrypt(key: string, value: string) {
   const kh = crypto.createHash('sha256').update(key).digest();
   const iv = crypto.randomBytes(16);
@@ -15,8 +15,11 @@ export function encrypt(key: string, value: string) {
   return `${iv.toString('hex')}:${encrypted}`;
 }
 
-// decrypts a previously encrypted hex string and given key with AES.
+/** decrypts a previously encrypted hex string and given key with AES. */
 export function decrypt(key: string, hex: string) {
+  if (hex.length < 32) {
+    throw Error('ciphertext too short');
+  }
   const kh = crypto.createHash('sha256').update(key).digest();
   const [iv, value] = hex.split(separate);
 
@@ -25,3 +28,8 @@ export function decrypt(key: string, hex: string) {
   decrypted += decipher.final('utf8');
   return decrypted;
 }
+
+export default {
+  encrypt,
+  decrypt,
+};

@@ -10,10 +10,13 @@ import {
   type InferAttributes,
   type InferCreationAttributes,
   type CreationOptional,
+  type NonAttribute,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 import { type Models, type RunJobModel } from '@/models';
+
+import type Run from './run';
 
 /** These are all the attributes in the ActionsRunJob model */
 export type ActionsRunJobAttributes = InferAttributes<ActionsRunJob>;
@@ -53,6 +56,8 @@ class ActionsRunJob extends BaseModel<ActionsRunJobAttributes, ActionsRunJobCrea
   declare started: Date;
 
   declare stopped: Date;
+
+  declare Run?: NonAttribute<Run>;
 
   static associate({ Run }: Models) {
     // this.belongsTo(Run, { onDelete: 'cascade' });
