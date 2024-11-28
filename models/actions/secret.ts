@@ -33,7 +33,6 @@ class ActionsSecret extends BaseModel<ActionsSecretAttributes, ActionsSecretCrea
   //   this.belongsTo(User, { onDelete: 'cascade' });
   // }
 
-  // creates a new active runner token and invalidate all old tokens
   public static async findAllForTask(task: Task) {
     //
     console.log('task', task);
@@ -56,6 +55,9 @@ ActionsSecret.init(
       unique: true,
       allowNull: false,
       comment: 'actions secret label',
+      set(value: string) {
+        this.setDataValue('value', value.toUpperCase());
+      },
     },
     value: {
       type: DataTypes.TEXT,
