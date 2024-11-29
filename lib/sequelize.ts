@@ -16,8 +16,6 @@ import {
 } from 'sequelize';
 import sqlite3 from 'sqlite3';
 
-import type { Models } from '@/models';
-
 interface FindManyByPageOptions extends Omit<FindAndCountOptions, 'offset' | 'limit'> {
   page?: number;
   /** 每页条数 */
@@ -147,7 +145,7 @@ export class BaseModel<T extends {} = any, P extends {} = T> extends Model<T, P>
    * This method is not a part of Sequelize lifecycle.
    * The `models/index` file will call this method automatically.
    */
-  declare static associate: (models: Models) => void;
+  declare static associate: (models: never) => void;
 
   /** 分页查找模型数据 */
   public static async findManyByPage<M extends BaseModel>(

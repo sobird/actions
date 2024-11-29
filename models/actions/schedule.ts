@@ -38,7 +38,7 @@ class ActionsSchedule extends BaseModel<ActionsScheduleAttributes, ActionsSchedu
 
   declare ref: string;
 
-  declare commitSHA: string;
+  declare commitSha: string;
 
   declare content: string;
 }
@@ -76,7 +76,7 @@ ActionsSchedule.init(
     ref: {
       type: DataTypes.CHAR(255),
     },
-    commitSHA: {
+    commitSha: {
       type: DataTypes.CHAR(255),
     },
     content: {

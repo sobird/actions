@@ -14,7 +14,7 @@ import {
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import ActionsRunJob from './run_job';
+import ActionsRunJob from './job';
 import ActionsRunner from './runner';
 
 /** These are all the attributes in the ActionsTask model */

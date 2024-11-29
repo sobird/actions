@@ -11,6 +11,8 @@ import {
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
+import { type Models } from '.';
+
 /** These are all the attributes in the ActionsRun model */
 export type ActionsRunAttributes = InferAttributes<ActionsRun>;
 
@@ -58,9 +60,9 @@ class ActionsRun extends BaseModel<ActionsRunAttributes, ActionsRunCreationAttri
 
   declare duration: number;
 
-  // static associate({ User }) {
-  //   this.belongsTo(User, { onDelete: 'cascade' });
-  // }
+  static associate({ Job }: Models) {
+    this.hasMany(Job, { foreignKey: 'runId' });
+  }
 }
 
 ActionsRun.init(

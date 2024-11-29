@@ -10,33 +10,10 @@
 
 import { sequelize } from '@/lib/sequelize';
 
-import Run from './actions/run';
-import RunJob from './actions/run_job';
-import ActionsRunner from './actions/runner';
-import ActionsRunnerToken from './actions/runner_token';
-import ActionsTask from './actions/task';
-import ActionsTaskVersion from './actions/task_version';
-import { DbfsData, DbfsMeta } from './dbfs';
-
-// Model alias
-export { ActionsRunnerToken as ActionsRunnerTokenModel };
-export { ActionsRunner as ActionsRunnerModel };
-export { Run as RunModel };
-export { RunJob as RunJobModel };
-export { ActionsTask as ActionsTaskModel };
-export { ActionsTaskVersion as ActionsTaskVersionModel };
-export { DbfsData as DbfsDataModel };
-export { DbfsMeta as DbfsMetaModel };
+import Actions from './actions';
 
 const models = {
-  ActionsRunnerToken,
-  ActionsRunner,
-  Run,
-  RunJob,
-  ActionsTask,
-  ActionsTaskVersion,
-  DbfsData,
-  DbfsMeta,
+  Actions,
 };
 
 Object.values(models).forEach((model: any) => {

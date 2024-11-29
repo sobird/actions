@@ -8,7 +8,9 @@ import { randomBytes, pbkdf2Sync, timingSafeEqual } from 'node:crypto';
 
 import {
   DataTypes,
-  type InferAttributes, InferCreationAttributes, CreationOptional,
+  type InferAttributes,
+  type InferCreationAttributes,
+  type CreationOptional,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
@@ -52,7 +54,7 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
   //   this.belongsTo(User, { onDelete: 'cascade' });
   // }
 
-  public VerifyToken(token: string) {
+  public verifyToken(token: string) {
     if (!token) {
       return false;
     }

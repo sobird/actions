@@ -28,10 +28,6 @@ class ActionsRunnerToken extends BaseModel<ActionsRunnerTokenAttributes, Actions
 
   declare enabled: boolean;
 
-  // static associate({ User }) {
-  //   this.belongsTo(User, { onDelete: 'cascade' });
-  // }
-
   // creates a new active runner token and invalidate all old tokens
   public static async createForScope(ownerId: number, repositoryId: number) {
     const runnerToken = this.build({

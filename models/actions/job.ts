@@ -1,5 +1,5 @@
 /**
- * Actions Run Job Model
+ * Actions Run ActionsJob Model
  *
  * sobird<i@sobird.me> at 2024/11/25 16:33:36 created.
  */
@@ -14,17 +14,17 @@ import {
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
-import { type Models, type RunJobModel } from '@/models';
 
+import { type Models } from '.';
 import type Run from './run';
 
-/** These are all the attributes in the ActionsRunJob model */
-export type ActionsRunJobAttributes = InferAttributes<ActionsRunJob>;
+/** These are all the attributes in the ActionsJob model */
+export type ActionsJobAttributes = InferAttributes<ActionsJob>;
 
-/** Some attributes are optional in `ActionsRunJob.build` and `ActionsRunJob.create` calls */
-export type ActionsRunJobCreationAttributes = InferCreationAttributes<ActionsRunJob>;
+/** Some attributes are optional in `ActionsJob.build` and `ActionsJob.create` calls */
+export type ActionsJobCreationAttributes = InferCreationAttributes<ActionsJob>;
 
-class ActionsRunJob extends BaseModel<ActionsRunJobAttributes, ActionsRunJobCreationAttributes> {
+class ActionsJob extends BaseModel<ActionsJobAttributes, ActionsJobCreationAttributes> {
   declare id: CreationOptional<number>;
 
   declare name: string;
@@ -43,6 +43,7 @@ class ActionsRunJob extends BaseModel<ActionsRunJobAttributes, ActionsRunJobCrea
 
   declare workflowPayload: Blob;
 
+  /** job id in workflow, not job's id */
   declare jobId: string;
 
   declare needs: string[];
@@ -60,15 +61,15 @@ class ActionsRunJob extends BaseModel<ActionsRunJobAttributes, ActionsRunJobCrea
   declare Run?: NonAttribute<Run>;
 
   static associate({ Run }: Models) {
-    // this.belongsTo(Run, { onDelete: 'cascade' });
+    this.belongsTo(Run);
   }
 
   declare static associations: {
-    Run: Association<ActionsRunJob, RunJobModel>;
+    Run: Association<ActionsJob, Run>;
   };
 }
 
-ActionsRunJob.init(
+ActionsJob.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -88,6 +89,9 @@ ActionsRunJob.init(
     repositoryId: {
       type: DataTypes.BIGINT,
       allowNull: false,
+    },
+    commitSha: {
+      type: DataTypes.STRING,
     },
     isForkPullRequest: {
       type: DataTypes.BOOLEAN,
@@ -116,16 +120,16 @@ ActionsRunJob.init(
     started: DataTypes.DATE,
     stopped: DataTypes.DATE,
 
-    duration: DataTypes.BIGINT,
+    // duration: DataTypes.BIGINT,
   },
   {
     sequelize,
-    modelName: 'ActionsRunJob',
+    modelName: 'ActionsJob',
   },
 );
 
-// ActionsRunJob.beforeCreate((model) => {
+// ActionsJob.beforeCreate((model) => {
 
 // });
 
-export default ActionsRunJob;
+export default ActionsJob;
