@@ -15,12 +15,13 @@ import {
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
+import { type Models } from '.';
+
 /** These are all the attributes in the ActionsRunner model */
 export type ActionsRunnerAttributes = InferAttributes<ActionsRunner>;
 
 /** Some attributes are optional in `ActionsRunner.build` and `ActionsRunner.create` calls */
 export type ActionsRunnerCreationAttributes = InferCreationAttributes<ActionsRunner>;
-
 class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCreationAttributes> {
   declare uuid: CreationOptional<string>;
 
@@ -50,9 +51,9 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
 
   declare labels: string[];
 
-  // static associate({ User }) {
-  //   this.belongsTo(User, { onDelete: 'cascade' });
-  // }
+  static associate({ Task }: Models) {
+    this.hasMany(Task, { foreignKey: 'runnerId' });
+  }
 
   public verifyToken(token: string) {
     if (!token) {

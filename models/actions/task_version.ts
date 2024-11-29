@@ -27,7 +27,7 @@ class ActionsTaskVersion extends BaseModel<ActionsTaskVersionAttributes, Actions
 
   declare repositoryId: number;
 
-  declare version: CreationOptional<number>;
+  declare version: CreationOptional<BigInt>;
 
   public static async findOneVersionByScope(ownerId: number, repositoryId: number) {
     const taskVersion = await this.findOne({
@@ -38,7 +38,7 @@ class ActionsTaskVersion extends BaseModel<ActionsTaskVersionAttributes, Actions
     });
 
     if (taskVersion) {
-      return BigInt(taskVersion.version);
+      return taskVersion.version;
     }
   }
 
@@ -93,7 +93,7 @@ ActionsTaskVersion.init(
       comment: 'repository id',
     },
     version: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       defaultValue: 1,
       comment: 'task version',
     },

@@ -6,7 +6,8 @@
 
 import {
   DataTypes,
-  type InferAttributes, InferCreationAttributes,
+  type InferAttributes,
+  type InferCreationAttributes,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
@@ -33,9 +34,25 @@ class ActionsSecret extends BaseModel<ActionsSecretAttributes, ActionsSecretCrea
   //   this.belongsTo(User, { onDelete: 'cascade' });
   // }
 
-  public static async findAllForTask(task: Task) {
+  public static async SecretsForTask(task: Task) {
+    const secrets: Record<string, string> = {};
+
+    if (task.Job?.Run?.isForkPullRequest && task.Job.Run.triggerEvent !== 'pull_request_target') {
+      // ignore secrets for fork pull request, except GITHUB_TOKEN which are automatically generated.
+      // for the tasks triggered by pull_request_target event, they could access the secrets because they will run in the context of the base branch
+      // see the documentation: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+      return secrets;
+    }
     //
-    console.log('task', task);
+    const ownerSecrets = await this.findAll({ where: { ownerId: task.ownerId } });
+
+    const repositorySecrets = await this.findAll({ where: { repositoryId: task.repositoryId } });
+
+    [...ownerSecrets, ...repositorySecrets].forEach((row) => {
+      secrets[row.label] = row.value;
+    });
+
+    return secrets;
   }
 }
 

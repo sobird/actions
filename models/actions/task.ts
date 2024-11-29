@@ -14,21 +14,22 @@ import {
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
+import { type Models } from '.';
 import ActionsRunJob from './job';
 import ActionsRunner from './runner';
+import ActionsStep from './step';
 
 /** These are all the attributes in the ActionsTask model */
 export type ActionsTaskAttributes = InferAttributes<ActionsTask>;
 
 /** Some attributes are optional in `ActionsTask.build` and `ActionsTask.create` calls */
 export type ActionsTaskCreationAttributes = InferCreationAttributes<ActionsTask>;
-
 class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAttributes> {
   declare jobId: number;
 
-  declare attempt: number;
-
   declare runnerId: number;
+
+  declare attempt: number;
 
   declare status: string;
 
@@ -66,8 +67,12 @@ class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAt
 
   declare Job?: NonAttribute<ActionsRunJob>;
 
-  static associate({ Job }) {
-    this.belongsTo(Job, { onDelete: 'cascade' });
+  declare Steps?: NonAttribute<ActionsStep[]>;
+
+  static associate({ Job, Runner, Step }: Models) {
+    this.belongsTo(Job, { foreignKey: 'jobId' });
+    this.belongsTo(Runner, { foreignKey: 'runnerId' });
+    this.hasMany(Step, { foreignKey: 'taskId' });
   }
 
   declare static associations: {
@@ -85,10 +90,10 @@ ActionsTask.init(
     jobId: {
       type: DataTypes.INTEGER,
     },
-    attempt: {
+    runnerId: {
       type: DataTypes.INTEGER,
     },
-    runnerId: {
+    attempt: {
       type: DataTypes.INTEGER,
     },
     status: {
