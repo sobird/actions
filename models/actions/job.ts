@@ -29,7 +29,7 @@ class ActionsJob extends BaseModel<ActionsJobAttributes, ActionsJobCreationAttri
 
   declare name: string;
 
-  declare runId: number;
+  // declare runId: number;
 
   declare ownerId: number;
 
@@ -61,7 +61,7 @@ class ActionsJob extends BaseModel<ActionsJobAttributes, ActionsJobCreationAttri
   declare Run?: NonAttribute<Run>;
 
   static associate({ Run }: Models) {
-    this.belongsTo(Run);
+    this.belongsTo(Run, { foreignKey: 'runId' });
   }
 
   declare static associations: {
@@ -79,9 +79,9 @@ ActionsJob.init(
     name: {
       type: DataTypes.STRING,
     },
-    runId: {
-      type: DataTypes.INTEGER,
-    },
+    // runId: {
+    //   type: DataTypes.INTEGER,
+    // },
     ownerId: {
       type: DataTypes.BIGINT,
       allowNull: false,
