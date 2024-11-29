@@ -13,8 +13,6 @@ import {
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-console.log('sequelize11212', sequelize);
-
 /** These are all the attributes in the ActionsRunnerToken model */
 export type ActionsRunnerTokenAttributes = InferAttributes<ActionsRunnerToken>;
 
