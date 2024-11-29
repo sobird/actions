@@ -26,14 +26,13 @@ class ActionsRunnerToken extends BaseModel<ActionsRunnerTokenAttributes, Actions
 
   declare repositoryId: number;
 
-  declare enabled: boolean;
+  declare enabled: CreationOptional<boolean>;
 
   // creates a new active runner token and invalidate all old tokens
   public static async createForScope(ownerId: number, repositoryId: number) {
     const runnerToken = this.build({
       ownerId,
       repositoryId,
-      enabled: true,
     });
 
     await sequelize.transaction(async () => {
@@ -70,14 +69,13 @@ ActionsRunnerToken.init(
   {
     token: {
       type: DataTypes.STRING,
-      defaultValue: randomBytes(40).toString('hex'),
+      defaultValue: () => { return randomBytes(40).toString('hex'); },
       allowNull: false,
       unique: true,
       comment: 'actions runner registration token',
     },
     ownerId: {
       type: DataTypes.INTEGER,
-      primaryKey: true,
       comment: 'owner id',
     },
     repositoryId: {
@@ -86,6 +84,7 @@ ActionsRunnerToken.init(
     },
     enabled: {
       type: DataTypes.BOOLEAN,
+      defaultValue: true,
       comment: 'true means it can be used',
     },
   },

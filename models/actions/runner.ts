@@ -101,14 +101,16 @@ ActionsRunner.init(
     },
     token: {
       type: DataTypes.VIRTUAL,
-      defaultValue: randomBytes(20).toString('hex'),
+      defaultValue: () => { return randomBytes(20).toString('hex'); },
+      unique: true,
       allowNull: false,
       comment: 'runner token',
     },
     tokenSalt: {
       type: DataTypes.STRING,
+      unique: true,
       allowNull: false,
-      defaultValue: randomBytes(16).toString('hex'),
+      defaultValue: () => { return randomBytes(16).toString('hex'); },
       comment: 'token salt',
     },
     tokenHash: {
