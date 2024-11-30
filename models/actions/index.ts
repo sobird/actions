@@ -11,9 +11,9 @@ const models = {
   Run,
   Job,
   Runner,
-  RunnerToken,
+  // RunnerToken,
   Task,
-  Step,
+  // Step,
 };
 
 Object.values(models).forEach((model: any) => {
@@ -22,7 +22,7 @@ Object.values(models).forEach((model: any) => {
 });
 
 export {
-
+  sequelize,
 };
 export type Models = typeof models;
 export default models;

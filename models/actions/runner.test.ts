@@ -1,6 +1,6 @@
 import ActionsRunner from './runner';
 
-vi.mock('@/lib/sequelize');
+vi.mock('./runner');
 
 beforeAll(async () => {
   await ActionsRunner.sync({ force: true });

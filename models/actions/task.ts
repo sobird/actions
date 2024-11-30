@@ -9,6 +9,7 @@ import {
   Association,
   type InferAttributes,
   type InferCreationAttributes,
+  type CreationOptional,
   type NonAttribute,
 } from 'sequelize';
 
@@ -31,7 +32,7 @@ class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAt
 
   declare attempt: number;
 
-  declare status: string;
+  declare status: number;
 
   declare started: Date;
 
@@ -45,13 +46,13 @@ class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAt
 
   declare isForkPullRequest: boolean;
 
-  declare token: string;
+  declare token?: string;
 
-  declare tokenHash: string;
+  declare tokenHash: CreationOptional<string>;
 
-  declare tokenSalt: string;
+  declare tokenSalt: CreationOptional<string>;
 
-  declare tokenLastEight: string;
+  // declare tokenLastEight: CreationOptional<string>;
 
   declare logFilename: string;
 
@@ -61,9 +62,9 @@ class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAt
 
   declare logSize: number;
 
-  declare logIndexes: number;
+  // declare logIndexes: number;
 
-  declare logExpired: Date;
+  declare logExpired: Boolean;
 
   declare Job?: NonAttribute<ActionsRunJob>;
 
@@ -72,7 +73,7 @@ class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAt
   static associate({ Job, Runner, Step }: Models) {
     this.belongsTo(Job, { foreignKey: 'jobId' });
     this.belongsTo(Runner, { foreignKey: 'runnerId' });
-    this.hasMany(Step, { foreignKey: 'taskId' });
+    // this.hasMany(Step, { foreignKey: 'taskId' });
   }
 
   declare static associations: {
@@ -97,7 +98,7 @@ ActionsTask.init(
       type: DataTypes.INTEGER,
     },
     status: {
-      type: DataTypes.STRING,
+      type: DataTypes.TINYINT,
     },
     started: DataTypes.DATE,
     stopped: DataTypes.DATE,
@@ -116,7 +117,6 @@ ActionsTask.init(
       type: DataTypes.BOOLEAN,
       defaultValue: 0,
     },
-
     token: {
       type: DataTypes.STRING,
     },
@@ -126,7 +126,7 @@ ActionsTask.init(
     tokenSalt: {
       type: DataTypes.STRING,
     },
-    tokenLastEight: DataTypes.STRING,
+    // tokenLastEight: DataTypes.STRING,
     logFilename: DataTypes.STRING,
     logInStorage: {
       type: DataTypes.BOOLEAN,
@@ -136,10 +136,10 @@ ActionsTask.init(
     },
     logSize: {
       type: DataTypes.INTEGER,
-      comment: 'Store labels defined in state file (default: .runner file) of `runner`',
+      comment: 'log size',
     },
-    logIndexes: DataTypes.INTEGER,
-    logExpired: DataTypes.DATE,
+    // logIndexes: DataTypes.INTEGER,
+    logExpired: DataTypes.BOOLEAN,
   },
   {
     sequelize,

@@ -6,7 +6,9 @@
 
 import {
   DataTypes,
-  type InferAttributes, InferCreationAttributes, CreationOptional,
+  type InferAttributes,
+  type InferCreationAttributes,
+  type CreationOptional,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
@@ -28,13 +30,13 @@ class ActionsRun extends BaseModel<ActionsRunAttributes, ActionsRunCreationAttri
 
   declare repositoryId: number;
 
-  declare workflowId: number;
+  declare workflowId: string;
 
   declare index: number;
 
   declare triggerUserId: number;
 
-  declare scheduleId: number;
+  declare scheduleId: CreationOptional<number>;
 
   declare ref: string;
 
@@ -44,21 +46,23 @@ class ActionsRun extends BaseModel<ActionsRunAttributes, ActionsRunCreationAttri
 
   declare needApproval: boolean;
 
-  declare approvedBy: string;
+  declare approvedBy: number;
 
-  declare eventPayload: string;
+  declare eventName: string;
 
-  declare triggerEvent: string;
+  declare eventPayload: CreationOptional<string>;
 
-  declare status: string;
+  declare triggerEvent: CreationOptional<string>;
 
-  declare version: string;
+  declare status: number;
+
+  declare version: CreationOptional<string>;
 
   declare started: Date;
 
   declare stopped: Date;
 
-  declare duration: number;
+  declare duration: CreationOptional<number>;
 
   static associate({ Job }: Models) {
     this.hasMany(Job, { foreignKey: 'runId' });
@@ -84,7 +88,7 @@ ActionsRun.init(
       allowNull: false,
     },
     workflowId: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.STRING,
       allowNull: false,
     },
     index: {
@@ -109,8 +113,9 @@ ActionsRun.init(
       type: DataTypes.BOOLEAN,
     },
     approvedBy: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
     },
+    eventName: DataTypes.STRING,
     eventPayload: {
       type: DataTypes.TEXT,
     },
@@ -118,7 +123,7 @@ ActionsRun.init(
       type: DataTypes.STRING,
     },
     status: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
     },
     version: {
       type: DataTypes.STRING(64),

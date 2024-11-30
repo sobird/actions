@@ -27,9 +27,11 @@ export type ActionsJobCreationAttributes = InferCreationAttributes<ActionsJob>;
 class ActionsJob extends BaseModel<ActionsJobAttributes, ActionsJobCreationAttributes> {
   declare id: CreationOptional<number>;
 
+  declare taskId: number;
+
   declare name: string;
 
-  // declare runId: number;
+  declare runId: number;
 
   declare ownerId: number;
 
@@ -41,18 +43,16 @@ class ActionsJob extends BaseModel<ActionsJobAttributes, ActionsJobCreationAttri
 
   declare attempt: number;
 
-  declare workflowPayload: Blob;
+  declare workflowPayload: CreationOptional<Blob>;
 
   /** job id in workflow, not job's id */
   declare jobId: string;
 
-  declare needs: string[];
+  declare needs: CreationOptional<string[]>;
 
-  declare runsOn: string[];
+  declare runsOn: CreationOptional<string[]>;
 
-  declare taskId: number;
-
-  declare status: string;
+  declare status: number;
 
   declare started: Date;
 
@@ -80,9 +80,9 @@ ActionsJob.init(
     name: {
       type: DataTypes.STRING,
     },
-    // runId: {
-    //   type: DataTypes.INTEGER,
-    // },
+    runId: {
+      type: DataTypes.INTEGER,
+    },
     ownerId: {
       type: DataTypes.BIGINT,
       allowNull: false,
@@ -116,7 +116,7 @@ ActionsJob.init(
       type: DataTypes.INTEGER,
     },
     status: {
-      type: DataTypes.STRING(64),
+      type: DataTypes.TINYINT,
     },
     started: DataTypes.DATE,
     stopped: DataTypes.DATE,
