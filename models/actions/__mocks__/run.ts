@@ -6,7 +6,7 @@ vi.mock('@/lib/sequelize');
 
 const seeds = [
   {
-    id: 192,
+    id: 791,
     ownerId: 1,
     repositoryId: 4,
     title: 'update actions',
@@ -25,7 +25,7 @@ const seeds = [
     stopped: new Date(1683636626000),
   },
   {
-    id: 193,
+    id: 792,
     title: 'update actions',
     ownerId: 1,
     repositoryId: 4,
