@@ -39,8 +39,8 @@ class ActionsStep extends BaseModel<ActionsStepAttributes, ActionsStepCreationAt
 
   declare stopped: Date;
 
-  static associate({ Task }: Models) {
-    this.belongsTo(Task, { foreignKey: 'taskId' });
+  static associate({ ActionsTask }: Models) {
+    this.belongsTo(ActionsTask, { foreignKey: 'taskId' });
   }
 }
 

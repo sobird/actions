@@ -61,9 +61,9 @@ class ActionsJob extends BaseModel<ActionsJobAttributes, ActionsJobCreationAttri
 
   declare Run?: NonAttribute<Run>;
 
-  static associate({ Run, Task }: Models) {
-    this.belongsTo(Run, { foreignKey: 'runId' });
-    this.hasMany(Task, { foreignKey: 'jobId' });
+  static associate({ ActionsRun, ActionsTask }: Models) {
+    this.belongsTo(ActionsRun, { foreignKey: 'runId' });
+    this.hasMany(ActionsTask, { foreignKey: 'jobId' });
   }
 
   declare static associations: {

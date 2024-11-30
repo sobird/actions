@@ -51,8 +51,8 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
 
   declare labels: string[];
 
-  static associate({ Task }: Models) {
-    this.hasMany(Task, { foreignKey: 'runnerId' });
+  static associate({ ActionsTask }: Models) {
+    this.hasMany(ActionsTask, { foreignKey: 'runnerId' });
   }
 
   public verifyToken(token: string) {

@@ -1,8 +1,11 @@
 import { CreationAttributes } from 'sequelize';
 
 import ActionsJob from '../job';
+import ActionsRun from '../run';
+import ActionsTask from '../task';
 
 vi.mock('../run');
+vi.mock('../task');
 
 const seed = [
   {
@@ -38,6 +41,13 @@ const seed = [
 ] as CreationAttributes<ActionsJob>[];
 
 beforeAll(async () => {
+  // associate
+  // ActionsRun.associate({ Job: ActionsJob } as any);
+  // ActionsJob.associate({ Run: ActionsRun, Task: ActionsTask } as any);
+
+  const rows = await ActionsRun.findAll();
+  console.log('rows', rows);
+
   await ActionsJob.sync({ force: true });
   await ActionsJob.bulkCreate(seed);
 });

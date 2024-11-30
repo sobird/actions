@@ -64,8 +64,8 @@ class ActionsRun extends BaseModel<ActionsRunAttributes, ActionsRunCreationAttri
 
   declare duration: CreationOptional<number>;
 
-  static associate({ Job }: Models) {
-    this.hasMany(Job, { foreignKey: 'runId' });
+  static associate({ ActionsJob }: Models) {
+    this.hasMany(ActionsJob, { foreignKey: 'runId' });
   }
 }
 

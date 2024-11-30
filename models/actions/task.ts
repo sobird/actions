@@ -15,10 +15,9 @@ import {
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import { type Models } from '.';
-import ActionsRunJob from './job';
-import ActionsRunner from './runner';
-import ActionsStep from './step';
+import type {
+  Models, ActionsJob, ActionsRunner, ActionsStep,
+} from '.';
 
 /** These are all the attributes in the ActionsTask model */
 export type ActionsTaskAttributes = InferAttributes<ActionsTask>;
@@ -66,18 +65,18 @@ class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAt
 
   declare logExpired: Boolean;
 
-  declare Job?: NonAttribute<ActionsRunJob>;
+  declare Job?: NonAttribute<ActionsJob>;
 
   declare Steps?: NonAttribute<ActionsStep[]>;
 
-  static associate({ Job, Runner, Step }: Models) {
-    this.belongsTo(Job, { foreignKey: 'jobId' });
-    this.belongsTo(Runner, { foreignKey: 'runnerId' });
-    this.hasMany(Step, { foreignKey: 'taskId' });
+  static associate({ ActionsJob, ActionsRunner, ActionsStep }: Models) {
+    this.belongsTo(ActionsJob, { foreignKey: 'jobId' });
+    this.belongsTo(ActionsRunner, { foreignKey: 'runnerId' });
+    this.hasMany(ActionsStep, { foreignKey: 'taskId' });
   }
 
   declare static associations: {
-    Job: Association<ActionsTask, ActionsRunJob>;
+    Job: Association<ActionsTask, ActionsJob>;
   };
 
   public static async createForRunner(runner: ActionsRunner) {

@@ -1,6 +1,6 @@
 import { CreationAttributes } from 'sequelize';
 
-import ActionsRun from '../run';
+import { ActionsRun } from '@/models/actions';
 
 vi.mock('@/lib/sequelize');
 
