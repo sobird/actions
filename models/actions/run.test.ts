@@ -6,7 +6,7 @@ beforeAll(async () => {
   // await sequelize.sync({ force: true });
 });
 
-it('ddd', async () => {
-  const res = await ActionsRun.findAll();
-  console.log('dddd', res);
+it('ActionsRun Test', async () => {
+  const rows = await ActionsRun.findAll();
+  console.log('rows', rows);
 });

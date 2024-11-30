@@ -1,9 +1,15 @@
 import { CreationAttributes } from 'sequelize';
 
+import { sequelize } from '../index';
 import ActionsJob from '../job';
 import ActionsRun from '../run';
+// import ActionsRunner from '../runner';
+// import ActionsTask from '../task';
 
 vi.mock('@/lib/sequelize');
+vi.mock('../run');
+// vi.mock('../runner');
+// vi.mock('../task');
 
 const seed = [
   {
@@ -39,7 +45,12 @@ const seed = [
 ] as CreationAttributes<ActionsJob>[];
 
 beforeAll(async () => {
+  console.log('ActionsRun', ActionsRun);
   await ActionsRun.sync({ force: true });
+  // await ActionsRunner.sync({ force: true });
+  // await ActionsTask.sync({ force: true });
+
+  console.log('sequelize', sequelize.models);
   await ActionsJob.sync({ force: true });
   await ActionsJob.bulkCreate(seed);
 });

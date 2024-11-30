@@ -73,7 +73,7 @@ class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAt
   static associate({ Job, Runner, Step }: Models) {
     this.belongsTo(Job, { foreignKey: 'jobId' });
     this.belongsTo(Runner, { foreignKey: 'runnerId' });
-    // this.hasMany(Step, { foreignKey: 'taskId' });
+    this.hasMany(Step, { foreignKey: 'taskId' });
   }
 
   declare static associations: {

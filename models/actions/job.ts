@@ -27,11 +27,9 @@ export type ActionsJobCreationAttributes = InferCreationAttributes<ActionsJob>;
 class ActionsJob extends BaseModel<ActionsJobAttributes, ActionsJobCreationAttributes> {
   declare id: CreationOptional<number>;
 
-  declare taskId: number;
+  declare runId: number;
 
   declare name: string;
-
-  declare runId: number;
 
   declare ownerId: number;
 
@@ -47,6 +45,9 @@ class ActionsJob extends BaseModel<ActionsJobAttributes, ActionsJobCreationAttri
 
   /** job id in workflow, not job's id */
   declare jobId: string;
+
+  /** the latest task of the job */
+  declare taskId: number;
 
   declare needs: CreationOptional<string[]>;
 
@@ -77,11 +78,12 @@ ActionsJob.init(
       primaryKey: true,
       autoIncrement: true,
     },
-    name: {
-      type: DataTypes.STRING,
-    },
     runId: {
       type: DataTypes.INTEGER,
+    },
+
+    name: {
+      type: DataTypes.STRING,
     },
     ownerId: {
       type: DataTypes.BIGINT,
@@ -106,15 +108,17 @@ ActionsJob.init(
     jobId: {
       type: DataTypes.CHAR(255),
     },
+    taskId: {
+      type: DataTypes.INTEGER,
+      comment: 'the latest task of the job',
+    },
     needs: {
       type: DataTypes.TEXT,
     },
     runsOn: {
       type: DataTypes.STRING,
     },
-    taskId: {
-      type: DataTypes.INTEGER,
-    },
+
     status: {
       type: DataTypes.TINYINT,
     },

@@ -11,9 +11,9 @@ const models = {
   Run,
   Job,
   Runner,
-  // RunnerToken,
+  RunnerToken,
   Task,
-  // Step,
+  Step,
 };
 
 Object.values(models).forEach((model: any) => {
