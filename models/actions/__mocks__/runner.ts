@@ -4,7 +4,7 @@ import ActionsRunner from '../runner';
 
 vi.mock('@/lib/sequelize');
 
-const seed = [
+const seeds = [
   {
     id: 1,
     name: 'test runner name',
@@ -23,8 +23,10 @@ const seed = [
 ] as CreationAttributes<ActionsRunner>[];
 
 beforeAll(async () => {
-  await ActionsRunner.sync({ force: true });
-  await ActionsRunner.bulkCreate(seed);
+
 });
+
+await ActionsRunner.sync({ force: true });
+await ActionsRunner.bulkCreate(seeds);
 
 export default ActionsRunner;

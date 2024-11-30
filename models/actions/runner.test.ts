@@ -1,10 +1,11 @@
-import ActionsRunner from './runner';
+import { ActionsRunner } from '@/models/actions';
 
 vi.mock('./runner');
 
-beforeAll(async () => {
-  await ActionsRunner.sync({ force: true });
-});
+// beforeEach(async () => {
+//   const rows = await ActionsRunner.findAll();
+//   console.log('rows', rows);
+// });
 
 describe('Test Actions Runner Model', () => {
   it('ActionsRunnerToken.create', async () => {

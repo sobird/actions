@@ -1,12 +1,10 @@
-import { sequelize } from '.';
+import { ActionsJob } from '@/models/actions';
 
 vi.mock('./job');
-
-beforeAll(async () => {
-  // const res = await sequelize.models.ActionsRun.findAll();
-  // console.log('res', res);
-});
+// vi.mock('./run');
 
 it('ddd', async () => {
-  console.log('dddd', sequelize.models);
+  console.log('ActionsJob', ActionsJob);
+  const rows = await ActionsJob.findAll();
+  console.log('rows', rows);
 });

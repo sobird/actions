@@ -1,4 +1,4 @@
-import ActionsRun from './run';
+import { ActionsRun } from '@/models/actions';
 
 vi.mock('./run');
 

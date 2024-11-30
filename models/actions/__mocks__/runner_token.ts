@@ -14,8 +14,10 @@ const seed = [
 ] as ActionsRunnerToken[];
 
 beforeAll(async () => {
-  await ActionsRunnerToken.sync({ force: true });
-  await ActionsRunnerToken.bulkCreate(seed);
+
 });
+
+await ActionsRunnerToken.sync({ force: true });
+await ActionsRunnerToken.bulkCreate(seed);
 
 export default ActionsRunnerToken;

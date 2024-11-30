@@ -1,14 +1,12 @@
 import { CreationAttributes } from 'sequelize';
 
-import ActionsJob from '../job';
-import ActionsRunner from '../runner';
 import ActionsTask from '../task';
 
-// vi.mock('@/lib/sequelize');
+vi.mock('@/lib/sequelize');
 vi.mock('../runner');
 vi.mock('../job');
 
-const seed = [
+const seeds = [
   {
     id: 47,
     jobId: 192,
@@ -30,10 +28,10 @@ const seed = [
 ] as CreationAttributes<ActionsTask>[];
 
 beforeAll(async () => {
-  ActionsRunner.associate({ Task: ActionsTask } as any);
 
-  await ActionsTask.sync({ force: true });
-  await ActionsTask.bulkCreate(seed);
 });
+
+await ActionsTask.sync({ force: true });
+await ActionsTask.bulkCreate(seeds);
 
 export default ActionsTask;

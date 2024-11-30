@@ -1,10 +1,10 @@
-import { sequelize } from '.';
-import ActionsTask from './task';
+import { ActionsTask } from '@/models/actions';
 
 vi.mock('./task');
 
 it('ActionsTask Test', async () => {
-  console.log('sequelize', sequelize.models);
+  // const actionsRunner = await ActionsRunner.findAll();
+  // console.log('actionsRunner', actionsRunner);
 
   const rows = await ActionsTask.findAll();
   console.log('rows', rows);

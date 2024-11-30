@@ -1,6 +1,6 @@
 import { CreationAttributes } from 'sequelize';
 
-import { ActionsRun } from '@/models/actions';
+import ActionsRun from '../run';
 
 vi.mock('@/lib/sequelize');
 
@@ -46,8 +46,10 @@ const seeds = [
 ] as CreationAttributes<ActionsRun>[];
 
 beforeAll(async () => {
-  await ActionsRun.sync({ force: true });
-  await ActionsRun.bulkCreate(seeds);
+
 });
+
+await ActionsRun.sync({ force: true });
+await ActionsRun.bulkCreate(seeds);
 
 export default ActionsRun;
