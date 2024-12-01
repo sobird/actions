@@ -8,17 +8,22 @@ import {
   DataTypes,
   type InferAttributes,
   type InferCreationAttributes,
+  type BelongsToGetAssociationMixin,
+  type BelongsToSetAssociationMixin,
+  type BelongsToCreateAssociationMixin,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import { type Models } from '.';
+import type { Models, ActionsTask } from '.';
 
 /** These are all the attributes in the ActionsStep model */
 export type ActionsStepAttributes = InferAttributes<ActionsStep>;
 
 /** Some attributes are optional in `ActionsStep.build` and `ActionsStep.create` calls */
 export type ActionsStepCreationAttributes = InferCreationAttributes<ActionsStep>;
+
+export type ActionsTaskPrimaryKey = ActionsTask['id'];
 
 class ActionsStep extends BaseModel<ActionsStepAttributes, ActionsStepCreationAttributes> {
   declare name: string;
@@ -42,6 +47,16 @@ class ActionsStep extends BaseModel<ActionsStepAttributes, ActionsStepCreationAt
   static associate({ ActionsTask }: Models) {
     this.belongsTo(ActionsTask, { foreignKey: 'taskId' });
   }
+
+  // associates method
+  // Since TS cannot determine model association at compile time
+  // we have to declare them here purely virtually
+  // these will not exist until `Model.init` was called.
+  declare getActionsTask: BelongsToGetAssociationMixin<ActionsTask>;
+
+  declare setActionsTask: BelongsToSetAssociationMixin<ActionsTask, ActionsTaskPrimaryKey>;
+
+  declare createActionsTask: BelongsToCreateAssociationMixin<ActionsTask>;
 }
 
 ActionsStep.init(
