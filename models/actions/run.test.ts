@@ -6,5 +6,5 @@ vi.mock('./job');
 
 it('ActionsRun Test', async () => {
   const rows = await ActionsRun.findOne();
-  console.log('rows', await rows?.getActionsJobs());
+  console.log('rows', rows);
 });

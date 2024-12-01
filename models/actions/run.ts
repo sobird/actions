@@ -24,6 +24,7 @@ import {
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
 import type { Models, ActionsJob } from '.';
+import Status from './status';
 
 /** These are all the attributes in the ActionsRun model */
 export type ActionsRunAttributes = InferAttributes<ActionsRun>;
@@ -66,7 +67,7 @@ class ActionsRun extends BaseModel<ActionsRunAttributes, ActionsRunCreationAttri
 
   declare triggerEvent: CreationOptional<string>;
 
-  declare status: number;
+  declare status: Status;
 
   declare version: CreationOptional<string>;
 
@@ -168,7 +169,13 @@ ActionsRun.init(
       type: DataTypes.STRING,
     },
     status: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
+      // values: Status.Values(),
+      // defaultValue: Status.Unknown,
+
+      // set(value: Status) {
+      //   this.setDataValue('status', value.toString() as unknown as Status);
+      // },
     },
     version: {
       type: DataTypes.STRING(64),

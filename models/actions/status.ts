@@ -17,7 +17,7 @@ export enum EStatus {
   blocked, // 7, isn't a runnerv1.Result
 }
 
-export class Status {
+export default class Status {
   constructor(public status: EStatus) {}
 
   static get Unknown() {
@@ -103,6 +103,10 @@ export class Status {
     }
     return Result[Result.UNSPECIFIED];
   }
+
+  static Values() {
+    return Object.keys(EStatus).filter((key) => { return Number.isNaN(Number(key)); });
+  }
 }
 
-console.log('Result', Status.Blocked.asResult());
+console.log('Sta', Status.Values());

@@ -6,7 +6,7 @@ vi.mock('./runner');
 
 beforeEach(async () => {
   const rows = await ActionsRunner.findOne();
-  console.log('rows', await rows?.countActionsTasks());
+  console.log('rows', rows);
 });
 
 describe('Test Actions Runner Model', () => {

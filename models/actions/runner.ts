@@ -164,13 +164,7 @@ ActionsRunner.init(
       defaultValue: DataTypes.DATE(),
     },
     labels: {
-      type: DataTypes.TEXT,
-      get() {
-        return JSON.parse(this.dataValues.labels as unknown as string);
-      },
-      set(value: string) {
-        this.setDataValue('labels', JSON.stringify(value) as unknown as string[]);
-      },
+      type: DataTypes.JSON,
       comment: 'Store labels defined in state file (default: .runner file) of `runner`',
     },
   },

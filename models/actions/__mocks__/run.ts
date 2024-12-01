@@ -1,6 +1,7 @@
 import { CreationAttributes } from 'sequelize';
 
 import ActionsRun from '../run';
+import Status from '../status';
 
 const seeds = [
   {
@@ -18,7 +19,7 @@ const seeds = [
     needApproval: false,
     approvedBy: 0,
 
-    status: 1,
+    status: Status.Unknown,
     started: new Date(1683636528000),
     stopped: new Date(1683636626000),
   },
@@ -37,7 +38,7 @@ const seeds = [
     needApproval: false,
     approvedBy: 0,
 
-    status: 1,
+    status: Status.Waiting,
     started: new Date(1683636528000),
     stopped: new Date(1683636626000),
   },
