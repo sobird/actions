@@ -9,17 +9,29 @@ import {
   type InferAttributes,
   type InferCreationAttributes,
   type CreationOptional,
+  type HasManyGetAssociationsMixin,
+  type HasManySetAssociationsMixin,
+  type HasManyAddAssociationMixin,
+  type HasManyAddAssociationsMixin,
+  type HasManyRemoveAssociationMixin,
+  type HasManyRemoveAssociationsMixin,
+  type HasManyHasAssociationMixin,
+  type HasManyHasAssociationsMixin,
+  type HasManyCreateAssociationMixin,
+  type HasManyCountAssociationsMixin,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import { type Models } from '.';
+import type { Models, ActionsJob } from '.';
 
 /** These are all the attributes in the ActionsRun model */
 export type ActionsRunAttributes = InferAttributes<ActionsRun>;
 
 /** Some attributes are optional in `ActionsRun.build` and `ActionsRun.create` calls */
 export type ActionsRunCreationAttributes = InferCreationAttributes<ActionsRun>;
+
+export type ActionsJobPrimaryKey = ActionsJob['id'];
 
 class ActionsRun extends BaseModel<ActionsRunAttributes, ActionsRunCreationAttributes> {
   declare id: CreationOptional<number>;
@@ -67,6 +79,31 @@ class ActionsRun extends BaseModel<ActionsRunAttributes, ActionsRunCreationAttri
   static associate({ ActionsJob }: Models) {
     this.hasMany(ActionsJob, { foreignKey: 'runId' });
   }
+
+  // associates method
+  // Since TS cannot determine model association at compile time
+  // we have to declare them here purely virtually
+  // these will not exist until `Model.init` was called.
+  declare getActionsJobs: HasManyGetAssociationsMixin<ActionsJob>;
+
+  /** Remove all previous associations and set the new ones */
+  declare setActionsJobs: HasManySetAssociationsMixin<ActionsJob, ActionsJobPrimaryKey>;
+
+  declare addActionsJob: HasManyAddAssociationMixin<ActionsJob, ActionsJobPrimaryKey>;
+
+  declare addActionsJobs: HasManyAddAssociationsMixin<ActionsJob, ActionsJobPrimaryKey>;
+
+  declare removeActionsJob: HasManyRemoveAssociationMixin<ActionsJob, ActionsJobPrimaryKey>;
+
+  declare removeActionsJobs: HasManyRemoveAssociationsMixin<ActionsJob, ActionsJobPrimaryKey>;
+
+  declare hasActionsJob: HasManyHasAssociationMixin<ActionsJob, ActionsJobPrimaryKey>;
+
+  declare hasActionsJobs: HasManyHasAssociationsMixin<ActionsJob, ActionsJobPrimaryKey>;
+
+  declare createActionsJob: HasManyCreateAssociationMixin<ActionsJob>;
+
+  declare countActionsJobs: HasManyCountAssociationsMixin;
 }
 
 ActionsRun.init(
