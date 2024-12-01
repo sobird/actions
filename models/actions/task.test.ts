@@ -6,13 +6,16 @@ vi.mock('./runner');
 vi.mock('./job');
 vi.mock('./step');
 
-it('ActionsTask Test', async () => {
-  // const actionsRunner = await ActionsRunner.findAll();
-  // console.log('actionsRunner', actionsRunner);
-
-  const rows = await ActionsTask.findOne();
-  console.log('rows', await rows?.getActionsSteps());
-
+describe('ActionsTask Test', async () => {
   // const runner = await rows.getActionsRunner();
   // console.log('runner', runner);
+
+  it('createForRunner', async () => {
+    const actionsRunner = await ActionsRunner.findByPk(1);
+
+    if (actionsRunner) {
+      const rows = await ActionsTask.createForRunner(actionsRunner);
+      console.log('rows', rows);
+    }
+  });
 });

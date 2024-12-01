@@ -76,6 +76,14 @@ class ActionsRun extends BaseModel<ActionsRunAttributes, ActionsRunCreationAttri
 
   declare duration: CreationOptional<number>;
 
+  static async add() {
+    const t = await sequelize.transaction();
+
+    // run.index = index; // todo
+
+    return t.commit();
+  }
+
   static associate({ ActionsJob }: Models) {
     this.hasMany(ActionsJob, { foreignKey: 'runId' });
   }

@@ -137,8 +137,12 @@ class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAt
   declare createActionsRunner: BelongsToCreateAssociationMixin<ActionsRunner>;
 
   public static async createForRunner(runner: ActionsRunner) {
-    const t = sequelize.transaction();
+    const t = await sequelize.transaction();
     const { ownerId, repositoryId } = runner;
+
+    // const jobs = this
+
+    return t.commit();
   }
 }
 

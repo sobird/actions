@@ -2,8 +2,6 @@ import { CreationAttributes } from 'sequelize';
 
 import ActionsRun from '../run';
 
-vi.mock('@/lib/sequelize');
-
 const seeds = [
   {
     id: 791,
