@@ -32,6 +32,9 @@ export type ActionsRunnerAttributes = InferAttributes<ActionsRunner>;
 
 /** Some attributes are optional in `ActionsRunner.build` and `ActionsRunner.create` calls */
 export type ActionsRunnerCreationAttributes = InferCreationAttributes<ActionsRunner>;
+
+export type ActionsTaskPrimaryKey = ActionsTask['id'];
+
 class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCreationAttributes> {
   declare uuid: CreationOptional<string>;
 
@@ -68,19 +71,19 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
   declare getActionsTasks: HasManyGetAssociationsMixin<ActionsTask>;
 
   /** Remove all previous associations and set the new ones */
-  declare setActionsTasks: HasManySetAssociationsMixin<ActionsTask, number>;
+  declare setActionsTasks: HasManySetAssociationsMixin<ActionsTask, ActionsTaskPrimaryKey>;
 
-  declare addActionsTask: HasManyAddAssociationMixin<ActionsTask, number>;
+  declare addActionsTask: HasManyAddAssociationMixin<ActionsTask, ActionsTaskPrimaryKey>;
 
-  declare addActionsTasks: HasManyAddAssociationsMixin<ActionsTask, number>;
+  declare addActionsTasks: HasManyAddAssociationsMixin<ActionsTask, ActionsTaskPrimaryKey>;
 
-  declare removeActionsTask: HasManyRemoveAssociationMixin<ActionsTask, number>;
+  declare removeActionsTask: HasManyRemoveAssociationMixin<ActionsTask, ActionsTaskPrimaryKey>;
 
-  declare removeActionsTasks: HasManyRemoveAssociationsMixin<ActionsTask, number>;
+  declare removeActionsTasks: HasManyRemoveAssociationsMixin<ActionsTask, ActionsTaskPrimaryKey>;
 
-  declare hasActionsTask: HasManyHasAssociationMixin<ActionsTask, number>;
+  declare hasActionsTask: HasManyHasAssociationMixin<ActionsTask, ActionsTaskPrimaryKey>;
 
-  declare hasActionsTasks: HasManyHasAssociationsMixin<ActionsTask, number>;
+  declare hasActionsTasks: HasManyHasAssociationsMixin<ActionsTask, ActionsTaskPrimaryKey>;
 
   declare createActionsTask: HasManyCreateAssociationMixin<ActionsTask>;
 

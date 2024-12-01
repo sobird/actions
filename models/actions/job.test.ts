@@ -4,7 +4,6 @@ vi.mock('./job');
 // vi.mock('./run');
 
 it('ddd', async () => {
-  console.log('ActionsJob', ActionsJob);
-  const rows = await ActionsJob.findAll();
-  console.log('rows', rows);
+  const actionsJob = await ActionsJob.findOne();
+  console.log('rows', await actionsJob?.getActionsRun());
 });
