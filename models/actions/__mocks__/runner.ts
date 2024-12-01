@@ -26,6 +26,7 @@ beforeAll(async () => {
 
 });
 
+console.log('121212', 121212);
 await ActionsRunner.sync({ force: true });
 await ActionsRunner.bulkCreate(seeds);
 

@@ -1,11 +1,12 @@
 import { ActionsRunner } from '@/models/actions';
 
+vi.mock('./task');
 vi.mock('./runner');
 
-// beforeEach(async () => {
-//   const rows = await ActionsRunner.findAll();
-//   console.log('rows', rows);
-// });
+beforeEach(async () => {
+  const rows = await ActionsRunner.findOne();
+  console.log('rows', await rows?.countActionsTasks());
+});
 
 describe('Test Actions Runner Model', () => {
   it('ActionsRunnerToken.create', async () => {

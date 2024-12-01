@@ -11,11 +11,21 @@ import {
   type InferAttributes,
   type InferCreationAttributes,
   type CreationOptional,
+  type HasManyGetAssociationsMixin,
+  type HasManySetAssociationsMixin,
+  type HasManyAddAssociationMixin,
+  type HasManyAddAssociationsMixin,
+  type HasManyRemoveAssociationMixin,
+  type HasManyRemoveAssociationsMixin,
+  type HasManyHasAssociationMixin,
+  type HasManyHasAssociationsMixin,
+  type HasManyCreateAssociationMixin,
+  type HasManyCountAssociationsMixin,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import { type Models } from '.';
+import type { Models, ActionsTask } from '.';
 
 /** These are all the attributes in the ActionsRunner model */
 export type ActionsRunnerAttributes = InferAttributes<ActionsRunner>;
@@ -50,6 +60,31 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
   declare lastActive: CreationOptional<Date>;
 
   declare labels: string[];
+
+  // associates method
+  // Since TS cannot determine model association at compile time
+  // we have to declare them here purely virtually
+  // these will not exist until `Model.init` was called.
+  declare getActionsTasks: HasManyGetAssociationsMixin<ActionsTask>;
+
+  /** Remove all previous associations and set the new ones */
+  declare setActionsTasks: HasManySetAssociationsMixin<ActionsTask, number>;
+
+  declare addActionsTask: HasManyAddAssociationMixin<ActionsTask, number>;
+
+  declare addActionsTasks: HasManyAddAssociationsMixin<ActionsTask, number>;
+
+  declare removeActionsTask: HasManyRemoveAssociationMixin<ActionsTask, number>;
+
+  declare removeActionsTasks: HasManyRemoveAssociationsMixin<ActionsTask, number>;
+
+  declare hasActionsTask: HasManyHasAssociationMixin<ActionsTask, number>;
+
+  declare hasActionsTasks: HasManyHasAssociationsMixin<ActionsTask, number>;
+
+  declare createActionsTask: HasManyCreateAssociationMixin<ActionsTask>;
+
+  declare countActionsTasks: HasManyCountAssociationsMixin;
 
   static associate({ ActionsTask }: Models) {
     this.hasMany(ActionsTask, { foreignKey: 'runnerId' });
