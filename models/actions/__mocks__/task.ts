@@ -1,11 +1,6 @@
 import { CreationAttributes } from 'sequelize';
 
-// import ActionsRunner from '../runner';
 import ActionsTask from '../task';
-
-// vi.mock('@/lib/sequelize');
-// vi.mock('../runner');
-// vi.mock('../job');
 
 const seeds = [
   {
@@ -45,12 +40,6 @@ const seeds = [
     logExpired: false,
   },
 ] as CreationAttributes<ActionsTask>[];
-
-beforeAll(async () => {
-
-});
-
-// console.log('ActionsRunner1212', ActionsRunner);
 
 await ActionsTask.sync({ force: true });
 await ActionsTask.bulkCreate(seeds);

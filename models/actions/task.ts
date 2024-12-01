@@ -11,6 +11,19 @@ import {
   type InferCreationAttributes,
   type CreationOptional,
   type NonAttribute,
+  type HasManyGetAssociationsMixin,
+  type HasManySetAssociationsMixin,
+  type HasManyAddAssociationMixin,
+  type HasManyAddAssociationsMixin,
+  type HasManyRemoveAssociationMixin,
+  type HasManyRemoveAssociationsMixin,
+  type HasManyHasAssociationMixin,
+  type HasManyHasAssociationsMixin,
+  type HasManyCreateAssociationMixin,
+  type HasManyCountAssociationsMixin,
+  type BelongsToGetAssociationMixin,
+  type BelongsToSetAssociationMixin,
+  type BelongsToCreateAssociationMixin,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
@@ -24,6 +37,11 @@ export type ActionsTaskAttributes = InferAttributes<ActionsTask>;
 
 /** Some attributes are optional in `ActionsTask.build` and `ActionsTask.create` calls */
 export type ActionsTaskCreationAttributes = InferCreationAttributes<ActionsTask>;
+
+export type ActionsStepPrimaryKey = ActionsStep['id'];
+export type ActionsJobPrimaryKey = ActionsJob['id'];
+export type ActionsRunnerPrimaryKey = ActionsRunner['id'];
+
 class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAttributes> {
   declare jobId: number;
 
@@ -78,6 +96,45 @@ class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAt
   declare static associations: {
     Job: Association<ActionsTask, ActionsJob>;
   };
+
+  // associates method
+  // Since TS cannot determine model association at compile time
+  // we have to declare them here purely virtually
+  // these will not exist until `Model.init` was called.
+  declare getActionsSteps: HasManyGetAssociationsMixin<ActionsStep>;
+
+  /** Remove all previous associations and set the new ones */
+  declare setActionsSteps: HasManySetAssociationsMixin<ActionsStep, ActionsStepPrimaryKey>;
+
+  declare addActionsStep: HasManyAddAssociationMixin<ActionsStep, ActionsStepPrimaryKey>;
+
+  declare addActionsSteps: HasManyAddAssociationsMixin<ActionsStep, ActionsStepPrimaryKey>;
+
+  declare removeActionsStep: HasManyRemoveAssociationMixin<ActionsStep, ActionsStepPrimaryKey>;
+
+  declare removeActionsSteps: HasManyRemoveAssociationsMixin<ActionsStep, ActionsStepPrimaryKey>;
+
+  declare hasActionsStep: HasManyHasAssociationMixin<ActionsStep, ActionsStepPrimaryKey>;
+
+  declare hasActionsSteps: HasManyHasAssociationsMixin<ActionsStep, ActionsStepPrimaryKey>;
+
+  declare createActionsStep: HasManyCreateAssociationMixin<ActionsStep>;
+
+  declare countActionsSteps: HasManyCountAssociationsMixin;
+
+  // ActionsJob
+  declare getActionsJob: BelongsToGetAssociationMixin<ActionsJob>;
+
+  declare setActionsJob: BelongsToSetAssociationMixin<ActionsJob, ActionsJobPrimaryKey>;
+
+  declare createActionsJob: BelongsToCreateAssociationMixin<ActionsJob>;
+
+  // ActionsRunner
+  declare getActionsRunner: BelongsToGetAssociationMixin<ActionsRunner>;
+
+  declare setActionsRunner: BelongsToSetAssociationMixin<ActionsRunner, ActionsRunnerPrimaryKey>;
+
+  declare createActionsRunner: BelongsToCreateAssociationMixin<ActionsRunner>;
 
   public static async createForRunner(runner: ActionsRunner) {
     const t = sequelize.transaction();
