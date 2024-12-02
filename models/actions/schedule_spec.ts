@@ -59,7 +59,7 @@ class ActionsScheduleSpec extends BaseModel<ActionsScheduleSpecAttributes, Actio
     this.belongsTo(ActionsSchedule, { foreignKey: 'scheduleId' });
   }
 
-  // belongsTo ActionsSchedule
+  // belongsTo ActionsSchedule associate methods
 
   declare getActionsSchedule: BelongsToGetAssociationMixin<ActionsSchedule>;
 

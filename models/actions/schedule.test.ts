@@ -1,5 +1,6 @@
 import { ActionsSchedule } from '@/models/actions';
 
+vi.mock('@/lib/sequelize');
 vi.mock('./schedule');
 // vi.mock('./run');
 

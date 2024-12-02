@@ -2,9 +2,12 @@ import { CreationAttributes } from 'sequelize';
 
 import ActionsSchedule from '../schedule';
 
+// needs
+vi.mock('@/lib/sequelize');
+
 const seeds = [
   {
-    title: 'schedule title 1',
+    title: 'schedule title 1111',
     ownerId: 1,
     repositoryId: 4,
     workflowId: 'artifact.yaml',
@@ -28,6 +31,7 @@ const seeds = [
   },
 ] as CreationAttributes<ActionsSchedule>[];
 
+// ActionsSchedule Setup
 await ActionsSchedule.sync({ force: true });
 await ActionsSchedule.bulkCreate(seeds, { individualHooks: true, validate: true });
 
