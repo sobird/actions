@@ -24,6 +24,7 @@ import {
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
+import { RunnerStatus } from '@/pkg/service/runner/v1/messages_pb';
 
 import type { Models, ActionsTask } from '.';
 
@@ -34,6 +35,9 @@ export type ActionsRunnerAttributes = InferAttributes<ActionsRunner>;
 export type ActionsRunnerCreationAttributes = InferCreationAttributes<ActionsRunner>;
 
 export type ActionsTaskPrimaryKey = ActionsTask['id'];
+
+const RunnerOfflineTime = 60 * 1000;
+const RunnerIdleTime = 10 * 1000;
 
 class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCreationAttributes> {
   declare uuid: CreationOptional<string>;
@@ -63,6 +67,8 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
   declare lastActive: CreationOptional<Date>;
 
   declare labels: string[];
+
+  declare status: CreationOptional<string>;
 
   // associates method
   // Since TS cannot determine model association at compile time
@@ -166,6 +172,21 @@ ActionsRunner.init(
     labels: {
       type: DataTypes.JSON,
       comment: 'Store labels defined in state file (default: .runner file) of `runner`',
+    },
+    status: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const now = Date.now();
+        const lastOnline = this.getDataValue('lastOnline');
+        const lastActive = this.getDataValue('lastActive');
+        if (now - lastOnline.getTime() > RunnerOfflineTime) {
+          return RunnerStatus.OFFLINE;
+        }
+        if (now - lastActive.getTime() > RunnerIdleTime) {
+          return RunnerStatus.IDLE;
+        }
+        return RunnerStatus.ACTIVE;
+      },
     },
   },
   {

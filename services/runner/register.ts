@@ -1,6 +1,6 @@
 import { ConnectError } from '@connectrpc/connect';
 
-import { ActionsRunnerModel, ActionsRunnerTokenModel } from '@/models';
+import models from '@/models';
 import { RegisterResponse, Runner } from '@/pkg/service/runner/v1/messages_pb';
 import lodash from '@/utils/lodash';
 
@@ -12,7 +12,7 @@ export const register: ServiceMethodImpl<'register'> = async (req) => {
     throw new ConnectError('missing runner token, name', 3);
   }
 
-  const runnerToken = await ActionsRunnerTokenModel.findOne({
+  const runnerToken = await models.Actions.ActionsRunnerToken.findOne({
     where: {
       token: req.token,
     },
@@ -36,7 +36,7 @@ export const register: ServiceMethodImpl<'register'> = async (req) => {
 
   // create new runner
   const name = lodash.truncate(req.name, { length: 255 });
-  const runner = await ActionsRunnerModel.create({
+  const runner = await ActionsRunner.create({
     name,
     ownerId: runnerToken.ownerId,
     repositoryId: runnerToken.repositoryId,

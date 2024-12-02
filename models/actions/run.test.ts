@@ -9,7 +9,7 @@ vi.mock('./job');
 it('ActionsRun Test', async () => {
   const rows = await ActionsRun.findAll({
     where: {
-      status: Status.Unknown,
+      status: Status.Unknown.toString(),
     },
   });
   console.log('rows', rows);

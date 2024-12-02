@@ -12,7 +12,7 @@
 
 import log4js from 'log4js';
 import {
-  Sequelize, Model, CreationOptional, ModelStatic, InferAttributes, FindAndCountOptions,
+  Sequelize, Model, ModelStatic, InferAttributes, FindAndCountOptions,
 } from 'sequelize';
 import sqlite3 from 'sqlite3';
 
@@ -138,7 +138,7 @@ export const sequelize = new Sequelize({
  * sobird<i@sobird.me> at 2023/12/05 21:08:43 created.
  */
 export class BaseModel<T extends {} = any, P extends {} = T> extends Model<T, P> {
-  declare id: CreationOptional<number>;
+  declare id?: number;
 
   /**
    * Helper method for defining associations.

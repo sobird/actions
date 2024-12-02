@@ -4,10 +4,8 @@ vi.mock('@/lib/sequelize');
 vi.mock('./task');
 vi.mock('./runner');
 
-beforeEach(async () => {
-  const rows = await ActionsRunner.findOne();
-  console.log('rows', rows);
-});
+const rows = await ActionsRunner.findOne();
+console.log('rows', rows?.token);
 
 describe('Test Actions Runner Model', () => {
   it('ActionsRunnerToken.create', async () => {

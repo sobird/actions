@@ -20,11 +20,7 @@ const seeds = [
   },
 ] as CreationAttributes<ActionsRunner>[];
 
-beforeAll(async () => {
-
-});
-
 await ActionsRunner.sync({ force: true });
-await ActionsRunner.bulkCreate(seeds);
+await ActionsRunner.bulkCreate(seeds, { individualHooks: true });
 
 export default ActionsRunner;
