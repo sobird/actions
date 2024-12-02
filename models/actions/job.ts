@@ -41,8 +41,6 @@ export type ActionsTaskPrimaryKey = ActionsTask['id'];
 export type ActionsRunPrimaryKey = ActionsRun['id'];
 
 class ActionsJob extends BaseModel<ActionsJobAttributes, ActionsJobCreationAttributes> {
-  declare id: CreationOptional<number>;
-
   declare runId: number;
 
   declare name: string;

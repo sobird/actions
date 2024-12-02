@@ -2,6 +2,8 @@ import ActionsJob from './job';
 import ActionsRun from './run';
 import ActionsRunner from './runner';
 import ActionsRunnerToken from './runner_token';
+import ActionsSchedule from './schedule';
+import ActionsScheduleSpec from './schedule_spec';
 import ActionsStep from './step';
 import ActionsTask from './task';
 
@@ -10,6 +12,8 @@ export const models = {
   ActionsRun,
   ActionsRunner,
   ActionsRunnerToken,
+  ActionsSchedule,
+  ActionsScheduleSpec,
   ActionsStep,
   ActionsTask,
 } as const;
@@ -25,6 +29,8 @@ export {
   ActionsRun,
   ActionsRunner,
   ActionsRunnerToken,
+  ActionsSchedule,
+  ActionsScheduleSpec,
   ActionsStep,
   ActionsTask,
 };
