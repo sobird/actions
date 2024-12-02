@@ -5,7 +5,7 @@ vi.mock('./task');
 vi.mock('./runner');
 
 const rows = await ActionsRunner.findOne();
-console.log('rows', rows?.token);
+console.log('rows', rows);
 
 describe('Test Actions Runner Model', () => {
   it('ActionsRunnerToken.create', async () => {

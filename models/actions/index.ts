@@ -19,7 +19,6 @@ Object.values(models).forEach((model: any) => {
 });
 
 export type Models = typeof models;
-export default models;
 
 export {
   ActionsJob,
@@ -28,4 +27,13 @@ export {
   ActionsRunnerToken,
   ActionsStep,
   ActionsTask,
+};
+
+export default {
+  Job: ActionsJob,
+  Run: ActionsRun,
+  Runner: ActionsRunner,
+  RunnerToken: ActionsRunnerToken,
+  Step: ActionsStep,
+  Task: ActionsTask,
 };

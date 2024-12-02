@@ -45,6 +45,6 @@ beforeAll(async () => {
 });
 
 await ActionsJob.sync({ force: true });
-await ActionsJob.bulkCreate(seeds);
+await ActionsJob.bulkCreate(seeds, { individualHooks: true, validate: true });
 
 export default ActionsJob;

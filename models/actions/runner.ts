@@ -40,6 +40,8 @@ const RunnerOfflineTime = 60 * 1000;
 const RunnerIdleTime = 10 * 1000;
 
 class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCreationAttributes> {
+  declare id?: bigint;
+
   declare uuid: CreationOptional<string>;
 
   declare name: string;

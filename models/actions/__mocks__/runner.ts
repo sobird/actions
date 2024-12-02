@@ -21,6 +21,6 @@ const seeds = [
 ] as CreationAttributes<ActionsRunner>[];
 
 await ActionsRunner.sync({ force: true });
-await ActionsRunner.bulkCreate(seeds, { individualHooks: true });
+await ActionsRunner.bulkCreate(seeds, { individualHooks: true, validate: true });
 
 export default ActionsRunner;

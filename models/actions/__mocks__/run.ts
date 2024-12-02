@@ -49,6 +49,6 @@ beforeAll(async () => {
 });
 
 await ActionsRun.sync({ force: true });
-await ActionsRun.bulkCreate(seeds, { validate: true });
+await ActionsRun.bulkCreate(seeds, { individualHooks: true, validate: true });
 
 export default ActionsRun;

@@ -18,6 +18,6 @@ beforeAll(async () => {
 });
 
 await ActionsRunnerToken.sync({ force: true });
-await ActionsRunnerToken.bulkCreate(seed);
+await ActionsRunnerToken.bulkCreate(seed, { individualHooks: true, validate: true });
 
 export default ActionsRunnerToken;

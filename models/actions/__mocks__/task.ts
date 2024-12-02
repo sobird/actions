@@ -42,6 +42,6 @@ const seeds = [
 ] as CreationAttributes<ActionsTask>[];
 
 await ActionsTask.sync({ force: true });
-await ActionsTask.bulkCreate(seeds);
+await ActionsTask.bulkCreate(seeds, { individualHooks: true, validate: true });
 
 export default ActionsTask;

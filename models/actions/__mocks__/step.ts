@@ -30,6 +30,6 @@ const seeds = [
 ] as CreationAttributes<ActionsStep>[];
 
 await ActionsStep.sync({ force: true });
-await ActionsStep.bulkCreate(seeds);
+await ActionsStep.bulkCreate(seeds, { individualHooks: true, validate: true });
 
 export default ActionsStep;

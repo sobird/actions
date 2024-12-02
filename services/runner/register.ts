@@ -12,7 +12,7 @@ export const register: ServiceMethodImpl<'register'> = async (req) => {
     throw new ConnectError('missing runner token, name', 3);
   }
 
-  const runnerToken = await models.Actions.ActionsRunnerToken.findOne({
+  const runnerToken = await models.Actions.RunnerToken.findOne({
     where: {
       token: req.token,
     },
@@ -36,7 +36,7 @@ export const register: ServiceMethodImpl<'register'> = async (req) => {
 
   // create new runner
   const name = lodash.truncate(req.name, { length: 255 });
-  const runner = await ActionsRunner.create({
+  const runner = await models.Actions.Runner.create({
     name,
     ownerId: runnerToken.ownerId,
     repositoryId: runnerToken.repositoryId,
