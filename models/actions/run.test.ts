@@ -1,10 +1,16 @@
 import { ActionsRun } from '@/models/actions';
 
+import Status from './status';
+
 vi.mock('@/lib/sequelize');
 vi.mock('./run');
 vi.mock('./job');
 
 it('ActionsRun Test', async () => {
-  const rows = await ActionsRun.findOne();
+  const rows = await ActionsRun.findAll({
+    where: {
+      status: Status.Unknown,
+    },
+  });
   console.log('rows', rows);
 });

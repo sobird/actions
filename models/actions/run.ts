@@ -113,12 +113,16 @@ class ActionsRun extends BaseModel<ActionsRunAttributes, ActionsRunCreationAttri
   declare createActionsJob: HasManyCreateAssociationMixin<ActionsJob>;
 
   declare countActionsJobs: HasManyCountAssociationsMixin;
+
+  static validate() {
+    throw Error('dd');
+  }
 }
 
 ActionsRun.init(
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER.UNSIGNED,
       primaryKey: true,
       autoIncrement: true,
     },
@@ -169,13 +173,19 @@ ActionsRun.init(
       type: DataTypes.STRING,
     },
     status: {
-      type: DataTypes.STRING,
-      // values: Status.Values(),
-      // defaultValue: Status.Unknown,
-
-      // set(value: Status) {
-      //   this.setDataValue('status', value.toString() as unknown as Status);
-      // },
+      // https://github.com/sequelize/sequelize/issues/5765
+      type: DataTypes.ENUM,
+      values: Status.Values(),
+      defaultValue: Status.Unknown.toString(),
+      set(value: Status) {
+        this.setDataValue('status', value.toString() as unknown as Status);
+      },
+      validate: {
+        isIn: {
+          args: [Status.Values()],
+          msg: `Must be in ${Status.Values()}`,
+        },
+      },
     },
     version: {
       type: DataTypes.STRING(64),
@@ -190,6 +200,8 @@ ActionsRun.init(
     modelName: 'ActionsRun',
   },
 );
+
+// ActionsRun.prototype.validate('dddd');
 
 // ActionsRun.beforeCreate((model) => {
 

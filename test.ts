@@ -1,10 +1,28 @@
-enum MyEnum {
-  A,
-  B = 'b',
-  C = 'c',
-}
+import {
+  Sequelize, Op, Model, DataTypes,
+} from 'sequelize';
 
-console.log('MyEnum', MyEnum);
-// 获取枚举的键列表
-const enumKeys = Object.keys(MyEnum).filter((key) => { return Number.isNaN(Number(key)); });
-console.log(enumKeys); // 输出: ["A", "B", "C"]
+const sequelize = new Sequelize('sqlite::memory:');
+
+const User = sequelize.define('user', {
+  username: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+    unique: true,
+  },
+  hashedPassword: {
+    type: DataTypes.STRING(64),
+    validate: {
+      is: /^[0-9a-f]{64}$/i,
+    },
+  },
+});
+
+(async () => {
+  await sequelize.sync({ force: true });
+  // Code here
+  await User.create({
+    username: 'sobird',
+    hashedPassword: '**',
+  });
+})();

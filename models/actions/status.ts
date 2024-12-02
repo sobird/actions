@@ -7,85 +7,89 @@
 import { Result } from '@/pkg/service/runner/v1/messages_pb';
 
 export enum EStatus {
-  unknown, // 0, consistent with runnerv1.Result_RESULT_UNSPECIFIED
-  success, // 1, consistent with runnerv1.Result_RESULT_SUCCESS
-  failure, // 2, consistent with runnerv1.Result_RESULT_FAILURE
-  cancelled, // 3, consistent with runnerv1.Result_RESULT_CANCELLED
-  skipped, // 4, consistent with runnerv1.Result_RESULT_SKIPPED
-  waiting, // 5, isn't a runnerv1.Result
-  running, // 6, isn't a runnerv1.Result
-  blocked, // 7, isn't a runnerv1.Result
+  Unknown, // 0, consistent with runnerv1.Result_RESULT_UNSPECIFIED
+  Success, // 1, consistent with runnerv1.Result_RESULT_SUCCESS
+  Failure, // 2, consistent with runnerv1.Result_RESULT_FAILURE
+  Cancelled, // 3, consistent with runnerv1.Result_RESULT_CANCELLED
+  Skipped, // 4, consistent with runnerv1.Result_RESULT_SKIPPED
+  Waiting, // 5, isn't a runnerv1.Result
+  Running, // 6, isn't a runnerv1.Result
+  Blocked, // 7, isn't a runnerv1.Result
 }
 
 export default class Status {
   constructor(public status: EStatus) {}
 
   static get Unknown() {
-    return new this(EStatus.unknown);
+    return new this(EStatus.Unknown);
   }
 
   static get Success() {
-    return new this(EStatus.success);
+    return new this(EStatus.Success);
   }
 
   static get Failure() {
-    return new this(EStatus.failure);
+    return new this(EStatus.Failure);
   }
 
   static get Cancelled() {
-    return new this(EStatus.cancelled);
+    return new this(EStatus.Cancelled);
   }
 
   static get Skipped() {
-    return new this(EStatus.skipped);
+    return new this(EStatus.Skipped);
   }
 
   static get Waiting() {
-    return new this(EStatus.waiting);
+    return new this(EStatus.Waiting);
   }
 
   static get Running() {
-    return new this(EStatus.running);
+    return new this(EStatus.Running);
   }
 
   static get Blocked() {
-    return new this(EStatus.blocked);
+    return new this(EStatus.Blocked);
   }
 
   isUnknown() {
-    return this.status === EStatus.unknown;
+    return this.status === EStatus.Unknown;
   }
 
   isSuccess() {
-    return this.status === EStatus.success;
+    return this.status === EStatus.Success;
   }
 
   isFailure() {
-    return this.status === EStatus.failure;
+    return this.status === EStatus.Failure;
   }
 
   isCancelled() {
-    return this.status === EStatus.cancelled;
+    return this.status === EStatus.Cancelled;
   }
 
   isSkipped() {
-    return this.status === EStatus.skipped;
+    return this.status === EStatus.Skipped;
   }
 
   isWaiting() {
-    return this.status === EStatus.waiting;
+    return this.status === EStatus.Waiting;
   }
 
   isRunning() {
-    return this.status === EStatus.running;
+    return this.status === EStatus.Running;
   }
 
   isBlocked() {
-    return this.status === EStatus.blocked;
+    return this.status === EStatus.Blocked;
   }
 
   toString() {
-    return EStatus[this.status];
+    return EStatus[this.status].toLowerCase();
+  }
+
+  valueOf() {
+    return this.status;
   }
 
   in(...statuses: EStatus[]) {
@@ -94,7 +98,7 @@ export default class Status {
 
   // isDone returns whether the Status is final
   isDone() {
-    return this.in(EStatus.success, EStatus.failure, EStatus.cancelled, EStatus.skipped);
+    return this.in(EStatus.Success, EStatus.Failure, EStatus.Cancelled, EStatus.Skipped);
   }
 
   asResult() {
@@ -105,8 +109,6 @@ export default class Status {
   }
 
   static Values() {
-    return Object.keys(EStatus).filter((key) => { return Number.isNaN(Number(key)); });
+    return Object.keys(EStatus).filter((key) => { return Number.isNaN(Number(key)); }).map((key) => { return key.toLowerCase(); });
   }
 }
-
-console.log('Sta', Status.Values());
