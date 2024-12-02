@@ -5,7 +5,7 @@ vi.mock('./task');
 vi.mock('./runner');
 
 const rows = await ActionsRunner.findOne();
-console.log('rows', rows);
+console.log('rows', rows?.get());
 
 describe('Test Actions Runner Model', () => {
   it('ActionsRunnerToken.create', async () => {
@@ -30,5 +30,14 @@ describe('Test Actions Runner Model', () => {
 
     const verified = actionsRunner.verifyToken(actionsRunner.token);
     expect(verified).toBeTruthy();
+  });
+
+  it('isOnline', async () => {
+    const runner = await ActionsRunner.findByPk(1);
+    if (runner) {
+      runner.lastOnline = new Date();
+    }
+
+    expect(runner?.isOnline).toBeTruthy();
   });
 });

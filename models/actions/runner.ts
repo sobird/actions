@@ -68,9 +68,11 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
 
   declare lastActive: CreationOptional<Date>;
 
+  declare isOnline: CreationOptional<Boolean>;
+
   declare labels: string[];
 
-  declare status: CreationOptional<string>;
+  declare status: CreationOptional<RunnerStatus>;
 
   // associates method
   // Since TS cannot determine model association at compile time
@@ -170,6 +172,16 @@ ActionsRunner.init(
     lastActive: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.DATE(),
+    },
+    isOnline: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const { status } = this;
+        if (status === RunnerStatus.IDLE || status === RunnerStatus.ACTIVE) {
+          return true;
+        }
+        return false;
+      },
     },
     labels: {
       type: DataTypes.JSON,

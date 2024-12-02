@@ -2,10 +2,10 @@ import {
   Interceptor, ConnectError, createContextKey, HandlerContext,
 } from '@connectrpc/connect';
 
-import { ActionsRunnerModel } from '@/models';
+import { ActionsRunner } from '@/models/actions';
 import Constants from '@/pkg/common/constants';
 
-const runnerModelContextKey = createContextKey<ActionsRunnerModel | null>(null, {
+const runnerModelContextKey = createContextKey<ActionsRunner | null>(null, {
   description: 'current runner model',
 });
 
@@ -20,7 +20,7 @@ const withRunner: Interceptor = (next) => {
     const token = req.header.get(XRunnerToken)!;
     console.log('token', token);
 
-    const runner = await ActionsRunnerModel.findOne({ where: { uuid } });
+    const runner = await ActionsRunner.findOne({ where: { uuid } });
 
     if (!runner) {
       throw new ConnectError('unregistered runner', 16);
