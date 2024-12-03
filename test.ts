@@ -1,28 +1,13 @@
-import {
-  Sequelize, Op, Model, DataTypes,
-} from 'sequelize';
+import { CronJob } from 'cron';
 
-const sequelize = new Sequelize('sqlite::memory:');
+const job = new CronJob(
+  '30 5 * * 1,3', // cronTime
+  (() => {
+    console.log('You will see this message every second');
+  }), // onTick
+  null, // onComplete
+  false, // start
+  'America/Los_Angeles', // timeZone
+);
 
-const User = sequelize.define('user', {
-  username: {
-    type: DataTypes.TEXT,
-    allowNull: false,
-    unique: true,
-  },
-  hashedPassword: {
-    type: DataTypes.STRING(64),
-    validate: {
-      is: /^[0-9a-f]{64}$/i,
-    },
-  },
-});
-
-(async () => {
-  await sequelize.sync({ force: true });
-  // Code here
-  await User.create({
-    username: 'sobird',
-    hashedPassword: '**',
-  });
-})();
+console.log('job', job.nextDate());

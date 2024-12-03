@@ -2,13 +2,11 @@ import fs from 'node:fs';
 
 import { parse, stringify } from 'yaml';
 
-import { isEmptyDeep } from '@/utils';
-
 class Yaml {
   #yaml;
 
   constructor(yaml: Omit<Yaml, 'save' | 'dump'>) {
-    this.#yaml = yaml;
+    this.#yaml = structuredClone(yaml);
   }
 
   save(file: string, options?: Parameters<typeof stringify>[1]) {
@@ -16,12 +14,7 @@ class Yaml {
   }
 
   dump<T extends Parameters<typeof stringify>[1]>(options?: T) {
-    return stringify(JSON.parse(JSON.stringify(this, (key, value) => {
-      if (isEmptyDeep(value)) {
-        return undefined;
-      }
-      return value;
-    })), {
+    return stringify(this.#yaml, {
       lineWidth: 150,
       ...options,
     } as unknown as T);
