@@ -6,7 +6,9 @@
 
 import {
   DataTypes,
-  type InferAttributes, InferCreationAttributes, CreationOptional,
+  type InferAttributes,
+  type InferCreationAttributes,
+  type CreationOptional,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
@@ -18,45 +20,21 @@ export type RepositoryAttributes = InferAttributes<Repository>;
 export type RepositoryCreationAttributes = InferCreationAttributes<Repository>;
 
 class Repository extends BaseModel<RepositoryAttributes, RepositoryCreationAttributes> {
-  declare id: CreationOptional<number>;
-
-  declare title: string;
-
   declare ownerId: number;
 
-  declare repositoryId: number;
+  declare name: string;
 
-  declare workflowId: number;
+  declare description: string;
 
-  declare index: number;
+  declare website: number;
 
-  declare triggerUserId: number;
+  declare originalURL: string;
 
-  declare scheduleId: number;
+  declare defaultBranch: string;
 
-  declare ref: string;
+  declare defaultWikiBranch: string;
 
-  declare commitSha: string;
-
-  declare isForkPullRequest: boolean;
-
-  declare needApproval: boolean;
-
-  declare approvedBy: string;
-
-  declare eventPayload: string;
-
-  declare triggerEvent: string;
-
-  declare status: string;
-
-  declare version: string;
-
-  declare started: Date;
-
-  declare stopped: Date;
-
-  declare duration: number;
+  declare topics: string[];
 
   // static associate({ User }) {
   //   this.belongsTo(User, { onDelete: 'cascade' });
@@ -66,65 +44,36 @@ class Repository extends BaseModel<RepositoryAttributes, RepositoryCreationAttri
 Repository.init(
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
-    },
-    title: {
-      type: DataTypes.STRING(255),
     },
     ownerId: {
       type: DataTypes.BIGINT,
       allowNull: false,
     },
-    repositoryId: {
-      type: DataTypes.BIGINT,
+    name: {
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
-    workflowId: {
-      type: DataTypes.BIGINT,
-      allowNull: false,
-    },
-    index: {
-      type: DataTypes.BIGINT,
-    },
-    triggerUserId: {
-      type: DataTypes.BIGINT,
-    },
-    scheduleId: {
-      type: DataTypes.INTEGER,
-    },
-    ref: {
-      type: DataTypes.STRING,
-    },
-    commitSha: {
-      type: DataTypes.STRING,
-    },
-    isForkPullRequest: {
-      type: DataTypes.BOOLEAN,
-    },
-    needApproval: {
-      type: DataTypes.BOOLEAN,
-    },
-    approvedBy: {
-      type: DataTypes.STRING,
-    },
-    eventPayload: {
+    description: {
       type: DataTypes.TEXT,
     },
-    triggerEvent: {
+    website: {
+      type: DataTypes.CHAR(2048),
+    },
+    originalURL: {
       type: DataTypes.STRING,
     },
-    status: {
+    defaultBranch: {
       type: DataTypes.STRING,
     },
-    version: {
-      type: DataTypes.STRING(64),
+    defaultWikiBranch: {
+      type: DataTypes.STRING,
     },
-    started: DataTypes.DATE,
-    stopped: DataTypes.DATE,
-
-    duration: DataTypes.BIGINT,
+    topics: {
+      type: DataTypes.JSON,
+    },
   },
   {
     sequelize,
