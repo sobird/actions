@@ -10,7 +10,7 @@ import Run from './run';
 import Stage from './stage';
 
 const logger = log4js.getLogger();
-
+// I hava a plan
 /** Plan contains a list of stages to run in series */
 export default class Plan {
   constructor(public stages: Stage[] = []) {}

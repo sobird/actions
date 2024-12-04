@@ -1,11 +1,10 @@
 /**
- * workflows planner
- * 主要是针对，本地运行时进行的计划
- * 对于通过服务端获取任务执行的的计划，服务端只会每次任务只会分配一个Job.
+ * Workflow Planner
+ * 对于通过服务端获取任务执行的的计划，服务端每次任务只会分配一个Job.
  *
  * sobird<i@sobird.me> at 2024/05/03 18:52:14 created.
  */
-// eslint-disable-next-line max-classes-per-file
+
 import fs from 'fs';
 import {
   resolve, parse, join, basename,
@@ -80,19 +79,18 @@ class WorkflowPlanner {
   }
 
   /**
-   * gets all the events in the workflows file
+   * get all the events in the workflows file
    */
   get events() {
-    const eventsSet = new Set<string>();
+    let eventsSet = new Set<string>();
     this.workflows.forEach((workflow) => {
-      workflow.events.forEach((event) => {
-        eventsSet.add(event);
-      });
+      eventsSet = new Set([...eventsSet, ...workflow.events]);
+      // workflow.events.forEach((event) => {
+      //   eventsSet.add(event);
+      // });
     });
 
-    const events = Array.from(eventsSet);
-    events.sort();
-    return events;
+    return Array.from(eventsSet).sort();
   }
 
   /** will load a specific workflow, all workflows from a directory or all workflows from a directory and its subdirectories */

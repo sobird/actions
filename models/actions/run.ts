@@ -35,8 +35,6 @@ export type ActionsRunCreationAttributes = InferCreationAttributes<ActionsRun>;
 export type ActionsJobPrimaryKey = ActionsJob['id'];
 
 class ActionsRun extends BaseModel<ActionsRunAttributes, ActionsRunCreationAttributes> {
-  declare id: CreationOptional<number>;
-
   declare title: string;
 
   declare ownerId: number;
@@ -122,7 +120,7 @@ class ActionsRun extends BaseModel<ActionsRunAttributes, ActionsRunCreationAttri
 ActionsRun.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.BIGINT.UNSIGNED,
       primaryKey: true,
       autoIncrement: true,
     },
