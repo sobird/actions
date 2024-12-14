@@ -1,14 +1,11 @@
 /**
- * cache.test.ts
+ * action cache test
  *
  * sobird<i@sobird.me> at 2024/05/07 18:10:39 created.
  */
 
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-
 import { readTar } from '@/utils/readTar';
+import { createEachDir } from '@/utils/test';
 
 import ActionCache from '.';
 
@@ -16,16 +13,9 @@ vi.setConfig({
   testTimeout: 10000,
 });
 
-const testTmp = path.join(os.tmpdir(), 'actions');
+const testTmp = createEachDir('actions');
 
-beforeEach(() => {
-  fs.mkdirSync(testTmp, { recursive: true });
-});
-afterEach(() => {
-  fs.rmdirSync(testTmp, { recursive: true });
-});
-
-describe('ActionCache Tests', () => {
+describe('Action Cache Tests', () => {
   const actionCache = new ActionCache(testTmp);
 
   const repository = 'sobird/actions-test';

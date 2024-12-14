@@ -5,9 +5,9 @@ export async function readTar(pack: NodeJS.ReadableStream, callback?: (header: t
   pack.pipe(extract);
 
   extract.on('entry', (entry) => {
-    const buffer = Buffer.from('');
+    let buffer = Buffer.from('');
     entry.on('data', (chunk: Buffer) => {
-      Buffer.concat([buffer, chunk]);
+      buffer = Buffer.concat([buffer, chunk]);
     });
     entry.on('end', () => {
       if (entry.type === 'File') {

@@ -50,24 +50,10 @@ class ActionCache {
     fs.mkdirSync(repoPath, { recursive: true });
     const git = simpleGit(repoPath);
 
+    const commit = await git.revparse(ref);
     const cleanPrefix = path.normalize(prefix || '.');
 
-    const commit = await git.revparse(ref);
-
-    const files = (await git.raw(['ls-tree', '-r', '--name-only', commit])).split('\n').filter((file) => {
-      if (file.startsWith(`${cleanPrefix}/`)) {
-        return true;
-      }
-      if (cleanPrefix !== '.' && file !== cleanPrefix) {
-        return false;
-      }
-
-      if (!file) {
-        return false;
-      }
-
-      return true;
-    });
+    const files = (await git.raw(['ls-tree', '-r', '--name-only', commit, cleanPrefix])).split('\n').filter(Boolean);
 
     let count = 0;
     const pack = new tar.Pack({ portable: true });
