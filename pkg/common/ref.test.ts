@@ -26,7 +26,7 @@ describe('Ref', () => {
   });
 });
 
-describe('RefURL', () => {
+describe('Ref.URL', () => {
   const repoURL = '/user/repo';
 
   test('branch', () => {

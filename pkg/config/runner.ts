@@ -52,7 +52,7 @@ class Runner implements Omit<Options, ''> {
   /**
    * Bind the workdir to the job container.
    */
-  public bindWorkdir?: true;
+  public bindWorkdir: true;
 
   public actor: string;
 
@@ -181,7 +181,7 @@ class Runner implements Omit<Options, ''> {
 
   public skipCheckout: boolean;
 
-  public useGitignore?: true;
+  public useGitignore: true;
 
   public serverInstance: string;
 
@@ -235,14 +235,14 @@ class Runner implements Omit<Options, ''> {
   /**
    * pull docker image(s) even if already present
    */
-  public pull?: true;
+  public pull: true;
 
   /**
    * rebuild local action docker image(s) even if already present
    */
-  public rebuild?: true;
+  public rebuild: true;
 
-  public reuse?: true;
+  public reuse: true;
 
   public containerNamePrefix?: string;
 

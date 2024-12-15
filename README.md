@@ -1,5 +1,5 @@
-# act-runner
-Impl act runner using typescript
+# Actions
+Impl Actions runner using typescript
 
 [![npm][npm]][npm-url]
 [![Build Status][build-status]][build-status-url]
@@ -8,14 +8,14 @@ Impl act runner using typescript
 ## install
 
 ```sh
-npm i -g @sobird/act-runner
+npm i -g @sobird/actions
 ```
 
 ## 开发
 
 ### connectrpc
 
-act_runner 通过 [connectrpc](https://github.com/connectrpc) 来跟gitea服务实例进行通信。
+actions runner 通过 [connectrpc](https://github.com/connectrpc) 来跟gitea服务实例进行通信。
 
 借助 connectrpc 官方提供的 [@connectrpc/protoc-gen-connect-es](https://www.npmjs.com/package/@connectrpc/protoc-gen-connect-es) 来生成与浏览器和 Node.js 兼容的客户端和服务端定义代码。
 

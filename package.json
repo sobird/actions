@@ -1,7 +1,7 @@
 {
   "name": "@sobird/actions",
   "version": "0.0.1",
-  "description": "Impl act runner using typescript",
+  "description": "Impl Actions runner using typescript",
   "type": "module",
   "main": "index.js",
   "bin": {

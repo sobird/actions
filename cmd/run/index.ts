@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable no-param-reassign */
 /**
  * Run workflows
@@ -78,7 +77,7 @@ export const runCommand = new Command('run')
   .option('--detect-event', 'use first event type from workflow as event that triggered the workflow')
   .option('--workspace <path>', "The parent directory of a job's working directory.")
   .option('-w, --workdir <path>', 'the default working directory on the runner for steps', '.')
-  .option('--bind-workdir', 'bind working directory to container, rather than copy')
+  .option('--no-bind-workdir', 'bind working directory to container, rather than copy')
 
   // log
   .option('--log-json', 'output logs in json format')
@@ -112,7 +111,7 @@ export const runCommand = new Command('run')
   .option('--artifact-server-addr <addr>', 'defines the address where the artifact server listens', ip.address())
   .option('--artifact-server-port <port>', 'defines the port where the artifact server listens (will only bind to localhost)', (value: string) => { return Number(value); })
 
-  // actionCache
+  // action cache
   .option('--use-action-cache', 'enable using the new Action Cache for storing Actions locally')
   .option('--repositories <repositories...>', 'replaces the specified repository and ref with a local folder (e.g. https://github.com/test/test@v0=/home/act/test or test/test@v0=/home/act/test, the latter matches any hosts or protocols)', collectObject)
   .option('--action-offline-mode', 'if action contents exists, it will not be fetch and pull again. If turn on this, will turn off force pull')
@@ -205,7 +204,7 @@ export const runCommand = new Command('run')
     if (options.containerCapDrop) {
       logger.warn(deprecationWarning, 'container-cap-drop', `--cap-drop=${options.containerCapDrop.join(' ')}`, `--cap-drop=${options.containerCapDrop.join(' ')}`);
     }
-
+    console.log('options', options);
     await runner.options(options, eventName);
     const config = await runner.configure();
     await plan.executor(config).execute();
