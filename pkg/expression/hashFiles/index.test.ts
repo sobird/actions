@@ -6,10 +6,15 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-function hashFiles() {
+function hashFiles(...patterns: string[]) {
+  const followSymlink = patterns[0] === '--follow-symbolic-links';
+  if (followSymlink) {
+    patterns.shift();
+  }
+
   const env = {
     ...process.env,
-    patterns: './package.json',
+    patterns: patterns.join('\n'),
   };
 
   const result = spawnSync('node', [`${__dirname}/index.cjs`], { env, stdio: 'pipe' });
@@ -25,7 +30,11 @@ function hashFiles() {
       return hash;
     }
   }
+
+  return '';
 }
 
-const hash = hashFiles();
-console.log('hash', hash);
+it('Test hashFiles', () => {
+  const hash = hashFiles('./package.json');
+  expect(hash.length).toBe(64);
+});
