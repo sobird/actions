@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import readline from 'node:readline';
+import { fileURLToPath } from 'node:url';
 import path from 'path';
 
 import * as tar from 'tar';
@@ -34,6 +36,9 @@ export interface ContainerOptions {
 
 const hashFilesDir = path.join(Constants.Directory.Bin, 'hashFiles');
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 export default abstract class Container {
   rootdir: string = '';
 
@@ -45,7 +50,7 @@ export default abstract class Container {
 
   abstract Environment: string;
 
-  putHashFileExecutor = this.put(hashFilesDir, 'pkg/expression/hashFiles/index.cjs');
+  putHashFileExecutor = this.put(hashFilesDir, path.resolve(__dirname, 'hashFiles/index.cjs'));
 
   // constructor(public options: ContainerOptions) {}
 

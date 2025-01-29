@@ -7,8 +7,6 @@
  * @see https://cn.rollupjs.org/configuration-options
  * sobird<i@sobird.me> at 2023/09/28 11:30:37 created.
  */
-import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
@@ -20,8 +18,6 @@ import copy from 'rollup-plugin-copy';
 import external from 'rollup-plugin-peer-deps-external';
 import typescript from 'rollup-plugin-typescript2';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 const isProduction = process.env.NODE_ENV === 'production';
 const DIST = isProduction ? 'dist' : 'dist';
 
@@ -73,6 +69,8 @@ export default (env) => {
         terser(),
         copy({
           targets: [
+            { src: 'pkg/config/default.yaml', dest: DIST },
+            { src: 'pkg/runner/container/hashFiles/index.cjs', dest: `${DIST}/hashFiles` },
             { src: 'package.json', dest: DIST },
             { src: 'README.md', dest: DIST },
             { src: 'LICENSE', dest: DIST },
