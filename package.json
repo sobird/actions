@@ -14,7 +14,7 @@
     "lint": "next lint",
     "dev:runner": "rollup -cw --environment NODE_ENV:development",
     "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",
-    "build:runner": "rollup -c --environment NODE_ENV:production",
+    "build:actions": "rollup -c --environment NODE_ENV:production",
     "eslint:fix": "eslint src --fix",
     "test": "vitest",
     "export": "export NODE_OPTIONS=--import=./node_modules/@sobird/ts-node/register.js",
@@ -25,12 +25,13 @@
     "version": "git add -A .",
     "postversion": "git push && git push --tags",
     "postinstall": "echo \"postinstall\"",
-    "prepare": "husky"
+    "prepare": "husky",
+    "prepublishOnly": "npm run build:actions"
   },
   "keywords": [
-    "act",
-    "act-runner",
     "actions",
+    "runner",
+    "actions-runner",
     "github-actions"
   ],
   "author": "sobird",
@@ -119,5 +120,8 @@
   },
   "resolutions": {
     "strip-ansi": "6.0.0"
-  }
+  },
+  "files": [
+    "dist"
+  ]
 }
