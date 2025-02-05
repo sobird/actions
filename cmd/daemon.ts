@@ -89,7 +89,7 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
       logger.info(`runner: ${runner.name}, with version: ${runner.version}, with labels: ${runner.labels}, declare successfully`);
     }
 
-    const poller = new Poller(RunnerServiceClient, appconf.daemon, version);
+    const poller = new Poller(RunnerServiceClient, appconf, version);
     poller.poll();
   } catch (err) {
     const connectError = err as ConnectError;

@@ -6,6 +6,7 @@
  */
 import util from 'node:util';
 
+import { create, clone } from '@bufbuild/protobuf';
 import { timestampFromDate } from '@bufbuild/protobuf/wkt';
 import { ConnectError } from '@connectrpc/connect';
 import log4js, { LoggingEvent } from 'log4js';
@@ -13,7 +14,7 @@ import retry from 'retry';
 
 import type { Client } from '@/pkg';
 import {
-  LogRow, Task, TaskState, StepState, Result, UpdateTaskRequest, UpdateLogRequest,
+  LogRow, LogRowSchema, Task, TaskSchema, TaskState, TaskStateSchema, StepState, StepStateSchema, Result,
 } from '@/pkg/service/runner/v1/messages_pb';
 import { Replacer } from '@/utils';
 
@@ -48,11 +49,11 @@ class Reporter implements LoggerHook {
 
   constructor(
     public client: typeof Client.prototype.RunnerServiceClient,
-    public task: Task = new Task(),
+    public task: Task = create(TaskSchema),
     public cancel = () => {},
   ) {
     ['token', 'gitea_runtime_token'].forEach((key) => {
-      const value = task.context?.fields[key]?.toJsonString();
+      const value = task.context?.[key];
       if (value) {
         this.logReplacer.add(value, '***');
       }
@@ -62,7 +63,7 @@ class Reporter implements LoggerHook {
       this.logReplacer.add(value, '***');
     });
 
-    this.state = new TaskState({
+    this.state = create(TaskStateSchema, {
       id: task.id,
     });
 
@@ -84,7 +85,7 @@ class Reporter implements LoggerHook {
 
       // 创建新的 StepState 对象并添加到 steps 数组中
       for (let i = 0; i < l; i++) {
-        const step = new StepState({
+        const step = create(StepStateSchema, {
           id: BigInt(i),
         });
         this.state.steps.push(step);
@@ -143,8 +144,8 @@ class Reporter implements LoggerHook {
 
       // 处理步骤信息
       let step: StepState | undefined;
-      const { stepNumber } = entry.context;
-      if (Number.isInteger(parseInt(stepNumber, 10)) && this.state.steps.length > stepNumber) {
+      const stepNumber = parseInt(entry.context.stepNumber, 10);
+      if (Number.isInteger(stepNumber) && this.state.steps.length > stepNumber) {
         step = this.state.steps[stepNumber];
       }
 
@@ -222,7 +223,7 @@ class Reporter implements LoggerHook {
    * @param a
    */
   log(format: string, ...a: any): void {
-    this.logRows.push(new LogRow({
+    this.logRows.push(create(LogRowSchema, {
       time: timestampFromDate(new Date()),
       content: util.format(format, ...a),
     }));
@@ -271,14 +272,14 @@ class Reporter implements LoggerHook {
         this.state.result = Result.FAILURE;
 
         // 添加最终日志行
-        this.logRows.push(new LogRow({
+        this.logRows.push(create(LogRowSchema, {
           time: timestampFromDate(new Date()),
           content: lastWords,
         }));
         this.state.startedAt = timestampFromDate(new Date());
       } else if (lastWords) {
         // 添加额外的日志行
-        this.logRows.push(new LogRow({
+        this.logRows.push(create(LogRowSchema, {
           time: timestampFromDate(new Date()),
           content: lastWords,
         }));
@@ -316,12 +317,12 @@ class Reporter implements LoggerHook {
   async reportLog(noMore: boolean): Promise<Error | void > {
     try {
       const rows = this.logRows;
-      const updateLogResponse = await this.client.updateLog(new UpdateLogRequest({
+      const updateLogResponse = await this.client.updateLog({
         taskId: this.state.id,
         index: this.logOffset,
         rows,
         noMore,
-      }));
+      });
 
       // 获取服务端确认的日志索引
       const { ackIndex } = updateLogResponse;
@@ -344,12 +345,12 @@ class Reporter implements LoggerHook {
    * 上报任务状态
    */
   async reportState() {
-    const state = this.state.clone();
+    const state = clone(TaskStateSchema, this.state);
     const outputs = Object.fromEntries(this.outputs);
 
     try {
       // console.log('state, outputs ', state, outputs);
-      const updateTaskResponse = await this.client.updateTask(new UpdateTaskRequest({ state, outputs }));
+      const updateTaskResponse = await this.client.updateTask({ state, outputs });
       if (!updateTaskResponse) {
         return;
       }
@@ -490,7 +491,7 @@ class Reporter implements LoggerHook {
 
     content = this.logReplacer.replace(content);
 
-    return new LogRow({
+    return create(LogRowSchema, {
       time: timestampFromDate(entry.startTime),
       content,
     });

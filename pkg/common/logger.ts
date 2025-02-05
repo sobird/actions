@@ -6,7 +6,7 @@ export interface LogEntry extends LoggingEvent {
     raw_output: true;
     jobResult: string;
     stepResult: string;
-    stepNumber: number;
+    stepNumber: string;
   }
 }
 

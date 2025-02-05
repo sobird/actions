@@ -8,13 +8,12 @@ import { ConnectError } from '@connectrpc/connect';
 import log4js from 'log4js';
 
 import type { Client, Config } from '@/pkg';
-import RunnerConfig from '@/pkg/runner/config';
 import { Needs } from '@/pkg/runner/context/needs';
 import { withTimeout } from '@/utils';
 
 import { WithLoggerHook } from '../common/logger';
 import Reporter from '../reporter';
-import { FetchTaskRequest, Task } from '../service/runner/v1/messages_pb';
+import { Task } from '../service/runner/v1/messages_pb';
 import Workflow from '../workflow';
 
 const logger = log4js.getLogger();
@@ -26,16 +25,17 @@ class Poller {
 
   constructor(
     public client: typeof Client.prototype.RunnerServiceClient,
-    public config: InstanceType<typeof Config>['daemon'],
+    public config: InstanceType<typeof Config>,
     public runnerVersion?: string,
   ) {}
 
   async poll() {
+    const { daemon } = this.config;
     const checkInterval = setInterval(async () => {
-      if (this.runningTasks.size >= this.config.capacity) {
+      if (this.runningTasks.size >= daemon.capacity) {
         return;
       }
-      logger.debug('fetching task', this.tasksVersion, this.runningTasks.size, this.config.capacity);
+      logger.debug('fetching task', this.tasksVersion, this.runningTasks.size, daemon.capacity);
       const task = await this.fetchTask();
 
       if (this.runningTasks.has(task?.id)) {
@@ -45,14 +45,16 @@ class Poller {
       try {
         if (task) {
           this.runningTasks.set(task.id, task);
+          console.log('11212', 11212);
           await this.assign(task);
+          console.log('11212', 11212);
           this.runningTasks.delete(task.id);
         }
       } catch (error) {
         logger.error('failed to run task', error);
         clearInterval(checkInterval);
       }
-    }, this.config.fetchInterval);
+    }, daemon.fetchInterval);
   }
 
   async assign(task: Task) {
@@ -60,7 +62,7 @@ class Poller {
 
     const reporter = new Reporter(this.client, task);
     await reporter.runDaemon();
-    reporter.log(`Current runner version: ${this.runnerVersion} Received task ${task.id} of job ${task.context?.fields.job?.toJsonString()}, triggered by event: ${task.context?.fields.event_name?.toJsonString()}`);
+    reporter.log(`Current runner version: ${this.runnerVersion} Received task ${task.id} of job ${task.context?.job}, triggered by event: ${task.context?.event_name}`);
 
     // SingleWorkflow is a workflow with single job and single matrix
     const singleWorkflow = Workflow.Load(workflowPayload?.toString()!);
@@ -70,28 +72,23 @@ class Poller {
     loggerWithReporter.info('task:', task.id);
 
     const needs = Object.fromEntries(Object.entries(task.needs).map(([job, need]) => {
-      return [job, need.toJson()];
+      return [job, need];
     })) as unknown as Needs;
-    const github = task.context!.toJson();
+    const github = task.context;
 
-    // @todo config
-    const config = {
-      context: {
-        github,
-        secrets,
-        vars,
-        needs,
-      },
-    } as unknown as RunnerConfig;
+    Object.assign(this.config.runner.context.github, github);
+    Object.assign(this.config.runner.context.secrets, secrets);
+    Object.assign(this.config.runner.context.vars, vars);
+    Object.assign(this.config.runner.context.needs, needs);
 
-    // await plan.executor(config).execute();
-    await withTimeout(plan.executor(config).execute(), this.config.timeout);
+    const runnerConfig = await this.config.runner.configure();
+    await withTimeout(plan.executor(runnerConfig).execute(), this.config.daemon.timeout);
   }
 
   async fetchTask() {
     const { tasksVersion } = this;
     try {
-      const fetchTaskResponse = await withTimeout(this.client.fetchTask(new FetchTaskRequest({ tasksVersion })), this.config.fetchTimeout);
+      const fetchTaskResponse = await withTimeout(this.client.fetchTask({ tasksVersion }), this.config.daemon.fetchTimeout);
 
       if (fetchTaskResponse.tasksVersion > tasksVersion) {
         this.tasksVersion = fetchTaskResponse.tasksVersion;
