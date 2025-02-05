@@ -3,15 +3,21 @@ import fs from 'fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'path';
 
-import { JsonValue, Struct } from '@bufbuild/protobuf';
+import { create } from '@bufbuild/protobuf';
 
-import contextJson from './data/context';
+import context from './data/context';
 import {
-  UpdateLogResponse, DeclareResponse, Runner, FetchTaskResponse,
-  Task,
-  UpdateTaskResponse,
-  TaskState,
-  TaskNeed,
+  PingResponseSchema,
+} from '../ping/v1/messages_pb';
+import {
+  UpdateLogResponseSchema,
+  DeclareResponseSchema,
+  RunnerSchema,
+  FetchTaskResponseSchema,
+  TaskSchema,
+  UpdateTaskResponseSchema,
+  TaskStateSchema,
+  TaskNeedSchema,
 } from '../runner/v1/messages_pb';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,11 +25,10 @@ const __dirname = dirname(__filename);
 
 const taskWorkflow = fs.readFileSync(resolve(__dirname, './data/workflow.yaml'), 'utf-8');
 const workflowPayload = Buffer.from(taskWorkflow);
-const context = Struct.fromJson((contextJson as JsonValue));
 
-export const fetchTaskResponse = new FetchTaskResponse({
+export const fetchTaskResponse = create(FetchTaskResponseSchema, {
   tasksVersion: BigInt(123),
-  task: new Task({
+  task: create(TaskSchema, {
     id: BigInt(100),
     workflowPayload,
     context,
@@ -33,7 +38,7 @@ export const fetchTaskResponse = new FetchTaskResponse({
     },
     machine: '',
     needs: {
-      'test-job1': new TaskNeed({
+      'test-job1': create(TaskNeedSchema, {
         result: 1,
         outputs: {
           key1: 'this is outputs 1',
@@ -48,16 +53,20 @@ export const fetchTaskResponse = new FetchTaskResponse({
 const mock = vi.fn().mockImplementation(() => {
   return {
     PingServiceClient: {
-      ping: vi.fn(),
+      ping: vi.fn((req) => {
+        return create(PingResponseSchema, {
+          data: `Hello, ${req.data}`,
+        });
+      }),
     },
     RunnerServiceClient: {
       register: vi.fn(),
-      declare: vi.fn().mockResolvedValue(new DeclareResponse({
-        runner: new Runner(),
+      declare: vi.fn().mockResolvedValue(create(DeclareResponseSchema, {
+        runner: create(RunnerSchema),
       })),
       fetchTask: vi.fn().mockResolvedValue(fetchTaskResponse),
-      updateTask: vi.fn().mockResolvedValue(new UpdateTaskResponse({
-        state: new TaskState({
+      updateTask: vi.fn().mockResolvedValue(create(UpdateTaskResponseSchema, {
+        state: create(TaskStateSchema, {
           id: BigInt(123),
           result: 0,
           startedAt: undefined,
@@ -67,10 +76,8 @@ const mock = vi.fn().mockImplementation(() => {
         sentOutputs: [],
       })),
       updateLog: vi.fn((request) => {
-        return new Promise((r) => {
-          r(new UpdateLogResponse({
-            ackIndex: request.index + BigInt(request.rows.length),
-          }));
+        return create(UpdateLogResponseSchema, {
+          ackIndex: request.index + BigInt(request.rows.length),
         });
       }),
     },

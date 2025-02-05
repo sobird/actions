@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import fsP from 'node:fs/promises';
 
-import { Timestamp } from '@bufbuild/protobuf';
+import { create } from '@bufbuild/protobuf';
+import { timestampFromDate, timestampDate } from '@bufbuild/protobuf/wkt';
 
-import { LogRow } from '@/pkg/service/runner/v1/messages_pb';
+import { LogRow, LogRowSchema } from '@/pkg/service/runner/v1/messages_pb';
 
 const MaxLineSize = 64 * 1024;
 const DBFSPrefix = 'logs/';
@@ -34,7 +35,7 @@ class Log {
 
     const ns = [];
     for await (const row of rows) {
-      const line = `${this.format(row.time!.toDate(), row.content)}\n`;
+      const line = `${this.format(timestampDate(row.time || timestampFromDate(new Date())), row.content)}\n`;
       const n = await fd.write(Buffer.from(line), offset, line.length, null);
       ns.push(n);
     }
@@ -59,8 +60,8 @@ class Log {
 export default Log;
 
 const rows = [
-  { time: Timestamp.fromDate(new Date('2022-01-01T12:00:00Z')), content: 'Log entry 1' },
-  { time: Timestamp.fromDate(new Date('2022-01-01T12:00:01Z')), content: 'Log entry 2' },
+  { time: timestampFromDate(new Date('2022-01-01T12:00:00Z')), content: 'Log entry 1' },
+  { time: timestampFromDate(new Date('2022-01-01T12:00:01Z')), content: 'Log entry 2' },
 ];
 
-await Log.write('example.log', 2, rows.map((item) => { return new LogRow(item); }));
+await Log.write('example.log', 2, rows.map((item) => { return create(LogRowSchema, item); }));

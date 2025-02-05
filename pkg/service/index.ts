@@ -4,8 +4,8 @@ import { createClient, Client } from '@connectrpc/connect';
 import { createConnectTransport, ConnectTransportOptions } from '@connectrpc/connect-node';
 
 import { Protocol } from '../common/constants';
-import { PingService } from './ping/v1/services_connect';
-import { RunnerService } from './runner/v1/services_connect';
+import { PingService } from './ping/v1/services_pb';
+import { RunnerService } from './runner/v1/services_pb';
 
 const { XRunnerUUID, XRunnerToken, XRunnerVersion } = Protocol;
 

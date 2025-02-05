@@ -120,7 +120,7 @@ class ActionsRun extends BaseModel<ActionsRunAttributes, ActionsRunCreationAttri
 ActionsRun.init(
   {
     id: {
-      type: DataTypes.BIGINT.UNSIGNED,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
     },

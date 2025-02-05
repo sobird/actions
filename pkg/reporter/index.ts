@@ -6,7 +6,7 @@
  */
 import util from 'node:util';
 
-import { Timestamp } from '@bufbuild/protobuf';
+import { timestampFromDate } from '@bufbuild/protobuf/wkt';
 import { ConnectError } from '@connectrpc/connect';
 import log4js, { LoggingEvent } from 'log4js';
 import retry from 'retry';
@@ -105,7 +105,7 @@ class Reporter implements LoggerHook {
       // 使用提供的日志条目
       logger.trace(entry.data);
 
-      const timestamp = Timestamp.fromDate(entry.startTime);
+      const timestamp = timestampFromDate(entry.startTime);
       if (!this.state.startedAt) {
         this.state.startedAt = timestamp;
       }
@@ -223,7 +223,7 @@ class Reporter implements LoggerHook {
    */
   log(format: string, ...a: any): void {
     this.logRows.push(new LogRow({
-      time: Timestamp.fromDate(new Date()),
+      time: timestampFromDate(new Date()),
       content: util.format(format, ...a),
     }));
   }
@@ -272,14 +272,14 @@ class Reporter implements LoggerHook {
 
         // 添加最终日志行
         this.logRows.push(new LogRow({
-          time: Timestamp.fromDate(new Date()),
+          time: timestampFromDate(new Date()),
           content: lastWords,
         }));
-        this.state.startedAt = Timestamp.fromDate(new Date());
+        this.state.startedAt = timestampFromDate(new Date());
       } else if (lastWords) {
         // 添加额外的日志行
         this.logRows.push(new LogRow({
-          time: Timestamp.fromDate(new Date()),
+          time: timestampFromDate(new Date()),
           content: lastWords,
         }));
       }
@@ -491,7 +491,7 @@ class Reporter implements LoggerHook {
     content = this.logReplacer.replace(content);
 
     return new LogRow({
-      time: Timestamp.fromDate(entry.startTime),
+      time: timestampFromDate(entry.startTime),
       content,
     });
   }
