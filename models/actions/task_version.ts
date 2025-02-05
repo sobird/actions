@@ -27,7 +27,7 @@ class ActionsTaskVersion extends BaseModel<ActionsTaskVersionAttributes, Actions
 
   declare repositoryId: number;
 
-  declare version: CreationOptional<BigInt>;
+  declare version: CreationOptional<bigint>;
 
   public static async findOneVersionByScope(ownerId: number, repositoryId: number) {
     const taskVersion = await this.findOne({

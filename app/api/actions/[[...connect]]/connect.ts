@@ -1,22 +1,21 @@
 import { ConnectRouter } from '@connectrpc/connect';
 
-import { PingResponse } from '@/pkg/service/ping/v1/messages_pb';
-import { PingService } from '@/pkg/service/ping/v1/services_connect';
+import { PingService } from '@/pkg/service/ping/v1/services_pb';
 import { RunnerService, RunnerServiceImpl, RunnerServiceInterceptors } from '@/services/runner';
 
 export const routes = (router: ConnectRouter) => {
   // Register your service implementations here
-  // router.rpc(PingService, PingService.methods.ping, async (req) => {
-  //   return new PingResponse({
+  // router.rpc(PingService.method.ping, async (req) => {
+  //   return {
   //     data: `Hello, ${req.data}`,
-  //   });
+  //   };
   // });
 
   router.service(PingService, {
     ping: (req) => {
-      return new PingResponse({
+      return {
         data: `Hello, ${req.data}`,
-      });
+      };
     },
   });
 

@@ -1,21 +1,22 @@
+import { create } from '@bufbuild/protobuf';
 import { ConnectError } from '@connectrpc/connect';
 
-import { ActionsTaskModel } from '@/models';
+import models from '@/models';
 import Constants from '@/pkg/common/constants';
 import Log from '@/pkg/log';
-import { UpdateLogResponse } from '@/pkg/service/runner/v1/messages_pb';
+import { UpdateLogResponseSchema } from '@/pkg/service/runner/v1/messages_pb';
 
 import type { ServiceMethodImpl } from '.';
 
 const { XRunnerUUID } = Constants.Protocol;
 
-export const updateLog: ServiceMethodImpl<'updateLog'> = async (req, { requestHeader }) => {
+export const updateLog: ServiceMethodImpl['updateLog'] = async (req, { requestHeader }) => {
   const runnerUUID = requestHeader.get(XRunnerUUID);
   console.log('runnerUUID', runnerUUID);
 
-  const response = new UpdateLogResponse();
+  const response = create(UpdateLogResponseSchema);
 
-  const task = await ActionsTaskModel.findByPk(req.taskId);
+  const task = await models.Actions.Task.findByPk(req.taskId);
 
   const ack = task?.logLength || 0;
 

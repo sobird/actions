@@ -1,13 +1,12 @@
 import { ConnectError } from '@connectrpc/connect';
 
 import models from '@/models';
-import { RegisterResponse, Runner } from '@/pkg/service/runner/v1/messages_pb';
 import lodash from '@/utils/lodash';
 
 import type { ServiceMethodImpl } from '.';
 
 // Register register a new runner in server.
-export const register: ServiceMethodImpl<'register'> = async (req) => {
+export const register: ServiceMethodImpl['register'] = async (req) => {
   if (req.token === '' || req.name === '') {
     throw new ConnectError('missing runner token, name', 3);
   }
@@ -44,14 +43,14 @@ export const register: ServiceMethodImpl<'register'> = async (req) => {
     labels: req.labels,
   });
 
-  return new RegisterResponse({
-    runner: new Runner({
+  return {
+    runner: {
       id: runner.id,
       uuid: runner.uuid,
       token: runner.token,
       name: runner.name,
       version: runner.version,
       labels: runner.labels,
-    }),
-  });
+    },
+  };
 };

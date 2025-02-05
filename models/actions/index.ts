@@ -6,6 +6,7 @@ import ActionsSchedule from './schedule';
 import ActionsScheduleSpec from './schedule_spec';
 import ActionsStep from './step';
 import ActionsTask from './task';
+import ActionsTaskVersion from './task_version';
 
 export const models = {
   ActionsJob,
@@ -42,4 +43,5 @@ export default {
   RunnerToken: ActionsRunnerToken,
   Step: ActionsStep,
   Task: ActionsTask,
+  TaskVersion: ActionsTaskVersion,
 };

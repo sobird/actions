@@ -1,7 +1,6 @@
 import { ConnectError } from '@connectrpc/connect';
 
-import { ActionsTaskVersionModel } from '@/models';
-import { FetchTaskResponse } from '@/pkg/service/runner/v1/messages_pb';
+import models from '@/models';
 // import { runnerModelContextKey } from '@/services/runner';
 
 import type { ServiceMethodImpl } from '.';
@@ -11,19 +10,19 @@ import { RunnerModelFrom } from './interceptors/with_runner';
 //   description: 'current runner model',
 // });
 
-export const fetchTask: ServiceMethodImpl<'fetchTask'> = async (req, { values }) => {
+export const fetchTask: ServiceMethodImpl['fetchTask'] = async (req, { values }) => {
   const runner = RunnerModelFrom(values)!;
   const { ownerId = 0, repositoryId = 0 } = runner;
 
   const taskVersion = req.tasksVersion;
-  let latestVersion = await ActionsTaskVersionModel.findOneVersionByScope(ownerId, repositoryId);
+  let latestVersion = await models.Actions.TaskVersion.findOneVersionByScope(ownerId, repositoryId);
 
   if (latestVersion === undefined) {
     throw new ConnectError('query tasks version failed', 13);
   }
 
   if (latestVersion === 0n) {
-    await ActionsTaskVersionModel.increaseVersion(ownerId, repositoryId);
+    await models.Actions.TaskVersion.increaseVersion(ownerId, repositoryId);
 
     latestVersion += 1n;
   }
@@ -37,7 +36,7 @@ export const fetchTask: ServiceMethodImpl<'fetchTask'> = async (req, { values })
 
   // }
 
-  return new FetchTaskResponse({
+  return {
     tasksVersion: latestVersion,
-  });
+  };
 };
