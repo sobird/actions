@@ -1,11 +1,21 @@
 {
-  "name": "@sobird/actions",
+  "name": "actions",
   "version": "0.0.1",
   "description": "Impl Actions runner using typescript",
   "type": "module",
   "main": "index.js",
   "bin": {
     "actions": "./cmd/index.ts"
+  },
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "pkg"
+    ],
+    "nohoist": [
+      "**/@vercel/ncc",
+      "**/@actions/glob"
+    ]
   },
   "scripts": {
     "dev": "next dev --turbopack",
@@ -37,7 +47,6 @@
   "author": "sobird",
   "license": "MIT",
   "dependencies": {
-    "@actions/glob": "^0.4.0",
     "@bufbuild/protobuf": "^2.2.3",
     "@commander-js/extra-typings": "^12.0.1",
     "@connectrpc/connect": "^2.0.1",
@@ -100,7 +109,7 @@
     "esbuild": "^0.20.2",
     "eslint-config-sobird": "^0.2.14",
     "express": "^4.19.2",
-    "glob": "^10.3.10",
+    "glob": "^11.0.1",
     "husky": "^9.0.11",
     "node-notifier": "^10.0.1",
     "postcss": "^8.4.49",

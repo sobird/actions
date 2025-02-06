@@ -22,7 +22,7 @@ yarn.lock
 /build
 
 # misc
-/dist
+dist
 .DS_Store
 *.pem
 .env

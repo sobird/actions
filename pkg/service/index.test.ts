@@ -6,7 +6,7 @@ import {
   UpdateLogRequestSchema, LogRow, LogRowSchema, RunnerSchema, RegisterResponseSchema,
 } from './runner/v1/messages_pb';
 
-vi.mock('./index');
+// vi.mock('./index');
 
 const { RunnerServiceClient, PingServiceClient } = new Client('http://localhost:3000/', '', false);
 

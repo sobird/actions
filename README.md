@@ -80,6 +80,21 @@ actions config > actions.config.yaml
 ## Webhooks
 
 
+## Yarn Workspaces
+
+```sh
+# 显示当前项目的工作空间依赖树
+yarn workspaces info
+
+# 运行选定的工作空间（即包）的yarn命令，示例：yarn workspace awesome-package add react --dev
+yarn workspace <package-name> <command>
+
+
+# 为所有的包添加一个共同的依赖关系，进入项目的根目录并使用-W (或-ignore-workspace-root-check) 标志
+yarn add some-package -W
+```
+
+
 <!-- Badges -->
 [npm]: https://img.shields.io/npm/v/@sobird/act-runner.svg
 [npm-url]: https://www.npmjs.com/package/@sobird/act-runner
