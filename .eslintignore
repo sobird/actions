@@ -1,4 +1,3 @@
 node_modules
 dist
 commitlint.config.js
-pkg/runner/container/hashFiles/index.cjs

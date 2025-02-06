@@ -1,12 +1,12 @@
 {
-  "name": "@actions/hashfiles",
+  "name": "hashfiles",
   "version": "1.0.0",
   "description": "GitHub Actions HashFiles() expression function",
   "main": "src/hashFiles.ts",
   "private": true,
   "scripts": {
     "build": "tsc",
-    "pack": "ncc build -o ./dist",
+    "pack": "ncc build -o ../runner/container/hashFiles -m",
     "all": "npm run build && npm run pack",
     "prepare": "npm run all"
   },

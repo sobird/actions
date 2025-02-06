@@ -70,7 +70,7 @@ export default (env) => {
         copy({
           targets: [
             { src: 'pkg/config/default.yaml', dest: DIST },
-            { src: 'pkg/runner/container/hashFiles/index.cjs', dest: `${DIST}/hashFiles` },
+            { src: 'pkg/runner/container/hashFiles/index.js', dest: `${DIST}/hashFiles` },
             { src: 'package.json', dest: DIST },
             { src: 'README.md', dest: DIST },
             { src: 'LICENSE', dest: DIST },

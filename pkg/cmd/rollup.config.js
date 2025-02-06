@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 /**
  * rollup.config.js
  * 打包压缩ts文件
@@ -7,8 +6,6 @@
  * @see https://cn.rollupjs.org/configuration-options
  * sobird<i@sobird.me> at 2023/09/28 11:30:37 created.
  */
-
-import { fileURLToPath } from 'node:url';
 
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
@@ -22,8 +19,6 @@ import typescript from 'rollup-plugin-typescript2';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const DIST = isProduction ? 'dist' : 'dist';
-
-const hashfiles = fileURLToPath(import.meta.resolve('@actions/hashfiles'));
 
 export default (env) => {
   return defineConfig([
@@ -73,11 +68,8 @@ export default (env) => {
         terser(),
         copy({
           targets: [
-            { src: 'pkg/config/default.yaml', dest: DIST },
-            { src: hashfiles, dest: `${DIST}/hashFiles` },
-            { src: 'package.json', dest: DIST },
-            { src: 'README.md', dest: DIST },
-            { src: 'LICENSE', dest: DIST },
+            { src: '../config/default.yaml', dest: DIST },
+            { src: '../runner/container/hashFiles/index.js', dest: `${DIST}/hashFiles` },
           ],
           copyOnce: env.watch,
         }),

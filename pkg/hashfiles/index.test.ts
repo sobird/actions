@@ -17,7 +17,7 @@ function hashFiles(...patterns: string[]) {
     patterns: patterns.join('\n'),
   };
 
-  const result = spawnSync('node', [`${__dirname}/index.cjs`], { env, stdio: 'pipe' });
+  const result = spawnSync('node', [`${__dirname}/dist/index.js`], { env, stdio: 'pipe' });
 
   const output = result.stderr.toString();
   const guard = '__OUTPUT__';

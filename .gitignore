@@ -66,3 +66,4 @@ event.json
 .actionsrc
 database.sqlite
 unittest.sqlite
+hashFiles

@@ -50,7 +50,7 @@ export default abstract class Container {
 
   abstract Environment: string;
 
-  putHashFileExecutor = this.put(hashFilesDir, path.resolve(__dirname, 'hashFiles/index.cjs'));
+  putHashFileExecutor = this.put(hashFilesDir, path.resolve(__dirname, 'hashFiles/index.js'));
 
   // constructor(public options: ContainerOptions) {}
 
@@ -98,7 +98,7 @@ export default abstract class Container {
       patterns: patterns.join('\n'),
     };
 
-    const hashFilesScript = this.resolve(hashFilesDir, 'index.cjs');
+    const hashFilesScript = this.resolve(hashFilesDir, 'index.js');
 
     const { stderr } = this.spawnSync('node', [hashFilesScript], { env });
 
