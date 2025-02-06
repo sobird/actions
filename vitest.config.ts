@@ -1,4 +1,5 @@
 import { resolve } from 'path';
+
 import { defineConfig } from 'vitest/config';
 
 const r = (p: string) => { return resolve(__dirname, p); };

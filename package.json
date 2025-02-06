@@ -115,7 +115,7 @@
     "ts-protoc-gen": "^0.15.0",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.4.5",
-    "vitest": "^1.5.2"
+    "vitest": "^3.0.5"
   },
   "resolutions": {
     "strip-ansi": "6.0.0"
