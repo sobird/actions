@@ -2,11 +2,11 @@
   "name": "@actions/hashfiles",
   "version": "1.0.0",
   "description": "GitHub Actions HashFiles() expression function",
-  "main": "dist/index.js",
+  "main": "src/hashFiles.ts",
   "private": true,
   "scripts": {
     "build": "tsc",
-    "pack": "ncc build -o ./dist -m",
+    "pack": "ncc build -o ./dist",
     "all": "npm run build && npm run pack"
   },
   "repository": {
