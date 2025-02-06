@@ -23,7 +23,6 @@
   "author": "sobird",
   "license": "MIT",
   "dependencies": {
-    "@actions/glob": "^0.5.0",
     "@bufbuild/protobuf": "^2.2.3",
     "@commander-js/extra-typings": "^12.0.1",
     "@connectrpc/connect": "^2.0.1",

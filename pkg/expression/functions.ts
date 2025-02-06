@@ -7,10 +7,10 @@
  * sobird<i@sobird.me> at 2024/05/12 1:51:41 created.
  */
 
-import { createHash } from 'node:crypto';
-import fs from 'node:fs';
+// import { createHash } from 'node:crypto';
+// import fs from 'node:fs';
 
-import glob from '@actions/glob';
+// import glob from '@actions/glob';
 import _ from 'lodash';
 
 /**
@@ -144,34 +144,34 @@ function fromJSON(value: string) {
  *
  * @see https://github.com/actions/toolkit/blob/main/packages/glob/src/internal-hash-files.ts
  */
-export async function hashFiles(...patterns: string[]) {
-  const hashes = [];
+// export async function hashFiles(...patterns: string[]) {
+//   const hashes = [];
 
-  for (const pattern of patterns) {
-    const globber = await glob.create(pattern, {
-      followSymbolicLinks: false,
-      matchDirectories: false,
-      omitBrokenSymbolicLinks: true,
-    });
+//   for (const pattern of patterns) {
+//     const globber = await glob.create(pattern, {
+//       followSymbolicLinks: false,
+//       matchDirectories: false,
+//       omitBrokenSymbolicLinks: true,
+//     });
 
-    const filepaths = await globber.glob();
+//     const filepaths = await globber.glob();
 
-    if (filepaths.length === 0) {
-      return '';
-    }
+//     if (filepaths.length === 0) {
+//       return '';
+//     }
 
-    for (const filepath of filepaths) {
-      const content = fs.readFileSync(filepath);
-      const hash = createHash('sha256').update(content).digest('hex');
-      hashes.push(hash);
-    }
-  }
+//     for (const filepath of filepaths) {
+//       const content = fs.readFileSync(filepath);
+//       const hash = createHash('sha256').update(content).digest('hex');
+//       hashes.push(hash);
+//     }
+//   }
 
-  const combinedHashes = hashes.join();
-  const finalHash = createHash('sha256').update(combinedHashes).digest('hex');
+//   const combinedHashes = hashes.join();
+//   const finalHash = createHash('sha256').update(combinedHashes).digest('hex');
 
-  return finalHash;
-}
+//   return finalHash;
+// }
 
 /**
  * Returns true when all previous steps have succeeded.
