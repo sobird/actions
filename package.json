@@ -7,6 +7,12 @@
   "bin": {
     "actions": "./cmd/index.ts"
   },
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "pkg/*"
+    ]
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

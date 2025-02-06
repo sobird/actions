@@ -1,6 +1,6 @@
 {
   "name": "@sobird/actions",
-  "version": "0.0.5",
+  "version": "0.0.4",
   "description": "Impl Actions runner using typescript",
   "type": "module",
   "main": "index.js",
@@ -24,7 +24,6 @@
   "license": "MIT",
   "dependencies": {
     "@actions/glob": "^0.5.0",
-    "@actions/hashfiles": "1.0.0",
     "@bufbuild/protobuf": "^2.2.3",
     "@commander-js/extra-typings": "^12.0.1",
     "@connectrpc/connect": "^2.0.1",
@@ -57,7 +56,8 @@
     "sqlite3": "^5.1.7",
     "tar": "^7.1.0",
     "xdg-basedir": "^5.1.0",
-    "yaml": "^2.4.2"
+    "yaml": "^2.4.2",
+    "@actions/hashfiles": "file:../hashfiles"
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.50.0",
@@ -107,5 +107,8 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }
