@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "GitHub Actions HashFiles() expression function",
   "main": "dist/index.js",
+  "private": true,
   "scripts": {
     "build": "tsc",
     "pack": "ncc build -o ./dist -m",
