@@ -21,12 +21,12 @@
     "node": "NODE_OPTIONS=--import=./node_modules/@sobird/ts-node/register.js node",
     "cmd": "NODE_OPTIONS=--import=./node_modules/@sobird/ts-node/register.js node cmd",
     "lint:eslint": "eslint src --ext ts,js --report-unused-disable-directives --max-warnings 10",
-    "preversion": "yarn lint:eslint",
-    "version": "git add -A .",
-    "postversion": "git push && git push --tags",
     "postinstall": "echo \"postinstall\"",
     "prepare": "husky",
-    "prepublishOnly": "npm run build:actions"
+    "prepublishOnly": "npm run build:actions",
+    "preversion": "yarn lint:eslint",
+    "version": "git add -A .",
+    "postversion": "git push && git push --tags"
   },
   "keywords": [
     "actions",

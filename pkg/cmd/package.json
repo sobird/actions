@@ -1,6 +1,6 @@
 {
   "name": "@sobird/actions",
-  "version": "0.0.4",
+  "version": "0.0.0",
   "description": "Impl Actions runner using typescript",
   "type": "module",
   "main": "index.js",
@@ -12,7 +12,10 @@
     "build": "rollup -c --environment NODE_ENV:production",
     "test": "vitest",
     "prepare": "husky",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "preversion": "node -v",
+    "version": "git add -A .",
+    "postversion": "git push && git push --tags"
   },
   "keywords": [
     "actions",

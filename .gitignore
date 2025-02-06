@@ -27,6 +27,7 @@ dist
 *.pem
 .env
 *.tar
+ncc-cache
 
 # Editor directories and files
 !.vscode/extensions.json
