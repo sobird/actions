@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['sequelize'],
+  serverExternalPackages: ['sequelize', 'log4js'],
   /* config options here */
 };
 

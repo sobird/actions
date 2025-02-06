@@ -76,8 +76,7 @@
     "sqlite3": "^5.1.7",
     "tar": "^7.1.0",
     "xdg-basedir": "^5.1.0",
-    "yaml": "^2.4.2",
-    "@actions/hashfiles": "workspace:*"
+    "yaml": "^2.4.2"
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.50.0",
