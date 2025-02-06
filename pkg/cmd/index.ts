@@ -4,9 +4,9 @@ import { Command } from '@commander-js/extra-typings';
 
 import { configCommand } from './config';
 import { daemonCommand } from './daemon';
+import pkg from './package.json' with { type: 'json' };
 import { registerCommand } from './register';
 import { runCommand } from './run';
-import pkg from '../package.json' with { type: 'json' };
 
 const program = new Command();
 
