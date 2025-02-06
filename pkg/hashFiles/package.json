@@ -2,10 +2,10 @@
   "name": "@actions/hashfiles",
   "version": "1.0.0",
   "description": "GitHub Actions HashFiles() expression function",
-  "main": "lib/hashFiles.js",
+  "main": "dist/index.js",
   "scripts": {
-    "build": "tsc -p ./tsconfig.json",
-    "pack": "ncc build -o ./dist",
+    "build": "tsc",
+    "pack": "ncc build -o ./dist -m",
     "all": "npm run build && npm run pack"
   },
   "repository": {
@@ -21,7 +21,6 @@
     "@actions/glob": "^0.4.0"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.38.0",
-    "typescript": "^5.2.2"
+    "@vercel/ncc": "^0.38.0"
   }
 }
