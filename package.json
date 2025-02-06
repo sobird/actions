@@ -10,11 +10,7 @@
   "private": true,
   "workspaces": {
     "packages": [
-      "pkg"
-    ],
-    "nohoist": [
-      "**/@vercel/ncc",
-      "**/@actions/glob"
+      "pkg/*"
     ]
   },
   "scripts": {
