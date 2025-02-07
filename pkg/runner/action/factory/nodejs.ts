@@ -40,7 +40,7 @@ class NodeJSAction extends Action {
       await container?.applyPath(runner!.prependPath, env);
 
       return container?.exec(['node', path.join(this.Dir, this.runs.pre)], { env });
-    }).if(this.HasPost);
+    }).if(this.HasPre);
   }
 
   protected main() {

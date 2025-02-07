@@ -5,7 +5,7 @@
   "type": "module",
   "main": "index.js",
   "bin": {
-    "actions": "./cmd/index.ts"
+    "lact": "./pkg/cmd/index.ts"
   },
   "scripts": {
     "dev": "next dev --turbopack",
