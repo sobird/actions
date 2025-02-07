@@ -1,6 +1,6 @@
 {
   "name": "actions",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Impl Actions runner using typescript",
   "type": "module",
   "main": "index.js",
@@ -24,7 +24,7 @@
     "postinstall": "echo \"postinstall\"",
     "prepare": "husky",
     "prepublishOnly": "npm run build:actions",
-    "preversion": "yarn lint:eslint",
+    "preversion": "",
     "version": "git add -A .",
     "postversion": "git push && git push --tags"
   },

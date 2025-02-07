@@ -22,29 +22,17 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .node-version
           registry-url: https://registry.npmjs.org/
           cache: pnpm
 
-      - name: Restore Dependencies Cache
-        id: dependencies-cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            **/node_modules
-          key: ${{ runner.os }}-dependencies-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-dependencies-
-
       - name: Install Dependencies 🔧
-        if: steps.dependencies-cache.outputs.cache-hit != 'true'
-        run: |
-          pnpm i
+        run: pnpm install
 
-      - name: Build Actions ☕️
+      - name: Build and publish ☕️
         run: |
           cd pkg/cmd
-          pnpm run build
-          pnpm publish
+          npm run build
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
