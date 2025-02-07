@@ -1,11 +1,11 @@
 {
   "name": "@sobird/actions",
-  "version": "0.0.3",
+  "version": "0.0.6",
   "description": "Impl Actions runner using typescript",
   "type": "module",
   "main": "index.js",
   "bin": {
-    "actions": "./index.ts"
+    "actions": "./dist/index.js"
   },
   "scripts": {
     "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",
