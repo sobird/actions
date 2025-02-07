@@ -24,11 +24,14 @@ class Storage {
 
   async write(id: number, offset: number, data: IncomingMessage) {
     const name = this.tmpName(id, offset);
+
     const tmpDir = this.tmpDir(id);
     if (!fs.existsSync(tmpDir)) {
       fs.mkdirSync(tmpDir, { recursive: true, mode: 0o755 });
     }
-    fs.writeFileSync(name, data as unknown as string);
+    console.log('name', name);
+    data.pipe(fs.createWriteStream(name));
+    // fs.writeFileSync(name, data as unknown as string);
   }
 
   async commit(id: number, size: number) {
@@ -93,10 +96,16 @@ class Storage {
 
   remove(id: number) {
     const name = this.filename(id);
+
     if (this.exist(id)) {
       fs.unlinkSync(name);
     }
-    fs.rmSync(this.tmpDir(id));
+
+    const tmpDir = this.tmpDir(id);
+
+    if (fs.existsSync(tmpDir)) {
+      fs.rmSync(tmpDir);
+    }
   }
 
   filename(id: number) {

@@ -34,7 +34,7 @@ import {
 import Storage from './storage';
 import type { AddressInfo } from 'net';
 
-const DEFAULT_CACHE_DIR = path.join(os.homedir(), '.cache', 'actcache');
+const DEFAULT_CACHE_DIR = path.join(os.homedir(), '.cache', 'actions');
 
 class ArtifactCache {
   storage: Storage;
@@ -102,8 +102,10 @@ class ArtifactCache {
     });
     // Purge cache storage and DB
     app.post('/_apis/artifactcache/clean', (req, res) => {
-      this.purge(false);
-      res.status(200).json({});
+      const { changes } = this.purge(false);
+      res.status(200).json({
+        count: changes,
+      });
     });
   }
 
@@ -146,6 +148,8 @@ class ArtifactCache {
       return;
     }
 
+    console.log('row', row);
+
     if (row.complete) {
       const error = `Cache id ${row.id} was already uploaded`;
       res.status(400).json({ error });
@@ -175,7 +179,7 @@ class ArtifactCache {
       const startRange = Number(contentRange.split('-')[0].split(' ')[1]?.trim()) || 0;
 
       try {
-        await this.storage.write(row.id, startRange, req.body);
+        await this.storage.write(row.id, startRange, req);
         res.status(200).json({});
       } catch (err) {
         res.status(400).json({ error: (err as Error).message });
@@ -240,7 +244,7 @@ class ArtifactCache {
       // Remove cached artifacts if any and temporary uploads
       this.storage.remove(row.id);
     });
-    db.prepare(deleteQ).run();
+    return db.prepare(deleteQ).run();
   }
 
   // Check if matching cache file exists

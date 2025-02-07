@@ -3,16 +3,16 @@ import path from 'path';
 
 import request from 'supertest';
 
+import { createAllDir } from '@/utils/test';
+
 import ArtifactCache from '.';
 
-const { app, dir, storage } = new ArtifactCache(undefined, undefined, 3000);
+const { app, dir, storage } = new ArtifactCache(createAllDir('artifact'), undefined, 3000);
 
-// 设置 mock-fs
 beforeAll(() => {
   //
 });
 
-// 恢复原始的文件系统
 afterAll(() => {
 
 });
@@ -24,37 +24,37 @@ describe('Artifact Cache Server Test', () => {
   const expectFileName = path.join(dir, `${cacheId}`, itemPath);
 
   it('Missing cache', async () => {
-    const response = await request(app).get('/_apis/artifactcache/cache')
-      .query({
-        keys: 'Linux-yarn-373d5d0423376133b400f89affe63b8d86e2e9698df297856d7d8c4c8da3ad91,Linux-yarn-',
-        version: '95d85d065bf84fdcb56573f0500a02d74aacea5ad50dda358b754d0ff52b5d02',
-      });
+    const response = await request(app).get('/_apis/artifactcache/cache').query({
+      keys: 'Linux-yarn-373d5d0423376133b400f89affe63b8d86e2e9698df297856d7d8c4c8da3ad91,Linux-yarn-',
+      version: '95d85d065bf84fdcb56573f0500a02d74aacea5ad50dda358b754d0ff52b5d02',
+    });
     expect(response.statusCode).toBe(204);
   });
 
-  it('Reserve a cache - POST /_apis/artifactcache/caches', async () => {
-    const response = await request(app).post('/_apis/artifactcache/caches')
-      .send({ key: 'Linux-npm-xxxx', version: '0.0.1' })
-      .expect(200);
+  it('Reserve cache', async () => {
+    const response = await request(app).post('/_apis/artifactcache/caches').send({ key: 'Linux-npm-xxxx', version: '0.0.1' }).expect(200);
+
     expect(response.statusCode).toBe(200);
     expect(response.body.cacheId).toBeGreaterThan(0);
   });
 
   it('Upload cache file parts with a cache id', async () => {
+    const cacheTmpname = storage.tmpName(cacheId, 0);
     const response = await request(app).patch(`/_apis/artifactcache/caches/${cacheId}`)
       .set('Content-Range', 'bytes 0-22275422/*')
       .attach('file', Buffer.from('file content123'), filename);
 
     expect(response.statusCode).toBe(200);
-    expect(fs.existsSync(storage.tmpName(cacheId, 0))).toBeTruthy();
+    expect(fs.existsSync(cacheTmpname)).toBeTruthy();
   });
 
   it('Commit the cache parts upload', async () => {
+    const cacheFilename = storage.filename(cacheId);
     const response = await request(app).post(`/_apis/artifactcache/caches/${cacheId}`)
-      .send({ size: 22275422 });
+      .send({ size: 221 });
 
     expect(response.statusCode).toBe(200);
-    expect(fs.existsSync(storage.tmpName(cacheId, 0))).toBeTruthy();
+    expect(fs.existsSync(cacheFilename)).toBeTruthy();
   });
 
   // it('PUT /upload/:cacheId without itemPath', async () => {
@@ -66,11 +66,11 @@ describe('Artifact Cache Server Test', () => {
   //   expect(response.body.message).toBe('Missing itemPath parameter');
   // });
 
-  // it('GET /_apis/pipelines/workflows/:cacheId/artifacts', async () => {
-  //   const response = await request(app).get(`/_apis/pipelines/workflows/${cacheId}/artifacts`);
-  //   expect(response.statusCode).toBe(200);
-  //   expect(response.body.count).toBe(1);
-  // });
+  it('Clean Cache', async () => {
+    const response = await request(app).post('/_apis/artifactcache/clean');
+    expect(response.statusCode).toBe(200);
+    expect(response.body.count).toBe(1);
+  });
 
   // fs.unlinkSync(expectFileName);
 });
