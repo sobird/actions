@@ -34,15 +34,15 @@ import {
 import Storage from './storage';
 import type { AddressInfo } from 'net';
 
-const CACHE_DIR = path.join(os.homedir(), '.cache', 'actcache');
+const DEFAULT_CACHE_DIR = path.join(os.homedir(), '.cache', 'actcache');
 
 class ArtifactCache {
   storage: Storage;
 
-  db!: Database;
+  db: Database;
 
   constructor(
-    public dir: string = CACHE_DIR,
+    public dir: string = DEFAULT_CACHE_DIR,
     public outboundIP: string = ip.address() || 'localhost',
     public port: number = 0,
     public logger: Logger = log4js.getLogger('ArtifactCache'),
@@ -52,12 +52,12 @@ class ArtifactCache {
       fs.mkdirSync(dir, { recursive: true });
     }
     this.storage = new Storage(path.join(dir, 'cache'));
-    const db = sqlite3(path.join(CACHE_DIR, 'cache.db'), {
-      verbose: logger.debug,
+    this.db = sqlite3(path.join(dir, 'cache.db'), {
+      verbose: console.log,
     });
 
     try {
-      db.prepare(`CREATE TABLE caches (
+      this.db.prepare(`CREATE TABLE caches (
         id INTEGER PRIMARY KEY, 
         key TEXT NOT NULL, 
         version TEXT NOT NULL, 
@@ -66,9 +66,8 @@ class ArtifactCache {
         updatedAt INTEGER DEFAULT (0) NOT NULL, 
         createdAt INTEGER DEFAULT (0) NOT NULL
       )`).run();
-      db.prepare('CREATE INDEX idx_key ON caches (key)');
-      db.prepare('CREATE UNIQUE INDEX idx_key ON caches (key, version)');
-      this.db = db;
+      this.db.prepare('CREATE INDEX idx_key ON caches (key)');
+      this.db.prepare('CREATE UNIQUE INDEX idx_key ON caches (key, version)');
     } catch (err) {
       this.logger.debug((err as Error).message);
     }
@@ -97,7 +96,7 @@ class ArtifactCache {
     // Download artifact with a given id from the cache
     app.get('/_apis/artifactcache/artifacts/:cacheId', async (req, res) => {
       const { cacheId } = req.params;
-      db.prepare('UPDATE caches SET updatedAt = ? WHERE id = ?').run(Date.now(), cacheId);
+      this.db.prepare('UPDATE caches SET updatedAt = ? WHERE id = ?').run(Date.now(), cacheId);
 
       this.storage.serve(res, Number(cacheId));
     });
@@ -111,9 +110,9 @@ class ArtifactCache {
   // GET /_apis/artifactcache/cache?key=key1,key2&version=1.0.0
   findCache: Handler = (req, res) => {
     const { keys = '', version = '' } = req.query as { keys: string, version: string };
-    const [primaryKey, ...restorePaths] = keys.split(',');
-
+    const [primaryKey, ...restorePaths] = decodeURIComponent(keys).split(',');
     const idAndKey = this.findCacheEntry(primaryKey, version, restorePaths);
+
     if (!idAndKey) {
       this.logger.debug(`Missing key ${primaryKey}`);
       res.status(204).json({});

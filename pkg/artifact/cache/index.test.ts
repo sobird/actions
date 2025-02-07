@@ -5,21 +5,19 @@ import request from 'supertest';
 
 import ArtifactCache from '.';
 
-const {
-  app, dir, storage,
-} = new ArtifactCache(undefined, undefined, 3000);
+const { app, dir, storage } = new ArtifactCache(undefined, undefined, 3000);
 
-describe('Artifact Server Test', () => {
-  // 设置 mock-fs
-  beforeAll(() => {
-    //
-  });
+// 设置 mock-fs
+beforeAll(() => {
+  //
+});
 
-  // 恢复原始的文件系统
-  afterAll(() => {
+// 恢复原始的文件系统
+afterAll(() => {
 
-  });
+});
 
+describe('Artifact Cache Server Test', () => {
   const filename = 'test.txt';
   const cacheId = 1;
   const itemPath = 'test';
