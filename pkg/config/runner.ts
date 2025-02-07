@@ -11,9 +11,9 @@ import path from 'node:path';
 import ip from 'ip';
 import log4js from 'log4js';
 
-import { Options } from '@/cmd/run';
 import Artifact from '@/pkg/artifact';
 import ArtifactCache from '@/pkg/artifact/cache';
+import { Options } from '@/pkg/cmd/run';
 import Git from '@/pkg/common/git';
 import { Docker } from '@/pkg/docker';
 import Labels from '@/pkg/labels';

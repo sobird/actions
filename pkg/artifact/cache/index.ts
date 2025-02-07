@@ -117,7 +117,7 @@ class ArtifactCache {
 
     if (!idAndKey) {
       this.logger.debug(`Missing key ${primaryKey}`);
-      res.status(204).json({});
+      res.status(204).end();
       return;
     }
 
@@ -127,7 +127,7 @@ class ArtifactCache {
     const cacheFile = this.storage.filename(cacheId);
     if (!this.storage.exist(cacheId)) {
       this.logger.debug(`Missing cache file ${cacheFile}`);
-      res.status(204).json({});
+      res.status(204).end();
     } else {
       const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
       const cacheFileURL = `${baseURL}/_apis/artifactcache/artifacts/${cacheId}`;
