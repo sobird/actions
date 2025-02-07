@@ -36,7 +36,7 @@ jobs:
 
     - name: Build ☕️
       run: |
-        npm build
+        npm run build
         cd dist
         npm publish
       env:

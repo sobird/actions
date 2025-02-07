@@ -206,7 +206,9 @@ export const runCommand = new Command('run')
     }
     console.log('options', options);
     await runner.options(options, eventName);
+    await runner.startActionsRuntime();
     const config = await runner.configure();
+
     await plan.executor(config).execute();
     process.exit();
   });

@@ -490,7 +490,7 @@ class Runner implements Omit<Options, ''> {
     return config;
   }
 
-  async setActionRuntimeEnv() {
+  async startActionsRuntime() {
     // Start Artifact Server
     const ACTIONS_RUNTIME_URL = 'ACTIONS_RUNTIME_URL';
     const ACTIONS_RUNTIME_TOKEN = 'ACTIONS_RUNTIME_TOKEN';
