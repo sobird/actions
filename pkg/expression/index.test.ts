@@ -28,6 +28,22 @@ const context = {
         ],
       },
     },
+    'who-to-greet': 'hello',
+    server_url: 'https://github.com',
+    token: 'token',
+  },
+  steps: {
+    'actions-setup-node-v4': {
+      outputs: { 'node-version': 'v20.18.2' },
+      outcome: 'success',
+      conclusion: 'success',
+    },
+    'yarn-cache': {
+      outputs: { 'cache-hit': 'false' },
+      outcome: 'success',
+      conclusion: 'success',
+    },
+    'actions-checkout-v4': { outputs: {}, outcome: 'success', conclusion: 'success' },
   },
 };
 
@@ -56,6 +72,15 @@ const literals = [{
 }, {
   source: '${{ github.event }}',
   expected: '[object Object]',
+}, {
+  source: "${{ github.server_url == 'https://github.com' && github.token || '' }}",
+  expected: 'token',
+}, {
+  source: '${{ github.who-to-greet }}',
+  expected: 'hello',
+}, {
+  source: "${{ steps.yarn-cache.outputs.cache-hit != 'true' }}",
+  expected: true,
 }];
 
 const operators = [
@@ -140,7 +165,7 @@ afterAll(async () => {
 describe('test Expression Literals', () => {
   literals.forEach((item) => {
     it(`${item.source} - test case`, () => {
-      const expression = new Expression(item.source, ['github']);
+      const expression = new Expression(item.source, ['github', 'steps']);
       const result = expression.evaluate(runner);
       expect(result).toBe(item.expected);
     });

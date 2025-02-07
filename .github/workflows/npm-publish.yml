@@ -13,27 +13,30 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version: 20
         registry-url: https://registry.npmjs.org/
-    - name: Restore Yarn Cache
-      id: yarn-cache
+
+    - name: Restore cache
+      id: cache-dependencies
       uses: actions/cache@v4
       with:
         path: |
           **/node_modules
-        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        key: ${{ runner.os }}-dependencies-${{ hashFiles('**/package.lock') }}
         restore-keys: |
-          ${{ runner.os }}-yarn-
+          ${{ runner.os }}-dependencies-
+
     - name: Install Dependencies 🔧
-      if: steps.yarn-cache.outputs.cache-hit != 'true'
-      run: |
-        yarn
+      if: steps.cache-dependencies.outputs.cache-hit != 'true'
+      run: npm install
+
     - name: Build ☕️
       run: |
-        yarn build
+        npm build
         cd dist
         npm publish
       env:
