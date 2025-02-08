@@ -35,6 +35,6 @@ function hashFiles(...patterns: string[]) {
 }
 
 it('Test hashFiles', () => {
-  const hash = hashFiles('./package.json');
+  const hash = hashFiles('**/pnpm-lock.yaml');
   expect(hash.length).toBe(64);
 });

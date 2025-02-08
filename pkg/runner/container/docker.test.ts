@@ -86,7 +86,7 @@ describe('Test Docker Container', () => {
 
   it('put archive to container', async () => {
     const archive = tar.create({ cwd: tmp, portable: true }, ['.']) as unknown as NodeJS.ReadableStream;
-    await docker.putArchive('put-archive-test', archive);
+    await docker.putArchive('put-archive-test', archive).execute();
   });
 
   it('get archive from container', async () => {
@@ -143,7 +143,7 @@ describe('Test Docker Container', () => {
     const putContentExecutor = docker.putContent('', {
       name: 'package.json',
       mode: 0o777,
-      body: 'test content',
+      body: '{"name": "test"}',
     });
     await putContentExecutor.execute();
 

@@ -94,14 +94,15 @@ export default abstract class Container {
     }
 
     const env = {
-      ...process.env,
+      // ...process.env,
       patterns: patterns.join('\n'),
     };
 
+    const { workdir } = this.options;
+
     const hashFilesScript = this.resolve(hashFilesDir, 'index.js');
 
-    const { stderr } = this.spawnSync('node', [hashFilesScript], { env });
-
+    const { stderr } = this.spawnSync('node', [hashFilesScript], { env, workdir });
     const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
     if (matches && matches.length > 0) {
       return matches[0].slice(10, -10);
