@@ -596,7 +596,7 @@ class DockerContainer extends Container {
 
       const out = new Writable({
         write: (chunk, enc, next) => {
-          console.log('chunk', chunk.toString());
+          // console.log('chunk', chunk.toString());
 
           next();
         },
@@ -609,7 +609,7 @@ class DockerContainer extends Container {
       });
 
       rl.on('line', (line) => {
-        console.log(`Line from file: ${line}`);
+        console.log(line);
       });
 
       await new Promise((resolve, reject) => {

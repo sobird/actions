@@ -22,16 +22,14 @@ class Storage {
     return fs.existsSync(name);
   }
 
-  async write(id: number, offset: number, data: IncomingMessage) {
+  async write(id: number, offset: number, req: IncomingMessage) {
     const name = this.tmpName(id, offset);
 
     const tmpDir = this.tmpDir(id);
     if (!fs.existsSync(tmpDir)) {
       fs.mkdirSync(tmpDir, { recursive: true, mode: 0o755 });
     }
-    console.log('name', name);
-    data.pipe(fs.createWriteStream(name));
-    // fs.writeFileSync(name, data as unknown as string);
+    req.pipe(fs.createWriteStream(name));
   }
 
   async commit(id: number, size: number) {

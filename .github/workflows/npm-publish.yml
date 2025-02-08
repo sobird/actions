@@ -14,30 +14,30 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Setup Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        registry-url: https://registry.npmjs.org/
+    # - name: Setup Node
+    #   uses: actions/setup-node@v4
+    #   with:
+    #     node-version: 20
+    #     registry-url: https://registry.npmjs.org/
 
     - name: Restore cache
       id: cache-dependencies
       uses: actions/cache@v4
       with:
         path: |
-          **/test
+          test
         key: ${{ runner.os }}-dependencies-${{ hashFiles('pnpm-lock.yaml') }}
         restore-keys: |
           ${{ runner.os }}-dependencies-
 
-    - name: Install Dependencies 🔧
-      if: steps.cache-dependencies.outputs.cache-hit != 'true'
-      run: npm install
+    # - name: Install Dependencies 🔧
+    #   if: steps.cache-dependencies.outputs.cache-hit != 'true'
+    #   run: npm install
 
-    - name: Build ☕️
-      run: |
-        npm run build
-        cd dist
-        npm publish
-      env:
-        NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+    # - name: Build ☕️
+    #   run: |
+    #     npm run build
+    #     cd dist
+    #     npm publish
+    #   env:
+    #     NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}

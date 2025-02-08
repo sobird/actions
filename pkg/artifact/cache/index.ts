@@ -71,11 +71,11 @@ class ArtifactCache {
     }
 
     app.set('query parser', 'simple');
-    app.use(bodyParser.json());
-    app.use(bodyParser.raw({
-      type: 'application/octet-stream',
-      limit: '500mb',
-    }));
+    // app.use(bodyParser.json());
+    // app.use(bodyParser.raw({
+    //   type: 'application/octet-stream',
+    //   limit: '500mb',
+    // }));
     app.use(this.middleware);
     app.get('/', (req, res) => {
       res.send({
@@ -86,11 +86,11 @@ class ArtifactCache {
     // Find a cache by keys and version
     app.get('/_apis/artifactcache/cache', this.findCache);
     // Reserve a cache for an upcoming upload
-    app.post('/_apis/artifactcache/caches', this.reserveCache);
+    app.post('/_apis/artifactcache/caches', bodyParser.json(), this.reserveCache);
     // Upload cache file parts with a cache id
     app.patch('/_apis/artifactcache/caches/:cacheId', this.uploadCache);
     // Commit the cache parts upload
-    app.post('/_apis/artifactcache/caches/:cacheId', this.commitCache);
+    app.post('/_apis/artifactcache/caches/:cacheId', bodyParser.json(), this.commitCache);
     // Download artifact with a given id from the cache
     app.get('/_apis/artifactcache/artifacts/:cacheId', async (req, res) => {
       const { cacheId } = req.params;
@@ -176,7 +176,9 @@ class ArtifactCache {
 
       try {
         await this.storage.write(row.id, startRange, req);
-        res.status(200).json({});
+        req.on('end', () => {
+          res.status(200).json();
+        });
       } catch (err) {
         res.status(400).json({ error: (err as Error).message });
         this.logger.error((err as Error).message);

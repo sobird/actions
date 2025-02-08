@@ -34,11 +34,11 @@ export function createEachDir(...name: string[]) {
   return dir;
 }
 
-export function createTestFile(name: string = 'test-file') {
+export function createTestFile(name: string = 'test-file', data: string = '') {
   const file = path.join(os.tmpdir(), `${projectName}-test`, name);
   const dir = path.dirname(file);
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(file, '');
+  fs.writeFileSync(file, data);
   onTestFinished(() => {
     fs.rmdirSync(dir, { recursive: true });
   });
