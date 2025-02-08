@@ -26,7 +26,7 @@ jobs:
       with:
         path: |
           **/test
-        key: ${{ runner.os }}-dependencies-${{ hashFiles('**/pnpm-lock.yaml') }}
+        key: ${{ runner.os }}-dependencies-${{ hashFiles('pnpm-lock.yaml') }}
         restore-keys: |
           ${{ runner.os }}-dependencies-
 

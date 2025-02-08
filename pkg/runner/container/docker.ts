@@ -650,7 +650,6 @@ class DockerContainer extends Container {
   }
 
   spawnSync(command: string, args: string[], options: ContainerExecOptions = {}) {
-    console.log('options', args, options);
     const { container } = this;
     // if (!container) {
     //   return;
@@ -680,7 +679,7 @@ class DockerContainer extends Container {
     dockerArgs.push(container!.id);
     dockerArgs.push(command);
     dockerArgs.push(...args);
-    console.log('dockerArgs', dockerArgs);
+
     return cp.spawnSync('docker', dockerArgs, { encoding: 'utf8' });
   }
 
