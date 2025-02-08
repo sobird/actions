@@ -1,16 +1,23 @@
 /* eslint-disable no-template-curly-in-string */
-
+// todo 要同时测试 DockerContainer 和 HostedContainer
 import Runner from '@/pkg/runner';
 import DockerContainer from '@/pkg/runner/container/docker';
+import HostedContainer from '@/pkg/runner/container/hosted';
 
 import Expression from '.';
 
 vi.mock('@/pkg/runner/container/docker');
+vi.mock('@/pkg/runner/container/hosted');
 
-const dockerContainer: DockerContainer = new (DockerContainer as any)();
+const dockerContainer: DockerContainer = new (HostedContainer as any)();
 
 const startExecutor = dockerContainer.start();
 await startExecutor.execute();
+
+afterAll(async () => {
+  const removeExecutor = dockerContainer.remove();
+  await removeExecutor.execute();
+});
 
 const context = {
   github: {
@@ -44,6 +51,9 @@ const context = {
       conclusion: 'success',
     },
     'actions-checkout-v4': { outputs: {}, outcome: 'success', conclusion: 'success' },
+  },
+  runner: {
+    os: 'Linux',
   },
 };
 
@@ -155,12 +165,11 @@ const functions = [{
   source: '${{ toJSON(github) }}',
   expected: JSON.stringify(context.github),
 },
+{
+  source: "${{ runner.os }}-dependencies-${{ hashFiles('pnpm-lock.yaml') }}",
+  expected: 'Linux-dependencies-',
+},
 ];
-
-afterAll(async () => {
-  const removeExecutor = dockerContainer.remove();
-  await removeExecutor.execute();
-});
 
 describe('test Expression Literals', () => {
   literals.forEach((item) => {
@@ -185,7 +194,7 @@ describe('test Expression Operators', () => {
 describe('test Expression Functions', () => {
   functions.forEach((item) => {
     it(`${item.source} - test case`, () => {
-      const expression = new Expression(item.source, ['github']);
+      const expression = new Expression(item.source, ['github', 'runner'], ['hashFiles']);
       const result = expression.evaluate(runner as unknown as Runner);
       expect(result).toBe(item.expected);
     });

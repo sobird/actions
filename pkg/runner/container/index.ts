@@ -22,7 +22,7 @@ export interface FileEntry {
 export interface ContainerExecOptions {
   env?: NodeJS.ProcessEnv;
   privileged?: boolean;
-  workdir?: string;
+  workdir: string;
   user?: string;
 }
 
@@ -81,10 +81,16 @@ export default abstract class Container {
   abstract resolve(...paths: string[]): string;
   abstract imageEnv(): Promise<Record<string, string>>;
 
-  // eslint-disable-next-line class-methods-use-this
+  // hosted default
   public spawnSync(command: string, args: readonly string[], options: ContainerExecOptions) {
-    const { workdir, ...restOptions } = options;
-    return spawnSync(command, args, { encoding: 'utf8', cwd: workdir, ...restOptions });
+    const { workdir } = options;
+
+    const env = {
+      ...process.env,
+      ...options.env,
+    };
+
+    return spawnSync(command, args, { encoding: 'utf8', cwd: this.resolve(workdir), env });
   }
 
   public hashFiles(...patterns: string[]) {
@@ -103,6 +109,7 @@ export default abstract class Container {
     const hashFilesScript = this.resolve(hashFilesDir, 'index.js');
 
     const { stderr } = this.spawnSync('node', [hashFilesScript], { env, workdir });
+
     const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
     if (matches && matches.length > 0) {
       return matches[0].slice(10, -10);
