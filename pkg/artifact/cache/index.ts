@@ -43,8 +43,6 @@ class ArtifactCache {
 
   constructor(
     public dir: string = DEFAULT_CACHE_DIR,
-    public outboundIP: string = ip.address() || 'localhost',
-    public port: number = 0,
     public logger: Logger = log4js.getLogger('ArtifactCache'),
     public app = express(),
   ) {
@@ -53,7 +51,7 @@ class ArtifactCache {
     }
     this.storage = new Storage(path.join(dir, 'cache'));
     this.db = sqlite3(path.join(dir, 'cache.db'), {
-      verbose: console.log,
+      // verbose: console.log,
     });
 
     try {
@@ -147,8 +145,6 @@ class ArtifactCache {
       res.status(200).json({ cacheId: id });
       return;
     }
-
-    console.log('row', row);
 
     if (row.complete) {
       const error = `Cache id ${row.id} was already uploaded`;
@@ -302,12 +298,15 @@ class ArtifactCache {
     }
   }
 
-  async serve(): Promise<string> {
-    return new Promise((resolve) => {
-      const server = this.app.listen(this.port, this.outboundIP, () => {
+  async serve(port: number = 0, outboundIP: string = ip.address() || 'localhost') {
+    return new Promise<{ address: string, port: number }>((resolve) => {
+      this.app.listen(port, () => {
         // this.logger.info('Server running at:', (server.address() as AddressInfo).port);
-        const { address, port } = server.address() as AddressInfo;
-        resolve(`http://${address}:${port}/`);
+        // const { port } = server.address() as AddressInfo;
+        resolve({
+          address: outboundIP,
+          port,
+        });
       });
     });
   }
