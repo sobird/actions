@@ -40,12 +40,12 @@ interface Config {
   /**
    * When offline, use caching action contents.
    */
-  readonly actionOfflineMode?: boolean;
+  readonly actionsOffline?: boolean;
 
   /**
    * The default actions web site.
    */
-  readonly actionInstance: string;
+  readonly actionsInstance: string;
 
   /**
    * Remote name in local git repo config.
@@ -204,6 +204,50 @@ interface Config {
    * Options for the job container.
    */
   containerOptions: string;
+
+  // artifact
+  /**
+   * artifact server path
+   */
+  artifactPath: string;
+
+  artifactAddr: string;
+
+  artifactPort: number;
+
+  /**
+   * Enable cache server to use actions/cache.
+   */
+  actionsCache: boolean;
+
+  /**
+   * The directory to store the cache data.
+   * If it's empty, the cache data will be stored in `$ACTIONS_HOME/cache`.
+   */
+  actionsCacheServerPath: string;
+
+  /**
+   * The host of the cache server.
+   *
+   * It's not for the address to listen, but the address to connect from job containers.
+   * So 0.0.0.0 is a bad choice, leave it empty to detect automatically.
+   */
+  actionsCacheServerAddr: string;
+
+  /**
+   * The port of the cache server.
+   *
+   * 0 means to use a random available port.
+   */
+  actionsCacheServerPort: number;
+
+  /**
+   * The external cache server URL. Valid only when actions cache enable is true.
+   *
+   * If it's specified, actions runner will use this URL as the ACTIONS_CACHE_URL rather than start a server by itself.
+   * The URL should generally end with "/".
+  */
+  actionsCacheExternal: string;
 }
 
 export default Config;

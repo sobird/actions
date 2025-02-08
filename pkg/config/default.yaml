@@ -63,36 +63,36 @@ runner:
     - ubuntu-20.04=gitea/runner-images:ubuntu-20.04
     - self-hosted=-self-hosted
   #actions
-  actionInstance: github.com
+  actionsInstance: github.com
   # actions/cache
   # Enable cache server to use actions/cache.
   cacheServer: true
   # The directory to store the cache data.
   # If it's empty, the cache data will be stored in $ACTIONS_HOME/cache.
-  cacheServerPath: ""
+  actionsCachePath: ""
   # The host of the cache server.
   # It's not for the address to listen, but the address to connect from job containers.
   # So 0.0.0.0 is a bad choice, leave it empty to detect automatically.
-  cacheServerAddr: ""
+  actionsCacheAddr: ""
   # The port of the cache server.
   # 0 means to use a random available port.
-  cacheServerPort: 0
+  actionsCachePort: 0
   # The external cache server URL. Valid only when enable is true.
   # If it's specified, runner will use this URL as the ACTIONS_CACHE_URL rather than start a server by itself.
   # The URL should generally end with "/".
   externalServer: ""
   # defines the path where the artifact server stores uploads and retrieves downloads from. 
   # If not specified the artifact server will not start
-  artifactServerPath: ""
+  artifactPath: ""
   # defines the address where the artifact server listens
-  artifactServerAddr: ""
+  artifactAddr: ""
   # defines the port where the artifact server listens (will only bind to localhost)
-  artifactServerPort: 0
+  artifactPort: 0
 
   # The parent directory of a job's working directory.
   # If it's empty, $HOME/.cache/act/ will be used.
-  actionCacheDir: ""
-  useActionCache: true
+  actionsPath: ""
+  cacheActions: true
 
   matrix:
     java:

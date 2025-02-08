@@ -26,7 +26,7 @@ class StepActionRemote extends StepAction {
       const { uses } = this;
 
       const { server_url: serverUrl } = runner!.context.github;
-      uses.url = uses.url || runner.config.actionInstance || serverUrl;
+      uses.url = uses.url || runner.config.actionsInstance || serverUrl;
 
       const replaceGheActionWithGithubCom = runner.config.replaceGheActionWithGithubCom || [];
       replaceGheActionWithGithubCom.forEach((action) => {

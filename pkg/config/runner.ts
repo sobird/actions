@@ -11,8 +11,6 @@ import path from 'node:path';
 import ip from 'ip';
 import log4js from 'log4js';
 
-import Artifact from '@/pkg/artifact';
-import ArtifactCache from '@/pkg/artifact/cache';
 import { Options } from '@/pkg/cmd/run';
 import Git from '@/pkg/common/git';
 import { Docker } from '@/pkg/docker';
@@ -105,13 +103,13 @@ class Runner implements Omit<Options, ''> {
   /**
    * Enable cache server to use actions/cache.
    */
-  public cacheServer: boolean;
+  public actionsCache: boolean;
 
   /**
    * The directory to store the cache data.
    * If it's empty, the cache data will be stored in $ACTIONS_HOME/cache.
    */
-  public cacheServerPath: string;
+  public actionsCachePath: string;
 
   /**
    * The host of the cache server.
@@ -119,14 +117,14 @@ class Runner implements Omit<Options, ''> {
    * It's not for the address to listen, but the address to connect from job containers.
    * So 0.0.0.0 is a bad choice, leave it empty to detect automatically.
    */
-  public cacheServerAddr: string;
+  public actionsCacheAddr: string;
 
   /**
    * The port of the cache server.
    *
    * 0 means to use a random available port.
    */
-  public cacheServerPort: number;
+  public actionsCachePort: number;
 
   /**
    * The external cache server URL. Valid only when enable is true.
@@ -136,10 +134,12 @@ class Runner implements Omit<Options, ''> {
    */
   public externalServer: string;
 
+  // actions repository local cache
+
   /**
-   * enable using the new Action Cache for storing Actions locally
+   * enable using the new cache action for storing actions locally
    */
-  public useActionCache?: true;
+  public cacheActions?: true;
 
   /**
    * replaces the specified repository and ref with a local folder
@@ -151,33 +151,33 @@ class Runner implements Omit<Options, ''> {
    * if action contents exists, it will not be fetch and pull again.
    * If turn on this, will turn off force pull
    */
-  public actionOfflineMode?: true;
+  public actionsOffline?: true;
 
   /**
    * defines the dir where the actions get cached and host workspaces created.
    */
-  public actionCacheDir: string;
+  public actionsPath: string;
 
   /**
    * defines the default url of action instance', 'https://github.com
    */
-  public actionInstance: string;
+  public actionsInstance: string;
 
   /**
    * defines the path where the artifact server stores uploads and retrieves downloads from.
    * If not specified the artifact server will not start
    */
-  public artifactServerPath: string;
+  public artifactPath: string;
 
   /**
    * defines the address where the artifact server listens
    */
-  public artifactServerAddr: string;
+  public artifactAddr: string;
 
   /**
    * defines the port where the artifact server listens (will only bind to localhost)
    */
-  public artifactServerPort: number;
+  public artifactPort: number;
 
   public skipCheckout: boolean;
 
@@ -298,23 +298,23 @@ class Runner implements Omit<Options, ''> {
 
     this.insecure = runner.insecure ?? false;
     this.labels = runner.labels ?? [];
-    this.cacheServer = runner.cacheServer ?? true;
-    this.cacheServerPath = runner.cacheServerPath || path.join(ACTIONS_HOME, 'artifact', 'cache');
-    this.cacheServerAddr = runner.cacheServerAddr || ip.address();
-    this.cacheServerPort = runner.cacheServerPort ?? 0;
+    this.actionsCache = runner.actionsCache ?? true;
+    this.actionsCachePath = runner.actionsCachePath || path.join(ACTIONS_HOME, 'artifact', 'cache');
+    this.actionsCacheAddr = runner.actionsCacheAddr || ip.address();
+    this.actionsCachePort = runner.actionsCachePort ?? 0;
     this.externalServer = runner.externalServer ?? '';
 
     // action cache
-    this.useActionCache = runner.useActionCache;
+    this.cacheActions = runner.cacheActions;
     this.repositories = runner.repositories;
-    this.actionOfflineMode = runner.actionOfflineMode;
-    this.actionCacheDir = runner.actionCacheDir || path.join(ACTIONS_HOME, 'actions');
-    this.actionInstance = runner.actionInstance || 'https://github.com';
+    this.actionsOffline = runner.actionsOffline;
+    this.actionsPath = runner.actionsPath || path.join(ACTIONS_HOME, 'actions');
+    this.actionsInstance = runner.actionsInstance || 'https://github.com';
 
     // Artifact Server
-    this.artifactServerPath = runner.artifactServerPath;
-    this.artifactServerAddr = runner.artifactServerAddr || ip.address();
-    this.artifactServerPort = runner.artifactServerPort;
+    this.artifactPath = runner.artifactPath;
+    this.artifactAddr = runner.artifactAddr || ip.address();
+    this.artifactPort = runner.artifactPort;
 
     this.skipCheckout = runner.skipCheckout;
     this.image = runner.image;
@@ -438,12 +438,12 @@ class Runner implements Omit<Options, ''> {
 
     // ActionCache
     let actionCache;
-    if (this.useActionCache) {
-      actionCache = this.actionOfflineMode ? new ActionCacheOffline(this.actionCacheDir) : new ActionCache(this.actionCacheDir);
+    if (this.cacheActions) {
+      actionCache = this.actionsOffline ? new ActionCacheOffline(this.actionsPath) : new ActionCache(this.actionsPath);
     }
 
     if (this.repositories) {
-      actionCache = new ActionCacheRepository(this.actionCacheDir, this.repositories);
+      actionCache = new ActionCacheRepository(this.actionsPath, this.repositories);
     }
 
     // labels
@@ -458,8 +458,8 @@ class Runner implements Omit<Options, ''> {
       bindWorkdir: this.bindWorkdir,
       actionCache,
       platforms,
-      actionOfflineMode: this.actionOfflineMode,
-      actionInstance: this.actionInstance,
+      actionsOffline: this.actionsOffline,
+      actionsInstance: this.actionsInstance,
       serverInstance: this.serverInstance,
       remoteName: this.remoteName,
       reuseContainers: this.reuse,
@@ -488,33 +488,6 @@ class Runner implements Omit<Options, ''> {
     };
 
     return config;
-  }
-
-  async startActionsRuntime() {
-    // Start Artifact Server
-    const ACTIONS_RUNTIME_URL = 'ACTIONS_RUNTIME_URL';
-    const ACTIONS_RUNTIME_TOKEN = 'ACTIONS_RUNTIME_TOKEN';
-    if (this.artifactServerPath && !this.env[ACTIONS_RUNTIME_URL]) {
-      const artifact = new Artifact(this.artifactServerPath, this.artifactServerAddr, this.artifactServerPort);
-      const actionsRuntimeUrl = await artifact.serve();
-      logger.debug('Artifact Server address:', actionsRuntimeUrl);
-      this.env[ACTIONS_RUNTIME_URL] = actionsRuntimeUrl;
-
-      let actionsRuntimeToken = process.env[ACTIONS_RUNTIME_TOKEN];
-      if (!actionsRuntimeToken) {
-        actionsRuntimeToken = 'token';
-      }
-      this.env[ACTIONS_RUNTIME_TOKEN] = actionsRuntimeToken;
-    }
-
-    // Start Artifact Cache Server
-    const ACTIONS_CACHE_URL = 'ACTIONS_CACHE_URL';
-    if (this.cacheServer && !this.env[ACTIONS_CACHE_URL]) {
-      const artifactCache = new ArtifactCache(this.cacheServerPath, this.cacheServerAddr, this.cacheServerPort);
-      const artifactCacheServeURL = await artifactCache.serve();
-      logger.debug('Artifact Cache Server address:', artifactCacheServeURL);
-      this.env[ACTIONS_CACHE_URL] = artifactCacheServeURL;
-    }
   }
 }
 

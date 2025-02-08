@@ -32,7 +32,7 @@ import {
   CacheEntry, ArtifactCacheEntry, ReserveCacheRequest, ReserveCacheResponse, CommitCacheRequest,
 } from './contracts';
 import Storage from './storage';
-import type { AddressInfo } from 'net';
+// import type { AddressInfo } from 'net';
 
 const DEFAULT_CACHE_DIR = path.join(os.homedir(), '.cache', 'actions');
 
@@ -298,15 +298,12 @@ class ArtifactCache {
     }
   }
 
-  async serve(port: number = 0, outboundIP: string = ip.address() || 'localhost') {
-    return new Promise<{ address: string, port: number }>((resolve) => {
+  async serve(port: number = 0, address: string = ip.address() || 'localhost') {
+    return new Promise<string>((resolve) => {
       this.app.listen(port, () => {
         // this.logger.info('Server running at:', (server.address() as AddressInfo).port);
         // const { port } = server.address() as AddressInfo;
-        resolve({
-          address: outboundIP,
-          port,
-        });
+        resolve(`http://${address}:${port}/`);
       });
     });
   }

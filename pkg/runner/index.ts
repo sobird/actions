@@ -10,6 +10,8 @@ import path from 'node:path';
 
 import log4js, { Logger } from 'log4js';
 
+import Artifact from '@/pkg/artifact';
+import ArtifactCache from '@/pkg/artifact/cache';
 import Constants from '@/pkg/common/constants';
 import { Docker } from '@/pkg/docker';
 import Config from '@/pkg/runner/config';
@@ -96,6 +98,52 @@ class Runner {
     if (config.serverInstance) {
       const serverInstance = /^http(s)?:\/\//i.test(config.serverInstance) ? config.serverInstance : `https://${config.serverInstance}`;
       context.github.server_url = serverInstance;
+    }
+
+    this.startActionsRuntime();
+  }
+
+  async startActionsRuntime() {
+    const {
+      artifactPath,
+      artifactAddr,
+      artifactPort,
+
+      actionsCache,
+      actionsCacheServerPath,
+      actionsCacheServerAddr,
+      actionsCacheServerPort,
+      actionsCacheExternal,
+    } = this.config;
+    // Start Artifact Server
+    const ACTIONS_RUNTIME_URL = 'ACTIONS_RUNTIME_URL';
+    const ACTIONS_RUNTIME_TOKEN = 'ACTIONS_RUNTIME_TOKEN';
+    if (artifactPath && !this.context.env[ACTIONS_RUNTIME_URL]) {
+      const artifact = new Artifact(artifactPath, artifactAddr, artifactPort);
+      const actionsRuntimeUrl = await artifact.serve();
+      this.logger.debug('Artifact Server address:', actionsRuntimeUrl);
+      this.context.env[ACTIONS_RUNTIME_URL] = actionsRuntimeUrl;
+
+      let actionsRuntimeToken = process.env[ACTIONS_RUNTIME_TOKEN];
+      if (!actionsRuntimeToken) {
+        actionsRuntimeToken = 'token';
+      }
+      this.context.env[ACTIONS_RUNTIME_TOKEN] = actionsRuntimeToken;
+    }
+
+    // Start Actions Cache Server
+    const ACTIONS_CACHE_URL = 'ACTIONS_CACHE_URL';
+    if (actionsCache && !this.context.env[ACTIONS_CACHE_URL]) {
+      if (actionsCacheExternal) {
+        this.context.env[ACTIONS_CACHE_URL] = actionsCacheExternal;
+      } else {
+        const { IsHosted } = this;
+        const internal = IsHosted ? actionsCacheServerAddr : 'host.docker.internal';
+        const actionsCacheServer = new ArtifactCache(actionsCacheServerPath);
+        const actionsCacheURL = await actionsCacheServer.serve(actionsCacheServerPort, internal);
+        this.logger.debug('Actions Cache Server address:', actionsCacheURL);
+        this.context.env[ACTIONS_CACHE_URL] = actionsCacheURL;
+      }
     }
   }
 
