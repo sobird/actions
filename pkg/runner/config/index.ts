@@ -38,14 +38,9 @@ interface Config {
   readonly actionCache?: ActionCache;
 
   /**
-   * When offline, use caching action contents.
-   */
-  readonly actionsOffline?: boolean;
-
-  /**
    * The default actions web site.
    */
-  readonly actionsInstance: string;
+  readonly actionInstance: string;
 
   /**
    * Remote name in local git repo config.
@@ -224,7 +219,7 @@ interface Config {
    * The directory to store the cache data.
    * If it's empty, the cache data will be stored in `$ACTIONS_HOME/cache`.
    */
-  actionsCacheServerPath: string;
+  actionsCachePath: string;
 
   /**
    * The host of the cache server.
@@ -232,14 +227,14 @@ interface Config {
    * It's not for the address to listen, but the address to connect from job containers.
    * So 0.0.0.0 is a bad choice, leave it empty to detect automatically.
    */
-  actionsCacheServerAddr: string;
+  actionsCacheAddr: string;
 
   /**
    * The port of the cache server.
    *
    * 0 means to use a random available port.
    */
-  actionsCacheServerPort: number;
+  actionsCachePort: number;
 
   /**
    * The external cache server URL. Valid only when actions cache enable is true.

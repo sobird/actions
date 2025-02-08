@@ -110,9 +110,9 @@ class Runner {
       artifactPort,
 
       actionsCache,
-      actionsCacheServerPath,
-      actionsCacheServerAddr,
-      actionsCacheServerPort,
+      actionsCachePath,
+      actionsCacheAddr,
+      actionsCachePort,
       actionsCacheExternal,
     } = this.config;
     // Start Artifact Server
@@ -138,9 +138,9 @@ class Runner {
         this.context.env[ACTIONS_CACHE_URL] = actionsCacheExternal;
       } else {
         const { IsHosted } = this;
-        const internal = IsHosted ? actionsCacheServerAddr : 'host.docker.internal';
-        const actionsCacheServer = new ArtifactCache(actionsCacheServerPath);
-        const actionsCacheURL = await actionsCacheServer.serve(actionsCacheServerPort, internal);
+        const internal = IsHosted ? actionsCacheAddr : 'host.docker.internal';
+        const actionsCacheServer = new ArtifactCache(actionsCachePath);
+        const actionsCacheURL = await actionsCacheServer.serve(actionsCachePort, internal);
         this.logger.debug('Actions Cache Server address:', actionsCacheURL);
         this.context.env[ACTIONS_CACHE_URL] = actionsCacheURL;
       }

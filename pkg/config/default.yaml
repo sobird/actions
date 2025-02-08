@@ -63,7 +63,7 @@ runner:
     - ubuntu-20.04=gitea/runner-images:ubuntu-20.04
     - self-hosted=-self-hosted
   #actions
-  actionsInstance: github.com
+  actionInstance: github.com
   # actions/cache
   # Enable cache server to use actions/cache.
   cacheServer: true
@@ -80,7 +80,7 @@ runner:
   # The external cache server URL. Valid only when enable is true.
   # If it's specified, runner will use this URL as the ACTIONS_CACHE_URL rather than start a server by itself.
   # The URL should generally end with "/".
-  externalServer: ""
+  actionsCacheExternal: ""
   # defines the path where the artifact server stores uploads and retrieves downloads from. 
   # If not specified the artifact server will not start
   artifactPath: ""

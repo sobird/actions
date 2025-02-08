@@ -9,7 +9,6 @@ import yaml from 'yaml';
 
 import { ACTIONS_HOME } from '@/pkg/common/constants';
 
-import Cache from './cache';
 import Daemon from './daemon';
 import { Registration } from './registration';
 import Runner from './runner';
@@ -30,8 +29,6 @@ class Config {
 
   public runner: Runner;
 
-  public cache: Cache;
-
   /**
    * The parent directory of a job's working directory.
    * If it's empty, $ACTIONS_HOME/actions/ will be used.
@@ -46,7 +43,6 @@ class Config {
     this.log = config.log ?? {};
     this.daemon = new Daemon(config.daemon ?? {});
     this.runner = new Runner(config.runner ?? {});
-    this.cache = new Cache(config.cache ?? {});
     this.actionsPath = config.actionsPath ?? path.join(ACTIONS_HOME, 'actions');
     this.registration = Registration.Load(config.registration.file);
   }

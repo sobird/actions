@@ -132,7 +132,7 @@ class Runner implements Omit<Options, ''> {
    * If it's specified, runner will use this URL as the ACTIONS_CACHE_URL rather than start a server by itself.
    * The URL should generally end with "/".
    */
-  public externalServer: string;
+  public actionsCacheExternal: string;
 
   // actions repository local cache
 
@@ -161,7 +161,7 @@ class Runner implements Omit<Options, ''> {
   /**
    * defines the default url of action instance', 'https://github.com
    */
-  public actionsInstance: string;
+  public actionInstance: string;
 
   /**
    * defines the path where the artifact server stores uploads and retrieves downloads from.
@@ -302,14 +302,14 @@ class Runner implements Omit<Options, ''> {
     this.actionsCachePath = runner.actionsCachePath || path.join(ACTIONS_HOME, 'artifact', 'cache');
     this.actionsCacheAddr = runner.actionsCacheAddr || ip.address();
     this.actionsCachePort = runner.actionsCachePort ?? 0;
-    this.externalServer = runner.externalServer ?? '';
+    this.actionsCacheExternal = runner.actionsCacheExternal ?? '';
 
     // action cache
     this.cacheActions = runner.cacheActions;
     this.repositories = runner.repositories;
     this.actionsOffline = runner.actionsOffline;
     this.actionsPath = runner.actionsPath || path.join(ACTIONS_HOME, 'actions');
-    this.actionsInstance = runner.actionsInstance || 'https://github.com';
+    this.actionInstance = runner.actionInstance || 'https://github.com';
 
     // Artifact Server
     this.artifactPath = runner.artifactPath;
@@ -436,7 +436,7 @@ class Runner implements Omit<Options, ''> {
     }
     Object.assign(this.context.github.event, event);
 
-    // ActionCache
+    // Cache Actions
     let actionCache;
     if (this.cacheActions) {
       actionCache = this.actionsOffline ? new ActionCacheOffline(this.actionsPath) : new ActionCache(this.actionsPath);
@@ -458,9 +458,18 @@ class Runner implements Omit<Options, ''> {
       bindWorkdir: this.bindWorkdir,
       actionCache,
       platforms,
-      actionsOffline: this.actionsOffline,
-      actionsInstance: this.actionsInstance,
+
+      actionsCache: this.actionsCache,
+      actionsCachePath: this.actionsCachePath,
+      actionsCacheAddr: this.actionsCacheAddr,
+      actionsCachePort: this.actionsCachePort,
+      actionsCacheExternal: this.actionsCacheExternal,
+
+      actionInstance: this.actionInstance,
       serverInstance: this.serverInstance,
+      artifactPath: this.artifactPath,
+      artifactAddr: this.artifactAddr,
+      artifactPort: this.artifactPort,
       remoteName: this.remoteName,
       reuseContainers: this.reuse,
       logJson: this.logJson,
@@ -471,6 +480,7 @@ class Runner implements Omit<Options, ''> {
       useGitignore: this.useGitignore,
       skipCheckout: this.skipCheckout,
       matrix: this.matrix,
+      // container
       pull: this.pull,
       rebuild: this.rebuild,
       containerUsernsMode: this.containerUsernsMode,
