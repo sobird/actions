@@ -49,8 +49,8 @@ class ArtifactCache {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    this.storage = new Storage(path.join(dir, 'cache'));
-    this.db = sqlite3(path.join(dir, 'cache.db'), {
+    this.storage = new Storage(path.join(dir, 'artifact'));
+    this.db = sqlite3(path.join(dir, 'artifact.db'), {
       // verbose: console.log,
     });
 
