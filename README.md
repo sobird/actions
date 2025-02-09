@@ -94,6 +94,31 @@ yarn workspace <package-name> <command>
 yarn add some-package -W
 ```
 
+## actions/cache
+
+```
+If you are using a `self-hosted` Windows runner, `GNU tar` and `zstd` are required for Cross-OS caching to work. They are also recommended to be installed in general so the performance is on par with `hosted` Windows runners.
+```
+
+```sh
+# 类似下面目录为 actions/cache 创建的临时目录
+/Users/sobird/.actions/actions/c88dd2466a5b7752/home/runner/work/temp/7a3d7800-55cb-4962-bc11-684f0fccefb4
+
+# 执行下面tar打包命名， 其中manifest.txt的内容为: `../../../../c88dd2466a5b7752/Users/sobird/act-runner/test`
+/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /Users/sobird/.actions/actions/c88dd2466a5b7752/Users/sobird/act-runner --files-from manifest.txt --use-compress-program zstdmt
+
+# 则会报下面的错误
+tar: ../../../../c88dd2466a5b7752/Users/sobird/act-runner/test: Cannot stat: No such file or directory
+
+# 而将manifest.txt内容改为 ../../../Users/sobird/act-runner/test，则不会再报错，什么原因？
+
+```
+
+在 Node.js 中，`process.cwd()` 获取的是当前进程的实际工作目录，而不是软链接的路径。这意味着，如果当前工作目录是通过软链接进入的，`process.cwd()` 仍然会返回实际的物理路径，而不是软链接的路径。
+
+见：[internal-pattern](https://github.com/actions/toolkit/blob/main/packages/glob/src/internal-pattern.ts#L261)
+
+因为 `process.cwd()` 获取的是实际物理路径，导致在上面使用tar命令打包时，会出现 `../../../../c88dd2466a5b7752/Users/sobird/act-runner/test` 类似这样的相对路径，导致打包失败，如何解决呢？
 
 <!-- Badges -->
 [npm]: https://img.shields.io/npm/v/@sobird/act-runner.svg

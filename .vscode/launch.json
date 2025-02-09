@@ -35,7 +35,8 @@
       // "preLaunchTask": "tsc:build - tsconfig.json",
       "env": {
         "NODE_OPTIONS": "--import=./node_modules/@sobird/ts-node/register.js"
-      }
+      },
+      "autoAttachChildProcesses": true
     },
   ]
 }

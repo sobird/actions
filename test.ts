@@ -26,3 +26,5 @@ const isMatch = patterns.every((pattern) => { return minimatch(filePath, pattern
 console.log(isMatch); // 输出：true 或 false
 
 console.log('minimatch.match', minimatch.match([filePath], '*.jds'));
+
+console.log('first', process.cwd());

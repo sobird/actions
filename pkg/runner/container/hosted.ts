@@ -150,7 +150,7 @@ class HostedContainer extends Container {
         shell: true,
         cwd: workdir,
         env: {
-          // ...process.env,
+          ...process.env,
           ...options.env,
         },
         stdio: 'pipe',
