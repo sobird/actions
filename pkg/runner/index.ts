@@ -10,8 +10,6 @@ import path from 'node:path';
 
 import log4js, { Logger } from 'log4js';
 
-import Artifact from '@/pkg/artifact';
-import ArtifactCache from '@/pkg/artifact/cache';
 import Constants from '@/pkg/common/constants';
 import { Docker } from '@/pkg/docker';
 import Config from '@/pkg/runner/config';

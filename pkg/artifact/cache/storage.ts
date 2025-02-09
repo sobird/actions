@@ -87,16 +87,16 @@ class Storage {
   serve(res: ServerResponse<IncomingMessage> & {
     req: IncomingMessage;
   }, id: number) {
-    const name = this.filename(id);
-    res.setHeader('Content-Disposition', `attachment; filename=${path.basename(name)}`);
-    fs.createReadStream(name).pipe(res);
+    const filename = this.filename(id);
+    // res.setHeader('Content-Disposition', `attachment; filename=${path.basename(name)}`);
+    fs.createReadStream(filename).pipe(res);
   }
 
   remove(id: number) {
-    const name = this.filename(id);
+    const filename = this.filename(id);
 
     if (this.exist(id)) {
-      fs.unlinkSync(name);
+      fs.unlinkSync(filename);
     }
 
     const tmpDir = this.tmpDir(id);

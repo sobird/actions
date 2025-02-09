@@ -505,7 +505,7 @@ class Runner implements Omit<Options, ''> {
     return config;
   }
 
-  // actions runtime
+  // actions runtime public server
   async actionsRuntime() {
     const {
       artifactPath,

@@ -25,7 +25,7 @@ export interface PullImageInputs {
 
 export class Docker extends Dockerode {
   async pullImage(repoTag: string, inputs: PullImageInputs = {}) {
-    logger.debug('\u{1F433} Docker pull %s', repoTag);
+    logger.debug('\u{1F433} Docker pull %s', repoTag, inputs.platform ? `(${inputs.platform})` : '');
 
     const { force, ...options } = inputs;
 
