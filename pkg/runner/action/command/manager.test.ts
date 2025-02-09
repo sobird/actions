@@ -99,7 +99,7 @@ describe('action command ::stop-commands:: test', () => {
     const commandManager2 = new ActionCommandManager(new Runner(undefined as any, {
       context: {
         env: {
-          [Constants.Variables.Actions.AllowUnsupportedStopCommandTokens]: 'true',
+          [Constants.Actions.AllowUnsupportedStopCommandTokens]: 'true',
         },
       },
     } as any));
@@ -181,7 +181,7 @@ describe('action command ::echo:: test', () => {
     const runner2 = new Runner(undefined as any, {
       context: {
         vars: {
-          [Constants.Variables.Actions.StepDebug]: 'true',
+          [Constants.Actions.StepDebug]: 'true',
         },
       },
     } as any);

@@ -93,57 +93,11 @@ class Runner {
     }
 
     // Initialize 'echo on action command success' property, default to false, unless Step_Debug is set
-    this.echoOnActionCommand = context.secrets[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || context.vars[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' || false;
+    this.echoOnActionCommand = context.secrets[Constants.Actions.StepDebug]?.toLowerCase() === 'true' || context.vars[Constants.Actions.StepDebug]?.toLowerCase() === 'true' || false;
 
     if (config.serverInstance) {
       const serverInstance = /^http(s)?:\/\//i.test(config.serverInstance) ? config.serverInstance : `https://${config.serverInstance}`;
       context.github.server_url = serverInstance;
-    }
-
-    this.startActionsRuntime();
-  }
-
-  async startActionsRuntime() {
-    const {
-      artifactPath,
-      artifactAddr,
-      artifactPort,
-
-      actionsCache,
-      actionsCachePath,
-      actionsCacheAddr,
-      actionsCachePort,
-      actionsCacheExternal,
-    } = this.config;
-    // Start Artifact Server
-    const ACTIONS_RUNTIME_URL = 'ACTIONS_RUNTIME_URL';
-    const ACTIONS_RUNTIME_TOKEN = 'ACTIONS_RUNTIME_TOKEN';
-    if (artifactPath && !this.context.env[ACTIONS_RUNTIME_URL]) {
-      const artifact = new Artifact(artifactPath, artifactAddr, artifactPort);
-      const actionsRuntimeUrl = await artifact.serve();
-      this.logger.debug('Artifact Server address:', actionsRuntimeUrl);
-      this.context.env[ACTIONS_RUNTIME_URL] = actionsRuntimeUrl;
-
-      let actionsRuntimeToken = process.env[ACTIONS_RUNTIME_TOKEN];
-      if (!actionsRuntimeToken) {
-        actionsRuntimeToken = 'token';
-      }
-      this.context.env[ACTIONS_RUNTIME_TOKEN] = actionsRuntimeToken;
-    }
-
-    // Start Actions Cache Server
-    const ACTIONS_CACHE_URL = 'ACTIONS_CACHE_URL';
-    if (actionsCache && !this.context.env[ACTIONS_CACHE_URL]) {
-      if (actionsCacheExternal) {
-        this.context.env[ACTIONS_CACHE_URL] = actionsCacheExternal;
-      } else {
-        const { IsHosted } = this;
-        const internal = IsHosted ? actionsCacheAddr : 'host.docker.internal';
-        const actionsCacheServer = new ArtifactCache(actionsCachePath);
-        const actionsCacheURL = await actionsCacheServer.serve(actionsCachePort, internal);
-        this.logger.debug('Actions Cache Server address:', actionsCacheURL);
-        this.context.env[ACTIONS_CACHE_URL] = actionsCacheURL;
-      }
     }
   }
 
@@ -188,6 +142,12 @@ class Runner {
         context.github.workspace = this.config.workdir; // 使用仓库物理地址
       } else {
         context.github.workspace = container.resolve(this.config.workdir);
+      }
+
+      if (!IsHosted && !this.config.actionsCacheExternal && context.env[Constants.Actions.CacheUrl]) {
+        const url = new URL(context.env[Constants.Actions.CacheUrl]);
+        url.hostname = 'host.docker.internal';
+        context.env[Constants.Actions.CacheUrl] = url.toString();
       }
 
       // set runner context

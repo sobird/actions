@@ -40,7 +40,7 @@ interface Config {
   /**
    * The default actions web site.
    */
-  readonly actionInstance: string;
+  readonly actionsInstance: string;
 
   /**
    * Remote name in local git repo config.

@@ -84,7 +84,7 @@ class ActionCommandManager {
   }
 
   validateStopToken(stopToken: string) {
-    const { AllowUnsupportedStopCommandTokens } = Constants.Variables.Actions;
+    const { AllowUnsupportedStopCommandTokens } = Constants.Actions;
     const allowUnsecureStopCommandTokens = process.env[AllowUnsupportedStopCommandTokens]?.toLowerCase() === 'true' || this.runner.context.env[AllowUnsupportedStopCommandTokens]?.toLowerCase() === 'true' || false;
 
     const isTokenInvalid = this.registeredCommands.has(stopToken) || !stopToken || stopToken.toLowerCase() === 'pause-logging';

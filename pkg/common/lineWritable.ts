@@ -6,7 +6,7 @@ export default class LineWritable extends Writable {
   _lastLine: string = '';
 
   _write(chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null) => void) {
-    let data = chunk.subarray.toString();
+    let data = chunk.toString();
     if (this._lastLine) {
       data = this._lastLine + data;
       this._lastLine = '';

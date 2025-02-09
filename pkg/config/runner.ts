@@ -11,7 +11,10 @@ import path from 'node:path';
 import ip from 'ip';
 import log4js from 'log4js';
 
+import Artifact from '@/pkg/artifact';
+import ArtifactCache from '@/pkg/artifact/cache';
 import { Options } from '@/pkg/cmd/run';
+import Constants from '@/pkg/common/constants';
 import Git from '@/pkg/common/git';
 import { Docker } from '@/pkg/docker';
 import Labels from '@/pkg/labels';
@@ -161,7 +164,7 @@ class Runner implements Omit<Options, ''> {
   /**
    * defines the default url of action instance', 'https://github.com
    */
-  public actionInstance: string;
+  public actionsInstance: string;
 
   /**
    * defines the path where the artifact server stores uploads and retrieves downloads from.
@@ -309,7 +312,7 @@ class Runner implements Omit<Options, ''> {
     this.repositories = runner.repositories;
     this.actionsOffline = runner.actionsOffline;
     this.actionsPath = runner.actionsPath || path.join(ACTIONS_HOME, 'actions');
-    this.actionInstance = runner.actionInstance || 'https://github.com';
+    this.actionsInstance = runner.actionsInstance || 'github.com';
 
     // Artifact Server
     this.artifactPath = runner.artifactPath;
@@ -465,7 +468,7 @@ class Runner implements Omit<Options, ''> {
       actionsCachePort: this.actionsCachePort,
       actionsCacheExternal: this.actionsCacheExternal,
 
-      actionInstance: this.actionInstance,
+      actionsInstance: this.actionsInstance,
       serverInstance: this.serverInstance,
       artifactPath: this.artifactPath,
       artifactAddr: this.artifactAddr,
@@ -497,7 +500,53 @@ class Runner implements Omit<Options, ''> {
       replaceGheActionTokenWithGithubCom: this.replaceGheActionTokenWithGithubCom,
     };
 
+    await this.actionsRuntime();
+
     return config;
+  }
+
+  // actions runtime
+  async actionsRuntime() {
+    const {
+      artifactPath,
+      artifactAddr,
+      artifactPort,
+
+      actionsCache,
+      actionsCachePath,
+      actionsCacheAddr,
+      actionsCachePort,
+      actionsCacheExternal,
+    } = this;
+
+    // Start Artifact Server
+    const ACTIONS_RUNTIME_URL = Constants.Actions.RuntimeUrl;
+    const ACTIONS_RUNTIME_TOKEN = Constants.Actions.RuntimeToken;
+    if (artifactPath && !this.context.env[ACTIONS_RUNTIME_URL]) {
+      const artifact = new Artifact(artifactPath, artifactAddr, artifactPort);
+      const actionsRuntimeUrl = await artifact.serve();
+      logger.info('Artifact Server address:', actionsRuntimeUrl);
+      this.context.env[ACTIONS_RUNTIME_URL] = actionsRuntimeUrl;
+
+      let actionsRuntimeToken = process.env[ACTIONS_RUNTIME_TOKEN];
+      if (!actionsRuntimeToken) {
+        actionsRuntimeToken = 'token';
+      }
+      this.context.env[ACTIONS_RUNTIME_TOKEN] = actionsRuntimeToken;
+    }
+
+    // Start Actions Cache Server
+    const ACTIONS_CACHE_URL = Constants.Actions.CacheUrl;
+    if (actionsCache && !this.context.env[ACTIONS_CACHE_URL]) {
+      if (actionsCacheExternal) {
+        this.context.env[ACTIONS_CACHE_URL] = actionsCacheExternal;
+      } else {
+        const artifactCache = new ArtifactCache(actionsCachePath);
+        const actionsCacheURL = await artifactCache.serve(actionsCachePort, actionsCacheAddr);
+        logger.info('Actions Cache Server address:', actionsCacheURL);
+        this.context.env[ACTIONS_CACHE_URL] = actionsCacheURL;
+      }
+    }
   }
 }
 

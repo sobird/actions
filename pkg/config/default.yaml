@@ -63,7 +63,7 @@ runner:
     - ubuntu-20.04=gitea/runner-images:ubuntu-20.04
     - self-hosted=-self-hosted
   #actions
-  actionInstance: github.com
+  actionsInstance: github.com
   # actions/cache
   # Enable cache server to use actions/cache.
   cacheServer: true

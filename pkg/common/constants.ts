@@ -23,10 +23,12 @@ class Actions {
   public static readonly RunnerDebug = 'ACTIONS_RUNNER_DEBUG';
 
   public static readonly StepDebug = 'ACTIONS_STEP_DEBUG';
-}
 
-class Variables {
-  public static readonly Actions = Actions;
+  public static readonly CacheUrl = 'ACTIONS_CACHE_URL';
+
+  public static readonly RuntimeUrl = 'ACTIONS_RUNTIME_URL';
+
+  public static readonly RuntimeToken = 'ACTIONS_RUNTIME_TOKEN';
 }
 
 class Runner {
@@ -117,7 +119,7 @@ export class Protocol {
 class Constants {
   public static readonly Runner = Runner;
 
-  public static readonly Variables = Variables;
+  public static readonly Actions = Actions;
 
   public static readonly Directory = Directory;
 

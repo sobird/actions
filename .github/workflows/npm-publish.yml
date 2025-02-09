@@ -41,3 +41,9 @@ jobs:
     #     npm publish
     #   env:
     #     NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+
+  anthor-test-job:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
