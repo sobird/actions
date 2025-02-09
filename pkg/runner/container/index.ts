@@ -20,10 +20,10 @@ export interface FileEntry {
 }
 
 export interface ContainerExecOptions {
-  env?: NodeJS.ProcessEnv;
-  privileged?: boolean;
-  workdir: string;
+  cwd?: string;
+  env?: object;
   user?: string;
+  privileged?: boolean;
 }
 
 export interface ContainerOptions {
@@ -75,7 +75,7 @@ export default abstract class Container {
   abstract putArchive(destination: string, archive: NodeJS.ReadableStream): Executor;
   abstract getArchive(destination: string): Promise<NodeJS.ReadableStream>;
   abstract exec(command: string[], options: ContainerExecOptions): Executor;
-  abstract spawnSync(command: string, args: string[], options: ContainerExecOptions): SpawnSyncReturns<string> | undefined;
+  abstract spawnSync(command: string, args: string[], options: ContainerExecOptions): SpawnSyncReturns<string>;
   // hashFiles功能应由所在容器提供
   // abstract hashFiles(...patterns: string[]): string;
   abstract resolve(...paths: string[]): string;
@@ -92,12 +92,10 @@ export default abstract class Container {
       patterns: patterns.join('\n'),
     };
 
-    const { workdir } = this.options;
-
+    const { workdir } = this.options as { workdir: string };
     const hashFilesScript = this.resolve(hashFilesDir, 'index.js');
 
-    const { stderr } = this.spawnSync('node', [hashFilesScript], { env, workdir });
-
+    const { stderr } = this.spawnSync('node', [hashFilesScript], { env, cwd: workdir });
     const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
     if (matches && matches.length > 0) {
       return matches[0].slice(10, -10);

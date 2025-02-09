@@ -18,7 +18,7 @@ import Dockerode, {
 import dotenv from 'dotenv';
 import ignore from 'ignore';
 import log4js from 'log4js';
-import shellQuote from 'shell-quote';
+// import shellQuote from 'shell-quote';
 import * as tar from 'tar';
 
 import Executor, { Conditional } from '@/pkg/common/executor';
@@ -565,7 +565,7 @@ class DockerContainer extends Container {
     }));
   }
 
-  exec(command: string[], inputs: ContainerExecOptions = {}) {
+  exec(command: string[], { cwd = '', env }: ContainerExecOptions = {}) {
     return new Executor(async () => {
       const { container } = this;
       if (!container) {
@@ -573,12 +573,10 @@ class DockerContainer extends Container {
       }
 
       // todo
-      logger.debug(shellQuote.quote(command));
+      // logger.debug(shellQuote.quote(command));
 
-      const WorkingDir = this.resolve(this.options.workdir, inputs.workdir || '');
-      const Env = Object.entries(inputs.env || {}).map(([key, value]) => { return `${key}=${value}`; });
-
-      logger.debug('exec env:', Env);
+      const WorkingDir = this.resolve(this.options.workdir, cwd);
+      const Env = Object.entries(env || {}).map(([key, value]) => { return `${key}=${value}`; });
 
       const exec = await container.exec({
         Cmd: command,
@@ -587,7 +585,6 @@ class DockerContainer extends Container {
         Tty: false,
         WorkingDir,
         Env,
-        User: inputs.user,
       });
 
       const stream = await exec.start({});
@@ -653,12 +650,10 @@ class DockerContainer extends Container {
 
   spawnSync(command: string, args: string[], options: ContainerExecOptions = {}) {
     const { container } = this;
-    // if (!container) {
-    //   return;
-    // }
     const {
-      env, workdir, privileged, user,
+      cwd, env, privileged, user,
     } = options;
+
     const dockerArgs = ['exec'];
     if (env) {
       Object.entries(env).forEach(([key, value]) => {
@@ -666,8 +661,8 @@ class DockerContainer extends Container {
       });
     }
 
-    if (workdir) {
-      dockerArgs.push('-w', workdir);
+    if (cwd) {
+      dockerArgs.push('-w', cwd);
     }
 
     if (privileged) {

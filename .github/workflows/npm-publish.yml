@@ -30,9 +30,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-dependencies-
 
-    # - name: Install Dependencies 🔧
-    #   if: steps.cache-dependencies.outputs.cache-hit != 'true'
-    #   run: pnpm install
+    - name: Install Dependencies 🔧
+      if: steps.cache-dependencies.outputs.cache-hit != 'true'
+      run: pnpm install --no-frozen-lockfile
 
     # - name: Build ☕️
     #   run: |

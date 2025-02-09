@@ -17,7 +17,7 @@ import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
 import { trimSuffix } from '@/utils';
 
-import Container, { FileEntry, ContainerExecOptions } from '.';
+import Container, { FileEntry, type ContainerExecOptions } from '.';
 
 export interface HostedContainerOptions {
   basedir: string;
@@ -161,36 +161,35 @@ class HostedContainer extends Container {
     return new Executor().finally(this.putHashFileExecutor);
   }
 
-  exec(command: string[], options: ContainerExecOptions = {}) {
+  exec(commands: string[], { env, cwd = '' }: ContainerExecOptions = {}) {
     return new Executor(async () => {
-      const workdir = this.resolve(this.options.workdir, (options.workdir as string) || '');
-
       const { NODE_OPTIONS, ...envs } = process.env;
-      const [cmd, ...args] = command;
-      const cp = spawn(cmd, args, {
-        shell: true,
-        cwd: workdir,
+      const [command, ...args] = commands;
+
+      const child = spawn(command, args, {
+        cwd: this.resolve(this.options.workdir, cwd),
         env: {
           ...envs,
-          ...options.env,
+          ...env,
         },
+        shell: true,
         stdio: 'pipe',
       });
 
       // cp.stdout.pipe(process.stdout);
       // cp.stderr.pipe(process.stdout);
 
-      cp.stdout.on('data', (data) => {
+      child.stdout.on('data', (data) => {
         console.log(`stdout: ${data}`);
       });
 
-      cp.stderr.on('data', (data) => {
+      child.stderr.on('data', (data) => {
         console.log(`stderr: ${data}`);
       });
 
       await new Promise((resolve, reject) => {
-        cp.on('error', reject);
-        cp.on('exit', (code) => {
+        child.on('error', reject);
+        child.on('exit', (code) => {
           if (code === 0) {
             resolve(code);
           } else {
@@ -202,21 +201,22 @@ class HostedContainer extends Container {
   }
 
   // hosted default
-  public spawnSync(command: string, args: readonly string[], options: ContainerExecOptions) {
-    const { workdir } = options;
-
+  public spawnSync(command: string, args: readonly string[], { cwd = '', env }: ContainerExecOptions) {
     const { NODE_OPTIONS, ...envs } = process.env;
-    const env = {
-      ...envs,
-      ...options.env,
-    };
 
-    return spawnSync(command, args, { encoding: 'utf8', cwd: this.resolve(workdir), env });
+    return spawnSync(command, args, {
+      cwd: this.resolve(cwd),
+      env: {
+        ...envs,
+        ...env,
+      },
+      encoding: 'utf8',
+    });
   }
 
   remove() {
     return new Executor(() => {
-      // fs.rmSync(this.rootdir, { recursive: true, force: true });
+      fs.rmSync(this.rootdir, { recursive: true, force: true });
     });
   }
 
