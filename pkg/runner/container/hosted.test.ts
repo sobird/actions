@@ -113,7 +113,7 @@ describe('Test Hosted Container', () => {
     const containerdir = hosted.resolve(destination);
 
     const archive = tar.create({ cwd: filedir, portable: true }, ['.']) as unknown as NodeJS.ReadableStream;
-    await hosted.putArchive(destination, archive);
+    await hosted.putArchive(destination, archive).execute();
 
     const sourceFiles = fs.readdirSync(filedir);
     const destFiles = fs.readdirSync(containerdir);
@@ -202,7 +202,7 @@ describe('Test Hosted Container', () => {
     const putContentExecutor = hosted.putContent('', {
       name: 'package.json',
       mode: 0o777,
-      body: 'test content',
+      body: '{"name": "test"}',
     });
     await putContentExecutor.execute();
 

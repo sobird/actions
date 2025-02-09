@@ -7,7 +7,7 @@
 
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import fs, { CopySyncOptions } from 'node:fs';
+import fs from 'node:fs';
 import path from 'node:path';
 
 import ignore from 'ignore';
@@ -61,19 +61,27 @@ class HostedContainer extends Container {
   }
 
   put(destination: string, source: string, useGitIgnore: boolean = false) {
-    return new Executor(() => {
-      let dest = this.resolve(destination);
+    return new Executor(async () => {
+      const dest = this.resolve(destination);
+      fs.mkdirSync(dest, { recursive: true });
 
-      const copyOptions: CopySyncOptions = {
-        dereference: true,
-        recursive: true,
+      const info = path.parse(source);
+      const sourceStat = fs.statSync(source);
+      if (sourceStat.isDirectory()) {
+        info.dir = source;
+        info.base = '.';
+      }
+
+      const options: tar.TarOptionsWithAliasesAsyncNoFile = {
+        cwd: info.dir,
+        // prefix: dest,
+        portable: true,
       };
 
       const ignorefile = path.join(source, '.gitignore');
-
       if (useGitIgnore && fs.existsSync(ignorefile)) {
         const ig = ignore().add(fs.readFileSync(ignorefile).toString());
-        copyOptions.filter = (src) => {
+        options.filter = (src) => {
           const relPath = path.relative(source, path.join(source, src));
           if (relPath) {
             return !ig.ignores(relPath);
@@ -82,12 +90,19 @@ class HostedContainer extends Container {
         };
       }
 
-      const info = path.parse(source);
-      const sourceStat = fs.statSync(source);
-      if (sourceStat.isFile()) {
-        dest = path.join(dest, info.base);
-      }
-      fs.cpSync(source, dest, copyOptions);
+      const pack = tar.create(options, [info.base]);
+      const unpack = tar.x({ cwd: dest });
+
+      pack.pipe(unpack);
+
+      await new Promise<void>((resolve, reject) => {
+        pack.on('error', (err) => {
+          reject(err);
+        });
+        unpack.on('finish', () => {
+          resolve();
+        });
+      });
     });
   }
 
