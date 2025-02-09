@@ -5,7 +5,7 @@
  * sobird<i@sobird.me> at 2024/06/06 21:49:44 created.
  */
 
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -163,12 +163,13 @@ class HostedContainer extends Container {
     return new Executor(async () => {
       const workdir = this.resolve(this.options.workdir, (options.workdir as string) || '');
 
+      const { NODE_OPTIONS, ...envs } = process.env;
       const [cmd, ...args] = command;
       const cp = spawn(cmd, args, {
         shell: true,
         cwd: workdir,
         env: {
-          ...process.env,
+          ...envs,
           ...options.env,
         },
         stdio: 'pipe',
@@ -196,6 +197,19 @@ class HostedContainer extends Container {
         });
       });
     });
+  }
+
+  // hosted default
+  public spawnSync(command: string, args: readonly string[], options: ContainerExecOptions) {
+    const { workdir } = options;
+
+    const { NODE_OPTIONS, ...envs } = process.env;
+    const env = {
+      ...envs,
+      ...options.env,
+    };
+
+    return spawnSync(command, args, { encoding: 'utf8', cwd: this.resolve(workdir), env });
   }
 
   remove() {

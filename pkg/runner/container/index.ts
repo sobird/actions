@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { spawnSync } from 'node:child_process';
+import { type SpawnSyncReturns } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import readline from 'node:readline';
@@ -75,23 +75,11 @@ export default abstract class Container {
   abstract putArchive(destination: string, archive: NodeJS.ReadableStream): Executor;
   abstract getArchive(destination: string): Promise<NodeJS.ReadableStream>;
   abstract exec(command: string[], options: ContainerExecOptions): Executor;
-  // abstract spawnSync(command: string, args: string[], options: ContainerExecOptions): SpawnSyncReturns<string> | undefined;
+  abstract spawnSync(command: string, args: string[], options: ContainerExecOptions): SpawnSyncReturns<string> | undefined;
   // hashFiles功能应由所在容器提供
   // abstract hashFiles(...patterns: string[]): string;
   abstract resolve(...paths: string[]): string;
   abstract imageEnv(): Promise<Record<string, string>>;
-
-  // hosted default
-  public spawnSync(command: string, args: readonly string[], options: ContainerExecOptions) {
-    const { workdir } = options;
-
-    const env = {
-      ...process.env,
-      ...options.env,
-    };
-
-    return spawnSync(command, args, { encoding: 'utf8', cwd: this.resolve(workdir), env });
-  }
 
   public hashFiles(...patterns: string[]) {
     const followSymlink = patterns[0] === '--follow-symbolic-links';
