@@ -104,13 +104,13 @@ If you are using a `self-hosted` Windows runner, `GNU tar` and `zstd` are requir
 # 类似下面目录为 actions/cache 创建的临时目录
 /Users/sobird/.actions/actions/c88dd2466a5b7752/home/runner/work/temp/7a3d7800-55cb-4962-bc11-684f0fccefb4
 
-# 执行下面tar打包命名， 其中manifest.txt的内容为: `../../../../c88dd2466a5b7752/Users/sobird/act-runner/test`
-/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /Users/sobird/.actions/actions/c88dd2466a5b7752/Users/sobird/act-runner --files-from manifest.txt --use-compress-program zstdmt
+# 执行下面tar打包命名， 其中manifest.txt的内容为: `../../../../c88dd2466a5b7752/Users/sobird/actions/test`
+/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /Users/sobird/.actions/actions/c88dd2466a5b7752/Users/sobird/actions --files-from manifest.txt --use-compress-program zstdmt
 
 # 则会报下面的错误
-tar: ../../../../c88dd2466a5b7752/Users/sobird/act-runner/test: Cannot stat: No such file or directory
+tar: ../../../../c88dd2466a5b7752/Users/sobird/actions/test: Cannot stat: No such file or directory
 
-# 而将manifest.txt内容改为 ../../../Users/sobird/act-runner/test，则不会再报错，什么原因？
+# 而将manifest.txt内容改为 ../../../Users/sobird/actions/test，则不会再报错，什么原因？
 
 ```
 
@@ -118,12 +118,24 @@ tar: ../../../../c88dd2466a5b7752/Users/sobird/act-runner/test: Cannot stat: No 
 
 见：[internal-pattern](https://github.com/actions/toolkit/blob/main/packages/glob/src/internal-pattern.ts#L261)
 
-因为 `process.cwd()` 获取的是实际物理路径，导致在上面使用tar命令打包时，会出现 `../../../../c88dd2466a5b7752/Users/sobird/act-runner/test` 类似这样的相对路径，导致打包失败，如何解决呢？
+因为 `process.cwd()` 获取的是实际物理路径，导致在上面使用tar命令打包时，会出现 `../../../../c88dd2466a5b7752/Users/sobird/actions/test` 类似这样的相对路径，导致打包失败，如何解决呢？
+
+执行上面的tar命令，在mac系统下会出现下面所示错误，但在Linux平台不会出错，为什么？
+```
+tar: ../../../../../../actions/test: Cannot stat: No such file or directory
+tar: Error exit delayed from previous errors.
+```
+
+在macOS下使用 gnu-tar，执行下面命令安装
+```sh
+brew install gnu-tar
+```
+详细见：[cache tar.ts](https://github.com/actions/toolkit/blob/main/packages/cache/src/internal/tar.ts#L31)
 
 <!-- Badges -->
-[npm]: https://img.shields.io/npm/v/@sobird/act-runner.svg
-[npm-url]: https://www.npmjs.com/package/@sobird/act-runner
-[build-status]: https://img.shields.io/github/actions/workflow/status/sobird/act-runner/release-please.yml?label=CI&logo=github
-[build-status-url]: https://github.com/sobird/act-runner/actions
-[size]: https://packagephobia.com/badge?p=@sobird/act-runner
-[size-url]: https://packagephobia.com/result?p=@sobird/act-runner
+[npm]: https://img.shields.io/npm/v/@sobird/actions.svg
+[npm-url]: https://www.npmjs.com/package/@sobird/actions
+[build-status]: https://img.shields.io/github/actions/workflow/status/sobird/actions/release-please.yml?label=CI&logo=github
+[build-status-url]: https://github.com/sobird/actions/actions
+[size]: https://packagephobia.com/badge?p=@sobird/actions
+[size-url]: https://packagephobia.com/result?p=@sobird/actions

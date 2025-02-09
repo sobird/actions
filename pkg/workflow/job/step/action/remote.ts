@@ -58,8 +58,8 @@ class StepActionRemote extends StepAction {
           logger.debug('Skipping local actions/checkout because you bound your workspace');
           return;
         }
-        const workdir = runner.container?.resolve(runner.config.workdir) || '';
-        const copyToPath = path.join(workdir, this.with.evaluate(runner)?.path || '');
+        // const workdir = runner.container?.resolve(runner.config.workdir) || '';
+        const copyToPath = path.join(runner.config.workdir, this.with.evaluate(runner)?.path || '');
 
         return runner.container?.put(copyToPath, runner.config.workdir, runner.config.useGitignore);
       }

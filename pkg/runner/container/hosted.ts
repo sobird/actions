@@ -74,7 +74,11 @@ class HostedContainer extends Container {
       if (useGitIgnore && fs.existsSync(ignorefile)) {
         const ig = ignore().add(fs.readFileSync(ignorefile).toString());
         copyOptions.filter = (src) => {
-          return !ig.ignores(src);
+          const relPath = path.relative(source, path.join(source, src));
+          if (relPath) {
+            return !ig.ignores(relPath);
+          }
+          return true;
         };
       }
 
@@ -83,7 +87,6 @@ class HostedContainer extends Container {
       if (sourceStat.isFile()) {
         dest = path.join(dest, info.base);
       }
-
       fs.cpSync(source, dest, copyOptions);
     });
   }

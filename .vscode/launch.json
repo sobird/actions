@@ -25,6 +25,16 @@
       }
     },
     {
+      "name": "Debug actions cache",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/pkg/cmd",
+      "args": ["run", "-j", "build-and-publish-npm", "--reuse", "--image", "-self-hosted", "--no-bind-workdir"],
+      "env": {
+        "NODE_OPTIONS": "--import=./node_modules/@sobird/ts-node/register.js"
+      }
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "Node.js",

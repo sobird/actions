@@ -3,7 +3,7 @@
   "version": "0.0.6",
   "description": "Impl Actions runner using typescript",
   "type": "module",
-  "main": "index.js",
+  "main": "index.ts",
   "bin": {
     "actions": "./dist/index.js"
   },
