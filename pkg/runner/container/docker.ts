@@ -156,7 +156,9 @@ class DockerContainer extends Container {
 
       const ignorefile = path.join(source, '.gitignore');
       if (useGitIgnore && fs.existsSync(ignorefile)) {
-        const ig = ignore().add(fs.readFileSync(ignorefile).toString());
+        const ig = ignore({
+          ignorecase: false,
+        }).add(fs.readFileSync(ignorefile).toString());
         options.filter = (src) => {
           const relPath = path.relative(source, path.join(source, src));
           if (relPath) {

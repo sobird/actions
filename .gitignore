@@ -22,11 +22,11 @@ yarn.lock
 /build
 
 # misc
-dist
+/dist
+pkg/**/dist
 .DS_Store
 *.pem
 .env
-*.tar
 ncc-cache
 
 # Editor directories and files
@@ -63,7 +63,7 @@ next-env.d.ts
 *.local
 .runner
 *.config.json
-event.json
+/event.json
 .actionsrc
 database.sqlite
 unittest.sqlite
