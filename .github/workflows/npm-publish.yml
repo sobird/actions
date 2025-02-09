@@ -25,14 +25,14 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          test
+          node_modules
         key: ${{ runner.os }}-dependencies-${{ hashFiles('pnpm-lock.yaml') }}
         restore-keys: |
           ${{ runner.os }}-dependencies-
 
     # - name: Install Dependencies 🔧
     #   if: steps.cache-dependencies.outputs.cache-hit != 'true'
-    #   run: npm install
+    #   run: pnpm install
 
     # - name: Build ☕️
     #   run: |

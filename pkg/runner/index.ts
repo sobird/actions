@@ -183,7 +183,12 @@ class Runner {
 
       // set github context
       context.github.event_path = container.resolve(workflowDirectory, 'event.json') || '';
-      context.github.workspace = container.resolve(this.config.workdir);
+      if (IsHosted && this.config.bindWorkdir) {
+        // resolve actions/cache hosted save cache error: Cannot stat: No such file or directory
+        context.github.workspace = this.config.workdir; // 使用仓库物理地址
+      } else {
+        context.github.workspace = container.resolve(this.config.workdir);
+      }
 
       // set runner context
       context.runner.name = this.name;
