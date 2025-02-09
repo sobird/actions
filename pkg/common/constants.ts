@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
+// https://github.com/actions/runner/blob/main/src/Runner.Common/Constants.cs
 
-// Related to definition variables.
 import os from 'node:os';
 import path from 'node:path';
 

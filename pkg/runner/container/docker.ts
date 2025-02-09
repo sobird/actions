@@ -8,8 +8,6 @@
 import cp from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import readline from 'node:readline';
-import { Writable } from 'node:stream';
 import tty from 'node:tty';
 
 import Dockerode, {
@@ -22,6 +20,7 @@ import log4js from 'log4js';
 import * as tar from 'tar';
 
 import Executor, { Conditional } from '@/pkg/common/executor';
+import { createLineWriteStream } from '@/pkg/common/lineWritable';
 import docker from '@/pkg/docker';
 import Runner from '@/pkg/runner';
 
@@ -565,7 +564,7 @@ class DockerContainer extends Container {
     }));
   }
 
-  exec(command: string[], { cwd = '', env }: ContainerExecOptions = {}) {
+  exec(command: string[], { cwd = '', env, user }: ContainerExecOptions = {}) {
     return new Executor(async () => {
       const { container } = this;
       if (!container) {
@@ -579,37 +578,47 @@ class DockerContainer extends Container {
       const Env = Object.entries(env || {}).map(([key, value]) => { return `${key}=${value}`; });
 
       const exec = await container.exec({
+        WorkingDir,
         Cmd: command,
+        Env,
+        Tty: isatty,
+        User: user,
         AttachStdout: true,
         AttachStderr: true,
-        Tty: false,
-        WorkingDir,
-        Env,
       });
 
-      const stream = await exec.start({});
+      const stream = await exec.start({
+        // hijack: true,
+        // stdin: true,
+        // Detach: true,
+        // https://github.com/apocas/dockerode/issues/736
+        Tty: isatty,
+      });
 
       // stream.on('data', (chunk) => {
       //   console.log('chunk', chunk.toString());
       // });
 
-      const out = new Writable({
-        write: (chunk, enc, next) => {
-          // console.log('chunk', chunk.toString());
+      // const out = new Writable({
+      //   write: (chunk: Buffer, enc, next) => {
+      //     // console.log('chunk', chunk.subarray(8).toString());
 
-          next();
-        },
-      });
-      stream.pipe(out);
+      //     next();
+      //   },
+      // });
 
-      const rl = readline.createInterface({
-        input: stream,
-        crlfDelay: Infinity,
-      });
-
-      rl.on('line', (line) => {
+      stream.pipe(createLineWriteStream((line) => {
         console.log(line);
-      });
+      }));
+
+      // const rl = readline.createInterface({
+      //   input: stream,
+      //   crlfDelay: Infinity,
+      // });
+
+      // rl.on('line', (line) => {
+      //   console.log(line);
+      // });
 
       await new Promise((resolve, reject) => {
         stream.on('end', () => {
@@ -776,7 +785,8 @@ class DockerContainer extends Container {
         binds,
         mounts,
         env: {
-          LANG: 'C.UTF-8',
+          LANG: 'en_US.UTF-8',
+          LC_ALL: 'en_US.UTF-8',
         },
         networkMode: containerNetworkMode,
         networkAliases: [runner.run.name],

@@ -25,7 +25,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          node_modules
+          test
         key: ${{ runner.os }}-dependencies-${{ hashFiles('pnpm-lock.yaml') }}
         restore-keys: |
           ${{ runner.os }}-dependencies-

@@ -1,4 +1,4 @@
-import LineWritable from './line-writable';
+import LineWritable from './lineWritable';
 
 const testLines = [
   'hello',

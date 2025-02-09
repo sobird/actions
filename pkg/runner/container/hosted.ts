@@ -14,6 +14,7 @@ import ignore from 'ignore';
 import * as tar from 'tar';
 
 import Executor from '@/pkg/common/executor';
+import { createLineWriteStream } from '@/pkg/common/lineWritable';
 import Runner from '@/pkg/runner';
 import { trimSuffix } from '@/utils';
 
@@ -176,12 +177,16 @@ class HostedContainer extends Container {
         stdio: 'pipe',
       });
 
+      child.stdout.pipe(createLineWriteStream((line) => {
+        console.log(line);
+      }));
+
       // cp.stdout.pipe(process.stdout);
       // cp.stderr.pipe(process.stdout);
 
-      child.stdout.on('data', (data) => {
-        console.log(`stdout: ${data}`);
-      });
+      // child.stdout.on('data', (data) => {
+      //   console.log(`stdout: ${data}`);
+      // });
 
       child.stderr.on('data', (data) => {
         console.log(`stderr: ${data}`);

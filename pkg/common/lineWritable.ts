@@ -1,11 +1,12 @@
 /* eslint-disable no-underscore-dangle */
+
 import { Writable } from 'node:stream';
 
 export default class LineWritable extends Writable {
   _lastLine: string = '';
 
   _write(chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null) => void) {
-    let data = chunk.toString();
+    let data = chunk.subarray.toString();
     if (this._lastLine) {
       data = this._lastLine + data;
       this._lastLine = '';
@@ -30,4 +31,17 @@ export default class LineWritable extends Writable {
     }
     callback();
   }
+}
+
+export function createLineWriteStream(...fns: ((line: string) => boolean | void)[]) {
+  return new LineWritable({
+    highWaterMark: 1,
+    objectMode: true,
+  }).on('line', (line) => {
+    for (const fn of fns) {
+      if (fn(line) === false) {
+        break;
+      }
+    }
+  });
 }

@@ -1,4 +1,4 @@
-import LineWritable from '@/pkg/common/line-writable';
+import LineWritable from '@/pkg/common/lineWritable';
 
 export function createWriteLineStream(...fns: ((line: string) => boolean | void)[]) {
   return new LineWritable({
