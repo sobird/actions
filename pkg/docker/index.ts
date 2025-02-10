@@ -169,7 +169,7 @@ export class Docker extends Dockerode {
     // Here there is no DOCKER_HOST _and_ the supplied container socket is not a valid URI (either invalid or a file path)
     // Cases: 2B <- but is already handled at the top
     // I.e. this path should never be taken
-    logger.error(`no DOCKER_HOST and an invalid container socket '${socketHost.socket}'`);
+    logger.error(`No DOCKER_HOST and an invalid container socket '${socketHost.socket}'`);
     socketHost.socket = '';
     return socketHost;
   }

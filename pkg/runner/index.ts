@@ -106,7 +106,7 @@ class Runner {
         return;
       }
 
-      console.log('start job:', this.run.name);
+      console.log('runner name:', this.name);
 
       console.log('job', job === Object.entries(workflow.jobs)[0][1]);
       // todo

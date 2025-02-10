@@ -31,14 +31,14 @@ class WorkflowPlanner {
   planEvent(eventName: string) {
     const plan = new Plan();
     if (this.workflows.length === 0) {
-      logger.debug('no workflows found by planner');
+      logger.debug('No workflows found by planner');
       return plan;
     }
 
     this.workflows.forEach((workflow) => {
       const { events } = workflow;
       if (events.length === 0) {
-        logger.debug('no events found for workflow: %s', workflow.file);
+        logger.debug('No events found for workflow: %s', workflow.file);
         return;
       }
       events.forEach((event) => {
@@ -52,7 +52,7 @@ class WorkflowPlanner {
 
   planJob(...jobId: string[]) {
     if (this.workflows.length === 0) {
-      logger.debug(`no jobs found for workflow: ${jobId}`);
+      logger.debug(`No jobs found for workflow: ${jobId}`);
     }
 
     const plan = new Plan();
@@ -66,7 +66,7 @@ class WorkflowPlanner {
 
   planAll() {
     if (this.workflows.length === 0) {
-      logger.debug('no workflows found by planner');
+      logger.debug('No workflows found by planner');
     }
 
     const plan = new Plan();

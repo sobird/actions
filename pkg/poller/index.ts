@@ -35,7 +35,7 @@ class Poller {
       if (this.runningTasks.size >= daemon.capacity) {
         return;
       }
-      logger.debug('fetching task', this.tasksVersion, this.runningTasks.size, daemon.capacity);
+      logger.debug('Fetching task', this.tasksVersion, this.runningTasks.size, daemon.capacity);
       const task = await this.fetchTask();
 
       if (this.runningTasks.has(task?.id)) {
@@ -51,7 +51,7 @@ class Poller {
           this.runningTasks.delete(task.id);
         }
       } catch (error) {
-        logger.error('failed to run task', error);
+        logger.error('Failed to run task', error);
         clearInterval(checkInterval);
       }
     }, daemon.fetchInterval);
@@ -100,7 +100,7 @@ class Poller {
 
       this.tasksVersion = BigInt(0);
     } catch (error) {
-      logger.error('failed to fetch task', (error as ConnectError).message);
+      logger.error('Failed to fetch task', (error as ConnectError).message);
     }
   }
 }

@@ -47,10 +47,10 @@ class DockerAction extends Action {
           const platform = `${imageInspect.Os}/${imageInspect.Architecture}`;
 
           if ((!runner.config.containerPlatform || runner.config.containerPlatform === platform) && !runner.config.rebuild) {
-            logger.debug("image '%s' for architecture '%s' already exists", image, runner.config.containerPlatform || '');
+            logger.debug("Image '%s' for architecture '%s' already exists", image, runner.config.containerPlatform || '');
           } else {
             await dockerImage.remove();
-            throw new Error('image need build');
+            throw new Error('Image need build');
           }
         } catch (error) {
           // need build image

@@ -26,18 +26,18 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
   const appconf = Config.Load(options.config, appname);
 
   logger.level = appconf.log.level;
-  logger.info('starting runner daemon');
+  logger.info('Starting runner daemon');
 
   let registration = null;
 
   try {
     registration = appconf.registration;
     if (!registration) {
-      logger.error('registration file not found, please register the runner first');
+      logger.error('Registration file not found, please register the runner first');
       return;
     }
   } catch (err) {
-    logger.fatal('failed to load registration file: %w', (err as Error).message);
+    logger.fatal('Failed to load registration file: %w', (err as Error).message);
     return;
   }
 
@@ -45,7 +45,7 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
   const labels = new Labels(appconf.runner.labels.length > 0 ? appconf.runner.labels : registration.labels);
 
   if (labels.names().length === 0) {
-    logger.warn('no labels configured, runner may not be able to pick up jobs');
+    logger.warn('No labels configured, runner may not be able to pick up jobs');
   }
 
   if (labels.requireDocker()) {
@@ -58,7 +58,7 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
     try {
       await docker.ping();
     } catch (err) {
-      logger.fatal('cannot ping the docker daemon, is it running?', (err as Error).message);
+      logger.fatal('Cannot ping the docker daemon, is it running?', (err as Error).message);
       return;
     }
   }
@@ -67,9 +67,9 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
     try {
       registration.save();
     } catch (err) {
-      return logger.error('failed to save runner config:', (err as Error).message);
+      return logger.error('Failed to save runner config:', (err as Error).message);
     }
-    logger.info('labels updated to:', registration.labels);
+    logger.info('Labels updated to:', registration.labels);
   }
 
   try {
@@ -86,7 +86,7 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
       version,
     });
     if (runner) {
-      logger.info(`runner: ${runner.name}, with version: ${runner.version}, with labels: ${runner.labels}, declare successfully`);
+      logger.info(`Runner: ${runner.name}, with version: ${runner.version}, with labels: ${runner.labels}, declare successfully`);
     }
 
     const poller = new Poller(RunnerServiceClient, appconf, version);
@@ -94,10 +94,10 @@ async function daemonAction(opts: Options, program: typeof Command.prototype) {
   } catch (err) {
     const connectError = err as ConnectError;
     if (connectError.code === Code.Unimplemented) {
-      logger.error('your Gitea version is too old to support runner declare, please upgrade to v1.21 or later');
+      logger.error('Your Gitea version is too old to support runner declare, please upgrade to v1.21 or later');
       return;
     }
-    logger.error('fail to invoke declare', connectError.message);
+    logger.error('Fail to invoke declare', connectError.message);
   }
 }
 

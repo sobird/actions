@@ -95,13 +95,14 @@ export default abstract class Container {
     const { workdir } = this.options as { workdir: string };
     const hashFilesScript = this.resolve(hashFilesDir, 'index.js');
 
+    let hashResult = '';
     const { stderr } = this.spawnSync('node', [hashFilesScript], { env, cwd: workdir });
     const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
     if (matches && matches.length > 0) {
-      return matches[0].slice(10, -10);
+      hashResult = matches[0].slice(10, -10);
     }
 
-    return '';
+    return hashResult;
   }
 
   async getContent(filename: string): Promise<FileEntry | undefined> {

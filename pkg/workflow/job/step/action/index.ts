@@ -93,6 +93,7 @@ abstract class StepAction extends Step {
       try {
         this.applyEnv(runner, this.environment);
         await withTimeout(executor.execute(runner), timeoutMinutes * 60 * 1000);
+        await actionCommandFile.process();
         logger.info('🍏', `Finishing: ${stage} ${this.Name(runner)}`);
       } catch (error) {
         console.log('error', error);
@@ -118,11 +119,8 @@ abstract class StepAction extends Step {
           };
 
           logger.error('🍎', `Error in continue-on-error-expression: "continue-on-error: ${this['continue-on-error'].source}" (${(err as Error).message})`);
-
-          return;
         }
       }
-      await actionCommandFile.process();
     });
   }
 
@@ -130,11 +128,11 @@ abstract class StepAction extends Step {
     return new Conditional((ctx) => {
       const runner = ctx!;
       if (!this.action) {
-        logger.debug("skip pre step for '%s': no action model available", this.Name(runner));
+        logger.debug("Skip pre step for '%s': no action model available", this.Name(runner));
         return false;
       }
       if (!this.action.HasPost.evaluate(ctx)) {
-        logger.debug("skipping pre step for '%s': no action pre available", this.Name(runner));
+        logger.debug("Skipping pre step for '%s': no action pre available", this.Name(runner));
         return false;
       }
       return true;
@@ -147,21 +145,21 @@ abstract class StepAction extends Step {
       const { StepResult } = runner.context;
 
       if (!StepResult) {
-        logger.debug("skipping post step for '%s'; step was not executed", this.Name(runner));
+        logger.debug("Skipping post step for '%s'; step was not executed", this.Name(runner));
         return false;
       }
 
       if (StepResult.conclusion === 'skipped') {
-        logger.debug("skipping post step for '%s'; main step was skipped", this.Name(runner));
+        logger.debug("Skipping post step for '%s'; main step was skipped", this.Name(runner));
         return false;
       }
 
       if (!this.action) {
-        logger.debug("skipping post step for '%s': no action model available", this.Name(runner));
+        logger.debug("Skipping post step for '%s': no action model available", this.Name(runner));
         return false;
       }
       if (!this.action.HasPost.evaluate(ctx)) {
-        logger.debug("skipping post step for '%s': no action post available", this.Name(runner));
+        logger.debug("Skipping post step for '%s': no action post available", this.Name(runner));
         return false;
       }
       return true;

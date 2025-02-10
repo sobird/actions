@@ -232,12 +232,12 @@ class Reporter implements LoggerHook {
   setOutputs(outputs: Map<string, string>): void {
     outputs.forEach((value, key) => {
       if (key.length > 255) {
-        logger.warn('ignore output because the key is too long', key);
+        logger.warn('Ignore output because the key is too long', key);
         return;
       }
       if (value.length > 1024 * 1024) {
-        console.log(`ignore output because the value is too long: ${key}`, value.length);
-        logger.warn(`ignore output because the value ${key} is too long: ${value.length}`);
+        console.log(`Ignore output because the value is too long: ${key}`, value.length);
+        logger.warn(`Ignore output because the value ${key} is too long: ${value.length}`);
         return;
       }
       if (this.outputs.has(key)) {
@@ -327,14 +327,14 @@ class Reporter implements LoggerHook {
       // 获取服务端确认的日志索引
       const { ackIndex } = updateLogResponse;
       if (ackIndex < this.logOffset) {
-        logger.info('submitted logs are lost');
+        logger.info('Submitted logs are lost');
       }
 
       this.logRows = this.logRows.slice(Number(ackIndex - this.logOffset));
       this.logOffset = ackIndex;
 
       if (noMore && ackIndex < this.logOffset + BigInt(rows.length)) {
-        logger.info('not all logs are submitted');
+        logger.info('Not all logs are submitted');
       }
     } catch (error) {
       logger.error('Update log fail:', (error as ConnectError).message);
@@ -375,7 +375,7 @@ class Reporter implements LoggerHook {
       });
 
       if (notSent.length > 0) {
-        logger.info(`there are still outputs that have not been sent: ${notSent}`);
+        logger.info(`There are still outputs that have not been sent: ${notSent}`);
       }
     } catch (error) {
       logger.error('Update task fail:', (error as ConnectError).message);
