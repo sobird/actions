@@ -120,7 +120,7 @@ abstract class Action extends Yaml {
   }
 
   public get Main() {
-    return this.SetEnvironment.next(this.main());
+    return this.SetEnvironment.next(this.PrintDetails).next(this.main());
   }
 
   public get Post() {
@@ -156,13 +156,13 @@ abstract class Action extends Yaml {
     const stepWith = stepAction?.with.evaluate(runner);
     const inputs: Record<string, string> = {};
     Object.entries(this.inputs || {}).forEach(([inputId, input]) => {
-      const value = stepWith && (stepWith[inputId] || input.default.evaluate(runner));
+      const value = (stepWith && stepWith[inputId]) || input.default.evaluate(runner);
       const key = `INPUT_${inputId.toUpperCase().replace(/[^A-Z0-9-]/g, '_')}`;
       if (!out[key]) {
         // eslint-disable-next-line no-param-reassign
-        out[key] = value || '';
+        out[key] = value;
       }
-      inputs[inputId] = value || '';
+      inputs[inputId] = value;
     });
 
     // eslint-disable-next-line no-param-reassign
@@ -179,6 +179,39 @@ abstract class Action extends Yaml {
       out[key] = state;
     });
     return out;
+  }
+
+  public get PrintDetails() {
+    return new Executor((ctx) => {
+      const runner = ctx!;
+      const stepAction = runner.stepAction!;
+      const inputs = Object.entries(runner.context.inputs);
+      const env = Object.entries(stepAction.env.evaluate(runner) || {});
+      const { uses } = stepAction;
+      const groupName = `Run ${uses.uses}`;
+
+      runner.output(`##[group]${groupName}`);
+
+      if (inputs.length > 0) {
+        console.log('with:');
+        inputs.forEach(([key, value]) => {
+          if (value !== null && value !== '') {
+            console.log(`  ${key}: ${value}`);
+          }
+        });
+      }
+
+      if (env.length > 0) {
+        console.log('env:');
+        env.forEach(([key, value]) => {
+          if (value !== null && value !== '') {
+            console.log(`  ${key}: ${value}`);
+          }
+        });
+      }
+
+      console.log('##[endgroup]');
+    });
   }
 }
 

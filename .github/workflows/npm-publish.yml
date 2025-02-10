@@ -15,11 +15,16 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    # - name: Setup Node
-    #   uses: actions/setup-node@v4
-    #   with:
-    #     node-version: 20
-    #     registry-url: https://registry.npmjs.org/
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 10
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        registry-url: https://registry.npmjs.org/
 
     - name: Restore cache
       id: cache-dependencies
@@ -31,8 +36,10 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-dependencies-
 
+    
+
     - name: Install Dependencies 🔧
-      if: steps.cache-dependencies.outputs.cache-hit != 'true'
+      # if: steps.cache-dependencies.outputs.cache-hit != 'true'
       run: pnpm install --no-frozen-lockfile
 
     # - name: Build ☕️

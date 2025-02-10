@@ -784,8 +784,7 @@ class DockerContainer extends Container {
         binds,
         mounts,
         env: {
-          LANG: 'en_US.UTF-8',
-          LC_ALL: 'en_US.UTF-8',
+          LANG: 'C.UTF-8',
         },
         networkMode: containerNetworkMode,
         networkAliases: [runner.run.name],

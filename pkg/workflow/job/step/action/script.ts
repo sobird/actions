@@ -13,27 +13,63 @@ import StepAction from '.';
 class StepActionScript extends StepAction {
   public command: string = '';
 
+  private cmd = '';
+
+  private script = '';
+
   public main() {
     return new Executor(async (ctx) => {
       const runner = ctx!;
       await this.setupShellCommand(runner);
 
       const cmd = shellQuote.parse(this.command) as string[];
-      const workdir = this.WorkingDirectory(runner);
+      const cwd = this.WorkingDirectory(runner);
 
-      return runner.container?.exec(cmd, { env: this.environment, workdir });
+      const container = runner.container!;
+
+      return this.PrintDetails.next(container.exec(cmd, { env: this.environment, cwd }));
+    });
+  }
+
+  public get PrintDetails() {
+    return new Executor((ctx) => {
+      const runner = ctx!;
+      const stepAction = runner.stepAction!;
+
+      const env = Object.entries(stepAction.env.evaluate(runner) || {});
+
+      const groupName = `Run ${this.script}`;
+
+      runner.output(`##[group]${groupName}`);
+      runner.output(this.script);
+      runner.output(`shell: ${this.cmd}`);
+
+      if (env.length > 0) {
+        runner.output('env:');
+        env.forEach(([key, value]) => {
+          if (value !== null && value !== '') {
+            runner.output(`  ${key}: ${value}`);
+          }
+        });
+      }
+
+      runner.output('##[endgroup]');
+
+      console.log(this.command);
     });
   }
 
   async setupShellCommand(runner: Runner) {
     const shell = await this.setupShell(runner);
     const script = StepActionScript.FixUpScriptContent(shell, this.run.evaluate(runner));
-    const [command, ext] = StepActionScript.GetShellCommandAndExt(shell);
+    const [cmd, ext] = StepActionScript.GetShellCommandAndExt(shell);
+    this.cmd = cmd;
+    this.script = script;
 
     const scriptFilePath = path.join(Constants.Directory.Temp, `${this.uuid}${ext}`);
     const resolvedScriptPath = runner.container?.resolve(scriptFilePath);
 
-    this.command = format(command, resolvedScriptPath);
+    this.command = format(cmd, resolvedScriptPath);
 
     runner.container?.putContent('.', {
       name: scriptFilePath,
