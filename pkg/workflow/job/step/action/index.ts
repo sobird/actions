@@ -93,7 +93,7 @@ abstract class StepAction extends Step {
       try {
         this.applyEnv(runner, this.environment);
         await withTimeout(executor.execute(runner), timeoutMinutes * 60 * 1000);
-        logger.info('\u2705 Finishing: %s %s', stage, this.Name(runner));
+        logger.info('🍏', `Finishing: ${stage} ${this.Name(runner)}`);
       } catch (error) {
         console.log('error', error);
         context.StepResult = {
@@ -117,7 +117,7 @@ abstract class StepAction extends Step {
             conclusion: 'failure',
           };
 
-          logger.error('\u274C  Error in continue-on-error-expression: "continue-on-error: %s" (%s)', this['continue-on-error'].source, (err as Error).message);
+          logger.error('🍎', `Error in continue-on-error-expression: "continue-on-error: ${this['continue-on-error'].source}" (${(err as Error).message})`);
 
           return;
         }

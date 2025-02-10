@@ -474,7 +474,7 @@ class Job {
       job.total = matrices.length;
 
       if (!name?.includes('${{') || !name.includes('}}')) {
-        job.name = `${name || job.#id} (${Object.values(matrix).join(', ')})`;
+        job.name = `${name || job.id}${Object.values(matrix).length > 0 ? ` (${Object.values(matrix).join(', ')})` : ''}`;
       }
 
       job.strategy.matrix = Object.entries(matrix).reduce((accu, [key, value]) => {

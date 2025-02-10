@@ -330,7 +330,7 @@ class Runner {
 
   ContainerName(id?: string) {
     const { workflow } = this.run;
-    const parts = [`WORKFLOW-${workflow.name || workflow.file}`, `JOB-${this.run.name}`];
+    const parts = [`WORKFLOW-${workflow.name || workflow.file}`, `JOB-${this.run.jobId}`];
     if (id) {
       parts.push(`ID-${id}`);
     }
@@ -338,12 +338,11 @@ class Runner {
   }
 
   ContainerNetworkName(id?: string): [string, boolean] {
-    const { jobId } = this.run;
     if (this.config.containerNetworkMode) {
       return [this.config.containerNetworkMode, false];
     }
     // 如未配置NetworkMode，则手动创建network
-    return [`${this.ContainerName(id)}-${jobId}-network`, true];
+    return [`${this.ContainerName(id)}-Network`, true];
   }
 
   setJobContext(job: Context['job']) {
