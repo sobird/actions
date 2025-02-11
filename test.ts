@@ -1,9 +1,37 @@
-import * as core from '@actions/core';
+import { IssueMatchersConfig, IssueMatcher } from './pkg/runner/action/command/IssueMatcher';
 
-console.log('core', core);
+const config = new IssueMatchersConfig({
+  problemMatcher: [
+    {
+      owner: 'myMatcher',
+      severity: 'warning',
+      pattern: [
+        {
+          regexp: '^(ERROR)?(?: )?(.+):$',
+          severity: 1,
+          code: 2,
+        },
+        {
+          regexp: '^(.+)$',
+          message: 1,
+        },
+      ],
+    },
+  ],
+} as IssueMatchersConfig);
 
-core.group('ddd', async () => {
-  console.log('112', 112);
-});
+config.validate();
+const matcher = new IssueMatcher(config.problemMatcher[0]);
 
-core.endGroup();
+let match = matcher.match('ABC:');
+match = matcher.match('not-working');
+
+// expect(match.severity).toBe('warning');
+// expect(match.code).toBe('ABC');
+// expect(match.message).toBe('not-working');
+
+match = matcher.match('ERROR ABC:');
+match = matcher.match('not-working')!;
+expect(match.severity).toBe('ERROR');
+expect(match.code).toBe('ABC');
+expect(match.message).toBe('not-working');

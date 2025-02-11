@@ -1,9 +1,16 @@
 /* eslint-disable max-classes-per-file */
-class MatcherChangedEventArgs {
-  constructor(public config: IssueMatcherConfig) {}
+// https://github.com/actions/toolkit/blob/main/docs/problem-matchers.md
+function getNumberOfGroups(regex: RegExp) {
+  // 匹配普通分组 ( )，排除非捕获组 (?: ) 和其他特殊语法
+  const groupPattern = /\((?!\?)/g;
+  const matches = regex.source.match(groupPattern);
+
+  return matches ? matches.length : 0;
 }
 
-class IssuePattern {
+export class IssuePattern {
+  public regexp: RegExp;
+
   public file?: number;
 
   public line?: number;
@@ -20,8 +27,6 @@ class IssuePattern {
 
   public loop: boolean;
 
-  public regex: RegExp;
-
   constructor(config: IssuePatternConfig) {
     this.file = config.file;
     this.line = config.line;
@@ -31,103 +36,7 @@ class IssuePattern {
     this.message = config.message;
     this.fromPath = config.fromPath;
     this.loop = config.loop;
-    this.regex = new RegExp(config.pattern || '', 'g');
-  }
-}
-
-export class IssueMatcher {
-  #defaultSeverity: string;
-
-  #owner: string;
-
-  #pattern: IssuePattern[];
-
-  #state: IssueMatch[] = [];
-
-  constructor(config: IssueMatcherConfig, timeout: number) {
-    this.#owner = config.owner;
-    this.#defaultSeverity = config.severity;
-    this.#pattern = config.pattern.map((x) => { return new IssuePattern(x, timeout); });
-    this.reset();
-  }
-
-  get owner(): string {
-    return this.#owner || '';
-  }
-
-  get defaultSeverity(): string {
-    return this.#defaultSeverity || '';
-  }
-
-  match(line: string): IssueMatch | null {
-    // Single pattern
-    if (this.#pattern.length === 1) {
-      const pattern = this.#pattern[0];
-      const regexMatch = pattern.regex.exec(line);
-
-      if (regexMatch) {
-        return new IssueMatch(null, pattern, regexMatch, this.defaultSeverity);
-      }
-
-      return null;
-    }
-    // Multiple pattern
-
-    // Each pattern (iterate in reverse)
-    for (let i = this.#pattern.length - 1; i >= 0; i--) {
-      const runningMatch = i > 0 ? this.#state[i - 1] : null;
-
-      // First pattern or a running match
-      if (i === 0 || runningMatch) {
-        const pattern = this.#pattern[i];
-        const isLast = i === this.#pattern.length - 1;
-        const regexMatch = pattern.regex.exec(line);
-
-        // Matched
-        if (regexMatch) {
-          // Last pattern
-          if (isLast) {
-            // Loop
-            if (pattern.loop) {
-              // Clear most state, but preserve the running match
-              this.reset();
-              this.#state[i - 1] = runningMatch;
-            }
-            // Not loop
-            else {
-              // Clear the state
-              this.reset();
-            }
-
-            // Return
-            return new IssueMatch(runningMatch, pattern, regexMatch, this.defaultSeverity);
-          }
-          // Not the last pattern
-
-          // Store the match
-          this.#state[i] = new IssueMatch(runningMatch, pattern, regexMatch);
-        }
-        // Not matched
-        else {
-          // Last pattern
-          if (isLast) {
-            // Break the running match
-            this.#state[i - 1] = null;
-          }
-          // Not the last pattern
-          else {
-            // Record not matched
-            this.#state[i] = null;
-          }
-        }
-      }
-    }
-
-    return null;
-  }
-
-  reset(): void {
-    this.#state = new Array(this.#pattern.length - 1);
+    this.regexp = new RegExp(config.regexp || '');
   }
 }
 
@@ -167,65 +76,204 @@ class IssueMatch {
   }
 }
 
-export class IssueMatchersConfig {
-  constructor(public matchers: IssueMatcherConfig[] = []) {}
+export class IssueMatcher {
+  public defaultSeverity: string = '';
 
-  // get matchers(): IssueMatcherConfig[] {
-  //   if (!this._matchers) {
-  //     this._matchers = [];
-  //   }
-  //   return this._matchers;
-  // }
+  owner: string = '';
 
-  // set matchers(value: IssueMatcherConfig[]) {
-  //   this._matchers = value;
-  // }
+  pattern: IssuePattern[] = [];
 
-  validate(): void {
-    const distinctOwners = new Set<string>();
+  state: Array<IssueMatch | null> = [];
 
-    if (this.matchers && this.matchers.length > 0) {
-      for (const matcher of this.matchers) {
-        matcher.validate();
+  constructor(config: IssueMatcherConfig) {
+    this.owner = config.owner;
+    this.defaultSeverity = config.severity;
+    this.pattern = config.pattern.map((x) => { return new IssuePattern(x); });
+    this.reset();
+  }
 
-        if (distinctOwners.has(matcher.owner)) {
-          throw new Error(`Duplicate owner name '${matcher.owner}'`);
-        }
-        distinctOwners.add(matcher.owner);
+  match(line: string) {
+    // Single pattern
+    if (this.pattern.length === 1) {
+      const pattern = this.pattern[0];
+      const regexMatch = pattern.regexp.exec(line);
+
+      if (regexMatch) {
+        return new IssueMatch(null, pattern, regexMatch, this.defaultSeverity);
       }
+    }
+    // Multiple pattern
+    // Each pattern (iterate in reverse)
+    for (let i = this.pattern.length - 1; i >= 0; i--) {
+      const runningMatch = i > 0 ? this.state[i - 1] : null;
+
+      // First pattern or a running match
+      if (i === 0 || runningMatch) {
+        const pattern = this.pattern[i];
+        const isLast = i === this.pattern.length - 1;
+        const regexMatch = pattern.regexp.exec(line);
+
+        // Matched
+        if (regexMatch) {
+          // Last pattern
+          if (isLast) {
+            // Loop
+            if (pattern.loop) {
+              // Clear most state, but preserve the running match
+              this.reset();
+              this.state[i - 1] = runningMatch;
+            } else {
+              this.reset();
+            }
+            return new IssueMatch(runningMatch, pattern, regexMatch, this.defaultSeverity);
+          }
+          // Not the last pattern
+          // Store the match
+          this.state[i] = new IssueMatch(runningMatch, pattern, regexMatch);
+        } else if (isLast) { // Last pattern
+          // Break the running match
+          this.state[i - 1] = null;
+        } else { // Not the last pattern
+          // Record not matched
+          this.state[i] = null;
+        }
+      }
+    }
+  }
+
+  reset() {
+    this.state = new Array(this.pattern.length - 1).fill(null);
+  }
+}
+
+export class IssuePatternConfig {
+  /**
+   * the regex pattern that provides the groups to match against **required**
+   */
+  regexp: string = '';
+
+  /**
+   * a group number containing the file name
+   */
+  file?: number;
+
+  /**
+   * a group number containing a filepath used to root the file (e.g. a project file)
+   */
+  fromPath?: number;
+
+  /**
+   * a group number containing the line number
+   */
+  line?: number;
+
+  /**
+   * a group number containing the column information
+   */
+  column?: number;
+
+  /**
+   * a group number containing either 'warning' or 'error' case-insensitive. Defaults to `error`
+   */
+  severity?: number;
+
+  /**
+   * a group number containing the error code
+   */
+  code?: number;
+
+  /**
+   * a group number containing the error message. **required** at least one pattern must set the message
+   */
+  message?: number;
+
+  /**
+   * whether to loop until a match is not found, only valid on the last pattern of a multipattern matcher
+   */
+  loop: boolean = false;
+
+  constructor(config: IssuePatternConfig) {
+    this.regexp = config.regexp;
+    this.file = config.file;
+    this.line = config.line;
+    this.column = config.column;
+    this.severity = config.severity;
+    this.code = config.code;
+    this.message = config.message;
+    this.fromPath = config.fromPath;
+    this.loop = config.loop;
+  }
+
+  validate(
+    isFirst: boolean,
+    isLast: boolean,
+    validateProps: ValidateProps,
+  ): void {
+    // Only the last pattern in a multiline matcher may set 'loop'
+    if (this.loop && (isFirst || !isLast)) {
+      throw new Error('Only the last pattern in a multiline matcher may set \'loop\'');
+    }
+
+    if (this.loop && this.message == null) {
+      throw new Error('The loop pattern must set \'message\'');
+    }
+
+    const regex = new RegExp(this.regexp || '', 'g');
+    const groupCount = getNumberOfGroups(regex) + 1;
+
+    IssuePatternConfig.Validate('file', groupCount, this.file, validateProps);
+    IssuePatternConfig.Validate('line', groupCount, this.line, validateProps);
+    IssuePatternConfig.Validate('column', groupCount, this.column, validateProps);
+    IssuePatternConfig.Validate('severity', groupCount, this.severity, validateProps);
+    IssuePatternConfig.Validate('code', groupCount, this.code, validateProps);
+    IssuePatternConfig.Validate('message', groupCount, this.message, validateProps);
+    IssuePatternConfig.Validate('fromPath', groupCount, this.fromPath, validateProps);
+  }
+
+  static Validate(propertyName: keyof ValidateProps, groupCount: number, newValue?: number, validateProps?: ValidateProps): void {
+    if (!newValue) {
+      return;
+    }
+
+    // The property '___' is set twice
+    if (validateProps?.[propertyName]) {
+      throw new Error(`The property '${propertyName}' is set twice`);
+    }
+
+    // Out of range
+    if (newValue < 0 || newValue >= groupCount) {
+      throw new Error(`The property '${propertyName}' is set to ${newValue} which is out of range`);
+    }
+
+    // Record the value
+    if (newValue && validateProps) {
+      // eslint-disable-next-line no-param-reassign
+      validateProps[propertyName] = newValue;
     }
   }
 }
 
-class IssueMatcherConfig {
-  #owner: string = '';
+interface ValidateProps {
+  file?: number;
+  line?: number;
+  column?: number;
+  severity?: number;
+  code?: number;
+  message?: number;
+  fromPath?: number;
+}
 
-  #severity: string = '';
+export class IssueMatcherConfig {
+  owner: string = '';
 
-  #pattern: IssuePatternConfig[] = [];
+  severity: string = '';
 
-  get owner(): string {
-    return this.#owner;
-  }
+  pattern: IssuePatternConfig[] = [];
 
-  set owner(value: string) {
-    this.#owner = value;
-  }
-
-  get severity(): string {
-    return this.#severity;
-  }
-
-  set severity(value: string) {
-    this.#severity = value;
-  }
-
-  get pattern(): IssuePatternConfig[] {
-    return this.#pattern || [];
-  }
-
-  set pattern(value: IssuePatternConfig[]) {
-    this.#pattern = value;
+  constructor(config: IssueMatcherConfig) {
+    this.owner = config.owner;
+    this.severity = config.severity;
+    this.pattern = config.pattern.map((item) => { return new IssuePatternConfig(item); });
   }
 
   validate(): void {
@@ -250,97 +298,54 @@ class IssueMatcherConfig {
       throw new Error(`Matcher '${this.owner}' does not contain any pattern`);
     }
 
-    const file: number | null = null;
-    const line: number | null = null;
-    const column: number | null = null;
-    const severity: number | null = null;
-    const code: number | null = null;
-    const message: number | null = null;
-    const fromPath: number | null = null;
+    const validateProps: ValidateProps = {};
 
     // Validate each pattern config
     for (let i = 0; i < this.pattern.length; i++) {
       const isFirst = i === 0;
       const isLast = i === this.pattern.length - 1;
       const pattern = this.pattern[i];
-      pattern.validate(isFirst, isLast, file, line, column, severity, code, message, fromPath);
+      pattern.validate(isFirst, isLast, validateProps);
     }
 
-    if (message == null) {
+    if (validateProps.message == null) {
       throw new Error('At least one pattern must set \'message\'');
     }
   }
 }
 
-class IssuePatternConfig {
-  file: number | null = null;
+export class IssueMatchersConfig {
+  problemMatcher: IssueMatcherConfig[] = [];
 
-  line: number | null = null;
-
-  column: number | null = null;
-
-  severity: number | null = null;
-
-  code: number | null = null;
-
-  message: number | null = null;
-
-  fromPath: number | null = null;
-
-  loop: boolean = false;
-
-  pattern: string | null = null;
-
-  validate(
-    isFirst: boolean,
-    isLast: boolean,
-    file: number | null,
-    line: number | null,
-    column: number | null,
-    severity: number | null,
-    code: number | null,
-    message: number | null,
-    fromPath: number | null,
-  ): void {
-    // Only the last pattern in a multiline matcher may set 'loop'
-    if (this.loop && (isFirst || !isLast)) {
-      throw new Error('Only the last pattern in a multiline matcher may set \'loop\'');
-    }
-
-    if (this.loop && this.message == null) {
-      throw new Error('The loop pattern must set \'message\'');
-    }
-
-    const regex = new RegExp(this.pattern || '', 'g');
-    const groupCount = regex.toString().split('|').length;
-
-    IssuePatternConfig.Validate('file', groupCount, this.file, file);
-    IssuePatternConfig.Validate('line', groupCount, this.line, line);
-    IssuePatternConfig.Validate('column', groupCount, this.column, column);
-    IssuePatternConfig.Validate('severity', groupCount, this.severity, severity);
-    IssuePatternConfig.Validate('code', groupCount, this.code, code);
-    IssuePatternConfig.Validate('message', groupCount, this.message, message);
-    IssuePatternConfig.Validate('fromPath', groupCount, this.fromPath, fromPath);
+  constructor(config: IssueMatchersConfig) {
+    this.problemMatcher = config.problemMatcher.map((item) => { return new IssueMatcherConfig(item); });
   }
 
-  static Validate(propertyName: string, groupCount: number, newValue: number | null, trackedValue: number | null): void {
-    if (newValue == null) {
-      return;
-    }
+  // get matchers(): IssueMatcherConfig[] {
+  //   if (!this._matchers) {
+  //     this._matchers = [];
+  //   }
+  //   return this._matchers;
+  // }
 
-    // The property '___' is set twice
-    if (trackedValue != null) {
-      throw new Error(`The property '${propertyName}' is set twice`);
-    }
+  // set matchers(value: IssueMatcherConfig[]) {
+  //   this._matchers = value;
+  // }
 
-    // Out of range
-    if (newValue < 0 || newValue >= groupCount) {
-      throw new Error(`The property '${propertyName}' is set to ${newValue} which is out of range`);
-    }
+  validate(): void {
+    const distinctOwners = new Set<string>();
 
-    // Record the value
-    if (newValue != null) {
-      trackedValue = newValue;
+    if (this.problemMatcher && this.problemMatcher.length > 0) {
+      for (const matcher of this.problemMatcher) {
+        matcher.validate();
+
+        const owner = matcher.owner.toLowerCase();
+
+        if (distinctOwners.has(owner)) {
+          throw new Error(`Duplicate owner name '${matcher.owner}'`);
+        }
+        distinctOwners.add(owner);
+      }
     }
   }
 }
