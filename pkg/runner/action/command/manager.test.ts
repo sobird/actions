@@ -14,28 +14,28 @@ beforeEach(() => {
   runner.echoOnActionCommand = false;
 });
 
-describe('action command ::set-env:: test', () => {
-  it('set-env (ACTIONS_ALLOW_UNSECURE_COMMANDS = false)', () => {
+describe('::set-env:: Action Command Manager Test', () => {
+  it('ACTIONS_ALLOW_UNSECURE_COMMANDS = false', () => {
     commandManager.process('::set-env name=name,::sobird');
 
     expect(runner.context.env).toEqual({});
   });
 
-  it('set-env (ACTIONS_ALLOW_UNSECURE_COMMANDS = true)', () => {
+  it('ACTIONS_ALLOW_UNSECURE_COMMANDS', () => {
     process.env.ACTIONS_ALLOW_UNSECURE_COMMANDS = 'true';
-    commandManager.process('::set-env name=name,::sobird');
+    commandManager.process('::set-env name=name, ::sobird');
 
     expect(runner.context.env).toEqual({ name: 'sobird' });
   });
 
-  it('set-env field name not provided', () => {
+  it('field name not provided', () => {
     process.env.ACTIONS_ALLOW_UNSECURE_COMMANDS = 'true';
     commandManager.process('::set-env unknown=name,::sobird');
 
     expect(runner.context.env).toEqual({});
   });
 
-  it('set-env BlockList ', () => {
+  it('blockList ', () => {
     process.env.ACTIONS_ALLOW_UNSECURE_COMMANDS = 'true';
     runner.echoOnActionCommand = true;
     commandManager.process('::set-env name=NODE_OPTIONS,::sobird');
@@ -44,8 +44,8 @@ describe('action command ::set-env:: test', () => {
   });
 });
 
-describe('action command ::set-output:: test', () => {
-  it('set-output', () => {
+describe('::set-output:: Action Command Manager Test', () => {
+  it('set output', () => {
     const { context } = runner;
     commandManager.process('::set-output name=name,::sobird');
 
@@ -53,16 +53,16 @@ describe('action command ::set-output:: test', () => {
   });
 });
 
-describe('action command ::save-state:: test', () => {
-  it('save-state', () => {
+describe('::save-state:: Action Command Manager Test', () => {
+  it('save state', () => {
     const { context } = runner;
     commandManager.process('::save-state name=name,::sobird');
     expect(runner.IntraActionState[context.github.action].name).toEqual('sobird');
   });
 });
 
-describe('action command ::stop-commands:: test', () => {
-  it('stop-commands with valid token', () => {
+describe('::stop-commands:: Action Command Manager Test', () => {
+  it('with valid token', () => {
     const { context } = runner;
     const validToken = 'randomToken';
     commandManager.process(`::stop-commands::${validToken}`);
@@ -72,7 +72,7 @@ describe('action command ::stop-commands:: test', () => {
     expect(context.env).toEqual({});
   });
 
-  it('stop-commands with valid token and new command process', () => {
+  it('with valid token and new command process', () => {
     const { context } = runner;
     const validToken = 'randomToken';
     commandManager.process(`::stop-commands::${validToken}`);
@@ -85,7 +85,7 @@ describe('action command ::stop-commands:: test', () => {
     });
   });
 
-  it('Stop Process Command FailOn InvalidStopTokens', () => {
+  it('stop Process command fail on invalid stopTokens', () => {
     const invalidStopTokens = ['', 'pause-logging'];
 
     invalidStopTokens.forEach((stopToken) => {
@@ -95,7 +95,7 @@ describe('action command ::stop-commands:: test', () => {
     });
   });
 
-  it('Stop Process Command Allows Invalid StopTokens If Env.Var.IsSet', () => {
+  it('stop process command allows invalid stopTokens if Env.Var.IsSet', () => {
     const commandManager2 = new ActionCommandManager(new Runner(undefined as any, {
       context: {
         env: {
@@ -131,8 +131,8 @@ describe('action command ::stop-commands:: test', () => {
   });
 });
 
-describe('action command ::add-path:: test', () => {
-  it('add-path', () => {
+describe('::add-path:: Action Command Manager Test', () => {
+  it('add path', () => {
     commandManager.process('::stopToken::');
     commandManager.process('::add-path::path1');
     commandManager.process('::add-path::path2');
@@ -142,7 +142,7 @@ describe('action command ::add-path:: test', () => {
   });
 });
 
-describe('action command ::add-mask:: test', () => {
+describe('::add-mask:: Action Command Manager Test', () => {
   it('add-mask', () => {
     commandManager.process('::stopToken::');
     commandManager.process('::add-mask::mask1');
@@ -152,7 +152,7 @@ describe('action command ::add-mask:: test', () => {
     expect(runner.masks).toEqual(['mask1', 'mask2', 'mask3']);
   });
 
-  it('add-mask With Multiline Value', () => {
+  it('add-mask with multiline value', () => {
     commandManager.process('::add-mask::abc%0Ddef%0Aghi%0D%0Ajkl');
     commandManager.process('::add-mask:: %0D  %0A   %0D%0A    %0D');
 
@@ -160,7 +160,7 @@ describe('action command ::add-mask:: test', () => {
   });
 });
 
-describe('action command ::echo:: test', () => {
+describe('::echo:: Action Command Manager Test', () => {
   it('echo process', () => {
     expect(runner.echoOnActionCommand).toBe(false);
 
@@ -177,7 +177,7 @@ describe('action command ::echo:: test', () => {
     expect(runner.echoOnActionCommand).toBe(false);
   });
 
-  it('echo process command DebugOn', () => {
+  it('echo process command debug on', () => {
     const runner2 = new Runner(undefined as any, {
       context: {
         vars: {
@@ -185,12 +185,12 @@ describe('action command ::echo:: test', () => {
         },
       },
     } as any);
+    const commandManager2 = new ActionCommandManager(runner2);
 
     expect(runner2.echoOnActionCommand).toBe(true);
-    commandManager.process('::echo::off');
+    commandManager2.process('::echo::off');
     expect(runner2.echoOnActionCommand).toBe(false);
-
-    commandManager.process('::echo::on');
+    commandManager2.process('::echo::on');
     expect(runner2.echoOnActionCommand).toBe(true);
   });
 
@@ -202,5 +202,11 @@ describe('action command ::echo:: test', () => {
   it('echo no value', () => {
     commandManager.process('::echo::');
     expect(runner.echoOnActionCommand).toBe(false);
+  });
+});
+
+describe('::add-matcher:: Action Command Manager Test', () => {
+  it('add matcher', () => {
+    commandManager.process('::add-matcher::package.json');
   });
 });

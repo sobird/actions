@@ -1,3 +1,6 @@
+// https://github.com/actions/toolkit/blob/main/docs/problem-matchers.md
+import { readJsonSync } from '@/utils';
+
 import type { CommandExtension } from '.';
 
 const AddMatcherCommandExtension: CommandExtension = {
@@ -13,9 +16,13 @@ const AddMatcherCommandExtension: CommandExtension = {
       return;
     }
 
-    file = runner.container!.resolve(file);
+    if (runner.container) {
+      file = runner.container!.resolve(file);
+    }
 
-    console.log('file', file);
+    console.log('file', file, runner.context.github.workspace);
+
+    const ddd = readJsonSync(file);
 
     // add by file
   },

@@ -72,8 +72,8 @@ class ActionCommandManager {
       } catch (err) {
         const commandInformation = extension.echo ? line : extension.command;
         const message = `Unable to process command '${commandInformation}' successfully.`;
-        console.error(message);
-        console.error(err);
+        // console.error(message);
+        // console.error(err);
         // context.Error(ex);
         // context.CommandResult = TaskResult.Failed;
       }
