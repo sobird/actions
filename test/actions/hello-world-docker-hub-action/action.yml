@@ -12,6 +12,6 @@ outputs:
 runs:
   using: 'docker'
   image: 'docker://node:lts-slim'
-  entrypoint: 'echo'
-  args:
-    - ${{ inputs.who-to-greet }}
+  # entrypoint: 'echo'
+  # args:
+  #   - ${{ inputs.who-to-greet }}
