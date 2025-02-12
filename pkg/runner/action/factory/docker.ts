@@ -8,7 +8,7 @@ import Executor, { Conditional } from '@/pkg/common/executor';
 import docker from '@/pkg/docker';
 import Runner from '@/pkg/runner';
 import DockerContainer from '@/pkg/runner/container/docker';
-import { createSafeName } from '@/utils';
+import { isExecutable, createSafeName } from '@/utils';
 
 import Action from '..';
 
@@ -101,10 +101,18 @@ class DockerAction extends Action {
         cmd = this.runs.args.evaluate(runner);
       }
 
-      let entrypoint = shellQuote.parse(stepWith?.[entrypointStage] || '');
-      if (entrypoint.length === 0) {
-        entrypoint = shellQuote.parse(this.runs[entrypointStage] || '');
+      let entrypointPath = stepWith?.[entrypointStage];
+      if (!entrypointPath) {
+        entrypointPath = this.runs[entrypointStage];
       }
+
+      entrypointPath = path.resolve(this.Dir, entrypointPath || '');
+
+      if (!isExecutable(entrypointPath)) {
+        entrypointPath = '';
+      }
+
+      const entrypoint = shellQuote.parse(entrypointPath);
 
       runner.Assign(stepAction!.environment, this.runs.env);
       const container = DockerAction.Container(runner, image, cmd, entrypoint);

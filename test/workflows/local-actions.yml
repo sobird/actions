@@ -27,7 +27,7 @@ jobs:
         uses: ./test/actions/hello-world-docker-file
         with:
           who-to-greet: 'docker file'
-          entrypoint: entrypoint.sh
+          # entrypoint: entrypoint.sh
           # args: docker file
 
       - name: Docker Hub Action
