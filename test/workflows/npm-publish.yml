@@ -1,11 +1,11 @@
-name: Test Actions
+name: Test Npm Publish
 
 on:
   release:
     types: [created]
 
 jobs:
-  test-actions:
+  test-npm-publish:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -33,7 +33,7 @@ jobs:
           ${{ runner.os }}-dependencies-
 
     - name: Install Dependencies 🔧
-      if: steps.cache-dependencies.outputs.cache-hit != 'true'
+      # if: steps.cache-dependencies.outputs.cache-hit != 'true'
       run: pnpm install --no-frozen-lockfile
 
     - name: Build ☕️
@@ -44,9 +44,3 @@ jobs:
       env:
         NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
-  anthor-test-actions:
-    name: hello
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
