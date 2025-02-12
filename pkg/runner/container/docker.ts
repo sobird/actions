@@ -503,7 +503,7 @@ class DockerContainer extends Container {
 
       try {
         await container.remove({ volumes: true, force: true });
-        logger.debug('\u{1F433}', 'Removed container: container.id');
+        logger.debug('\u{1F433}', `Removed container: ${container.id}`);
         delete this.container;
       } catch (error) {
         logger.error('\u{1F433}', `Failed to remove container: ${(error as Error).message}`);
