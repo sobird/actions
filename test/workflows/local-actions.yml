@@ -1,0 +1,55 @@
+name: Test Local Actions
+run-name: Test Local Actions By ${{ github.actor }}
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test-local-actions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Step
+        uses: actions/checkout@v4
+        
+      - name: Hello World Javascript Action
+        id: hello_world_javascript_action
+        uses: test/actions/hello-world-javascript-action
+        with:
+          who-to-greet: 'hello world javascript action step'
+
+      - name: Hello World Docker File Action
+        id: hello_world_docker_file_action
+        uses: test/actions/hello-world-docker-file
+        with:
+          who-to-greet: 'docker file'
+          entrypoint: sh -c 'echo $GITHUB_SHA'
+          args: docker file
+
+      - name: Docker Hub Action
+        uses: docker://alpine:3.8
+        with:
+          entrypoint: echo
+          args: "The ${{ github.event_name }} event triggered this step. runner os: ${{runner.os}}"
+
+      - name: Hello World Docker Action
+        id: hello_world_docker_action
+        uses: test/actions/hello-world-docker-action
+        with:
+          who-to-greet: 'docker action step'
+      
+      - name: Get the Docker output time
+        run: echo "The time was ${{ steps.hello_world_docker_file.outputs.time }}"
+
+      - name: Hello World Docker Hub Action
+        id: hello_world_docker_hub_action
+        uses: test/actions/hello-world-docker-hub-action
+        with:
+          who-to-greet: 'docker hub action'
+
+      - name: Hello World Composite Action
+        id: hello_world_composite_action
+        uses: test/actions/hello-world-composite-action
+        with:
+          who-to-greet: 'composite action'

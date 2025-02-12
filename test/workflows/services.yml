@@ -1,5 +1,5 @@
-name: Job for Development
-run-name: Job for Development By ${{ github.actor }}
+name: Test Services
+run-name: Job for Test By ${{ github.actor }}
 on:
   workflow_dispatch:
 
@@ -10,27 +10,26 @@ jobs:
   job-for-development:
     runs-on: ubuntu-latest
 
-    # services:
-    #   nginx:
-    #     image: nginx
-    #     # Map port 8080 on the Docker host to port 80 on the nginx container
-    #     ports:
-    #       - 8080:80
-    #   redis:
-    #     image: redis
-    #     # Map TCP port 6379 on Docker host to a random free port on the Redis container
-    #     ports:
-    #       - 6379/tcp
+    services:
+      nginx:
+        image: nginx
+        # Map port 8080 on the Docker host to port 80 on the nginx container
+        ports:
+          - 8080:80
+      redis:
+        image: redis
+        # Map TCP port 6379 on Docker host to a random free port on the Redis container
+        ports:
+          - 6379/tcp
 
     steps:
-      # - name: Print env
-        # if: ${{ ddd }}
-        # shell: bash
-        # working-directory: '.'
-        # env:
-        #   FIRST_NAME: Mona
-        #   LAST_NAME: Octocat
-        # run: env
+      - name: Print env
+        shell: bash
+        working-directory: '.'
+        env:
+          FIRST_NAME: Mona
+          LAST_NAME: Octocat
+        run: env
 
       - name: Checkout Step
         uses: actions/checkout@v4

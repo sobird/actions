@@ -318,6 +318,8 @@ export class IssueMatchersConfig {
   problemMatcher: IssueMatcherConfig[] = [];
 
   constructor(config: IssueMatchersConfig) {
+    // eslint-disable-next-line no-param-reassign
+    config.problemMatcher = config.problemMatcher || [];
     this.problemMatcher = config.problemMatcher.map((item) => { return new IssueMatcherConfig(item); });
   }
 

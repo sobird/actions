@@ -1,15 +1,11 @@
-# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
-# For more information see: https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
-
-name: Npm Publish
+name: Test Actions
 
 on:
   release:
     types: [created]
 
 jobs:
-  build-and-publish-npm:
-    name: hello
+  test-actions:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -36,21 +32,19 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-dependencies-
 
-    
-
     - name: Install Dependencies 🔧
-      # if: steps.cache-dependencies.outputs.cache-hit != 'true'
+      if: steps.cache-dependencies.outputs.cache-hit != 'true'
       run: pnpm install --no-frozen-lockfile
 
-    # - name: Build ☕️
-    #   run: |
-    #     npm run build
-    #     cd dist
-    #     npm publish
-    #   env:
-    #     NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+    - name: Build ☕️
+      run: |
+        npm run build
+        cd dist
+        npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
-  anthor-test-job:
+  anthor-test-actions:
     name: hello
     runs-on: ubuntu-latest
     steps:

@@ -206,6 +206,10 @@ describe('::echo:: Action Command Manager Test', () => {
 });
 
 describe('::add-matcher:: Action Command Manager Test', () => {
+  runner.container?.putContent('ddd', {
+    name: 'test',
+    body: 'ddd',
+  });
   it('add matcher', () => {
     commandManager.process('::add-matcher::package.json');
   });

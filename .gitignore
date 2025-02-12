@@ -28,6 +28,7 @@ pkg/**/dist
 *.pem
 .env
 ncc-cache
+__snapshots__
 
 # Editor directories and files
 !.vscode/extensions.json

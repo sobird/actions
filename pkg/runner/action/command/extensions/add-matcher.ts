@@ -21,11 +21,14 @@ const AddMatcherCommandExtension: CommandExtension = {
       file = runner.container!.resolve(file);
     }
 
-    const config = new IssueMatchersConfig(readJsonSync(file));
+    console.log('file', file);
 
+    const config = new IssueMatchersConfig(readJsonSync(file));
+    console.log('config', config);
     // add
     if (config.problemMatcher.length > 0) {
       config.validate();
+
       // todo add matchers
     }
   },
