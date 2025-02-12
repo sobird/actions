@@ -109,9 +109,9 @@ export default class Context {
     const { action } = this.github;
     if (!this.steps[action]) {
       this.steps[action] = {
-        outputs: {},
-        outcome: 'success',
         conclusion: 'success',
+        outcome: 'success',
+        outputs: {},
       };
     }
     Object.assign(this.steps[action], step);

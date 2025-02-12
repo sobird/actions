@@ -53,11 +53,7 @@ abstract class StepAction extends Step {
       // set current step
       context.github.action = id;
       runner.stepAction = this;
-      context.StepResult = {
-        outcome: 'success',
-        conclusion: 'success',
-        outputs: {},
-      };
+      context.StepResult = {};
 
       if (this.uses.ref) {
         context.github.action_ref = this.uses.ref;
@@ -72,7 +68,7 @@ abstract class StepAction extends Step {
             outcome: 'skipped',
             conclusion: 'skipped',
           };
-          logger.debug("Skipping step '%s' due to '%s'", this.Name(runner), this.if.source);
+          logger.debug("Skipping step '%s' due to '%s'", this.Name(runner), this.if.source || '');
           return;
         }
       } catch (err) {
@@ -90,13 +86,14 @@ abstract class StepAction extends Step {
       await actionCommandFile.initialize(this.uuid);
       const timeoutMinutes = Number(this['timeout-minutes'].evaluate(runner)) || 60;
 
+      const name = this.Name(runner);
       try {
         this.applyEnv(runner, this.environment);
         await withTimeout(executor.execute(runner), timeoutMinutes * 60 * 1000);
         await actionCommandFile.process();
-        logger.info('🍏', `Finishing: ${stage} ${this.Name(runner)}`);
+        logger.info('🍏', `Finishing: ${stage} ${name}`);
       } catch (error) {
-        console.log('error', error);
+        logger.error((error as Error).message);
         context.StepResult = {
           outcome: 'failure',
         };
@@ -120,6 +117,8 @@ abstract class StepAction extends Step {
 
           logger.error('🍎', `Error in continue-on-error-expression: "continue-on-error: ${this['continue-on-error'].source}" (${(err as Error).message})`);
         }
+
+        logger.error('🍎', `Failure: ${stage} ${name}`);
       }
     });
   }

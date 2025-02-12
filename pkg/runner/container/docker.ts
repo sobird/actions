@@ -628,10 +628,10 @@ class DockerContainer extends Container {
               resolve(null);
               break;
             case 127:
-              reject(Error(`exitcode '${inspect.ExitCode}': command not found`));
+              reject(Error(`Process completed with exit code ${inspect.ExitCode}.`));
               break;
             default:
-              reject(Error(`exitcode '${inspect.ExitCode}': failure`));
+              reject(Error(`Process completed with exit code ${inspect.ExitCode}.`));
           }
         });
         stream.on('error', (err) => {
