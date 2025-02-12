@@ -8,8 +8,8 @@
       "name": "debug for development",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/cmd",
-      "args": ["run", "-j", "job-for-development", "--bind-workdir"],
+      "program": "${workspaceFolder}/pkg/cmd",
+      "args": ["run", "-W", "test/workflows", "-j", "test-step-output", "--reuse"],
       "env": {
         "NODE_OPTIONS": "--import=./node_modules/@sobird/ts-node/register.js"
       }

@@ -90,7 +90,7 @@ class StepActionScript extends StepAction {
 
     if (!shell) {
       //
-      if (runner.container) {
+      if (runner.container && runner.IsHosted) {
         let shellWithFallback = ['bash', 'sh'];
         if (runner.container.OS === 'Windows') {
           shellWithFallback = ['pwsh', 'powershell'];

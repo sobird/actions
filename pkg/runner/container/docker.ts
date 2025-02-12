@@ -620,8 +620,19 @@ class DockerContainer extends Container {
       // });
 
       await new Promise((resolve, reject) => {
-        stream.on('end', () => {
-          resolve(null);
+        stream.on('end', async () => {
+          const inspect = await exec.inspect();
+
+          switch (inspect.ExitCode) {
+            case 0:
+              resolve(null);
+              break;
+            case 127:
+              reject(Error(`exitcode '${inspect.ExitCode}': command not found`));
+              break;
+            default:
+              reject(Error(`exitcode '${inspect.ExitCode}': failure`));
+          }
         });
         stream.on('error', (err) => {
           reject(err);

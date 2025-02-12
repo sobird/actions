@@ -261,3 +261,14 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
     }
   });
 });
+
+describe('lookPath', () => {
+  it('/bin/bash', () => {
+    const result = docker.lookPath('/bin/bash', {});
+    expect(result).toBe('/bin/bash');
+  });
+  it('bash', () => {
+    const result = docker.lookPath('bash', {});
+    expect(result).toBe('/bin/bash');
+  });
+});
