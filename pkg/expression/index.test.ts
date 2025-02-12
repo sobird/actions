@@ -1,23 +1,13 @@
 /* eslint-disable no-template-curly-in-string */
 // todo 要同时测试 DockerContainer 和 HostedContainer
 import Runner from '@/pkg/runner';
-import DockerContainer from '@/pkg/runner/container/docker';
-import HostedContainer from '@/pkg/runner/container/hosted';
 
 import Expression from '.';
+import { type Job } from '../runner/context/job';
 
-vi.mock('@/pkg/runner/container/docker');
-vi.mock('@/pkg/runner/container/hosted');
+vi.mock('@/pkg/runner');
 
-const dockerContainer: DockerContainer = new (HostedContainer as any)();
-
-const startExecutor = dockerContainer.start();
-await startExecutor.execute();
-
-afterAll(async () => {
-  const removeExecutor = dockerContainer.remove();
-  await removeExecutor.execute();
-});
+afterAll(async () => {});
 
 const context = {
   github: {
@@ -57,10 +47,7 @@ const context = {
   },
 };
 
-const runner: Runner = {
-  context,
-  container: dockerContainer,
-} as unknown as Runner;
+const runner: Runner = new (Runner as any)();
 
 const literals = [{
   source: '${{ false }}',
@@ -191,7 +178,7 @@ describe('test Expression Operators', () => {
   });
 });
 
-describe('test Expression Functions', () => {
+describe('Condition Functions Test', () => {
   functions.forEach((item) => {
     it(`${item.source} - test case`, () => {
       const expression = new Expression(item.source, ['github', 'runner'], ['hashFiles']);
@@ -204,5 +191,131 @@ describe('test Expression Functions', () => {
     const expression = new Expression('${{ hashFiles("bin/hashFiles/index.js") }}', ['github'], ['hashFiles']);
     const hash = expression.evaluate(runner);
     expect(hash.length).toBe(64);
+  });
+
+  describe('always()', () => {
+    const testCases = [
+      { jobStatus: null, expected: true },
+      { jobStatus: 'Cancelled', expected: true },
+      { jobStatus: 'Failure', expected: true },
+      { jobStatus: 'Success', expected: true },
+    ];
+
+    testCases.forEach(({ jobStatus, expected }) => {
+      it(`should return ${expected} when jobStatus is ${jobStatus}`, () => {
+        const expression = new Expression('always()', [], [], true, true);
+        const result = expression.evaluate(runner);
+        expect(result).toBe(expected);
+      });
+    });
+  });
+
+  describe('cancelled()', () => {
+    const testCases = [
+      { jobStatus: 'cancelled', expected: true },
+      { jobStatus: null, expected: false },
+      { jobStatus: 'failure', expected: false },
+      { jobStatus: 'success', expected: false },
+    ];
+
+    testCases.forEach(({ jobStatus, expected }) => {
+      it(`should return ${expected} when jobStatus is ${jobStatus}`, () => {
+        runner.context.job = {
+          status: jobStatus,
+        } as Job;
+
+        const expression = new Expression('cancelled()', [], ['cancelled'], true, true);
+        const result = expression.evaluate(runner);
+        expect(result).toBe(expected);
+      });
+    });
+  });
+
+  describe('failure()', () => {
+    const testCases = [
+      { jobStatus: 'failure', expected: true },
+      { jobStatus: null, expected: false },
+      { jobStatus: 'cancelled', expected: false },
+      { jobStatus: 'success', expected: false },
+    ];
+
+    testCases.forEach(({ jobStatus, expected }) => {
+      it(`should return ${expected} when jobStatus is ${jobStatus}`, () => {
+        runner.context.job = {
+          status: jobStatus,
+        } as Job;
+
+        const expression = new Expression('failure()', [], ['failure'], true, true);
+        const result = expression.evaluate(runner);
+        expect(result).toBe(expected);
+      });
+    });
+  });
+
+  describe('failure() with composite conditions', () => {
+    const testCases = [
+      { jobStatus: 'Failure', actionStatus: 'Failure', expected: true },
+      { jobStatus: 'Failure', actionStatus: 'Success', expected: false },
+      { jobStatus: 'Success', actionStatus: 'Failure', expected: true },
+      { jobStatus: 'Success', actionStatus: 'Success', expected: false },
+      { jobStatus: 'Success', actionStatus: null, expected: false },
+    ];
+
+    testCases.forEach(({ jobStatus, actionStatus, expected }) => {
+      it(`should return ${expected} when jobStatus is ${jobStatus} and actionStatus is ${actionStatus}`, () => {
+        runner.context.job = {
+          status: jobStatus,
+        } as Job;
+        runner.context.github.action_status = actionStatus;
+
+        const expression = new Expression('failure()', [], ['failure'], true, true);
+        const result = expression.evaluate(runner);
+        expect(result).toBe(expected);
+      });
+    });
+  });
+
+  describe('success()', () => {
+    const testCases = [
+      { jobStatus: null, expected: true },
+      { jobStatus: 'success', expected: true },
+      { jobStatus: 'cancelled', expected: false },
+      { jobStatus: 'failure', expected: false },
+    ];
+
+    testCases.forEach(({ jobStatus, expected }) => {
+      it(`should return ${expected} when jobStatus is ${jobStatus}`, () => {
+        runner.context.job = {
+          status: jobStatus,
+        } as Job;
+
+        const expression = new Expression('success()', [], ['success'], true, true);
+        const result = expression.evaluate(runner);
+        expect(result).toBe(expected);
+      });
+    });
+  });
+
+  describe('success() with composite conditions', () => {
+    const testCases = [
+      { jobStatus: 'Failure', actionStatus: 'Failure', expected: false },
+      { jobStatus: 'Failure', actionStatus: 'Success', expected: true },
+      { jobStatus: 'Success', actionStatus: 'Failure', expected: false },
+      { jobStatus: 'Success', actionStatus: 'Success', expected: true },
+      { jobStatus: 'Success', actionStatus: null, expected: true },
+    ];
+
+    testCases.forEach(({ jobStatus, actionStatus, expected }) => {
+      it(`should return ${expected} when jobStatus is ${jobStatus} and actionStatus is ${actionStatus}`, () => {
+        runner.context.job = {
+          status: jobStatus,
+        } as Job;
+        runner.context.github.action_status = actionStatus;
+
+        const expression = new Expression('success()', [], ['success'], true, true);
+        const result = expression.evaluate(runner);
+        expect(result).toBe(expected);
+      });
+    });
   });
 });

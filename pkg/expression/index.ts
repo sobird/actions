@@ -112,18 +112,19 @@ class Expression<T> {
           fns.hashFiles = Expression.CreateHashFilesFunction(runner);
           break;
         case 'success':
-          if (this.type === 'job') {
-            fns.success = Expression.CreateJobSuccess(runner);
-          } else if (this.type === 'step') {
+          if (this.type === 'step') {
             fns.success = Expression.CreateStepSuccess(runner);
+          } else {
+            fns.success = Expression.CreateJobSuccess(runner);
           }
           break;
         case 'failure':
-          if (this.type === 'job') {
-            fns.failure = Expression.CreateJobFailure(runner);
-          } else if (this.type === 'step') {
+          if (this.type === 'step') {
             fns.failure = Expression.CreateStepFailure(runner);
+          } else {
+            fns.failure = Expression.CreateJobFailure(runner);
           }
+
           break;
         case 'cancelled':
           fns.cancelled = Expression.CreateCancelled(runner);
@@ -153,7 +154,7 @@ class Expression<T> {
         }
       }
 
-      return true;
+      return runner.context.job.status === 'success';
     };
   }
 
@@ -182,14 +183,13 @@ class Expression<T> {
     return () => {
       const { workflow, job } = runner.run;
       const jobNeeds = this.JobNeedsTransitive(job, runner);
-
       for (const need of jobNeeds) {
         if (workflow.jobs[need].result === 'failure') {
           return true;
         }
       }
 
-      return false;
+      return runner.context.job.status === 'failure';
     };
   }
 

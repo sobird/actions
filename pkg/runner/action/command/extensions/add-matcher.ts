@@ -2,6 +2,7 @@
 import { readJsonSync } from '@/utils';
 
 import type { CommandExtension } from '.';
+import { IssueMatchersConfig } from '../IssueMatcher';
 
 const AddMatcherCommandExtension: CommandExtension = {
   command: 'add-matcher',
@@ -20,11 +21,13 @@ const AddMatcherCommandExtension: CommandExtension = {
       file = runner.container!.resolve(file);
     }
 
-    console.log('file', file, runner.context.github.workspace);
+    const config = new IssueMatchersConfig(readJsonSync(file));
 
-    const ddd = readJsonSync(file);
-
-    // add by file
+    // add
+    if (config.problemMatcher.length > 0) {
+      config.validate();
+      // todo add matchers
+    }
   },
 };
 
