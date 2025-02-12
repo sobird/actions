@@ -154,6 +154,10 @@ class Expression<T> {
         }
       }
 
+      if (!runner.context.job.status) {
+        return true;
+      }
+
       return runner.context.job.status === 'success';
     };
   }

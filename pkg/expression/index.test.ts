@@ -4,6 +4,7 @@ import Runner from '@/pkg/runner';
 
 import Expression from '.';
 import { type Job } from '../runner/context/job';
+import Step from '../runner/context/step';
 
 vi.mock('@/pkg/runner');
 
@@ -47,7 +48,9 @@ const context = {
   },
 };
 
-const runner: Runner = new (Runner as any)();
+const runner: Runner = new (Runner as any)(undefined, {
+  context,
+});
 
 const literals = [{
   source: '${{ false }}',
@@ -132,10 +135,10 @@ const functions = [{
   source: "${{ contains(fromJSON('[\"push\", \"pull_request\"]'), github.event_name) }}",
   expected: true,
 }, {
-  source: "${{startsWith('Hello world', 'He')}}",
+  source: "${{ startsWith('Hello world', 'He') }}",
   expected: true,
 }, {
-  source: "${{endsWith('Hello world', 'ld')}}",
+  source: "${{ endsWith('Hello world', 'ld') }}",
   expected: true,
 }, {
   source: "${{ format('Hello {0} {1} {2}', 'Mona', 'the', 'Octocat') }}",
@@ -150,7 +153,7 @@ const functions = [{
   expected: 'bug, error',
 }, {
   source: '${{ toJSON(github) }}',
-  expected: JSON.stringify(context.github),
+  expected: JSON.stringify(runner.context.github),
 },
 {
   source: "${{ runner.os }}-dependencies-${{ hashFiles('pnpm-lock.yaml') }}",
@@ -158,9 +161,9 @@ const functions = [{
 },
 ];
 
-describe('test Expression Literals', () => {
+describe('Expression Literals', () => {
   literals.forEach((item) => {
-    it(`${item.source} - test case`, () => {
+    it(`${item.source}`, () => {
       const expression = new Expression(item.source, ['github', 'steps']);
       const result = expression.evaluate(runner);
       expect(result).toBe(item.expected);
@@ -168,9 +171,9 @@ describe('test Expression Literals', () => {
   });
 });
 
-describe('test Expression Operators', () => {
+describe('Expression Operators', () => {
   operators.forEach((item) => {
-    it(`${item.source} - test case`, () => {
+    it(`${item.source}`, () => {
       const expression = new Expression(item.source, ['github']);
       const result = expression.evaluate(runner);
       expect(result).toBe(item.expected);
@@ -178,16 +181,16 @@ describe('test Expression Operators', () => {
   });
 });
 
-describe('Condition Functions Test', () => {
+describe('Expression Functions', () => {
   functions.forEach((item) => {
-    it(`${item.source} - test case`, () => {
+    it(`${item.source}`, () => {
       const expression = new Expression(item.source, ['github', 'runner'], ['hashFiles']);
       const result = expression.evaluate(runner as unknown as Runner);
       expect(result).toBe(item.expected);
     });
   });
 
-  it('${{ hashFiles("**/package.json") }} - test case', () => {
+  it('${{ hashFiles("**/package.json") }}', () => {
     const expression = new Expression('${{ hashFiles("bin/hashFiles/index.js") }}', ['github'], ['hashFiles']);
     const hash = expression.evaluate(runner);
     expect(hash.length).toBe(64);
@@ -196,9 +199,9 @@ describe('Condition Functions Test', () => {
   describe('always()', () => {
     const testCases = [
       { jobStatus: null, expected: true },
-      { jobStatus: 'Cancelled', expected: true },
-      { jobStatus: 'Failure', expected: true },
-      { jobStatus: 'Success', expected: true },
+      { jobStatus: 'cancelled', expected: true },
+      { jobStatus: 'failure', expected: true },
+      { jobStatus: 'success', expected: true },
     ];
 
     testCases.forEach(({ jobStatus, expected }) => {
@@ -254,11 +257,11 @@ describe('Condition Functions Test', () => {
 
   describe('failure() with composite conditions', () => {
     const testCases = [
-      { jobStatus: 'Failure', actionStatus: 'Failure', expected: true },
-      { jobStatus: 'Failure', actionStatus: 'Success', expected: false },
-      { jobStatus: 'Success', actionStatus: 'Failure', expected: true },
-      { jobStatus: 'Success', actionStatus: 'Success', expected: false },
-      { jobStatus: 'Success', actionStatus: null, expected: false },
+      { jobStatus: 'failure', actionStatus: 'failure', expected: true },
+      { jobStatus: 'failure', actionStatus: 'success', expected: false },
+      { jobStatus: 'success', actionStatus: 'failure', expected: true },
+      { jobStatus: 'success', actionStatus: 'success', expected: false },
+      { jobStatus: 'success', actionStatus: null, expected: false },
     ];
 
     testCases.forEach(({ jobStatus, actionStatus, expected }) => {
@@ -266,9 +269,12 @@ describe('Condition Functions Test', () => {
         runner.context.job = {
           status: jobStatus,
         } as Job;
-        runner.context.github.action_status = actionStatus;
+        // runner.context.github.action_status = actionStatus;
+        runner.context.StepResult = {
+          conclusion: actionStatus,
+        } as Step;
 
-        const expression = new Expression('failure()', [], ['failure'], true, true);
+        const expression = new Expression('failure()', [], ['failure'], true, true, 'step');
         const result = expression.evaluate(runner);
         expect(result).toBe(expected);
       });
@@ -288,6 +294,9 @@ describe('Condition Functions Test', () => {
         runner.context.job = {
           status: jobStatus,
         } as Job;
+        // runner.context.StepResult = {
+        //   conclusion: actionStatus,
+        // };
 
         const expression = new Expression('success()', [], ['success'], true, true);
         const result = expression.evaluate(runner);
@@ -298,11 +307,11 @@ describe('Condition Functions Test', () => {
 
   describe('success() with composite conditions', () => {
     const testCases = [
-      { jobStatus: 'Failure', actionStatus: 'Failure', expected: false },
-      { jobStatus: 'Failure', actionStatus: 'Success', expected: true },
-      { jobStatus: 'Success', actionStatus: 'Failure', expected: false },
-      { jobStatus: 'Success', actionStatus: 'Success', expected: true },
-      { jobStatus: 'Success', actionStatus: null, expected: true },
+      { jobStatus: 'failure', actionStatus: 'failure', expected: false },
+      { jobStatus: 'failure', actionStatus: 'success', expected: true },
+      { jobStatus: 'success', actionStatus: 'failure', expected: false },
+      { jobStatus: 'success', actionStatus: 'success', expected: true },
+      { jobStatus: 'success', actionStatus: null, expected: true },
     ];
 
     testCases.forEach(({ jobStatus, actionStatus, expected }) => {
@@ -310,9 +319,12 @@ describe('Condition Functions Test', () => {
         runner.context.job = {
           status: jobStatus,
         } as Job;
-        runner.context.github.action_status = actionStatus;
+        // runner.context.github.action_status = actionStatus;
+        runner.context.StepResult = {
+          conclusion: actionStatus,
+        } as Step;
 
-        const expression = new Expression('success()', [], ['success'], true, true);
+        const expression = new Expression('success()', [], ['success'], true, true, 'step');
         const result = expression.evaluate(runner);
         expect(result).toBe(expected);
       });
