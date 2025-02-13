@@ -43,6 +43,7 @@ __snapshots__
 # Logs
 logs
 *.log
+!test/log/*.log
 
 # debug
 npm-debug.log*
