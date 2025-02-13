@@ -52,16 +52,18 @@ class DockerAction extends Action {
             try {
               await dockerImage.remove({ force: true });
             } catch (err) {
-              // console.log('err', err);
+              logger.error((err as Error).message);
             }
             throw new Error('Image need build');
           }
         } catch (error) {
+          logger.error((error as Error).message);
           // need build image
           let archive = new tar.Pack() as unknown as NodeJS.ReadableStream;
           try {
             archive = await runner.container!.getArchive(`${this.Dir}`);
           } catch (err) {
+            logger.error((err as Error).message);
             if (runner.config.actionCache) {
               await runner.config.actionCache.fetch(uses.repositoryUrl, uses.repository, uses.ref);
               archive = await runner.config.actionCache.archive(uses.repository, uses.ref, uses.path);

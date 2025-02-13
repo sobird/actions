@@ -1,0 +1,26 @@
+name: Test Self Hosted
+run-name: self-hosted-${{ github.actor }}
+on:
+  workflow_dispatch:
+
+jobs:
+  test-self-hosted:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: docker (Docker Packages Container registry)
+        uses: docker://alpine:latest
+        with:
+          entrypoint: /bin/echo
+          args: The ${{ github.event_name }} event triggered this step.
+      
+      - name: Javascript Action
+        id: javascript_action
+        uses: ./test/actions/hello-world-javascript-action
+        with:
+          who-to-greet: 'hello world javascript action step'
+
+      - name: Get the output time
+        run: echo "The time was ${{ steps.javascript_action.outputs.time }}"

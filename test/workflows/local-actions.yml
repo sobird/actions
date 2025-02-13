@@ -8,8 +8,15 @@ permissions:
 
 jobs:
   test-local-actions:
-    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 3
+      matrix:
+        platform: [ubuntu-latest, self-hosted]
+    runs-on: ${{ matrix.platform }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Javascript Action
         id: javascript_action
         uses: ./test/actions/hello-world-javascript-action

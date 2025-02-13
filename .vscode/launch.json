@@ -9,7 +9,7 @@
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/pkg/cmd",
-      "args": ["run", "-W", "test/workflows", "-j", "test-step-output", "--reuse"],
+      "args": ["run", "-W", "test/workflows", "-j", "test-local-actions", "--reuse"],
       "env": {
         "NODE_OPTIONS": "--import=./node_modules/@sobird/ts-node/register.js"
       }
