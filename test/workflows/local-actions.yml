@@ -11,7 +11,7 @@ jobs:
     strategy:
       max-parallel: 3
       matrix:
-        platform: [ubuntu-latest, self-hosted]
+        platform: [self-hosted]
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout
