@@ -65,14 +65,25 @@ jobs:
       - name: Get the Composite Action output random number
         run: echo "The random number was ${{ steps.composite_action.outputs.random-number }}"
 
-  test-remote-actions:
+  test-local-docker-action:
+    strategy:
+      max-parallel: 3
+      matrix:
+        platform: [self-hosted]
+    runs-on: ${{ matrix.platform }}
     steps:
-      - name: Checkout Step
+      - name: Checkout
         uses: actions/checkout@v4
-      - name: Docker Hub Action
-        id: docker_hub_action
-        uses: docker://alpine:3.8
+
+      - name: Javascript Action
+        id: javascript_action
+        uses: ./test/actions/hello-world-javascript-action
         with:
-          entrypoint: echo
-          args: "The ${{ github.event_name }} event triggered this step. runner os: ${{runner.os}}"
+          who-to-greet: 'hello world javascript action step'
+
+      - name: Docker Action
+        id: docker_action
+        uses: ./test/actions/hello-world-docker-action
+        with:
+          who-to-greet: 'docker action'
 

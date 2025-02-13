@@ -176,6 +176,11 @@ class DockerAction extends Action {
 
     const name = runner.ContainerName(runner.context.github.action);
 
+    let networkMode = `container:${runner.ContainerName()}`;
+    if (runner.IsHosted) {
+      networkMode = 'default';
+    }
+
     return new DockerContainer({
       name,
       image,
@@ -188,7 +193,7 @@ class DockerAction extends Action {
       },
       binds,
       mounts,
-      networkMode: `container:${runner.ContainerName()}`,
+      networkMode,
       privileged: config.containerPrivileged,
       usernsMode: config.containerUsernsMode,
       platform: config.containerPlatform,
