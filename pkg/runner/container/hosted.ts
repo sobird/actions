@@ -13,7 +13,7 @@ import path from 'node:path';
 import ignore from 'ignore';
 import * as tar from 'tar';
 
-import Executor from '@/pkg/common/executor';
+import Executor, { Conditional } from '@/pkg/common/executor';
 import { createLineWriteStream } from '@/pkg/common/lineWritable';
 import logger from '@/pkg/common/logger';
 import Runner from '@/pkg/runner';
@@ -275,12 +275,18 @@ class HostedContainer extends Container {
         binds.push(`${config.workdir}:${config.workdir}`);
       }
 
+      const reuseContainer = new Conditional(() => {
+        return Boolean(config.reuse);
+      });
+
       runner.container = new HostedContainer({
         basedir: runner.ActionCacheDir,
         workdir: config.workdir,
         binds,
       }, config.workspace);
-      runner.cleanContainerExecutor = runner.container.remove();
+      runner.cleanContainerExecutor = Executor.Pipeline(
+        runner.container.remove().ifNot(reuseContainer),
+      );
     });
   }
 }
