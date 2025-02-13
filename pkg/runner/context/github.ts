@@ -514,6 +514,7 @@ export class Github {
     env.GITHUB_WORKFLOW_REF = this.workflow_ref;
     env.GITHUB_WORKFLOW_SHA = this.workflow_sha;
     env.GITHUB_WORKSPACE = this.workspace;
+    env.GITHUB_TOKEN = this.token;
 
     env.GITHUB_OUTPUT = this.output;
     env.GITHUB_STATE = this.state;

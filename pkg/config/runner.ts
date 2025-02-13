@@ -57,6 +57,8 @@ class Runner implements Omit<Options, ''> {
 
   public actor: string;
 
+  public token: string;
+
   public remoteName: string;
 
   public defaultBranch: string;
@@ -164,7 +166,7 @@ class Runner implements Omit<Options, ''> {
   /**
    * defines the default url of action instance', 'https://github.com
    */
-  public actionsInstance: string;
+  public actionInstance: string;
 
   /**
    * defines the path where the artifact server stores uploads and retrieves downloads from.
@@ -245,8 +247,14 @@ class Runner implements Omit<Options, ''> {
    */
   public rebuild: true;
 
+  /**
+   * reuse container
+   */
   public reuse: true;
 
+  /**
+   * container name prefix
+   */
   public containerNamePrefix?: string;
 
   /**
@@ -274,22 +282,34 @@ class Runner implements Omit<Options, ''> {
    */
   public containerCapDrop: string[];
 
+  // container max life time
   public containerMaxLifetime: number;
 
   public containerOptions: string;
 
   constructor(runner: Runner) {
+    // common
     this.workflows = runner.workflows;
     this.recursive = runner.recursive;
-    this.context = new Context(runner.context);
     this.workspace = runner.workspace || '/home/runner';
     this.workdir = runner.workdir || '';
     this.bindWorkdir = runner.bindWorkdir;
-    this.eventFile = runner.eventFile;
-    this.actor = runner.actor;
     this.remoteName = runner.remoteName;
     this.defaultBranch = runner.defaultBranch;
 
+    // remote actions
+    this.skipCheckout = runner.skipCheckout;
+    this.useGitignore = runner.useGitignore;
+    this.serverInstance = runner.serverInstance;
+    this.actionInstance = runner.actionInstance || 'github.com';
+    this.replaceGheActionWithGithubCom = runner.replaceGheActionWithGithubCom;
+    this.replaceGheActionTokenWithGithubCom = runner.replaceGheActionTokenWithGithubCom;
+
+    // context
+    this.context = new Context(runner.context ?? {});
+    this.actor = runner.actor;
+    this.token = runner.token;
+    this.eventFile = runner.eventFile;
     this.env = runner.env ?? {};
     this.envFile = runner.envFile ?? '';
     this.vars = runner.vars ?? {};
@@ -300,41 +320,36 @@ class Runner implements Omit<Options, ''> {
     this.secretsFile = runner.secretsFile;
 
     this.insecure = runner.insecure ?? false;
-    this.labels = runner.labels ?? [];
+
+    // logger
+    this.logOutput = runner.logOutput;
+    this.logJson = runner.logJson;
+    this.logPrefixJobId = runner.logPrefixJobId;
+    this.insecureSecrets = runner.insecureSecrets;
+
+    // actions/cache
     this.actionsCache = runner.actionsCache ?? true;
     this.actionsCachePath = runner.actionsCachePath || path.join(ACTIONS_HOME, 'artifact', 'cache');
     this.actionsCacheAddr = runner.actionsCacheAddr || ip.address();
     this.actionsCachePort = runner.actionsCachePort ?? 0;
     this.actionsCacheExternal = runner.actionsCacheExternal ?? '';
 
-    // action cache
+    // cache actions
     this.cacheActions = runner.cacheActions;
+    this.actionsPath = runner.actionsPath || path.join(ACTIONS_HOME, 'actions');
     this.repositories = runner.repositories;
     this.actionsOffline = runner.actionsOffline;
-    this.actionsPath = runner.actionsPath || path.join(ACTIONS_HOME, 'actions');
-    this.actionsInstance = runner.actionsInstance || 'github.com';
 
     // Artifact Server
     this.artifactPath = runner.artifactPath;
     this.artifactAddr = runner.artifactAddr || ip.address();
     this.artifactPort = runner.artifactPort;
 
-    this.skipCheckout = runner.skipCheckout;
-    this.image = runner.image;
-    this.matrix = runner.matrix;
-    this.insecureSecrets = runner.insecureSecrets;
-    this.useGitignore = runner.useGitignore;
-    this.serverInstance = runner.serverInstance;
-    this.replaceGheActionWithGithubCom = runner.replaceGheActionWithGithubCom;
-    this.replaceGheActionTokenWithGithubCom = runner.replaceGheActionTokenWithGithubCom;
-
-    // log
-    this.logOutput = runner.logOutput;
-    this.logJson = runner.logJson;
-    this.logPrefixJobId = runner.logPrefixJobId;
-
     // container
     this.container = new Container(runner.container ?? {});
+    this.matrix = runner.matrix;
+    this.labels = runner.labels ?? [];
+    this.image = runner.image;
     this.pull = runner.pull;
     this.rebuild = runner.rebuild;
     this.reuse = runner.reuse;
@@ -390,12 +405,12 @@ class Runner implements Omit<Options, ''> {
       sha,
       ref,
       triggering_actor: userInfo.username,
-      token: options.token,
+      token: this.token,
       workspace: options.workdir,
     };
 
     Object.assign(this.context.github, github);
-    Object.assign(this.context.secrets, { GITHUB_TOKEN: options.token });
+    Object.assign(this.context.secrets, { GITHUB_TOKEN: this.token });
 
     return this;
   }
@@ -459,45 +474,55 @@ class Runner implements Omit<Options, ''> {
       workspace: this.workspace,
       workdir: path.resolve(this.workdir),
       bindWorkdir: this.bindWorkdir,
-      actionCache,
-      platforms,
 
+      platforms,
+      remoteName: this.remoteName,
+
+      useGitignore: this.useGitignore,
+      skipCheckout: this.skipCheckout,
+      serverInstance: this.serverInstance,
+      actionInstance: this.actionInstance,
+      replaceGheActionWithGithubCom: this.replaceGheActionWithGithubCom,
+      replaceGheActionTokenWithGithubCom: this.replaceGheActionTokenWithGithubCom,
+
+      // logger
+      logJson: this.logJson,
+      logOutput: this.logOutput,
+      logPrefixJobID: this.logPrefixJobId,
+      insecureSecrets: this.insecureSecrets,
+
+      // cache actions
+      actionCache,
+
+      // artifact server
+      artifactPath: this.artifactPath,
+      artifactAddr: this.artifactAddr,
+      artifactPort: this.artifactPort,
+
+      // artifact cache for actions/cache
       actionsCache: this.actionsCache,
       actionsCachePath: this.actionsCachePath,
       actionsCacheAddr: this.actionsCacheAddr,
       actionsCachePort: this.actionsCachePort,
       actionsCacheExternal: this.actionsCacheExternal,
 
-      actionsInstance: this.actionsInstance,
-      serverInstance: this.serverInstance,
-      artifactPath: this.artifactPath,
-      artifactAddr: this.artifactAddr,
-      artifactPort: this.artifactPort,
-      remoteName: this.remoteName,
-      reuseContainers: this.reuse,
-      logJson: this.logJson,
-      logOutput: this.logOutput,
-      logPrefixJobID: this.logPrefixJobId,
-      insecureSecrets: this.insecureSecrets,
-      platformPicker: () => { return this.image; },
-      useGitignore: this.useGitignore,
-      skipCheckout: this.skipCheckout,
-      matrix: this.matrix,
       // container
+      platformPicker: () => { return this.image; },
+      matrix: this.matrix,
       pull: this.pull,
+      reuse: this.reuse,
       rebuild: this.rebuild,
+      containerNamePrefix: this.containerNamePrefix,
       containerUsernsMode: this.containerUsernsMode,
+      containerPrivileged: this.containerPrivileged,
       containerPlatform: this.containerPlatform,
-      containerDaemonSocket: this.containerDaemonSocket,
       containerCapAdd: this.containerCapAdd,
       containerCapDrop: this.containerCapDrop,
-      containerNamePrefix: this.containerNamePrefix,
       containerMaxLifetime: this.containerMaxLifetime,
       containerNetworkMode: this.containerNetwork,
       containerAutoRemove: this.containerAutoRemove,
       containerOptions: this.containerOptions,
-      replaceGheActionWithGithubCom: this.replaceGheActionWithGithubCom,
-      replaceGheActionTokenWithGithubCom: this.replaceGheActionTokenWithGithubCom,
+      containerDaemonSocket: this.containerDaemonSocket,
     };
 
     await this.actionsRuntime();

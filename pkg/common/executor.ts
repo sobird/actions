@@ -12,7 +12,6 @@ import Runner from '@/pkg/runner';
 const mutex = new Mutex();
 
 const logger = log4js.getLogger();
-logger.level = 'debug';
 
 export class Conditional {
   constructor(public fn: (ctx?: Runner) => Promise<boolean> | boolean) {}

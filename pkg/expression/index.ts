@@ -211,8 +211,3 @@ class Expression<T> {
 }
 
 export default Expression;
-
-// const express = new Expression('${{ { status: "success" } }}', []);
-// const result = express.evaluate({});
-
-// console.log('ddd', result);

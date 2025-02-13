@@ -63,7 +63,7 @@ next-env.d.ts
 # runner
 *.local
 .runner
-*.config.json
+*.config.yaml
 /event.json
 .actionsrc
 database.sqlite

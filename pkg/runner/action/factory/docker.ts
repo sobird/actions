@@ -117,10 +117,10 @@ class DockerAction extends Action {
       runner.Assign(stepAction!.environment, this.runs.env);
       const container = DockerAction.Container(runner, image, cmd, entrypoint);
       return Executor.Pipeline(
-        container.remove().ifBool(!runner.config.reuseContainers),
+        container.remove().ifBool(!runner.config.reuse),
         container.start(true),
       ).finally(
-        container.remove().ifBool(!runner.config.reuseContainers),
+        container.remove().ifBool(!runner.config.reuse),
       );
     });
   }

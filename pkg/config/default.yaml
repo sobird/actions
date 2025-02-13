@@ -1,7 +1,7 @@
 # Example configuration file, it's safe to copy this as the default config file without any modification.
 
 # You don't have to copy this file to your instance,
-# just run `actions config > actions.config.json` to generate a config file.
+# just run `actions config > actions.config.yaml` to generate a config file.
 
 log:
   # The level of logging, can be trace, debug, info, warn, error, fatal
@@ -26,17 +26,13 @@ daemon:
   fetchInterval: 3000
 
 runner:
+  # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/accessing-contextual-information-about-workflow-runs
+  # NOT RECOMMENDED! You can configure the context yourself based on the link provided above
   context:
-    github:
-      actor: sobird
-    env:
-      name: sobird
-  # The parent directory of a job's working directory.
-  # If it's empty, /home/runner will be used.
-  workspace: /home/runner
-  workdir:
-  # Bind the workdir to the job container.
-  bindWorkdir: false
+  # The username of the user that triggered the initial workflow run
+  actor:
+  # github token
+  token:
   # Path to event JSON file
   eventFile: event.json
   # Extra environment variables to run jobs.
@@ -46,27 +42,40 @@ runner:
   # Extra environment variables to run jobs from a file.
   # It will be ignored if it's empty or the file doesn't exist.
   envFile: .env
+  # Extra variables to run jobs from a file.
+  # It will be ignored if it's empty or the file doesn't exist.
   vars:
   varsFile: .vars
+  # Extra inputs to run jobs from a file.
+  # It will be ignored if it's empty or the file doesn't exist.
   inputs:
   inputsFile: .inputs
+  # Extra secrets to run jobs from a file.
+  # It will be ignored if it's empty or the file doesn't exist.
   secrets:
   secretsFile: .secrets
-  # The labels of a runner are used to determine which jobs the runner can run, and how to run them.
-  # Like: "macos-arm64=host" or "ubuntu-latest=gitea/runner-images:ubuntu-latest"
-  # Find more images provided by Server at https://gitea.com/gitea/runner-images .
-  # If it's empty when registering, it will ask for inputting labels.
-  # If it's empty when execute `daemon`, will use labels in `.runner` file.
-  labels:
-    - ubuntu-latest=catthehacker/ubuntu:act-latest
-    - ubuntu-22.04=gitea/runner-images:ubuntu-22.04
-    - ubuntu-20.04=gitea/runner-images:ubuntu-20.04
-    - self-hosted=-self-hosted
-  #actions
-  actionsInstance: github.com
+
+  # The parent directory of a job's working directory.
+  # If it's empty, /home/runner will be used.
+  workspace: /home/runner
+  workdir:
+  # Bind the workdir to the job container.
+  bindWorkdir: false
+  # git remote name that will be used to retrieve url of git repo
+  remoteName:
+  # the name of the main branch
+  defaultBranch:
+
+  skipCheckout:
+  useGitignore:
+  serverInstance:
+  actionInstance:
+  replaceGheActionWithGithubCom:
+  replaceGheActionTokenWithGithubCom:
+  
   # actions/cache
   # Enable cache server to use actions/cache.
-  cacheServer: true
+  actionsCache: true
   # The directory to store the cache data.
   # If it's empty, the cache data will be stored in $ACTIONS_HOME/cache.
   actionsCachePath: ""
@@ -81,19 +90,40 @@ runner:
   # If it's specified, runner will use this URL as the ACTIONS_CACHE_URL rather than start a server by itself.
   # The URL should generally end with "/".
   actionsCacheExternal: ""
+  
   # defines the path where the artifact server stores uploads and retrieves downloads from. 
   # If not specified the artifact server will not start
-  artifactPath: ""
+  artifactPath: 
   # defines the address where the artifact server listens
-  artifactAddr: ""
+  artifactAddr:
   # defines the port where the artifact server listens (will only bind to localhost)
   artifactPort: 0
 
-  # The parent directory of a job's working directory.
-  # If it's empty, $HOME/.cache/act/ will be used.
-  actionsPath: ""
-  cacheActions: true
 
+  # Enable using the new cache actions for storing actions locally
+  cacheActions: true
+  # The directory of actions.
+  # If it's empty, $ACTIONS_HOME/actions will be used.
+  actionsPath:
+  # replaces the specified repository and ref with a local folder 
+  # e.g. https://github.com/test/test@v0=/home/actions/test or test/test@v0=/home/actions/test, the latter matches any hosts or protocols
+  repositories: 
+  # If action contents exists, it will not be fetch and pull again. 
+  # If turn on this, will turn off force pull
+  actionsOffline:
+
+  # container
+
+  # The labels of a runner are used to determine which jobs the runner can run, and how to run them.
+  # Like: "macos-arm64=host" or "ubuntu-latest=gitea/runner-images:ubuntu-latest"
+  # Find more images provided by Server at https://gitea.com/gitea/runner-images .
+  # If it's empty when registering, it will ask for inputting labels.
+  # If it's empty when execute `daemon`, will use labels in `.runner` file.
+  labels:
+    - ubuntu-latest=catthehacker/ubuntu:act-latest
+    - ubuntu-22.04=gitea/runner-images:ubuntu-22.04
+    - ubuntu-20.04=gitea/runner-images:ubuntu-20.04
+    - self-hosted=-self-hosted
   matrix:
     java:
       - 13
@@ -101,33 +131,30 @@ runner:
       - 22
       - 20
       - 18
-  # container
-  containerForcePull: true
-  container:
-    # Pull docker image(s) even if already present
-    forcePull: true
-    # Rebuild docker image(s) even if already present
-    forceRebuild: false
-    # Specifies the network to which the container will connect.
-    # Could be host, bridge or the name of a custom network.
-    # If it's empty, runner will create a network automatically.
-    network: ""
-    # Whether to use privileged mode or not when launching task containers (privileged mode is required for Docker-in-Docker).
-    privileged: false
-    # Volumes (including bind mounts) can be mounted to containers. Glob syntax is supported, see https://github.com/gobwas/glob
-    # You can specify multiple volumes. If the sequence is empty, no volumes can be mounted.
-    # For example, if you only allow containers to mount the `data` volume and all the json files in `/src`, you should change the config to:
-    # valid_volumes:
-    #   - data
-    #   - /src/*.json
-    # If you want to allow any volume, please use the following configuration:
-    # valid_volumes:
-    #   - '**'
-    validVolumes: []
-    # overrides the docker client host with the specified one.
-    # If it's empty, runner will find an available docker host automatically.
-    # If it's "-", runner will find an available docker host automatically, but the docker host won't be mounted to the job containers and service containers.
-    # If it's not empty or "-", the specified docker host will be used. An error will be returned if it doesn't work.
-    dockerHost: ""
-    # And other options to be used when the container is started (eg, --add-host=my.gitea.url:host-gateway).
-    options:
+
+  # Pull docker image(s) even if already present
+  pull: false
+  # Reuse container
+  reuse: false
+  # Rebuild docker image(s) even if already present
+  rebuild: true
+  containerNamePrefix:
+  # Specifies the network to which the container will connect.
+  # Could be host, bridge or the name of a custom network.
+  # If it's empty, runner will create a network automatically.
+  containerNetwork:
+  containerPlatform:
+  # overrides the docker client host with the specified one.
+  # If it's empty, runner will find an available docker host automatically.
+  # If it's "-", runner will find an available docker host automatically, but the docker host won't be mounted to the job containers and service containers.
+  # If it's not empty or "-", the specified docker host will be used. An error will be returned if it doesn't work.
+  containerDaemonSocket:
+  # Whether to use privileged mode or not when launching task containers (privileged mode is required for Docker-in-Docker).
+  containerPrivileged: false
+  containerAutoRemove: true
+  containerUsernsMode: 
+  containerCapAdd: []
+  containerCapDrop: []
+  containerMaxLifetime: 3600
+  # And other options to be used when the container is started (eg, --add-host=my.gitea.url:host-gateway).
+  containerOptions:

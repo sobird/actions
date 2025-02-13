@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import rc from 'rc';
-import yaml from 'yaml';
+import { parse } from 'yaml';
 
 import { ACTIONS_HOME } from '@/pkg/common/constants';
 
@@ -30,7 +30,7 @@ class Config {
   public runner: Runner;
 
   /**
-   * The parent directory of a job's working directory.
+   * The directory of actions.
    * If it's empty, $ACTIONS_HOME/actions/ will be used.
    */
   public actionsPath: string;
@@ -52,12 +52,14 @@ class Config {
   }
 
   static Load(file?: string, appname = 'actions') {
-    const config = rc(appname, Config.Default, { config: file });
+    const config = rc(appname, parse(Config.Default), { config: file }, (content) => {
+      return parse(content) as Config;
+    });
     return new Config(config);
   }
 
   static get Default() {
-    return yaml.parse(fs.readFileSync(path.resolve(__dirname, 'default.yaml'), 'utf-8'));
+    return fs.readFileSync(path.resolve(__dirname, 'default.yaml'), 'utf-8');
   }
 }
 

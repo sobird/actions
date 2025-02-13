@@ -7,7 +7,7 @@ import docker, { Docker } from '@/pkg/docker';
 export async function bugReportOption(version?: string) {
   const reports: string[] = [];
 
-  reports.push(`Actions version: ${version}`);
+  reports.push(`Version: ${version}`);
   reports.push(`Platform: ${os.platform()}`);
   reports.push(`Arch: ${os.arch()}`);
   reports.push(`NCPU: ${os.cpus().length}`);

@@ -811,7 +811,7 @@ class DockerContainer extends Container {
       runner.container = dockerContainer;
 
       const reuseContainer = new Conditional(() => {
-        return Boolean(config.reuseContainers);
+        return Boolean(config.reuse);
       });
 
       runner.cleanContainerExecutor = Executor.Pipeline(

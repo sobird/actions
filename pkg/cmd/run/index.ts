@@ -20,6 +20,7 @@ import { graphOption } from './graphOption';
 import { listOption } from './listOption';
 
 const logger = log4js.getLogger();
+logger.level = log4js.levels.INFO;
 
 const ACTIONS_HOME = path.join(os.homedir(), '.actions');
 
@@ -94,31 +95,31 @@ export const runCommand = new Command('run')
   .option('--secrets <secrets...>', 'secret to make available to actions with optional value (e.g. --secrets mysecret=foo,toke=bar)', collectObject, {})
   .option('--secrets-file <path>', 'file with list of secrets to read from (e.g. --secrets-file .secrets)', '.secrets')
 
-  .option('--matrix <list...>', 'specify which matrix configuration to include (e.g. --matrix java:13 node:20 node:18', collectMatrix, {})
   .option('--insecure-secrets', "NOT RECOMMENDED! Doesn't hide secrets while printing logs")
   .option('--no-use-gitignore', 'controls whether paths specified in .gitignore should be copied into container')
   .option('--no-skip-checkout', 'do not skip actions/checkout')
   .option('--server-instance <url>', 'server instance to use')
+  .option('--action-instance <url>', 'the default url of action instance', 'https://github.com')
 
-  // actions/cache server
+  // artifact cache server for actions/cache
   .option('--no-actions-cache', 'disable actions/cache server')
-  .option('--actions-cache-path <path>', 'defines the path where the actions/cache server stores caches.', path.join(ACTIONS_HOME, 'artifact', 'cache'))
-  .option('--actions-cache-addr <addr>', 'defines the address to which the actions/cache server binds.', ip.address())
-  .option('--actions-cache-port <port>', 'defines the port where the actions/cache server listens. 0 means a randomly available port.', (value: string) => { return Number(value); }, 0)
+  .option('--actions-cache-path <path>', 'the path where the actions/cache server stores caches.', path.join(ACTIONS_HOME, 'artifact', 'cache'))
+  .option('--actions-cache-addr <addr>', 'the address to which the actions/cache server binds.', ip.address())
+  .option('--actions-cache-port <port>', 'the port where the actions/cache server listens. 0 means a randomly available port.', (value: string) => { return Number(value); }, 0)
 
   // artifact server
-  .option('--artifact-path <path>', 'defines the path where the artifact server stores uploads and retrieves downloads from. If not specified the artifact server will not start')
-  .option('--artifact-addr <addr>', 'defines the address where the artifact server listens', ip.address())
-  .option('--artifact-port <port>', 'defines the port where the artifact server listens (will only bind to localhost)', (value: string) => { return Number(value); })
+  .option('--artifact-path <path>', 'the path where the artifact server stores uploads and retrieves downloads from. If not specified the artifact server will not start')
+  .option('--artifact-addr <addr>', 'the address where the artifact server listens', ip.address())
+  .option('--artifact-port <port>', 'the port where the artifact server listens (will only bind to localhost)', (value: string) => { return Number(value); })
 
-  // actions repository local cache
+  // cache actions repository to local
   .option('--cache-actions', 'enable using the new cache actions for storing actions locally')
-  .option('--repositories <repositories...>', 'replaces the specified repository and ref with a local folder (e.g. https://github.com/test/test@v0=/home/actions/test or test/test@v0=/home/actions/test, the latter matches any hosts or protocols)', collectObject)
+  .option('--actions-path <path>', 'the dir where the actions get cached', path.join(ACTIONS_HOME, 'actions'))
   .option('--actions-offline', 'if action contents exists, it will not be fetch and pull again. If turn on this, will turn off force pull')
-  .option('--actions-path <path>', 'defines the dir where the actions get cached and host workspaces created.', path.join(ACTIONS_HOME, 'actions'))
-  .option('--actions-instance <url>', 'defines the default url of actions instance', 'https://github.com')
+  .option('--repositories <repositories...>', 'replaces the specified repository and ref with a local folder (e.g. https://github.com/test/test@v0=/home/actions/test or test/test@v0=/home/actions/test, the latter matches any hosts or protocols)', collectObject)
 
   // container
+  .option('--matrix <list...>', 'specify which matrix configuration to include (e.g. --matrix java:13 node:20 node:18', collectMatrix, {})
   .option('--labels <labels...>', 'custom image to use per platform (e.g. --labels ubuntu-latest=nektos/act-environments-ubuntu:18.04)', collectArray)
   .option('--image <image>', 'docker image to use. Use "-self-hosted" to run directly on the host')
   .option('--pull', 'pull docker image(s) even if already present')
@@ -134,12 +135,16 @@ export const runCommand = new Command('run')
   .option('--container-cap-drop <drop...>', 'kernel capabilities to remove from the workflow containers (e.g. --container-cap-drop SYS_PTRACE)', collectArray)
   .option('--container-options <string>', 'container options')
 
-  .option('--watch', 'watch the contents of the local repo and run when files change')
-
-  // debug
+  // .option('--watch', 'watch the contents of the local repo and run when files change')
   .option('--bug-report', 'display system information for bug report')
-  .option('-d, --debug', 'enable debug log')
+  .option('-v, --verbose', 'verbose output')
   .option('-n, --dryrun', 'dryrun mode')
+  .hook('preAction', (thisCommand) => {
+    if (thisCommand.opts().verbose) {
+      logger.level = log4js.levels.DEBUG;
+      // logger.trace()
+    }
+  })
   .action(async (eventName, opts, program) => {
     const version = program.parent!.version();
     const appname = program.parent!.name();

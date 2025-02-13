@@ -20,10 +20,13 @@ interface Config {
    */
   readonly context: Context;
 
+  /**
+   * The parent directory of a job's working directory.
+   */
   readonly workspace: string;
 
   /**
-   * path to working directory
+   * Working directory
    */
   readonly workdir: string;
 
@@ -33,60 +36,13 @@ interface Config {
   readonly bindWorkdir?: boolean;
 
   /**
-   * Use a custom ActionCache Implementation.
+   * List of labels.
    */
-  readonly actionCache?: ActionCache;
-
-  /**
-   * The default actions web site.
-   */
-  readonly actionsInstance: string;
-
+  readonly platforms: Map<string, string>;
   /**
    * Remote name in local git repo config.
    */
   readonly remoteName: string;
-
-  /**
-   * Reuse containers to maintain state.
-   */
-  readonly reuseContainers?: boolean;
-
-  /**
-   * Log the output from docker run.
-   */
-  readonly logOutput: boolean;
-
-  /**
-   * Use json or text logger.
-   */
-  readonly logJson?: boolean;
-
-  /**
-   * Switches from the full job name to the job id.
-   */
-  readonly logPrefixJobID?: boolean;
-
-  /**
-   * GitHub token.
-   */
-  readonly token?: string;
-
-  /**
-   * Switch hiding output when printing to terminal. Doesn't hide secrets while printing logs
-   */
-  readonly insecureSecrets?: boolean;
-
-  /**
-   * List of labels.
-   */
-  readonly platforms: Map<string, string>;
-
-  /**
-   * Platform picker, it will take precedence over Platforms if isn't nil.
-   * @returns {string} The selected platform.
-   */
-  readonly platformPicker: (labels: string[]) => string | undefined;
 
   /**
    * Controls if paths in .gitignore should not be copied into container, default true.
@@ -94,14 +50,19 @@ interface Config {
   readonly useGitignore?: boolean;
 
   /**
+   * skip local actions/checkout.
+   */
+  readonly skipCheckout: boolean;
+
+  /**
    * GitHub instance to use, default "github.com".
    */
   readonly serverInstance: string;
 
   /**
-   * skip local actions/checkout.
+   * The default actions web site.
    */
-  readonly skipCheckout: boolean;
+  readonly actionInstance: string;
 
   /**
    * Use actions from GitHub Enterprise instance to GitHub.
@@ -113,10 +74,26 @@ interface Config {
    */
   readonly replaceGheActionTokenWithGithubCom: string;
 
+  // logger
   /**
-   * Matrix config to run.
+   * Use json or text logger.
    */
-  readonly matrix: Record<string, unknown[]>;
+  readonly logJson?: boolean;
+
+  /**
+   * Log the output from docker run.
+   */
+  readonly logOutput: boolean;
+
+  /**
+   * Switches from the full job name to the job id.
+   */
+  readonly logPrefixJobID?: boolean;
+
+  /**
+   * Switch hiding output when printing to terminal. Doesn't hide secrets while printing logs
+   */
+  readonly insecureSecrets?: boolean;
 
   /**
    * The level of job logger.
@@ -134,92 +111,39 @@ interface Config {
    */
   readonly insecureSkipTLS?: boolean;
 
-  // container: Container;
   /**
-   * Force pulling of the image, even if already present.
+   * Use a custom ActionCache Implementation.
    */
-  pull: boolean;
-
-  /**
-   * Force rebuilding local docker image action.
-   */
-  rebuild?: boolean;
-
-  /**
-   * Use privileged mode.
-   */
-  containerPrivileged?: boolean;
-
-  /**
-   * User namespace to use.
-   */
-  containerUsernsMode: string;
-
-  /**
-   * Desired OS/architecture platform for running containers.
-   */
-  containerPlatform: string;
-
-  /**
-   * Path to Docker daemon socket.
-   */
-  containerDaemonSocket: string;
-
-  /**
-   * List of kernel capabilities to add to the containers.
-   */
-  containerCapAdd: string[];
-
-  /**
-   * List of kernel capabilities to remove from the containers.
-   */
-  containerCapDrop: string[];
-
-  /**
-   * The prefix of container name.
-   */
-  containerNamePrefix?: string;
-
-  /**
-   * The max lifetime of job containers in seconds.
-   */
-  containerMaxLifetime: number;
-
-  /**
-   * The network mode of job containers (the value of --network).
-   */
-  containerNetworkMode: HostConfig['NetworkMode'];
-
-  /**
-   * Controls if the container is automatically removed upon workflow completion.
-   */
-  containerAutoRemove?: boolean;
-
-  /**
-   * Options for the job container.
-   */
-  containerOptions: string;
+  readonly actionCache?: ActionCache;
 
   // artifact
   /**
-   * artifact server path
+   * The path where the artifact server stores uploads and retrieves downloads from.
+   * If not specified the artifact server will not start
    */
-  artifactPath: string;
+  readonly artifactPath: string;
 
-  artifactAddr: string;
+  /**
+   * The address where the artifact server listens
+   */
+  readonly artifactAddr: string;
 
-  artifactPort: number;
+  /**
+   * The port where the artifact server listens
+   * 0 means to use a random available port.
+   */
+  readonly artifactPort: number;
 
   /**
    * Enable cache server to use actions/cache.
    */
-  actionsCache: boolean;
+  readonly actionsCache: boolean;
 
   /**
    * The directory to store the cache data.
    * If it's empty, the cache data will be stored in `$ACTIONS_HOME/cache`.
    */
-  actionsCachePath: string;
+  readonly actionsCachePath: string;
 
   /**
    * The host of the cache server.
@@ -227,14 +151,14 @@ interface Config {
    * It's not for the address to listen, but the address to connect from job containers.
    * So 0.0.0.0 is a bad choice, leave it empty to detect automatically.
    */
-  actionsCacheAddr: string;
+  readonly actionsCacheAddr: string;
 
   /**
    * The port of the cache server.
    *
    * 0 means to use a random available port.
    */
-  actionsCachePort: number;
+  readonly actionsCachePort: number;
 
   /**
    * The external cache server URL. Valid only when actions cache enable is true.
@@ -242,7 +166,75 @@ interface Config {
    * If it's specified, actions runner will use this URL as the ACTIONS_CACHE_URL rather than start a server by itself.
    * The URL should generally end with "/".
   */
-  actionsCacheExternal: string;
+  readonly actionsCacheExternal: string;
+
+  // container
+  /**
+   * Platform picker, it will take precedence over Platforms if isn't nil.
+   * @returns {string} The selected platform.
+   */
+  readonly platformPicker: (labels: string[]) => string | undefined;
+
+  /**
+   * Matrix config to run.
+   */
+  readonly matrix: Record<string, unknown[]>;
+  /**
+   * Force pulling of the image, even if already present.
+   */
+  readonly pull: boolean;
+  /**
+   * Reuse containers to maintain state.
+   */
+  readonly reuse?: boolean;
+  /**
+   * Force rebuilding local docker image action.
+   */
+  readonly rebuild?: boolean;
+  /**
+   * The prefix of container name.
+   */
+  readonly containerNamePrefix?: string;
+  /**
+   * User namespace to use.
+   */
+  readonly containerUsernsMode: string;
+  /**
+   * Use privileged mode.
+   */
+  readonly containerPrivileged?: boolean;
+  /**
+   * Desired OS/architecture platform for running containers.
+   */
+  readonly containerPlatform: string;
+  /**
+   * List of kernel capabilities to add to the containers.
+   */
+  readonly containerCapAdd: string[];
+  /**
+   * List of kernel capabilities to remove from the containers.
+   */
+  readonly containerCapDrop: string[];
+  /**
+   * The max lifetime of job containers in seconds.
+   */
+  readonly containerMaxLifetime: number;
+  /**
+   * The network mode of job containers (the value of --network).
+   */
+  readonly containerNetworkMode: HostConfig['NetworkMode'];
+  /**
+   * Controls if the container is automatically removed upon workflow completion.
+   */
+  readonly containerAutoRemove?: boolean;
+  /**
+   * Options for the job container.
+   */
+  readonly containerOptions: string;
+  /**
+   * Path to Docker daemon socket.
+   */
+  readonly containerDaemonSocket: string;
 }
 
 export default Config;
