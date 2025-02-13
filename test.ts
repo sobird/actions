@@ -1,37 +1,14 @@
-import { IssueMatchersConfig, IssueMatcher } from './pkg/runner/action/command/IssueMatcher';
+import { Command, Option } from 'commander';
 
-const config = new IssueMatchersConfig({
-  problemMatcher: [
-    {
-      owner: 'myMatcher',
-      severity: 'warning',
-      pattern: [
-        {
-          regexp: '^(ERROR)?(?: )?(.+):$',
-          severity: 1,
-          code: 2,
-        },
-        {
-          regexp: '^(.+)$',
-          message: 1,
-        },
-      ],
-    },
-  ],
-} as IssueMatchersConfig);
+const program = new Command();
 
-config.validate();
-const matcher = new IssueMatcher(config.problemMatcher[0]);
+program
+  .option('--no-optionA', 'Option A')
+  .option('--optionB', 'Option B')
+  .option('--optionC', 'Option C')
+  .addOption(new Option('--optionD').conflicts('optionA'))
+  .action(async (opts, program) => {
+    console.log('opts', opts);
+  });
 
-let match = matcher.match('ABC:');
-match = matcher.match('not-working');
-
-// expect(match.severity).toBe('warning');
-// expect(match.code).toBe('ABC');
-// expect(match.message).toBe('not-working');
-
-match = matcher.match('ERROR ABC:');
-match = matcher.match('not-working')!;
-expect(match.severity).toBe('ERROR');
-expect(match.code).toBe('ABC');
-expect(match.message).toBe('not-working');
+program.parse(process.argv);

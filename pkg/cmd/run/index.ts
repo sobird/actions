@@ -8,7 +8,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import { Command } from '@commander-js/extra-typings';
+import { Command, Option } from '@commander-js/extra-typings';
 import ip from 'ip';
 import log4js from 'log4js';
 
@@ -64,6 +64,7 @@ export const runCommand = new Command('run')
   .description('run workflow locally')
   // run a event name
   .arguments('[eventName]')
+
   // workflows
   .option('-W, --workflows <path>', 'path to workflow file(s)', './.github/workflows/')
   .option('--no-recursive', "flag to disable running workflows from subdirectories of specified path in '--workflows'/'-W' option")
@@ -78,7 +79,8 @@ export const runCommand = new Command('run')
   .option('--detect-event', 'use first event type from workflow as event that triggered the workflow')
   .option('--workspace <path>', "The parent directory of a job's working directory.")
   .option('-w, --workdir <path>', 'the default working directory on the runner for steps', '.')
-  .option('--no-bind-workdir', 'bind working directory to container, rather than copy')
+  .option('--bind-workdir', 'bind working directory to container, rather than copy')
+  .addOption(new Option('--no-skip-checkout', 'do not skip actions/checkout').conflicts('bindWorkdir'))
 
   // log
   .option('--log-json', 'output logs in json format')
@@ -97,7 +99,6 @@ export const runCommand = new Command('run')
 
   .option('--insecure-secrets', "NOT RECOMMENDED! Doesn't hide secrets while printing logs")
   .option('--no-use-gitignore', 'controls whether paths specified in .gitignore should be copied into container')
-  .option('--no-skip-checkout', 'do not skip actions/checkout')
   .option('--server-instance <url>', 'server instance to use')
   .option('--action-instance <url>', 'the default url of action instance', 'https://github.com')
 
