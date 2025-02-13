@@ -44,3 +44,5 @@ export function WithLoggerHook(hook: LoggerHook, category: string = 'default') {
 
   return log4js.getLogger(category);
 }
+
+export default log4js.getLogger();

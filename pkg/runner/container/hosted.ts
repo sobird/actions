@@ -15,6 +15,7 @@ import * as tar from 'tar';
 
 import Executor from '@/pkg/common/executor';
 import { createLineWriteStream } from '@/pkg/common/lineWritable';
+import logger from '@/pkg/common/logger';
 import Runner from '@/pkg/runner';
 import { trimSuffix } from '@/utils';
 
@@ -96,10 +97,12 @@ class HostedContainer extends Container {
       const pack = tar.create(options, [info.base]);
       const unpack = tar.x({ cwd: dest });
 
+      logger.debug(`Upload file from '${source}' to '${dest}'`);
       pack.pipe(unpack);
 
       await new Promise<void>((resolve, reject) => {
         pack.on('error', (err) => {
+          logger.error('Failed to copy dir to container: %s', (err as Error).message);
           reject(err);
         });
         unpack.on('finish', () => {
@@ -123,6 +126,8 @@ class HostedContainer extends Container {
             mode: file.mode,
           },
         );
+
+        logger.debug(`Extracting content to '${filename}'`);
       }
     });
   }
@@ -143,6 +148,7 @@ class HostedContainer extends Container {
           reject(err);
         });
         pipeline.on('finish', () => {
+          logger.debug(`Upload archive to container: ${dest}`);
           resolve();
         });
       });
@@ -222,6 +228,7 @@ class HostedContainer extends Container {
   remove() {
     return new Executor(() => {
       fs.rmSync(this.rootdir, { recursive: true, force: true });
+      logger.debug(`Removed container: ${this.rootdir}`);
     });
   }
 

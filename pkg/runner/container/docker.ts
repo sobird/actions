@@ -209,11 +209,12 @@ class DockerContainer extends Container {
         const entry = new tar.ReadEntry(header);
         entry.end(content);
         pack.add(entry);
+
+        logger.debug('\u{1F433}', `Extracting content to '${path.join(dest, file.name)}'`);
       }
       pack.end();
 
       try {
-        logger.debug('\u{1F433}', `Extracting content to '${dest}'`);
         await container.putArchive((pack as unknown as NodeJS.ReadableStream), {
           path: '/',
         });
