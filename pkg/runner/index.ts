@@ -154,7 +154,7 @@ class Runner {
       context.runner.os = container.OS as 'Linux' | 'Windows' | 'macOS';
       context.runner.arch = container.Arch as 'X86' | 'X64' | 'ARM' | 'ARM64';
       context.runner.tool_cache = container.ToolDir;
-      context.runner.temp = container.Temp;
+      context.runner.temp = container.TempDir;
       context.runner.environment = container.Environment as 'github-hosted' | 'self-hosted';
       context.runner.debug = '1';
 
@@ -215,6 +215,7 @@ class Runner {
   }
 
   // DockerContainer Utils
+  // @todo note: docker actions container difference?
   get BindsAndMounts(): [string[], Record<string, string>] {
     const containerName = this.ContainerName();
     const defaultSocket = '/var/run/docker.sock';
@@ -231,22 +232,12 @@ class Runner {
     let hostedWorkDir = '';
     let hostedToolDir = '';
     let hostedTempDir = '';
-    // const hostedToolDir = DockerContainer.Resolve(this.config.workdir);
-    // const hostedTempDir = DockerContainer.Resolve(this.config.workdir);
 
-    let containerWorkdir = hostedWorkDir = DockerContainer.Resolve(this.config.workdir);
-    let containerToolDir = hostedToolDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Tool);
-    let containerTempDir = hostedTempDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Temp);
+    const containerWorkdir = hostedWorkDir = DockerContainer.Resolve(this.config.workdir);
+    const containerToolDir = hostedToolDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Tool);
+    const containerTempDir = hostedTempDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Temp);
 
-    if (this.container) {
-      hostedWorkDir = this.container?.resolve(this.config.workdir);
-
-      containerWorkdir = this.container.Resolve(this.config.workdir);
-      containerToolDir = this.container.Resolve(Constants.Directory.Tool);
-      containerTempDir = this.container.Resolve(Constants.Directory.Temp);
-    }
-
-    let mounts = {
+    let mounts: Record<string, string> = {
       [ToolMount]: containerToolDir,
       [TempMount]: containerTempDir,
     };
@@ -261,22 +252,26 @@ class Runner {
       }
     });
 
+    let bindModifiers = '';
+    if (process.platform === 'darwin') {
+      bindModifiers = ':delegated';
+    }
+
     if (this.config.bindWorkdir) {
-      let bindModifiers = '';
-      if (process.platform === 'darwin') {
-        bindModifiers = ':delegated';
+      if (this.IsHosted && this.container) {
+        // docker container
+        hostedWorkDir = this.container.resolve(this.config.workdir);
+        binds.push(`${hostedWorkDir}:${hostedWorkDir}${bindModifiers}`);
+      } else {
+        binds.push(`${this.config.workdir}:${containerWorkdir}${bindModifiers}`);
       }
-      binds.push(`${this.config.workdir}:${containerWorkdir}${bindModifiers}`);
     } else if (this.IsHosted && this.container) {
       hostedWorkDir = this.container.resolve(this.config.workdir);
-      binds.push(`${hostedWorkDir}:${containerWorkdir}:delegated`);
-
-      mounts = [];
+      binds.push(`${hostedWorkDir}:${hostedWorkDir}${bindModifiers}`);
     } else {
       mounts[containerName] = containerWorkdir;
     }
-    console.log('this.IsHosted ', this.IsHosted);
-    console.log('this.container', this.container);
+
     if (this.IsHosted && this.container) {
       hostedToolDir = this.container.ToolDir;
       hostedTempDir = this.container.TempDir;
@@ -284,6 +279,8 @@ class Runner {
       // Always bound ToolDir and TempDir if hosted
       binds.push(`${hostedToolDir}:${hostedToolDir}:delegated`);
       binds.push(`${hostedTempDir}:${hostedTempDir}:delegated`);
+
+      mounts = {};
     }
     console.log('binds', binds);
     console.log('mounts', mounts);

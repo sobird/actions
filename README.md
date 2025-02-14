@@ -132,6 +132,16 @@ brew install gnu-tar
 ```
 详细见：[cache tar.ts](https://github.com/actions/toolkit/blob/main/packages/cache/src/internal/tar.ts#L31)
 
+
+--bind-workdir 参数默认应该为false，以防在容器中运行时，一些脚本意外删除工作目录中的文件，导致连同本机工作目录中的文件丢失。
+
+
+FAQ
+
+hosted container中实时目录为：/Users/sobird/.actions/hosted/{hashId}/home/runner/work，如何对应容器中/home/runner/work
+
+command file 路径如何处理？
+
 <!-- Badges -->
 [npm]: https://img.shields.io/npm/v/@sobird/actions.svg
 [npm-url]: https://www.npmjs.com/package/@sobird/actions
