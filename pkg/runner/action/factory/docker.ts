@@ -105,7 +105,7 @@ class DockerAction extends Action {
 
       let entrypointPath = stepWith?.[entrypointStage];
       if (!entrypointPath) {
-        entrypointPath = this.runs[entrypointStage];
+        entrypointPath = this.runs[entrypointStage] || '';
       }
 
       // entrypointPath = path.resolve(this.Dir, entrypointPath || '');
@@ -181,7 +181,6 @@ class DockerAction extends Action {
       networkMode = 'default';
     }
 
-    console.log('workdir', config.workdir);
     return new DockerContainer({
       name,
       image,
