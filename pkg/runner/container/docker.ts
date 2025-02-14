@@ -2,6 +2,8 @@
 /**
  * Docker Container
  *
+ * @deprecated see index.test.ts
+ *
  * sobird<i@sobird.me> at 2024/06/24 15:21:27 created.
  */
 

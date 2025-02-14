@@ -17,7 +17,7 @@ const hosted: HostedContainer = new (HostedContainer as any)();
 const docker: DockerContainer = new (DockerContainer as any)();
 docker.options.workdir = workdir;
 
-const filedir = createAllDir('hosted-test', 'file');
+const fileTestDir = createAllDir('container-test', 'file');
 
 const files = [
   {
@@ -38,10 +38,10 @@ const files = [
 
 beforeAll(() => {
   for (const file of files) {
-    const fileName = path.join(filedir, file.name);
+    const fileName = path.join(fileTestDir, file.name);
     fs.writeFileSync(fileName, file.body);
-    fs.symlinkSync(file.name, path.join(filedir, file.symlinkName));
-    fs.linkSync(fileName, path.join(filedir, file.linkName));
+    fs.symlinkSync(file.name, path.join(fileTestDir, file.symlinkName));
+    fs.linkSync(fileName, path.join(fileTestDir, file.linkName));
   }
 });
 
@@ -60,7 +60,7 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
     it('put file to container', async () => {
       const destination = 'put-file-test';
       const file = files[0];
-      const sourceFile = path.join(filedir, file.name);
+      const sourceFile = path.join(fileTestDir, file.name);
 
       const executor = container.put(destination, sourceFile);
       await executor.execute();
@@ -72,12 +72,12 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
     it('put dir to container', async () => {
       const destination = 'put-dir-test';
 
-      const executor = container.put(destination, filedir);
+      const executor = container.put(destination, fileTestDir);
       await executor.execute();
 
       const archive = await container.getArchive(destination);
       const fileFiles = await listEntry(archive);
-      const sourceFiles = fs.readdirSync(filedir);
+      const sourceFiles = fs.readdirSync(fileTestDir);
 
       expect(fileFiles?.map((item) => {
         return path.basename(item);
@@ -115,13 +115,13 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
     it('put archive to container', async () => {
       const destination = 'put-archive-test';
 
-      const archive = tar.create({ cwd: filedir, portable: true }, ['.']) as unknown as NodeJS.ReadableStream;
+      const archive = tar.create({ cwd: fileTestDir, portable: true }, ['.']) as unknown as NodeJS.ReadableStream;
       const putArchiveExecutor = container.putArchive(destination, archive);
       await putArchiveExecutor.execute();
 
       const archive2 = await container.getArchive(destination);
       const fileFiles = await listEntry(archive2);
-      const sourceFiles = fs.readdirSync(filedir);
+      const sourceFiles = fs.readdirSync(fileTestDir);
 
       expect(fileFiles?.map((item) => {
         return path.basename(item);
@@ -133,7 +133,7 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
       const archive = await container.getArchive(destination);
 
       const fileFiles = await listEntry(archive);
-      const sourceFiles = fs.readdirSync(filedir);
+      const sourceFiles = fs.readdirSync(fileTestDir);
 
       expect(fileFiles?.map((item) => {
         return path.basename(item);
@@ -184,7 +184,7 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
       const putContentExecutor = container.putContent('', {
         name: 'package.json',
         mode: 0o777,
-        body: 'test content',
+        body: '{"name": "test"}',
       });
       await putContentExecutor.execute();
 
@@ -215,21 +215,22 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
 
     it('container readline', async () => {
       const filename = 'filename';
+      const contents = ['hello', 'world', 'nihao'];
       const putContentExecutor = container.putContent('', {
         name: filename,
         mode: 0o777,
-        body: ['test', 'hello'].join('\n'),
+        body: contents.join('\n'),
       });
       await putContentExecutor.execute();
 
       const callback = vi.fn();
       await container.readline(filename, callback);
 
-      expect(callback).toBeCalledTimes(2);
+      expect(callback).toBeCalledTimes(contents.length);
     });
   });
 
-  describe('Test Container Path Resolve', () => {
+  describe('Container Resolve', () => {
     if (process.platform === 'win32') {
       const testCases = [
         ['/mnt/c/Users/act/go/src/github.com/nektos/act', 'C:\\Users\\act\\go\\src\\github.com\\nektos\\act\\'],
@@ -260,15 +261,15 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
       });
     }
   });
-});
 
-describe('lookPath', () => {
-  it('/bin/bash', () => {
-    const result = docker.lookPath('/bin/bash', {});
-    expect(result).toBe('/bin/bash');
-  });
-  it('bash', () => {
-    const result = docker.lookPath('bash', {});
-    expect(result).toBe('/bin/bash');
+  describe('lookPath', () => {
+    it('/bin/bash', () => {
+      const result = container.lookPath('/bin/bash', { PATH: process.env.PATH });
+      expect(result).toBe('/bin/bash');
+    });
+    it('bash', () => {
+      const result = container.lookPath('bash', { PATH: process.env.PATH });
+      expect(result).toBe('/bin/bash');
+    });
   });
 });

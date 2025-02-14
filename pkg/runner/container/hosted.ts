@@ -2,6 +2,8 @@
 /**
  * Hosted Container
  *
+ * @deprecated see index.test.ts
+ *
  * sobird<i@sobird.me> at 2024/06/06 21:49:44 created.
  */
 

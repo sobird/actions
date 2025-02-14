@@ -224,14 +224,29 @@ class Runner {
       binds.push(`${daemonPath}:${defaultSocket}`);
     }
 
-    const ToolCacheMount = 'toolcache';
-    const NameMount = `${containerName}-env`;
+    const ToolMount = 'toolcache';
+    const TempMount = `${containerName}-Temp`;
 
-    const containerWorkdir = DockerContainer.Resolve(this.config.workdir);
+    let containerWorkdir = DockerContainer.Resolve(this.config.workdir);
+    let containerToolDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Tool);
+    let containerTempDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Temp);
+
+    if (this.container) {
+      containerWorkdir = this.container.Resolve(this.config.workdir);
+      containerToolDir = this.container.Resolve(Constants.Directory.Tool);
+      containerTempDir = this.container.Resolve(Constants.Directory.Temp);
+    }
+
+    console.log('containerTempDir', containerWorkdir);
+
+    if (this.IsHosted) {
+      binds.push(`${containerTempDir}:${containerTempDir}:delegated`);
+      binds.push(`${containerWorkdir}:${this.config.workdir}:delegated`);
+    }
 
     const mounts = {
-      [ToolCacheMount]: DockerContainer.Resolve(this.config.workspace, Constants.Directory.Tool),
-      [NameMount]: DockerContainer.Resolve(this.config.workspace, Constants.Directory.Temp),
+      [ToolMount]: containerToolDir,
+      [TempMount]: containerTempDir,
     };
 
     const { volumes = [] } = this.run.job.container;
@@ -253,7 +268,8 @@ class Runner {
     } else {
       mounts[containerName] = containerWorkdir;
     }
-
+    console.log('binds', binds);
+    console.log('mounts', mounts);
     return [binds, mounts];
   }
 

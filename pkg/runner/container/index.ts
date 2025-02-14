@@ -266,14 +266,14 @@ export default abstract class Container {
     return pathString.split(this.OS === 'Windows' ? ';' : ':');
   }
 
-  lookPath(file: string, env: Record<string, string>) {
-    if (file.includes('/')) {
+  lookPath(file: string, env: Record<string, string | undefined>) {
+    if (file.includes(path.sep)) {
       if (Container.isExecutable(file)) {
         return file;
       }
       return '';
     }
-    const envPath = Container.GetEnv(env, this.pathVariableName);
+    const envPath = Container.GetEnv(env, this.pathVariableName) || '';
     const dirs = this.splitPath(envPath).map((dir) => {
       return dir.trim() === '' ? '.' : dir.trim();
     });
@@ -347,11 +347,12 @@ export default abstract class Container {
     return env;
   }
 
+  // container internal path
   Resolve(...paths: string[]) {
     return trimPrefix(this.resolve(...paths), this.rootdir);
   }
 
-  static GetEnv(env:Record<string, string>, name: string) {
+  static GetEnv(env:Record<string, string | undefined>, name: string) {
     if (process.platform === 'win32') {
       for (const k of Object.keys(env)) {
         if (k.toLowerCase() === name.toLowerCase()) {
