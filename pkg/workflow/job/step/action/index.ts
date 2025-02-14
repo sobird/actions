@@ -169,8 +169,8 @@ abstract class StepAction extends Step {
   LoadAction(actionDir: string) {
     return new Executor(async (ctx) => {
       const runner = ctx!;
-      const actionContainerDir = actionDir || '';
-      // const actionContainerDir = runner.container?.resolve(actionDir) || '';
+      // const actionContainerDir = actionDir || '';
+      const actionContainerDir = runner.container?.resolve(actionDir) || '';
       const ymlFile = path.join(actionDir, 'action.yml');
       const ymlEntry = await runner.container?.getContent(ymlFile);
 

@@ -241,6 +241,9 @@ class HostedContainer extends Container {
   resolve(...paths: string[]) {
     const { rootdir, workspace } = this;
     const dir = path.join(...paths);
+    if (dir.startsWith(this.rootdir)) {
+      return dir;
+    }
     return trimSuffix(path.isAbsolute(dir) ? path.join(rootdir, dir) : path.join(rootdir, workspace, dir), path.sep);
   }
 
