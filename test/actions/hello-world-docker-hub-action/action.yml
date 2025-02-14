@@ -12,6 +12,6 @@ outputs:
 runs:
   using: 'docker'
   image: 'docker://node:lts-slim'
-  # entrypoint: 'echo'
+  entrypoint: sh -c 'echo "time=$(date)" >> $GITHUB_OUTPUT'
   # args:
   #   - ${{ inputs.who-to-greet }}

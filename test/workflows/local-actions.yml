@@ -41,7 +41,7 @@ jobs:
         id: docker_hub_action
         uses: ./test/actions/hello-world-docker-hub-action
         with:
-          entrypoint: entrypoint.sh
+          # entrypoint: entrypoint.sh
           who-to-greet: 'docker hub'
 
       - name: Composite Action
