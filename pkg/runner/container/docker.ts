@@ -574,10 +574,11 @@ class DockerContainer extends Container {
       }
 
       // todo
-      // logger.debug(shellQuote.quote(command));
 
       const WorkingDir = this.resolve(this.options.workdir, cwd);
       const Env = Object.entries(env || {}).map(([key, value]) => { return `${key}=${value}`; });
+
+      logger.debug(Env);
 
       const exec = await container.exec({
         WorkingDir,

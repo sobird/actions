@@ -28,6 +28,7 @@ import {
 } from '@/utils';
 
 import Container from './container';
+import { createAuthorizationToken } from '../common/auth';
 
 const logger = log4js.getLogger();
 
@@ -555,7 +556,18 @@ class Runner implements Omit<Options, ''> {
 
       let actionsRuntimeToken = process.env[ACTIONS_RUNTIME_TOKEN];
       if (!actionsRuntimeToken) {
-        actionsRuntimeToken = 'token';
+        let runID = 1;
+
+        if (this.context.env.GITHUB_RUN_ID) {
+          runID = parseInt(this.context.env.GITHUB_RUN_ID, 10);
+
+          if (Number.isNaN(runID)) {
+            logger.warn('GITHUB_RUN_ID is not a valid number, using default value 1');
+            runID = 1; // 如果转换失败，回退到默认值
+          }
+        }
+
+        actionsRuntimeToken = createAuthorizationToken(runID, runID, runID);
       }
       this.context.env[ACTIONS_RUNTIME_TOKEN] = actionsRuntimeToken;
     }

@@ -27,6 +27,7 @@ describe('Artifact Server Test', () => {
 
   it('Test Artifact Upload Prepare', async () => {
     const response = await request(app).post(`/_apis/pipelines/workflows/${runId}/artifacts`);
+    console.log('response.body.fileContainerResourceUrl', response.body.fileContainerResourceUrl);
     expect(response.statusCode).toBe(200);
     expect(response.body.fileContainerResourceUrl).includes(`/upload/${runId}`);
   });

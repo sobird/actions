@@ -43,14 +43,17 @@ class Artifact {
       const { runId } = req.params;
       const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
 
-      res.json({ fileContainerResourceUrl: `${baseURL}/upload/${runId}` });
+      res.json({
+        fileContainerResourceUrl: `${baseURL}/upload/${runId}`,
+      });
     });
 
     // Artifact Upload Blob
     // curl --silent --show-error --fail "http://127.0.0.1:3000/upload/1?itemPath=my-artifact/package.txt" --upload-file package.json
     app.put('/upload/:runId', (req, res) => {
       const { runId } = req.params;
-      const { itemPath } = req.query;
+      const { itemPath } = req.query as { itemPath: string };
+      const isGzip = req.headers['content-encoding'] === 'gzip';
 
       if (!itemPath) {
         res.json({
@@ -58,24 +61,25 @@ class Artifact {
         });
         return;
       }
+
       const safeRunPath = Artifact.SafeResolve(this.dir, runId);
-      let safePath = Artifact.SafeResolve(safeRunPath, itemPath as string || '');
+      const safePath = Artifact.SafeResolve(safeRunPath, isGzip ? `${itemPath}${GZIP_EXT}` : itemPath);
       fs.mkdirSync(path.dirname(safePath), { recursive: true });
 
       // 处理 gzip 编码的文件
-      if (req.headers['content-encoding'] === 'gzip') {
-        safePath += GZIP_EXT;
-      }
+      // if (req.headers['content-encoding'] === 'gzip') {
+      //   safePath += GZIP_EXT;
+      // }
 
       const writeStream = fs.createWriteStream(safePath, {
         flags: req.headers['content-range'] ? 'a' : 'w',
       });
 
       writeStream.on('error', (err) => {
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ message: 'File upload failed', error: err.message });
       });
 
-      writeStream.on('close', () => {
+      writeStream.on('finish', () => {
         res.json({ message: 'success' });
       });
 
@@ -94,23 +98,39 @@ class Artifact {
       const safePath = Artifact.SafeResolve(this.dir, runId);
       const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
 
-      try {
-        const files = fs.readdirSync(safePath, {
-          recursive: true,
-          withFileTypes: true,
+      fs.readdir(safePath, (err, files) => {
+        if (err) {
+          return res.status(500).json({ message: 'Failed to list files', error: err.message });
+        }
+
+        res.json({
+          count: files.length,
+          value: files.map((file) => {
+            return {
+              name: file,
+              fileContainerResourceUrl: `${baseURL}/download/${runId}`,
+            };
+          }),
         });
-        const filesInfo = files.filter((file) => {
-          return file.isFile();
-        }).map((file) => {
-          return {
-            name: file.name,
-            fileContainerResourceUrl: `${baseURL}/download/${runId}`,
-          };
-        });
-        res.json({ count: filesInfo.length, value: filesInfo });
-      } catch (err) {
-        return res.status(500).json({ message: (err as Error).message });
-      }
+      });
+
+      // try {
+      //   const files = fs.readdirSync(safePath, {
+      //     recursive: true,
+      //     withFileTypes: true,
+      //   });
+      //   const filesInfo = files.filter((file) => {
+      //     return file.isFile();
+      //   }).map((file) => {
+      //     return {
+      //       name: file.name,
+      //       fileContainerResourceUrl: `${baseURL}/download/${runId}`,
+      //     };
+      //   });
+      //   res.json({ count: filesInfo.length, value: filesInfo });
+      // } catch (err) {
+      //   return res.status(500).json({ message: (err as Error).message });
+      // }
     });
 
     // List Artifact Container
@@ -171,6 +191,7 @@ class Artifact {
   }
 
   static SafeResolve(baseDir:string, relPath:string) {
+    return path.join(baseDir, path.normalize(relPath).replace(/^(\.\.(\/|\\|$))+/, ''));
     return trimSuffix(path.join(baseDir, path.normalize(path.join(path.sep, relPath))), path.sep);
   }
 }

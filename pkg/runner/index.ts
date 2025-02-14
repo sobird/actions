@@ -149,6 +149,13 @@ class Runner {
         context.env[Constants.Actions.CacheUrl] = url.toString();
       }
 
+      if (!IsHosted && context.env[Constants.Actions.RuntimeUrl]) {
+        const url = new URL(context.env[Constants.Actions.RuntimeUrl]);
+        url.hostname = 'host.docker.internal';
+        context.env[Constants.Actions.RuntimeUrl] = url.toString();
+      }
+      context.env.ACTIONS_RESULTS_URL = context.env[Constants.Actions.RuntimeUrl];
+
       // set runner context
       context.runner.name = this.name;
       context.runner.os = container.OS as 'Linux' | 'Windows' | 'macOS';
