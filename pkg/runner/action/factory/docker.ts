@@ -8,7 +8,7 @@ import Executor, { Conditional } from '@/pkg/common/executor';
 import docker from '@/pkg/docker';
 import Runner from '@/pkg/runner';
 import DockerContainer from '@/pkg/runner/container/docker';
-import { isExecutable, createSafeName } from '@/utils';
+import { createSafeName } from '@/utils';
 
 import Action from '..';
 
