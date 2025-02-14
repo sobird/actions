@@ -153,7 +153,7 @@ class Runner {
       context.runner.name = this.name;
       context.runner.os = container.OS as 'Linux' | 'Windows' | 'macOS';
       context.runner.arch = container.Arch as 'X86' | 'X64' | 'ARM' | 'ARM64';
-      context.runner.tool_cache = container.ToolCache;
+      context.runner.tool_cache = container.ToolDir;
       context.runner.temp = container.Temp;
       context.runner.environment = container.Environment as 'github-hosted' | 'self-hosted';
       context.runner.debug = '1';
@@ -278,11 +278,11 @@ class Runner {
     console.log('this.IsHosted ', this.IsHosted);
     console.log('this.container', this.container);
     if (this.IsHosted && this.container) {
-      hostedToolDir = this.container.resolve(Constants.Directory.Tool);
-      hostedTempDir = this.container.resolve(Constants.Directory.Temp);
+      hostedToolDir = this.container.ToolDir;
+      hostedTempDir = this.container.TempDir;
 
       // Always bound ToolDir and TempDir if hosted
-      binds.push(`${hostedToolDir}:${containerToolDir}:delegated`);
+      binds.push(`${hostedToolDir}:${hostedToolDir}:delegated`);
       binds.push(`${hostedTempDir}:${hostedTempDir}:delegated`);
     }
     console.log('binds', binds);

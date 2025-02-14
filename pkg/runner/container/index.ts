@@ -56,11 +56,11 @@ export default abstract class Container {
 
   constructor(public options: unknown, public workspace: string = '/home/runner') {}
 
-  get ToolCache() {
+  get ToolDir() {
     return this.resolve(Constants.Directory.Tool);
   }
 
-  get Temp() {
+  get TempDir() {
     return this.resolve(Constants.Directory.Temp);
   }
 

@@ -108,11 +108,11 @@ class DockerAction extends Action {
         entrypointPath = this.runs[entrypointStage];
       }
 
-      entrypointPath = path.resolve(this.Dir, entrypointPath || '');
+      // entrypointPath = path.resolve(this.Dir, entrypointPath || '');
 
-      if (!isExecutable(entrypointPath)) {
-        entrypointPath = '';
-      }
+      // if (!isExecutable(entrypointPath)) {
+      //   entrypointPath = '';
+      // }
 
       const entrypoint = shellQuote.parse(entrypointPath);
 
@@ -181,6 +181,7 @@ class DockerAction extends Action {
       networkMode = 'default';
     }
 
+    console.log('workdir', config.workdir);
     return new DockerContainer({
       name,
       image,
