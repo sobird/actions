@@ -27,6 +27,8 @@ class StepActionScript extends StepAction {
 
       const container = runner.container!;
 
+      this.applyEnv(runner, this.environment);
+
       return this.PrintDetails.next(container.exec(cmd, { env: this.environment, cwd }));
     });
   }

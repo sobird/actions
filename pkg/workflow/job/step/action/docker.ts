@@ -19,7 +19,11 @@ class StepActionDocker extends StepAction {
   }
 
   protected main() {
-    return new Executor(async () => { return this.action?.Main; });
+    return new Executor(async (ctx) => {
+      const runner = ctx!;
+      this.applyEnv(runner, this.environment);
+      return this.action?.Main;
+    });
   }
 }
 

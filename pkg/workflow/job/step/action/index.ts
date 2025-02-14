@@ -44,12 +44,13 @@ abstract class StepAction extends Step {
     return this.runtime(new Executor(() => { return this.action?.Post; }), 'Post').if(this.ShouldRunPost);
   }
 
+  // action runtime
   protected runtime(executor: Executor, stage: StepStage) {
     return new Executor(async (ctx) => {
       const runner = ctx!;
-
       const { id } = this;
       const { context } = runner;
+
       // set current step
       context.github.action = id;
       runner.stepAction = this;
@@ -88,7 +89,7 @@ abstract class StepAction extends Step {
 
       const name = this.Name(runner);
       try {
-        this.applyEnv(runner, this.environment);
+        // this.applyEnv(runner, this.environment);
         await withTimeout(executor.execute(runner), timeoutMinutes * 60 * 1000);
         await actionCommandFile.process();
         logger.info('🍏', `Finishing: ${stage} ${name}`);

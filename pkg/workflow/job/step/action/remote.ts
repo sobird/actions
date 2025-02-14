@@ -68,6 +68,7 @@ class StepActionRemote extends StepAction {
         return runner.container?.put(copyToPath, runner.config.workdir, runner.config.useGitignore);
       }
 
+      this.applyEnv(runner, this.environment);
       return this.action?.Main;
     });
   }
