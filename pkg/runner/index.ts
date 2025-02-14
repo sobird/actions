@@ -1,3 +1,4 @@
+/* eslint-disable no-multi-assign */
 /**
  * 一个Runner实例仅支持运行一个job
  * represents a job from a workflow that needs to be run
@@ -227,24 +228,25 @@ class Runner {
     const ToolMount = 'toolcache';
     const TempMount = `${containerName}-Temp`;
 
-    let containerWorkdir = DockerContainer.Resolve(this.config.workdir);
-    let containerToolDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Tool);
-    let containerTempDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Temp);
+    let hostedWorkDir = '';
+    let hostedToolDir = '';
+    let hostedTempDir = '';
+    // const hostedToolDir = DockerContainer.Resolve(this.config.workdir);
+    // const hostedTempDir = DockerContainer.Resolve(this.config.workdir);
+
+    let containerWorkdir = hostedWorkDir = DockerContainer.Resolve(this.config.workdir);
+    let containerToolDir = hostedToolDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Tool);
+    let containerTempDir = hostedTempDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Temp);
 
     if (this.container) {
+      hostedWorkDir = this.container?.resolve(this.config.workdir);
+
       containerWorkdir = this.container.Resolve(this.config.workdir);
       containerToolDir = this.container.Resolve(Constants.Directory.Tool);
       containerTempDir = this.container.Resolve(Constants.Directory.Temp);
     }
 
-    console.log('containerTempDir', containerWorkdir);
-
-    if (this.IsHosted) {
-      binds.push(`${containerTempDir}:${containerTempDir}:delegated`);
-      binds.push(`${containerWorkdir}:${this.config.workdir}:delegated`);
-    }
-
-    const mounts = {
+    let mounts = {
       [ToolMount]: containerToolDir,
       [TempMount]: containerTempDir,
     };
@@ -265,8 +267,23 @@ class Runner {
         bindModifiers = ':delegated';
       }
       binds.push(`${this.config.workdir}:${containerWorkdir}${bindModifiers}`);
+    } else if (this.IsHosted && this.container) {
+      hostedWorkDir = this.container.resolve(this.config.workdir);
+      binds.push(`${hostedWorkDir}:${containerWorkdir}:delegated`);
+
+      mounts = [];
     } else {
       mounts[containerName] = containerWorkdir;
+    }
+    console.log('this.IsHosted ', this.IsHosted);
+    console.log('this.container', this.container);
+    if (this.IsHosted && this.container) {
+      hostedToolDir = this.container.resolve(Constants.Directory.Tool);
+      hostedTempDir = this.container.resolve(Constants.Directory.Temp);
+
+      // Always bound ToolDir and TempDir if hosted
+      binds.push(`${hostedToolDir}:${containerToolDir}:delegated`);
+      binds.push(`${hostedTempDir}:${hostedTempDir}:delegated`);
     }
     console.log('binds', binds);
     console.log('mounts', mounts);

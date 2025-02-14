@@ -175,6 +175,7 @@ abstract class StepAction extends Step {
       const ymlEntry = await runner.container?.getContent(ymlFile);
 
       // set context github action path
+      // @todo
       runner.context.github.action_path = actionContainerDir;
 
       if (ymlEntry) {

@@ -66,11 +66,7 @@ jobs:
         run: echo "The random number was ${{ steps.composite_action.outputs.random-number }}"
 
   test-local-docker-action:
-    strategy:
-      max-parallel: 3
-      matrix:
-        platform: [self-hosted]
-    runs-on: ${{ matrix.platform }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -8,7 +8,7 @@
  */
 
 import { spawn, spawnSync } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
+// import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -19,11 +19,15 @@ import Executor, { Conditional } from '@/pkg/common/executor';
 import { createLineWriteStream } from '@/pkg/common/lineWritable';
 import logger from '@/pkg/common/logger';
 import Runner from '@/pkg/runner';
-import { trimSuffix } from '@/utils';
+import { trimSuffix, createSha1Hash } from '@/utils';
 
 import Container, { FileEntry, type ContainerExecOptions } from '.';
 
 export interface HostedContainerOptions {
+  /**
+   * container name
+   */
+  name?: string;
   basedir: string;
   workdir: string;
   stdout?: NodeJS.WritableStream;
@@ -45,8 +49,8 @@ class HostedContainer extends Container {
     super(options, workspace);
 
     const { basedir } = options;
-    // like container root
-    const rootdir = path.join(basedir, randomBytes(8).toString('hex'));
+    // hosted container root
+    const rootdir = path.join(basedir, createSha1Hash(options.name));
 
     this.rootdir = rootdir;
     fs.mkdirSync(path.join(rootdir, options.workdir || ''), { recursive: true });
@@ -277,15 +281,18 @@ class HostedContainer extends Container {
         binds.push(`${config.workdir}:${config.workdir}`);
       }
 
-      const reuseContainer = new Conditional(() => {
-        return Boolean(config.reuse);
-      });
+      const name = runner.ContainerName();
 
       runner.container = new HostedContainer({
+        name,
         basedir: runner.ActionCacheDir,
         workdir: config.workdir,
         binds,
       }, config.workspace);
+
+      const reuseContainer = new Conditional(() => {
+        return Boolean(config.reuse);
+      });
       runner.cleanContainerExecutor = Executor.Pipeline(
         runner.container.remove().ifNot(reuseContainer),
       );
