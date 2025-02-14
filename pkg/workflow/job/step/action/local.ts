@@ -15,6 +15,14 @@ import StepAction from '.';
 const logger = log4js.getLogger();
 
 class StepActionLocal extends StepAction {
+  protected get PrepareAction() {
+    return new Executor((ctx) => {
+      const runner = ctx!;
+      const actionDir = path.join(runner.config.workdir, this.uses.path);
+      return this.LoadAction(actionDir);
+    });
+  }
+
   public pre() {
     return new Executor(async () => {
       logger.warn(`'pre' execution is not supported for local action from '${this.uses.path}'`);
@@ -23,11 +31,7 @@ class StepActionLocal extends StepAction {
 
   // local LoadAction need after actions/checkout Main
   protected main() {
-    return new Executor(async (ctx) => {
-      const runner = ctx!;
-      const actionDir = path.join(runner.config.workdir, this.uses.path);
-      await this.LoadAction(actionDir).execute(ctx);
-
+    return new Executor(async () => {
       return this.action?.Main;
     });
   }

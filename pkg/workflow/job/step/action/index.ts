@@ -165,17 +165,15 @@ abstract class StepAction extends Step {
     });
   }
 
-  // load action from container
+  // load action from container on Prepare Stage
   LoadAction(actionDir: string) {
     return new Executor(async (ctx) => {
       const runner = ctx!;
-      // const actionContainerDir = actionDir || '';
       const actionContainerDir = runner.container?.resolve(actionDir) || '';
       const ymlFile = path.join(actionDir, 'action.yml');
       const ymlEntry = await runner.container?.getContent(ymlFile);
 
       // set context github action path
-      // @todo
       runner.context.github.action_path = actionContainerDir;
 
       if (ymlEntry) {
