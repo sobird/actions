@@ -10,7 +10,9 @@ class CompositeAction extends Action {
       const compositeRunner = runner.clone();
       compositeRunner.context.steps = {};
 
-      await Executor.Pipeline(...this.runs.steps.MainPipeline).execute(compositeRunner);
+      const { steps } = this.runs;
+
+      await Executor.Pipeline(...steps.PrePipeline, ...this.runs.steps.MainPipeline).execute(compositeRunner);
 
       // set composite outputs
       Object.entries(this.outputs).forEach(([outputId, output]) => {

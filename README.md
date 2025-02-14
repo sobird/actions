@@ -136,11 +136,18 @@ brew install gnu-tar
 --bind-workdir 参数默认应该为false，以防在容器中运行时，一些脚本意外删除工作目录中的文件，导致连同本机工作目录中的文件丢失。
 
 
-FAQ
+Develop Log
 
 hosted container中实时目录为：/Users/sobird/.actions/hosted/{hashId}/home/runner/work，如何对应容器中/home/runner/work
 
 command file 路径如何处理？
+
+github actions
+
+The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the 'Billing & plans' section in your settings.
+
+You've used 100% of included services for GitHub Actions.
+To continue using Actions & Packages uninterrupted, update your spending limit.
 
 <!-- Badges -->
 [npm]: https://img.shields.io/npm/v/@sobird/actions.svg
