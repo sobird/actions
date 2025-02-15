@@ -263,21 +263,33 @@ class Artifact {
 
     // 列出 Artifacts
     router.post('/ListArtifacts', bodyParser.json(), (req, res) => {
-      const { workflowRunBackendId, nameFilter } = req.body;
+      this.logger.error('req.body', req.body);
+      const {
+        workflow_run_backend_id: workflowRunBackendId,
+        workflow_job_run_backend_id: workflowJobRunBackendId,
+        name_filter: nameFilter,
+        id_filter: idFilter,
+      } = req.body;
       const runId = parseInt(workflowRunBackendId, 10);
 
       const safePath = safeResolve(this.dir, runId.toString());
-
       const entries = fs.readdirSync(safePath);
       const artifacts = entries
-        .filter((entry) => { return !nameFilter || entry === nameFilter; })
-        .map((entry) => {
-          const stats = fs.statSync(path.join(safePath, entry));
+        .filter((entry) => {
+          const filename = path.join(safePath, entry);
+          const fileId = createFnv1aHash(filename);
+
+          return (!nameFilter || entry === nameFilter + ZIP_EXT) && (!idFilter || idFilter === fileId);
+        }).map((entry) => {
+          const filename = path.join(safePath, entry);
+          const stats = fs.statSync(filename);
           return {
+            workflow_run_backend_id: workflowRunBackendId,
+            workflow_job_run_backend_id: workflowJobRunBackendId,
+            databaseId: idFilter,
             name: entry,
-            createdAt: stats.mtime.toISOString(),
             size: stats.size,
-            workflowRunBackendId,
+            createdAt: stats.mtime.toISOString(),
           };
         });
 
@@ -286,6 +298,7 @@ class Artifact {
 
     // Get SignedArtifact URL
     router.post('/GetSignedArtifactURL', bodyParser.json(), (req, res) => {
+      this.logger.error('req.body', req.body);
       const { workflowRunBackendId, name } = req.body;
       const runId = parseInt(workflowRunBackendId, 10);
 

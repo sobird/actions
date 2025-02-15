@@ -1,14 +1,18 @@
-import { Command, Option } from 'commander';
+import { createFnv1aHash } from './utils';
 
-const program = new Command();
+function artifactNameToID(name) {
+  const fnvOffset32 = 2166136261;
+  const fnvPrime32 = 16777619;
 
-program
-  .option('--no-optionA', 'Option A')
-  .option('--optionB', 'Option B')
-  .option('--optionC', 'Option C')
-  .addOption(new Option('--optionD').conflicts('optionA'))
-  .action(async (opts, program) => {
-    console.log('opts', opts);
-  });
+  let hash = fnvOffset32;
+  for (let i = 0; i < name.length; i++) {
+    hash ^= name.charCodeAt(i);
+    hash *= fnvPrime32;
+  }
+  return hash >>> 0; // 确保结果为无符号 32 位整数
+}
 
-program.parse(process.argv);
+const artifactName = 'test-artifact';
+const artifactID = artifactNameToID(artifactName);
+console.log(`Artifact Name: ${artifactName}, Monolith Database ID: ${artifactID}`);
+console.log('createFnv1aHash', createFnv1aHash('test-artifact'));

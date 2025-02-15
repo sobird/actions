@@ -31,3 +31,15 @@ export function createFnv1aHash(s: string, h = HASH_BASE): number {
 
   return h >>> 0;
 }
+
+export function createFnv1aHashV2(name: string) {
+  const fnvOffset32 = 2166136261;
+  const fnvPrime32 = 16777619;
+
+  let hash = fnvOffset32;
+  for (let i = 0; i < name.length; i++) {
+    hash ^= name.charCodeAt(i);
+    hash *= fnvPrime32;
+  }
+  return hash >>> 0;
+}
