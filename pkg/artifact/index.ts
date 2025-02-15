@@ -353,6 +353,8 @@ class Artifact {
     // v3
     // Artifact Upload Prepare
     app.post('/_apis/pipelines/workflows/:runId/artifacts', (req, res) => {
+      // const apiVersion = req.query['api-version'];
+
       const { runId } = req.params;
       const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
 

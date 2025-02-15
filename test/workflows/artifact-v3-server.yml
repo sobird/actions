@@ -1,0 +1,33 @@
+name: Test Artifact Server
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test-artifact-v3:
+    runs-on: ubuntu-latest
+    strategy:
+      # max-parallel: 3
+      matrix:
+        node-version: [8.x, 10.x, 12.x, 13.x]
+    steps:
+      # - name: Checkout
+      #   uses: actions/checkout@v4
+      - run: mkdir -p upload
+      - run: echo ${{ matrix.node-version }} > upload/test_${{ matrix.node-version }}.txt
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: test-artifact
+          path: upload
+          overwrite: true
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: test-artifact
+          path: download
+
+      - run: ls download
