@@ -1,16 +1,15 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 
 import request from 'supertest';
 
-import Artifact from '.';
+import { createAllDir } from '@/utils/test';
 
-const tmpdir = path.join(os.tmpdir(), 'artifacts');
-const { app, dir } = new Artifact(tmpdir, undefined, 3000);
+import Artifact, { safeResolve } from '.';
 
-console.log('tmpdir', tmpdir);
-// 设置 mock-fs
+const testDir = createAllDir('artifacts');
+const { app, dir } = new Artifact(testDir);
+
 beforeAll(() => {
   //
 });
@@ -19,65 +18,71 @@ afterAll(() => {
   // fs.rmdirSync(tmpdir, { recursive: true });
 });
 
-describe('Artifact Server Test', () => {
-  const filename = 'file.txt';
+describe('Artifact Server', () => {
+  const content = 'content';
   const runId = '1234';
   const itemPath = 'file.txt';
   const expectFileName = path.join(dir, runId, itemPath);
 
-  it('Test Artifact Upload Prepare', async () => {
-    const response = await request(app).post(`/_apis/pipelines/workflows/${runId}/artifacts`);
-    console.log('response.body.fileContainerResourceUrl', response.body.fileContainerResourceUrl);
-    expect(response.statusCode).toBe(200);
-    expect(response.body.fileContainerResourceUrl).includes(`/upload/${runId}`);
+  it('should prepare artifact upload', async () => {
+    const res = await request(app).post(`/_apis/pipelines/workflows/${runId}/artifacts`);
+    expect(res.body.fileContainerResourceUrl).includes(`/upload/${runId}`);
   });
 
-  it('Test Finalize Artifact Upload', async () => {
-    const response = await request(app).patch(`/_apis/pipelines/workflows/${runId}/artifacts`);
-    expect(response.statusCode).toBe(200);
-    expect(response.body.message).toBe('success');
+  it('should upload artifact blob', async () => {
+    const res = await request(app)
+      .put(`/upload/${runId}?itemPath=${itemPath}`)
+      .send(content)
+      .expect(200);
+
+    const expectContent = fs.readFileSync(expectFileName).toString();
+    expect(res.body.message).toBe('success');
+    expect(expectContent).toBe(content);
   });
 
-  it('Test Artifact Upload Blob with itemPath', async () => {
-    const res = fs.readFileSync('package.json');
+  it('should not upload artifact blob without itemPath', async () => {
+    const res = await request(app)
+      .put(`/upload/${runId}`)
+      .send(content)
+      .expect(200);
 
-    const response = await request(app).put(`/upload/${runId}?itemPath=${itemPath}`)
-      .attach('file', res, {
-        filename,
-      });
-
-    expect(response.statusCode).toBe(200);
-    expect(fs.existsSync(expectFileName)).toBeTruthy();
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe('Missing itemPath parameter');
   });
 
-  it('Test Artifact Upload Blob Without itemPath', async () => {
-    // 使用 supertest 发送一个模拟的文件上传请求
-    const response = await request(app).put(`/upload/${runId}`)
-      .attach('file', Buffer.from('file content123'), filename);
+  it('should finalize artifact upload', async () => {
+    const res = await request(app)
+      .patch(`/_apis/pipelines/workflows/${runId}/artifacts`)
+      .expect(200);
 
-    expect(response.statusCode).toBe(200);
-    expect(response.body.message).toBe('Missing itemPath parameter');
+    expect(res.body.message).toBe('success');
   });
 
-  it('Test List Artifacts', async () => {
-    const response = await request(app).get(`/_apis/pipelines/workflows/${runId}/artifacts`);
-    expect(response.statusCode).toBe(200);
-    expect(response.body.count).toBe(1);
-    expect(response.body.value[0].name).toBe('file.txt');
-    expect(response.body.value[0].fileContainerResourceUrl).includes(`/download/${runId}`);
+  it('should list artifacts', async () => {
+    const res = await request(app)
+      .get(`/_apis/pipelines/workflows/${runId}/artifacts`)
+      .expect(200);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.count).toBe(1);
+    expect(res.body.value[0].name).toBe('file.txt');
+    expect(res.body.value[0].fileContainerResourceUrl).includes(`/download/${runId}`);
   });
 
   it('Test List Artifact Container', async () => {
-    const response = await request(app).get(`/download/${runId}`);
+    const res = await request(app).get(`/download/${runId}`);
 
-    expect(response.statusCode).toBe(200);
-    expect(response.body.value[0].path).toBe('file.txt');
-    expect(response.body.value[0].contentLocation).includes(`/artifact/${runId}`);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.value[0].path).toBe('file.txt');
+    expect(res.body.value[0].contentLocation).includes(`/artifact/${runId}`);
   });
 
-  it('Test Download Artifact File', async () => {
-    const response = await request(app).get(`/artifact/${runId}/${filename}`);
-    expect(response.statusCode).toBe(200);
+  it('should download artifact file', async () => {
+    const res = await request(app)
+      .get(`/artifact/${runId}/${itemPath}`)
+      .expect(200);
+
+    expect(res.text).toBe(content);
   });
 });
 
@@ -98,28 +103,27 @@ describe('Test Mkdir FsImpl SafeResolve', () => {
 
   Object.entries(tests).forEach(([name, tc]) => {
     it(name, () => {
-      expect(Artifact.SafeResolve(baseDir, tc.input)).toBe(tc.want);
+      expect(safeResolve(baseDir, tc.input)).toBe(tc.want);
     });
   });
 
   const runId = '2';
   const itemPath = '../../some/file';
-  const filename = 'file';
-  const expectFileName = Artifact.SafeResolve(Artifact.SafeResolve(dir, runId), itemPath);
+  const content = 'content';
+
+  const expectFileName = safeResolve(safeResolve(dir, runId), itemPath);
   it('Test Artifact Upload Blob Unsafe Path', async () => {
-    const res = fs.readFileSync('package.json');
+    const res = await request(app)
+      .put(`/upload/${runId}?itemPath=${itemPath}`)
+      .send(content)
+      .expect(200);
 
-    const response = await request(app).put(`/upload/${runId}?itemPath=${itemPath}`)
-      .attach('file', res, {
-        filename,
-      });
-
-    expect(response.statusCode).toBe(200);
+    expect(res.statusCode).toBe(200);
     expect(fs.existsSync(expectFileName)).toBeTruthy();
   });
 
   it('Test Download Artifact File Unsafe Path', async () => {
-    const response = await request(app).get(`/artifact/${runId}/${itemPath}`);
-    expect(response.statusCode).toBe(404);
+    const res = await request(app).get(`/artifact/${runId}/${itemPath}`);
+    expect(res.statusCode).toBe(404);
   });
 });

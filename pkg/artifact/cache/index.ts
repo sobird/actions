@@ -1,6 +1,6 @@
 /**
- * artifact cache server
- * Spin up a local Github artifact cache server to be used with act Github actions that uses actions/cache
+ * Artifact Cache Server
+ * Spin up a local Github artifact cache server to be used with Github actions that uses actions/cache
  *
  * @see https://github.com/sp-ricard-valverde/github-act-cache-server
  * @see https://github.com/JEFuller/artifact-server/blob/main/index.js
