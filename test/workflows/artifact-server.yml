@@ -19,6 +19,7 @@ jobs:
         with:
           name: test-artifact
           path: upload/world.txt
+          overwrite: true
 
       - uses: actions/download-artifact@v4
         with:

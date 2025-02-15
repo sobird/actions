@@ -330,7 +330,11 @@ class Artifact {
 
     // Delete Artifact
     router.post('/DeleteArtifact', bodyParser.json(), (req, res) => {
-      const { workflowRunBackendId, name } = req.body;
+      const {
+        workflow_run_backend_id: workflowRunBackendId,
+        // workflow_job_run_backend_id: workflowJobRunBackendId,
+        name,
+      } = req.body;
       const runId = parseInt(workflowRunBackendId, 10);
 
       const safeRunPath = safeResolve(this.dir, runId.toString());
