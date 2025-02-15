@@ -8,11 +8,10 @@
       "name": "debug for development",
       "type": "node",
       "request": "launch",
+      "runtimeExecutable": "tsx",
       "program": "${workspaceFolder}/pkg/cmd",
-      "args": ["run", "-W", "test/workflows", "-j", "test-local-actions", "--reuse"],
-      "env": {
-        "NODE_OPTIONS": "--import=./node_modules/@sobird/ts-node/register.js"
-      }
+      "args": ["run", "-W", "test/workflows", "-j", "test-step-output", "-v"],
+      "env": {}
     },
     {
       "name": "Debug job uses",

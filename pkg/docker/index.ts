@@ -73,7 +73,20 @@ export class Docker extends Dockerode {
       return fs.existsSync(p);
     });
 
-    return socketPath ? (socketPath.startsWith('//./') ? 'npipe://' : 'unix://') + socketPath : '';
+    for (const p of Docker.SocketLocations) {
+
+      try {
+        fs.accessSync(p, fs.constants.F_OK); // 检查文件是否存在
+        if (p.startsWith('\\\\.\\')) {
+          return `npipe://${p}`;
+        }
+        return `unix://${p}`;
+      } catch (err) {
+        // 文件不存在，继续检查下一个路径
+      }
+    }
+
+    return ''
   }
 
   // 检查socketPath是否是有效的Docker主机URI
