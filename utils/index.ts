@@ -21,4 +21,4 @@ export { assignIgnoreCase } from './assignIgnoreCase';
 export { trimSuffix } from './trimSuffix';
 export { trimPrefix } from './trimPrefix';
 export { isExecutable } from './isExecutable';
-export { createSha1Hash } from './hash';
+export { createSha1Hash, createFnv1aHash } from './hash';

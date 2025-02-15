@@ -549,8 +549,8 @@ class Runner implements Omit<Options, ''> {
     const ACTIONS_RUNTIME_URL = Constants.Actions.RuntimeUrl;
     const ACTIONS_RUNTIME_TOKEN = Constants.Actions.RuntimeToken;
     if (artifactPath && !this.context.env[ACTIONS_RUNTIME_URL]) {
-      const artifact = new Artifact(artifactPath, artifactAddr, artifactPort);
-      const actionsRuntimeUrl = await artifact.serve();
+      const artifact = new Artifact(artifactPath);
+      const actionsRuntimeUrl = await artifact.serve(artifactPort, artifactAddr);
       logger.info('Artifact Server address:', actionsRuntimeUrl);
       this.context.env[ACTIONS_RUNTIME_URL] = actionsRuntimeUrl;
 

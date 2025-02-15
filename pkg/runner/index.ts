@@ -17,7 +17,7 @@ import Config from '@/pkg/runner/config';
 import Context from '@/pkg/runner/context';
 import StepAction from '@/pkg/workflow/job/step/action';
 import Strategy from '@/pkg/workflow/job/strategy';
-import { createSafeName, assignIgnoreCase } from '@/utils';
+import { createSafeName, assignIgnoreCase, createFnv1aHash } from '@/utils';
 
 import Container from './container';
 import DockerContainer from './container/docker';
@@ -78,6 +78,10 @@ class Runner {
     context.github.job = jobId;
     context.github.workflow = workflow.name || workflow.file || '';
     context.github.workflow_sha = workflow.sha || '';
+
+    // auto gen runId
+    const runId = createFnv1aHash(`${context.github.repository}${context.github.workflow}${context.github.workflow_sha}`).toString();
+    context.github.run_id = context.github.run_id || runId;
 
     // strategy context
     context.strategy['fail-fast'] = job.strategy['fail-fast'];
