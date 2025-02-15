@@ -5,46 +5,25 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "debug for development",
+      "name": "debug actions run",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "tsx",
       "program": "${workspaceFolder}/pkg/cmd",
-      "args": ["run", "-W", "test/workflows", "-j", "test-step-output", "-v"],
+      "args": ["run", "-W", "test/workflows", "-j", "debug-job", "-v"],
       "env": {}
     },
     {
-      "name": "Debug job uses",
+      "name": "debug a file",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/cmd",
-      "args": ["run", "-j", "test-job-uses"],
-      "env": {
-        "NODE_OPTIONS": "--import=./node_modules/@sobird/ts-node/register.js"
-      }
-    },
-    {
-      "name": "Debug actions cache",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/pkg/cmd",
-      "args": ["run", "-j", "build-and-publish-npm", "--reuse", "--image", "-self-hosted", "--no-bind-workdir"],
-      "env": {
-        "NODE_OPTIONS": "--import=./node_modules/@sobird/ts-node/register.js"
-      }
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Test",
       "skipFiles": [
         "<node_internals>/**"
       ],
+      "runtimeExecutable": "tsx",
       "program": "${file}",
       // "preLaunchTask": "tsc:build - tsconfig.json",
-      "env": {
-        "NODE_OPTIONS": "--import=./node_modules/@sobird/ts-node/register.js"
-      },
+      "env": {},
       "autoAttachChildProcesses": true
     },
   ]

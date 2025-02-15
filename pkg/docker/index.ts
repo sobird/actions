@@ -69,12 +69,7 @@ export class Docker extends Dockerode {
       return process.env.DOCKER_HOST;
     }
 
-    const socketPath = Docker.SocketLocations.find((p) => {
-      return fs.existsSync(p);
-    });
-
     for (const p of Docker.SocketLocations) {
-
       try {
         fs.accessSync(p, fs.constants.F_OK); // 检查文件是否存在
         if (p.startsWith('\\\\.\\')) {
@@ -86,22 +81,25 @@ export class Docker extends Dockerode {
       }
     }
 
-    return ''
+    return '';
   }
 
-  // 检查socketPath是否是有效的Docker主机URI
+  // 检查daemonPath是否是有效的Docker主机URI
 
   /**
- * This function, `isHostURI`, takes a string argument `socketPath`. It checks if the
- * socketPath` is a valid Docker host URI. It does this by checking if the scheme of the URI (the
- * part before "://") contains only alphabetic characters. If it does, the function returns true,
- * indicating that the `socketPath` is a Docker host URI. If it doesn't, or if the "://" delimiter
- * is not found in the `socketPath`, the function returns false.
- */
-  static isHostURI(socketPath: string) {
-    const index = socketPath.indexOf('://');
+   * This function, `isHostURI`, takes a string argument `daemonPath`. It checks if the
+   * daemonPath` is a valid Docker host URI. It does this by checking if the scheme of the URI (the
+   * part before "://") contains only alphabetic characters. If it does, the function returns true,
+   * indicating that the `daemonPath` is a Docker host URI. If it doesn't, or if the "://" delimiter
+   * is not found in the `daemonPath`, the function returns false.
+   */
+  static isHostURI(daemonPath: string) {
+    if (!daemonPath) {
+      return false;
+    }
+    const index = daemonPath.indexOf('://');
     if (index !== -1) {
-      const scheme = socketPath.substring(0, index);
+      const scheme = daemonPath.substring(0, index);
       return /^[A-Za-z]+$/.test(scheme);
     }
     return false;
@@ -110,10 +108,7 @@ export class Docker extends Dockerode {
   static SocketAndHost(containerSocket: string = '') {
     logger.debug('Handling container host and socket');
 
-    let dockerHost = '';
-
-    // Prefer DOCKER_HOST, don't override it
-    dockerHost = Docker.Host();
+    let dockerHost = Docker.Host();
 
     const socketHost = {
       socket: containerSocket,
