@@ -149,6 +149,17 @@ The job was not started because recent account payments have failed or your spen
 You've used 100% of included services for GitHub Actions.
 To continue using Actions & Packages uninterrupted, update your spending limit.
 
+* Error: Could not locate the bindings file. Tried:
+ → \node_modules\.pnpm\better-sqlite3@11.8.1\node_modules\better-sqlite3\build\better_sqlite3.node
+
+```sh
+cd node_modules/better-sqlite3
+npm run build-release
+cd ../..
+```
+[issues 886](https://github.com/WiseLibs/better-sqlite3/issues/866)
+
+
 <!-- Badges -->
 [npm]: https://img.shields.io/npm/v/@sobird/actions.svg
 [npm-url]: https://www.npmjs.com/package/@sobird/actions
