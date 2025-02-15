@@ -1,4 +1,4 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env node
 
 import { Command } from '@commander-js/extra-typings';
 
@@ -27,4 +27,9 @@ program.addCommand(daemonCommand);
 program.addCommand(configCommand);
 program.addCommand(runCommand);
 
-program.parse(process.argv);
+try {
+  program.exitOverride();
+  program.parse(process.argv);
+} catch (err) {
+  // custom processing...
+}
