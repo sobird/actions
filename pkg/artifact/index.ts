@@ -263,14 +263,14 @@ class Artifact {
 
     // 列出 Artifacts
     router.post('/ListArtifacts', bodyParser.json(), (req, res) => {
-      this.logger.error('req.body', req.body);
       const {
         workflow_run_backend_id: workflowRunBackendId,
         workflow_job_run_backend_id: workflowJobRunBackendId,
         name_filter: nameFilter,
-        id_filter: idFilter,
+        // id_filter: idFilter,
       } = req.body;
       const runId = parseInt(workflowRunBackendId, 10);
+      const idFilter = parseInt(req.body.id_filter, 10);
 
       const safePath = safeResolve(this.dir, runId.toString());
       const entries = fs.readdirSync(safePath);
@@ -283,10 +283,12 @@ class Artifact {
         }).map((entry) => {
           const filename = path.join(safePath, entry);
           const stats = fs.statSync(filename);
+          const fileId = createFnv1aHash(filename);
+
           return {
             workflow_run_backend_id: workflowRunBackendId,
             workflow_job_run_backend_id: workflowJobRunBackendId,
-            databaseId: idFilter,
+            databaseId: fileId,
             name: entry,
             size: stats.size,
             createdAt: stats.mtime.toISOString(),
@@ -298,8 +300,11 @@ class Artifact {
 
     // Get SignedArtifact URL
     router.post('/GetSignedArtifactURL', bodyParser.json(), (req, res) => {
-      this.logger.error('req.body', req.body);
-      const { workflowRunBackendId, name } = req.body;
+      const {
+        workflow_run_backend_id: workflowRunBackendId,
+        // workflow_job_run_backend_id: workflowJobRunBackendId,
+        name,
+      } = req.body;
       const runId = parseInt(workflowRunBackendId, 10);
 
       const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
@@ -314,7 +319,7 @@ class Artifact {
         const { runId, artifactName } = verifySignature(req, 'DownloadArtifact');
 
         const safeRunPath = safeResolve(this.dir, runId.toString());
-        const safePath = safeResolve(safeRunPath, `${artifactName}.zip`);
+        const safePath = safeResolve(safeRunPath, artifactName);
 
         const file = fs.createReadStream(safePath);
         file.pipe(res);
