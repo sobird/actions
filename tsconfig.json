@@ -111,16 +111,6 @@
       }
     ]
   },
-  "include": ["next-env.d.ts", "**/*", "**/*.tsx", ".next/types/**/*.ts", ".eslintrc.cjs", "rollup.config.js"],
-  "exclude": ["node_modules", "dist"],
-  "ts-node": { 
-    "esm": true,
-    "experimentalSpecifierResolution": "node",
-    "transpileOnly": true,
-    "require": ["tsconfig-paths/register"],
-    "compilerOptions": {
-      "sourceMap": false,
-      // "module": "commonjs"
-    }
-  }
+  "include": ["next-env.d.ts", "**/*", "**/*.tsx", ".next/types/**/*.ts", ".eslintrc.cjs"],
+  "exclude": ["node_modules", "dist"]
 }
