@@ -8,13 +8,13 @@
     "actions": "./index.ts"
   },
   "scripts": {
-    "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",
     "build": "rollup -c --environment NODE_ENV:production",
     "test": "vitest",
-    "prepublishOnly": "npm run build",
-    "preversion": "node -v",
-    "version": "git add -A .",
-    "postversion": "git push && git push --tags"
+    "prepublishOnly": "tsx scripts/prepublish.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sobird/actions.git"
   },
   "keywords": [
     "actions",

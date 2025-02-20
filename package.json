@@ -15,6 +15,7 @@
     "dev:runner": "rollup -cw --environment NODE_ENV:development",
     "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",
     "build:actions": "pnpm -C pkg/cmd build",
+    "publish:actions": "pnpm -C pkg/cmd publish",
     "eslint:fix": "eslint src --fix",
     "test": "vitest",
     "cmd": "tsx pkg/cmd",
