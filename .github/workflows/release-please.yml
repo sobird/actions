@@ -1,7 +1,7 @@
 on:
-  # push:
-  #   branches:
-  #     - master
+  push:
+    branches:
+      - master
   workflow_dispatch:
 
 permissions:
@@ -14,7 +14,7 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: google-github-actions/release-please-action@v4
+      - uses: googleapis/release-please-action@v4
         id: release
         with:
           # this assumes that you have created a personal access token
@@ -24,33 +24,48 @@ jobs:
           # this is a built-in strategy in release-please, see "Action Inputs"
           # for more options
           release-type: node
+
       - name: Checkout
         if: ${{ steps.release.outputs.release_created }}
         uses: actions/checkout@v4
-      - name: Use Node
+
+      - name: Install pnpm
+        if: ${{ steps.release.outputs.release_created }}
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install Node.js
         if: ${{ steps.release.outputs.release_created }}
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .node-version
           registry-url: https://registry.npmjs.org/
-      - name: Restore Yarn Cache
+
+      - name: Restore Cache
         if: ${{ steps.release.outputs.release_created }}
-        id: yarn-cache
+        id: dependencies-cache
         uses: actions/cache@v4
         with:
           path: |
             **/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-              ${{ runner.os }}-yarn-
+              ${{ runner.os }}-pnpm-
+
       - name: Install Dependencies 🔧
-        if: steps.yarn-cache.outputs.cache-hit != 'true' && ${{ steps.release.outputs.release_created }}
+        if: ${{ steps.dependencies-cache.outputs.cache-hit != 'true' && steps.release.outputs.release_created }}
         run: |
-          yarn
+          pnpm install
+
       - name: Build ☕️
         if: ${{ steps.release.outputs.release_created }}
         run: |
           yarn build
+
+      - name: Publish
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
           cd dist
           npm publish --access public
         env:

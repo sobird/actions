@@ -1,14 +1,14 @@
 name: Continuous Integration
 
 on:
-  release:
-    types: [published]
+  # release:
+  #   types: [published]
     
 # on:
 #   push:
 #     branches: [ "master" ]
-#   pull_request:
-#     branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
 
 jobs:
   unit-test:
