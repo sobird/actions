@@ -10,6 +10,7 @@
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
+import replace from '@rollup/plugin-replace';
 import terser from '@rollup/plugin-terser';
 import { defineConfig } from 'rollup';
 import clear from 'rollup-plugin-clear';
@@ -49,6 +50,14 @@ export default (env) => {
         clear({
           targets: [DIST],
           watch: false,
+        }),
+        replace({
+          delimiters: ['', ''],
+          values: {
+            '#!/usr/bin/env tsx': '#!/usr/bin/env node',
+            '"actions": "./index.ts"': '"actions": "./dist/index.js"',
+          },
+          preventAssignment: true,
         }),
         external({
           includeDependencies: true,

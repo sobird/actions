@@ -1,7 +1,7 @@
 {
   "name": "actions",
   "version": "0.0.3",
-  "description": "Impl Actions runner using typescript",
+  "description": "Impl Github Actions & Runner(Run GitHub actions locally) using typescript",
   "type": "module",
   "main": "index.js",
   "bin": {
@@ -25,6 +25,10 @@
     "preversion": "",
     "version": "git add -A .",
     "postversion": "git push && git push --tags"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sobird/actions.git"
   },
   "keywords": [
     "actions",
@@ -78,6 +82,7 @@
     "@rollup/plugin-commonjs": "^25.0.8",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^6.0.2",
     "@rollup/plugin-terser": "^0.4.4",
     "@types/better-sqlite3": "^7.6.12",
     "@types/body-parser": "^1.19.5",
