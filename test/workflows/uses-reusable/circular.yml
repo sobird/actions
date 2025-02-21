@@ -1,19 +1,20 @@
-name: simple call reusable workflow
+name: call circular reusable workflow
 
 on: 
   push:
     branches:
       - master
+  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
-  test-call-local-reusable:
+  call-reusable-workflow-job:
     strategy:
       matrix:
         os: ['ubuntu-latest']
         node: [20]
       fail-fast: false
     # Cannot define both `uses` and `steps` at the same time for the following jobs: job-uses
-    uses: ./test/workflows/workflow_call/simple.yml
+    uses: ./test/workflows/workflow_call/circular.yml

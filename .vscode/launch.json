@@ -10,7 +10,7 @@
       "request": "launch",
       "runtimeExecutable": "tsx",
       "program": "${workspaceFolder}/pkg/cmd",
-      "args": ["run", "-W", "test/workflows", "-j", "debug-job", "-v"],
+      "args": ["run", "-W", "test/workflows/uses-reusable/circular.yml", "-j", "call-reusable-workflow-job", "--image", "-self-hosted", "-v"],
       "env": {}
     },
     {

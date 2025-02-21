@@ -1,0 +1,14 @@
+name: circular workflow_call
+on: 
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  circular-reusable-workflow-job:
+    uses: ./test/workflows/uses-reusable/circular.yml

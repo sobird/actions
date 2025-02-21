@@ -18,6 +18,7 @@ class Steps {
 
   constructor(private steps: StepProps[] = []) {
     if (!steps || steps.length === 0) {
+      // 实例化时无需打印此信息，真正要执行时再打印
       // logger.debug('No steps found in composite action');
       return;
     }
