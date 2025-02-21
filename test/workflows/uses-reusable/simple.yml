@@ -1,5 +1,5 @@
-name: Reusable Workflow Test
-run-name: reusable workflows in the same repository ${{ github.event }}
+name: simple call reusable workflow
+
 on: 
   push:
     branches:
@@ -9,11 +9,11 @@ permissions:
   contents: read
 
 jobs:
-  test-job-uses:
+  test-call-local-reusable:
     strategy:
       matrix:
         os: ['ubuntu-latest']
         node: [20]
       fail-fast: false
     # Cannot define both `uses` and `steps` at the same time for the following jobs: job-uses
-    uses: ./.github/workflows/test-reusable-workflow.yml
+    uses: ./test/workflows/workflow_call/simple.yml
