@@ -222,7 +222,7 @@ abstract class Action extends Yaml {
         if (!image) {
           throw new Error(`You are using a Container Action but an image is not provided in ${action.Dir}.`);
         } else {
-          const DockerAction = (await import('./factory/docker')).default;
+          const DockerAction = (await import('./docker')).default;
           return new DockerAction(action);
         }
       }
@@ -231,14 +231,14 @@ abstract class Action extends Yaml {
         if (!main) {
           throw new Error(`You are using a JavaScript Action but there is not an entry JavaScript file provided in ${action.Dir}.`);
         } else {
-          const NodeJSAction = (await import('./factory/nodejs')).default;
+          const NodeJSAction = (await import('./nodejs')).default;
           return new NodeJSAction(action);
         }
       } else if (using === 'composite') {
         if (!runs.steps) {
           throw new Error(`You are using a composite action but there are no steps provided in ${action.Dir}.`);
         } else {
-          const CompositeAction = (await import('./factory/composite')).default;
+          const CompositeAction = (await import('./composite')).default;
           return new CompositeAction(action);
         }
       }

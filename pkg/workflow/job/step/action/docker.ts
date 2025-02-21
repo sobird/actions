@@ -1,6 +1,6 @@
 import Executor from '@/pkg/common/executor';
 import { ActionProps } from '@/pkg/runner/action';
-import DockerAction from '@/pkg/runner/action/factory/docker';
+import DockerAction from '@/pkg/runner/action/docker';
 
 import StepAction from '.';
 

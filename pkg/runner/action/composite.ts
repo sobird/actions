@@ -1,6 +1,6 @@
 import Executor from '@/pkg/common/executor';
 
-import Action from '..';
+import Action from '.';
 
 class CompositeAction extends Action {
   protected main() {

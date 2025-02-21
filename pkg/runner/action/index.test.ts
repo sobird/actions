@@ -6,8 +6,6 @@ import Runner from '@/pkg/runner';
 import DockerContainer from '@/pkg/runner/container/docker';
 import { createEachDir } from '@/utils/test';
 
-import ActionFactory from '.';
-
 vi.mock('@/pkg/runner');
 vi.mock('@/pkg/runner/container/docker');
 

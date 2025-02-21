@@ -10,7 +10,7 @@ import Runner from '@/pkg/runner';
 import DockerContainer from '@/pkg/runner/container/docker';
 import { createSafeName } from '@/utils';
 
-import Action from '..';
+import Action from '.';
 
 const logger = log4js.getLogger();
 

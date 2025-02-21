@@ -8,7 +8,7 @@ import path from 'node:path';
 
 import Executor from '@/pkg/common/executor';
 
-import Action, { ActionProps } from '..';
+import Action, { ActionProps } from '.';
 
 interface Output {
   description: string;

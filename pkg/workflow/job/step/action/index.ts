@@ -8,7 +8,6 @@ import { parse } from 'yaml';
 import Executor, { Conditional } from '@/pkg/common/executor';
 import Action, { ActionProps } from '@/pkg/runner/action';
 import ActionCommandFile from '@/pkg/runner/action/command/file';
-// import ActionFactory from '@/pkg/runner/action/factory';
 import Step from '@/pkg/workflow/job/step';
 import { withTimeout } from '@/utils';
 
