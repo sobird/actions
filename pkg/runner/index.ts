@@ -515,6 +515,17 @@ class Runner {
 
     this.masks.push(...masks);
   }
+
+  containsCaller(target: Runner) {
+    let current = this.caller;
+    while (current) {
+      if (current.run.job.uses.toString() === target.run.job.uses.toString()) {
+        return true;
+      }
+      current = current.caller;
+    }
+    return false;
+  }
 }
 
 export default Runner;

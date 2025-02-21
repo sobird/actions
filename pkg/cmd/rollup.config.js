@@ -77,7 +77,7 @@ export default (env) => {
           strictRequires: true,
         }),
         json(),
-        // terser(),
+        terser(),
         copy({
           targets: [
             { src: '../config/default.yaml', dest: DIST },

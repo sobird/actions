@@ -76,6 +76,12 @@ export default class Plan {
             const runner = new Runner(new Run(jobId, workflowCloned), config);
             runner.caller = caller;
 
+            // 跳出 workflow_call 递归调用
+            if (caller?.containsCaller(runner)) {
+              logger.error('Workflow is not valid: detected cyclic reference', caller.run.jobId, '<=>', runner.run.jobId);
+              return new Executor();
+            }
+
             /** @todo just todo test */
             // runner.container = caller?.container;
 
