@@ -24,7 +24,7 @@ import DockerContainer from './container/docker';
 import HostedContainer from './container/hosted';
 import Executor from '../common/executor';
 import Expression from '../expression';
-import { Run } from '../workflow/plan';
+import Run from '../workflow/plan/run';
 
 const SetEnvBlockList = ['NODE_OPTIONS'];
 
