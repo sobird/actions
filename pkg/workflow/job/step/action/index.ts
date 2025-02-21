@@ -8,7 +8,7 @@ import { parse } from 'yaml';
 import Executor, { Conditional } from '@/pkg/common/executor';
 import Action, { ActionProps } from '@/pkg/runner/action';
 import ActionCommandFile from '@/pkg/runner/action/command/file';
-import ActionFactory from '@/pkg/runner/action/factory';
+// import ActionFactory from '@/pkg/runner/action/factory';
 import Step from '@/pkg/workflow/job/step';
 import { withTimeout } from '@/utils';
 
@@ -178,20 +178,20 @@ abstract class StepAction extends Step {
       runner.context.github.action_path = actionContainerDir;
 
       if (ymlEntry) {
-        this.action = ActionFactory.create(parse(ymlEntry.body));
+        this.action = await Action.create(parse(ymlEntry.body));
         this.action.Dir = actionContainerDir;
         return;
       }
       const yamlEntry = await runner.container?.getContent(path.join(actionDir, 'action.yaml'));
       if (yamlEntry) {
-        this.action = ActionFactory.create(parse(yamlEntry.body));
+        this.action = await Action.create(parse(yamlEntry.body));
         this.action.Dir = actionContainerDir;
         return;
       }
 
       const dockerFileEntry = await runner.container?.getContent(path.join(actionDir, 'Dockerfile'));
       if (dockerFileEntry) {
-        this.action = ActionFactory.create({
+        this.action = await Action.create({
           name: '(Synthetic)',
           description: 'docker file action',
           runs: {
@@ -212,17 +212,17 @@ abstract class StepAction extends Step {
   private static async PickAction(read: (filename: string) => Promise<string | false> | string | false) {
     const yml = await read('action.yml');
     if (yml) {
-      return ActionFactory.create(parse(yml));
+      return Action.create(parse(yml));
     }
 
     const yaml = await read('action.yaml');
     if (yaml) {
-      return ActionFactory.create(parse(yaml));
+      return Action.create(parse(yaml));
     }
 
     const dockerfile = await read('Dockerfile');
     if (dockerfile) {
-      return ActionFactory.create({
+      return Action.create({
         name: '(Synthetic)',
         description: 'docker file action',
         runs: {

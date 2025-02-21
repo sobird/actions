@@ -21,19 +21,19 @@ const step = new StepActionScript({
   },
 });
 
+runner.stepAction = step;
+
 describe('step action script test', async () => {
   it('run normal main script', async () => {
     runner.container = hostedContainer;
     const containerExecMock = vi.spyOn(runner.container, 'exec').mockImplementation((command, options) => {
       console.log('command', command);
       console.log('options', options);
-
       return new Executor();
     });
 
     const main = step.main();
     await main.execute(runner);
-
     expect(containerExecMock).toHaveBeenCalled();
   });
 });
