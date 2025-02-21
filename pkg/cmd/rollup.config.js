@@ -63,7 +63,7 @@ export default (env) => {
           // builtins: true, // 自动处理 Node.js 内置模块
           deps: true, // 自动处理 dependencies
           peerDeps: true, // 自动处理 peerDependencies
-          devDeps: true,
+          // devDeps: true,
         }),
         nodeResolve({
           preferBuiltins: true,
@@ -77,7 +77,7 @@ export default (env) => {
           strictRequires: true,
         }),
         json(),
-        terser(),
+        // terser(),
         copy({
           targets: [
             { src: '../config/default.yaml', dest: DIST },
