@@ -1,5 +1,4 @@
 /* eslint-disable class-methods-use-this */
-import fs from 'node:fs';
 import path from 'node:path';
 
 import log4js from 'log4js';
@@ -8,7 +7,7 @@ import { parse } from 'yaml';
 import Executor, { Conditional } from '@/pkg/common/executor';
 import Action, { ActionProps } from '@/pkg/runner/action';
 import ActionCommandFile from '@/pkg/runner/action/command/file';
-import Step from '@/pkg/workflow/job/step';
+import Step, { StepProps } from '@/pkg/workflow/job/step';
 import { withTimeout } from '@/utils';
 
 const logger = log4js.getLogger();
@@ -205,61 +204,29 @@ abstract class StepAction extends Step {
     });
   }
 
-  /**
-   * @deprecated
-   */
-  private static async PickAction(read: (filename: string) => Promise<string | false> | string | false) {
-    const yml = await read('action.yml');
-    if (yml) {
-      return Action.create(parse(yml));
+  static async create(step: StepProps) {
+    if (!step.run && !step.uses) {
+      throw Error('every step must define a `uses` or `run` key');
     }
 
-    const yaml = await read('action.yaml');
-    if (yaml) {
-      return Action.create(parse(yaml));
+    if (step.run && step.uses) {
+      throw Error('a step cannot have both the `uses` and `run` keys');
     }
 
-    const dockerfile = await read('Dockerfile');
-    if (dockerfile) {
-      return Action.create({
-        name: '(Synthetic)',
-        description: 'docker file action',
-        runs: {
-          using: 'docker',
-          image: 'Dockerfile',
-        },
-      } as ActionProps);
+    if (step.uses) {
+      if (step.uses.startsWith('docker://')) {
+        const StepActionDocker = (await import('./docker')).default;
+        return new StepActionDocker(step);
+      } if (step.uses.startsWith('./') || step.uses.startsWith('.\\')) {
+        const StepActionLocal = (await import('./local')).default;
+        return new StepActionLocal(step);
+      }
+      const StepActionRemote = (await import('./remote')).default;
+      return new StepActionRemote(step);
     }
-    const fullPath = 'fullPath';
-    throw Error(`Can't find 'action.yml', 'action.yaml' or 'Dockerfile' under '${fullPath}'. Did you forget to run actions/checkout before running your local action?`);
-  }
 
-  /**
-   * @deprecated
-   */
-  private static async ScanAction(actionDir: string) {
-    return this.PickAction((filename) => {
-      if (!fs.existsSync(actionDir)) {
-        return false;
-      }
-
-      const stat = fs.statSync(actionDir);
-
-      if (stat.isDirectory()) {
-        const file = path.join(actionDir, filename);
-        if (fs.existsSync(file)) {
-          return fs.readFileSync(file, 'utf8');
-        }
-      }
-
-      if (stat.isFile()) {
-        if (fs.existsSync(actionDir)) {
-          return fs.readFileSync(actionDir, 'utf8');
-        }
-      }
-
-      return false;
-    });
+    const StepActionScript = (await import('./script')).default;
+    return new StepActionScript(step);
   }
 }
 
