@@ -15,7 +15,7 @@ import terser from '@rollup/plugin-terser';
 import { defineConfig } from 'rollup';
 import clear from 'rollup-plugin-clear';
 import copy from 'rollup-plugin-copy';
-import external from 'rollup-plugin-peer-deps-external';
+import nodeExternals from 'rollup-plugin-node-externals';
 import typescript from 'rollup-plugin-typescript2';
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -59,8 +59,11 @@ export default (env) => {
           },
           preventAssignment: true,
         }),
-        external({
-          includeDependencies: true,
+        nodeExternals({
+          // builtins: true, // 自动处理 Node.js 内置模块
+          deps: true, // 自动处理 dependencies
+          peerDeps: true, // 自动处理 peerDependencies
+          devDeps: true,
         }),
         nodeResolve({
           preferBuiltins: true,
@@ -83,6 +86,7 @@ export default (env) => {
           copyOnce: env.watch,
         }),
       ],
+      // external: [...Object.keys(pkg.dependencies), ...Object.keys(pkg2.dependencies)],
     },
   ]);
 };

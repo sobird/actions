@@ -15,7 +15,6 @@ import terser from '@rollup/plugin-terser';
 import { defineConfig } from 'rollup';
 import clear from 'rollup-plugin-clear';
 import copy from 'rollup-plugin-copy';
-import external from 'rollup-plugin-peer-deps-external';
 import typescript from 'rollup-plugin-typescript2';
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -50,9 +49,6 @@ export default (env) => {
         clear({
           targets: [DIST],
           watch: false,
-        }),
-        external({
-          includeDependencies: true,
         }),
         nodeResolve({
           preferBuiltins: true,
