@@ -590,18 +590,20 @@ class DockerContainer extends Container {
         AttachStderr: true,
       });
 
-      const stream = await exec.start({
+      const stream = (await exec.start({
         hijack: true,
         stdin: true,
         // Detach: true,
         // https://github.com/apocas/dockerode/issues/736
         Tty: isatty,
-      });
+      }));
 
       if (isatty) {
-        stream.pipe(this.options.stdout);
+        stream.pipe(process.stdout);
       } else {
-        stream.pipe(new DockerDemuxer(createLineWriteStream()));
+        const child = stream.pipe(new DockerDemuxer());
+        child.stdout.pipe(this.options.stdout);
+        child.stderr.pipe(this.options.stderr);
       }
 
       await new Promise((resolve, reject) => {

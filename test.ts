@@ -1,27 +1,77 @@
+/* eslint-disable no-underscore-dangle */
 import { spawn } from 'node:child_process';
 import tty from 'node:tty';
+import { Transform, TransformCallback } from 'stream';
 
 import Docker from 'dockerode';
 
 import { createLineWriteStream } from './pkg/common/lineWritable';
 import DockerDemuxer from './pkg/docker/demuxer';
 
-const res = spawn('tsx', ['./test/test.ts'], {});
-// console.log('res', res);
+class TestTransform extends Transform {
+  buffer = Buffer.alloc(0);
 
-const str = createLineWriteStream((line) => {
-  console.log('line', line);
-});
+  _transform(chunk: Buffer, encoding: string, callback: TransformCallback) {
+    // 将新数据追加到缓冲区
+    this.buffer = Buffer.concat([this.buffer, chunk]);
 
-str.on('pipe', (data) => {
-  console.log('data', data);
-});
+    // 解析流数据
+    while (this.buffer.length >= 8) {
+      const header = this.buffer.subarray(0, 8);
+      const type = header.readUInt8(0); // 流类型 (0: stdin, 1: stdout, 2: stderr)
+      const length = header.readUInt32BE(4); // 数据长度
 
-str.on('command', (data) => {
-  console.log('command', data);
-});
+      // 检查是否有足够的数据
+      if (this.buffer.length < 8 + length) {
+        break;
+      }
 
-res.stdout.pipe(str);
+      // 提取数据
+      const payload = this.buffer.subarray(8, 8 + length);
+      this.buffer = this.buffer.subarray(8 + length);
+
+      // 根据流类型处理数据
+      if (type === 1) {
+        // this.push(payload);
+        this.stdout.write(payload);
+      } else if (type === 2) {
+        // this.push(payload);
+        this.stderr.write(payload);
+      }
+    }
+
+    callback();
+  }
+
+  _flush(callback: TransformCallback) {
+    // 处理剩余的数据（如果有）
+    if (this.buffer.length > 0) {
+      console.warn('Remaining data in buffer:', this.buffer.toString());
+    }
+    callback();
+  }
+}
+
+const stdioTransform = new DockerDemuxer();
+const stream = process.stdin.pipe(stdioTransform);
+
+stream.stdout.pipe(process.stdout);
+stream.stderr.pipe(process.stderr);
+
+// const res = spawn('tsx', ['./test/test.ts'], {});
+// // console.log('res', res);
+
+// const str = createLineWriteStream((line) => {
+//   console.log('line', line);
+// });
+
+// str.on('command', (data) => {
+//   console.log('command', data);
+// });
+
+// res.stdout.pipe(str);
+
+// process.stdin.pipe(str);
 // res.stderr.pipe(process.stderr);
 // const docker = new Docker();
 

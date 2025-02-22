@@ -550,6 +550,10 @@ class Runner {
     process.stderr.write(message + os.EOL);
   }
 
+  error(message: string) {
+    //
+  }
+
   containsCaller(target: Runner) {
     let current = this.caller;
     while (current) {
