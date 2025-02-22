@@ -24,6 +24,7 @@ import * as tar from 'tar';
 import Executor, { Conditional } from '@/pkg/common/executor';
 import { createLineWriteStream } from '@/pkg/common/lineWritable';
 import docker from '@/pkg/docker';
+import DockerDemuxer from '@/pkg/docker/demuxer';
 import Runner from '@/pkg/runner';
 
 import Container, { FileEntry, ContainerExecOptions } from '.';
@@ -47,8 +48,6 @@ export interface DockerContainerOptions {
   cmd?: string[];
   env?: NodeJS.ProcessEnv;
   exposedPorts?: { [port: string]: {} };
-  stdout?: string;
-  stderr?: string;
   /** Automatically remove the container when it exits */
   autoRemove?: boolean;
   binds?: string[];
@@ -60,6 +59,9 @@ export interface DockerContainerOptions {
   privileged?: boolean;
   usernsMode?: string;
   networkAliases?: string[];
+
+  stdout?: NodeJS.WritableStream;
+  stderr?: NodeJS.WritableStream;
 }
 
 const isatty = tty.isatty(process.stdout.fd);
@@ -596,30 +598,13 @@ class DockerContainer extends Container {
         Tty: isatty,
       });
 
-      // stream.on('data', (chunk) => {
-      //   console.log('chunk', chunk.toString());
-      // });
-
-      // const out = new Writable({
-      //   write: (chunk: Buffer, enc, next) => {
-      //     // console.log('chunk', chunk.subarray(8).toString());
-
-      //     next();
-      //   },
-      // });
-
-      stream.pipe(createLineWriteStream((line) => {
-        console.log(line);
-      }));
-
-      // const rl = readline.createInterface({
-      //   input: stream,
-      //   crlfDelay: Infinity,
-      // });
-
-      // rl.on('line', (line) => {
-      //   console.log(line);
-      // });
+      if (isatty) {
+        stream.pipe(createLineWriteStream((line) => {
+          console.log('line:', line);
+        }));
+      } else {
+        stream.pipe(new DockerDemuxer(createLineWriteStream()));
+      }
 
       await new Promise((resolve, reject) => {
         stream.on('end', async () => {

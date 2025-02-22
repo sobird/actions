@@ -4,5 +4,5 @@ import { logger2 } from './log4js';
 
 export const logger = log4js.getLogger();
 
-console.log(logger2);
-console.log(logger);
+console.log('test');
+console.error('error');

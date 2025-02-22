@@ -30,8 +30,10 @@ export interface HostedContainerOptions {
   name?: string;
   basedir: string;
   workdir: string;
-  stdout?: NodeJS.WritableStream;
   binds?: string[];
+
+  stdout?: NodeJS.WritableStream;
+  stderr?: NodeJS.WritableStream;
 }
 
 class HostedContainer extends Container {
@@ -192,13 +194,6 @@ class HostedContainer extends Container {
       child.stdout.pipe(createLineWriteStream((line) => {
         console.log(line);
       }));
-
-      // cp.stdout.pipe(process.stdout);
-      // cp.stderr.pipe(process.stdout);
-
-      // child.stdout.on('data', (data) => {
-      //   console.log(`stdout: ${data}`);
-      // });
 
       child.stderr.on('data', (data) => {
         console.log(`stderr: ${data}`);
