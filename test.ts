@@ -58,8 +58,8 @@ const stream = process.stdin.pipe(stdioTransform);
 stream.stdout.pipe(process.stdout);
 stream.stderr.pipe(process.stderr);
 
-// const res = spawn('tsx', ['./test/test.ts'], {});
-// // console.log('res', res);
+const child = spawn('sh', ['-c', 'echo "This is stdout" && echo "This is stderr" >&2'], {});
+// console.log('res', res);
 
 // const str = createLineWriteStream((line) => {
 //   console.log('line', line);
