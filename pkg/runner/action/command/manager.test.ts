@@ -5,7 +5,9 @@ import ActionCommandManager from './manager';
 
 vi.mock('@/pkg/runner');
 
-const runner: Runner = new (Runner as any)();
+const runner: Runner = new (Runner as any)({}, {
+  reuse: true,
+});
 const commandManager = new ActionCommandManager(runner);
 
 beforeEach(() => {
@@ -205,12 +207,36 @@ describe('::echo:: Action Command Manager Test', () => {
   });
 });
 
-describe('::add-matcher:: Action Command Manager Test', () => {
-  runner.container?.putContent('ddd', {
-    name: 'test',
-    body: 'ddd',
+describe('::add-matcher:: Action Command Manager Test', async () => {
+  const body = `
+{
+    "problemMatcher": [
+        {
+            "owner": "my-matcher",
+            "pattern": [
+                {
+                    "regexp": "^ERROR: (.+)$",
+                    "message": 1
+                }
+            ]
+        }
+    ]
+}`;
+
+  const putContentExecutor = runner.container?.putContent('.', {
+    name: 'my-matcher.json',
+    body,
   });
-  it('add matcher', () => {
-    commandManager.process('::add-matcher::package.json');
+  await putContentExecutor?.execute();
+
+  it('add matcher', async () => {
+    vi.spyOn(runner, 'addMatchers').mockImplementation(async (config) => {
+      console.log('config', config);
+    });
+
+    const result = await commandManager.process('::add-matcher::my-matcher.json');
+
+    expect(result).toBe(true);
+    expect(runner.addMatchers).toHaveBeenCalledTimes(1);
   });
 });

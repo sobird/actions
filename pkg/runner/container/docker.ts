@@ -60,8 +60,8 @@ export interface DockerContainerOptions {
   usernsMode?: string;
   networkAliases?: string[];
 
-  stdout?: NodeJS.WritableStream;
-  stderr?: NodeJS.WritableStream;
+  stdout: NodeJS.WritableStream;
+  stderr: NodeJS.WritableStream;
 }
 
 const isatty = tty.isatty(process.stdout.fd);
@@ -591,17 +591,15 @@ class DockerContainer extends Container {
       });
 
       const stream = await exec.start({
-        // hijack: true,
-        // stdin: true,
+        hijack: true,
+        stdin: true,
         // Detach: true,
         // https://github.com/apocas/dockerode/issues/736
         Tty: isatty,
       });
 
       if (isatty) {
-        stream.pipe(createLineWriteStream((line) => {
-          console.log('line:', line);
-        }));
+        stream.pipe(this.options.stdout);
       } else {
         stream.pipe(new DockerDemuxer(createLineWriteStream()));
       }

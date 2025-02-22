@@ -1,4 +1,4 @@
-import { IssueMatchersConfig, IssuePatternConfig, IssueMatcher } from './IssueMatcher';
+import { IssueMatchersConfig, IssuePatternConfig, IssueMatcher } from './issueMatcher';
 
 describe('Issue Matchers Config Validation', () => {
   it('should throw an error if loop is set on a single pattern', () => {

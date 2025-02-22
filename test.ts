@@ -10,47 +10,55 @@ const res = spawn('tsx', ['./test/test.ts'], {});
 // console.log('res', res);
 
 const str = createLineWriteStream((line) => {
-  // console.log('line', line);
+  console.log('line', line);
 });
 
-// res.stdout.pipe(str);
+str.on('pipe', (data) => {
+  console.log('data', data);
+});
+
+str.on('command', (data) => {
+  console.log('command', data);
+});
+
+res.stdout.pipe(str);
 // res.stderr.pipe(process.stderr);
-const docker = new Docker();
+// const docker = new Docker();
 
-// 容器配置
-const containerOptions = {
-  Image: 'alpine', // 使用 alpine 镜像
-  Cmd: ['tail', '-f', '/dev/null'],
-  // Cmd: ['sh', '-c', 'echo "This is stdout" && echo "This is stderr" >&2'], // 容器执行的命令
-  AttachStdout: true, // 捕获 stdout
-  AttachStderr: true, // 捕获 stderr
-  Tty: false, // 禁用 TTY（以便正确捕获输出）
-};
+// // 容器配置
+// const containerOptions = {
+//   Image: 'alpine', // 使用 alpine 镜像
+//   Cmd: ['tail', '-f', '/dev/null'],
+//   // Cmd: ['sh', '-c', 'echo "This is stdout" && echo "This is stderr" >&2'], // 容器执行的命令
+//   AttachStdout: true, // 捕获 stdout
+//   AttachStderr: true, // 捕获 stderr
+//   Tty: false, // 禁用 TTY（以便正确捕获输出）
+// };
 
-const container = await docker.createContainer(containerOptions);
+// const container = await docker.createContainer(containerOptions);
 
-// 启动容器
-await container.start();
+// // 启动容器
+// await container.start();
 
-console.log('Container started');
+// console.log('Container started');
 
-// 执行命令的配置
-const execOptions = {
-  Cmd: ['sh', '-c', 'echo "This is stdout" && echo "This is stderr" >&2'], // 要执行的命令
-  AttachStdout: true, // 捕获 stdout
-  AttachStderr: true, // 捕获 stderr
-  Tty: true, // 禁用 TTY（以便正确捕获输出）
-};
+// // 执行命令的配置
+// const execOptions = {
+//   Cmd: ['sh', '-c', 'echo "This is stdout" && echo "This is stderr" >&2'], // 要执行的命令
+//   AttachStdout: true, // 捕获 stdout
+//   AttachStderr: true, // 捕获 stderr
+//   Tty: true, // 禁用 TTY（以便正确捕获输出）
+// };
 
-// 创建 exec 实例
-const exec = await container.exec(execOptions);
+// // 创建 exec 实例
+// const exec = await container.exec(execOptions);
 
-// 启动 exec 实例
-const stream = await exec.start({ });
+// // 启动 exec 实例
+// const stream = await exec.start({ });
 
-const parse = new DockerDemuxer();
+// const parse = new DockerDemuxer();
 
-stream.pipe(parse);
+// stream.pipe(parse);
 
 // // 捕获输出
 // let output = '';

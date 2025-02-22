@@ -1,7 +1,7 @@
 import log4js from 'log4js';
 
 import Constants from '@/pkg/common/constants';
-import Runner from '@/pkg/runner';
+import type Runner from '@/pkg/runner';
 
 import ActionCommand from '.';
 import extensions from './extensions';
@@ -22,7 +22,7 @@ class ActionCommandManager {
     this.registeredCommands.add(this.stopCommand);
   }
 
-  process(line: string) {
+  async process(line: string) {
     const { runner } = this;
     if (!line) {
       return;
@@ -68,7 +68,7 @@ class ActionCommandManager {
         console.log(line);
       }
       try {
-        extension.process(this.runner, actionCommand);
+        await extension.process(this.runner, actionCommand);
       } catch (err) {
         const commandInformation = extension.echo ? line : extension.command;
         const message = `Unable to process command '${commandInformation}' successfully.`;
@@ -81,6 +81,8 @@ class ActionCommandManager {
       // Command not found
       console.warn(`Can't find command extension for ##[${actionCommand.command}.command].`);
     }
+
+    return true;
   }
 
   validateStopToken(stopToken: string) {

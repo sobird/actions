@@ -25,6 +25,7 @@ import HostedContainer from './container/hosted';
 import Executor from '../common/executor';
 import Expression from '../expression';
 import Run from '../workflow/plan/run';
+import { IssueMatchersConfig, IssueMatcherConfig } from './action/command/issueMatcher';
 
 const SetEnvBlockList = ['NODE_OPTIONS'];
 
@@ -63,6 +64,8 @@ class Runner {
    * current step
    */
   stepAction?: StepAction;
+
+  matchers: IssueMatcherConfig[] = [];
 
   constructor(public run: Run, public config: Config) {
     const { jobId, job, workflow } = run;
@@ -390,11 +393,6 @@ class Runner {
     //
   }
 
-  output(message: string) {
-    // todo something
-    process.stdout.write(message + os.EOL);
-  }
-
   get Enabled() {
     const { job } = this.run;
     const jobIf = job.if.evaluate(this);
@@ -514,6 +512,42 @@ class Runner {
     const masks = value.split(/[\r\n]/).filter((item) => { return Boolean(item.trim()); });
 
     this.masks.push(...masks);
+  }
+
+  async addMatchers(config: IssueMatchersConfig) {
+    await Executor.Mutex(new Executor(() => {
+      const newMatchers = [];
+      const newOwners = new Set();
+      for (const matcher of config.problemMatcher) {
+        newOwners.add(matcher.owner);
+        newMatchers.push(matcher);
+      }
+
+      const existingMatchers = this.matchers || [];
+      newMatchers.push(...existingMatchers.filter((x) => { return !newOwners.has(x.owner); }));
+
+      this.matchers = newMatchers;
+
+      // Fire events
+      for (const matcher of config.problemMatcher) {
+        // this._onMatcherChanged(null, new MatcherChangedEventArgs(matcher));
+      }
+
+      const owners = config.problemMatcher.map((x) => { return `'${x.owner}'`; });
+      const joinedOwners = owners.join(', ');
+      this.debug(`Added matchers: ${joinedOwners}. Problem matchers scan action output for known warning or error strings and report these inline.`);
+    })).execute();
+  }
+
+  // logger
+  output(message: string) {
+    // todo something
+    process.stdout.write(message + os.EOL);
+  }
+
+  debug(message: string) {
+    // todo something
+    process.stderr.write(message + os.EOL);
   }
 
   containsCaller(target: Runner) {
