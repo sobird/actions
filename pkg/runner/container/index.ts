@@ -148,6 +148,20 @@ export default abstract class Container {
     }
   }
 
+  async readJSON(filename: string) {
+    const content = await this.getContent(filename);
+
+    if (!content) {
+      return {};
+    }
+
+    try {
+      return JSON.parse(content.body);
+    } catch (err) {
+      return {};
+    }
+  }
+
   async readline(filename: string, callback?: (line: string) => void) {
     const archive = await this.getArchive(filename);
 
