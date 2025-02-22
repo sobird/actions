@@ -1,5 +1,6 @@
 import Runner from '@/pkg/runner';
 
+import ActionCommand from '..';
 import AddMatcherCommandExtension from './add-matcher';
 import DebugCommandExtension from './debug';
 import EchoCommandExtension from './echo';
@@ -11,12 +12,11 @@ import SetOutputCommandExtension from './output';
 import AddPathCommandExtension from './path';
 import RemoveMatcherCommandExtension from './remove-matcher';
 import SaveStateCommandExtension from './state';
-import ActionCommand from '..';
 
 export interface CommandExtension {
   command: string;
   echo: boolean;
-  process: (runner: Runner, actionCommand: ActionCommand) => void
+  process: (runner: Runner, actionCommand: ActionCommand) => void | Promise<void>
 }
 
 // todo add more

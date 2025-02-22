@@ -91,9 +91,9 @@ describe('::stop-commands:: Action Command Manager Test', () => {
     const invalidStopTokens = ['', 'pause-logging'];
 
     invalidStopTokens.forEach((stopToken) => {
-      expect(() => {
-        commandManager.process(`::stop-commands::${stopToken}`);
-      }).toThrowError();
+      expect(
+        commandManager.process(`::stop-commands::${stopToken}`),
+      ).rejects.toThrowError();
     });
   });
 
@@ -106,8 +106,8 @@ describe('::stop-commands:: Action Command Manager Test', () => {
       },
     } as any));
 
-    expect(commandManager2.process('::stop-commands::')).toBe(true);
-    expect(commandManager2.process('::stop-commands::pause-logging')).toBe(false);
+    expect(commandManager2.process('::stop-commands::')).resolves.toBe(true);
+    expect(commandManager2.process('::stop-commands::pause-logging')).resolves.toBe(false);
   });
 
   it('stop-commands with invalid token', () => {
