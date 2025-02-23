@@ -10,6 +10,7 @@
 import cp from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline';
 import tty from 'node:tty';
 
 import Dockerode, {
@@ -22,12 +23,12 @@ import log4js from 'log4js';
 import * as tar from 'tar';
 
 import Executor, { Conditional } from '@/pkg/common/executor';
-import { createLineWriteStream } from '@/pkg/common/lineWritable';
 import docker from '@/pkg/docker';
 import DockerDemuxer from '@/pkg/docker/demuxer';
 import Runner from '@/pkg/runner';
 
 import Container, { FileEntry, ContainerExecOptions } from '.';
+import OutputManager from '../outputManager';
 
 const logger = log4js.getLogger();
 
@@ -599,11 +600,24 @@ class DockerContainer extends Container {
       }));
 
       if (isatty) {
-        stream.pipe(process.stdout);
+        readline.createInterface({
+          input: stream,
+        }).on('line', async (line) => {
+          console.log('stdout', line);
+        });
       } else {
         const child = stream.pipe(new DockerDemuxer());
-        child.stdout.pipe(this.options.stdout);
-        child.stderr.pipe(this.options.stderr);
+        readline.createInterface({
+          input: child.stdout,
+        }).on('line', async (line) => {
+          console.log('stdout', line);
+        });
+
+        readline.createInterface({
+          input: child.stderr,
+        }).on('line', async (line) => {
+          console.log('stderr', line);
+        });
       }
 
       await new Promise((resolve, reject) => {
@@ -720,6 +734,7 @@ class DockerContainer extends Container {
       const { config } = runner;
       const image = runner.PlatformImage;
       const credentials = runner.Credentials;
+      const outputManager = new OutputManager(runner);
 
       logger.debug('\u{1F338}', `Start image=${image}`);
 
@@ -765,6 +780,8 @@ class DockerContainer extends Container {
           capDrop: config.containerCapDrop,
           portBindings,
           exposedPorts,
+          stdout: outputManager,
+          stderr: outputManager,
         }, config.workspace);
       });
 
@@ -794,6 +811,8 @@ class DockerContainer extends Container {
         capDrop: config.containerCapDrop,
         // portBindings: {},
         // exposedPorts: {},
+        stdout: outputManager,
+        stderr: outputManager,
       }, config.workspace);
       runner.container = dockerContainer;
 

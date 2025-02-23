@@ -23,15 +23,14 @@ jobs:
         run: |
           echo "::set-output name=var_3::$(echo var3)"
       - id: set_3
-        run: |
-          echo "::set-output name=var_4::$(echo var4)"
+        run: echo "::set-output name=var_4::$(echo var4)"
 
       - name: Print steps outputs
         run: |
           echo ${{ steps.generate_number.outputs.random_number }}
           echo ${{ steps.set_1.outputs.var_1 }}
           echo ${{ steps.set_1.outputs.var_2 }}
-
+          echo ${{ steps.set_2.outputs.var_3 }}
 
     outputs:
       generate_number: ${{ steps.generate_number.outputs.random_number }}

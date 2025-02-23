@@ -11,12 +11,12 @@ import { spawn, spawnSync } from 'node:child_process';
 // import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline';
 
 import ignore from 'ignore';
 import * as tar from 'tar';
 
 import Executor, { Conditional } from '@/pkg/common/executor';
-import { createLineWriteStream } from '@/pkg/common/lineWritable';
 import logger from '@/pkg/common/logger';
 import Runner from '@/pkg/runner';
 import { trimSuffix, createSha1Hash } from '@/utils';
@@ -191,12 +191,16 @@ class HostedContainer extends Container {
         stdio: 'pipe',
       });
 
-      child.stdout.pipe(createLineWriteStream((line) => {
-        console.log(line);
-      }));
+      readline.createInterface({
+        input: child.stdout,
+      }).on('line', async (line) => {
+        console.log('stdout', line);
+      });
 
-      child.stderr.on('data', (data) => {
-        console.log(`stderr: ${data}`);
+      readline.createInterface({
+        input: child.stderr,
+      }).on('line', async (line) => {
+        console.log('stderr', line);
       });
 
       await new Promise((resolve, reject) => {
