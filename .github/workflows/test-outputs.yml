@@ -1,0 +1,61 @@
+name: Test Outputs
+description: job and steps outputs
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  job1:
+    runs-on: self-hosted
+
+    steps:
+      - name: Generate 0 or 1
+        id: generate_number
+        run: echo "random_number=$(($RANDOM % 2))" >> $GITHUB_OUTPUT
+      - id: set_1
+        run: |
+          echo "::set-output name=var_1::$(echo var1)"
+          echo "::set-output name=var_2::$(echo var2)"
+      - id: set_2
+        run: |
+          echo "::set-output name=var_3::$(echo var3)"
+      - id: set_3
+        run: echo "::set-output name=var_4::$(echo var4)"
+
+      - name: Print steps outputs
+        run: |
+          echo ${{ steps.generate_number.outputs.random_number }}
+          echo ${{ steps.set_1.outputs.var_1 }}
+          echo ${{ steps.set_1.outputs.var_2 }}
+          echo ${{ steps.set_2.outputs.var_3 }}
+
+    outputs:
+      generate_number: ${{ steps.generate_number.outputs.random_number }}
+      variable_1: ${{ steps.set_1.outputs.var_1 }}
+      variable_2: ${{ steps.set_1.outputs.var_2 }}
+      variable_3: ${{ steps.set_2.outputs.var_3 }}
+      variable_4: ${{ steps.set_3.outputs.var_4 }}
+
+  job2:
+    needs: job1
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check set_1 var1
+        run: |
+          echo "${{ needs.job1.outputs.variable_1 }}"
+          echo "${{ needs.job1.outputs.variable_1 }}" | grep 'var1' || exit 1
+      - name: Check set_1 var2
+        run: |
+          echo "${{ needs.job1.outputs.variable_2 }}"
+          echo "${{ needs.job1.outputs.variable_2 }}" | grep 'var2' || exit 1
+      - name: Check set_2 var3
+        run: |
+          echo "${{ needs.job1.outputs.variable_3 }}"
+          echo "${{ needs.job1.outputs.variable_3 }}" | grep 'var3' || exit 1
+      - name: Check set_3 var4
+        run: |
+          echo "${{ needs.job1.outputs.variable_4 }}"
+          echo "${{ needs.job1.outputs.variable_4 }}" | grep 'var4' || exit 1

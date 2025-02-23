@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-underscore-dangle */
 // https://github.com/actions/runner/blob/main/src/Runner.Worker/Handlers/OutputManager.cs
+// @todo
 
 import fs from 'node:fs';
 import path from 'node:path';
