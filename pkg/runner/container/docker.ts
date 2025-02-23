@@ -61,8 +61,8 @@ export interface DockerContainerOptions {
   usernsMode?: string;
   networkAliases?: string[];
 
-  stdout: NodeJS.WritableStream;
-  stderr: NodeJS.WritableStream;
+  stdout: OutputManager;
+  stderr: OutputManager;
 }
 
 const isatty = tty.isatty(process.stdout.fd);
@@ -603,20 +603,20 @@ class DockerContainer extends Container {
         readline.createInterface({
           input: stream,
         }).on('line', async (line) => {
-          console.log('stdout', line);
+          this.options.stdout?.onDataReceived(line);
         });
       } else {
         const child = stream.pipe(new DockerDemuxer());
         readline.createInterface({
           input: child.stdout,
         }).on('line', async (line) => {
-          console.log('stdout', line);
+          this.options.stdout?.onDataReceived(line);
         });
 
         readline.createInterface({
           input: child.stderr,
         }).on('line', async (line) => {
-          console.log('stderr', line);
+          this.options.stderr?.onDataReceived(line);
         });
       }
 

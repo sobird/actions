@@ -22,6 +22,7 @@ import Runner from '@/pkg/runner';
 import { trimSuffix, createSha1Hash } from '@/utils';
 
 import Container, { FileEntry, type ContainerExecOptions } from '.';
+import OutputManager from '../outputManager';
 
 export interface HostedContainerOptions {
   /**
@@ -32,8 +33,8 @@ export interface HostedContainerOptions {
   workdir: string;
   binds?: string[];
 
-  stdout?: NodeJS.WritableStream;
-  stderr?: NodeJS.WritableStream;
+  stdout?: OutputManager;
+  stderr?: OutputManager;
 }
 
 class HostedContainer extends Container {
@@ -194,13 +195,13 @@ class HostedContainer extends Container {
       readline.createInterface({
         input: child.stdout,
       }).on('line', async (line) => {
-        console.log('stdout', line);
+        this.options.stdout?.onDataReceived(line);
       });
 
       readline.createInterface({
         input: child.stderr,
       }).on('line', async (line) => {
-        console.log('stderr', line);
+        this.options.stderr?.onDataReceived(line);
       });
 
       await new Promise((resolve, reject) => {
@@ -278,6 +279,7 @@ class HostedContainer extends Container {
     return new Executor(() => {
       const { config } = runner;
       const binds = [];
+      const outputManager = new OutputManager(runner);
 
       if (config.bindWorkdir) {
         binds.push(`${config.workdir}:${config.workdir}`);
@@ -290,6 +292,8 @@ class HostedContainer extends Container {
         basedir: runner.ActionCacheDir,
         workdir: config.workdir,
         binds,
+        stdout: outputManager,
+        stderr: outputManager,
       }, config.workspace);
 
       const reuseContainer = new Conditional(() => {

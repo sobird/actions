@@ -40,7 +40,7 @@ export class IssuePattern {
   }
 }
 
-class IssueMatch {
+export class IssueMatch {
   file?: string;
 
   line?: string;
