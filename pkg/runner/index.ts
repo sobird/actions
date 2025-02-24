@@ -69,8 +69,7 @@ class Runner {
 
   constructor(public run: Run, public config: Config) {
     const { jobId, job, workflow } = run;
-    this.config = config;
-    const context = new Context(config.context ?? {});
+    const context = new Context(config.context);
     this.context = context;
 
     // Calculate the value of the expression in advance
@@ -128,7 +127,11 @@ class Runner {
       // execute job unit
       // await job.executor(this).execute(this);
 
-      await Executor.Pipeline(this.startContainer(), job.executor(this), this.stopContainer()).execute(this);
+      await Executor.Pipeline(
+        this.startContainer(),
+        job.executor(this),
+        this.stopContainer(),
+      ).execute(this);
     });
   }
 

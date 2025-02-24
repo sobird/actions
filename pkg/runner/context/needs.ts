@@ -41,7 +41,7 @@ export class Needs {
     Object.entries(needs).forEach(([needId, need]) => {
       this[needId] = {
         result: need.result,
-        outputs: need.outputs ?? {},
+        outputs: { ...need.outputs },
       };
     });
   }

@@ -20,6 +20,8 @@ class Uses extends Reusable {
 
   executor(runner: Runner) {
     if (!this.isYaml) {
+      // @todo throw error or logger error ? 执行时机，构造方法中抛出错误，还是此处抛出？
+      // throw new Error(`'uses' key references invalid workflow path '${this.uses}'. Must start with './' if it's a local workflow, or must start with '<org>/<repo>/' and include an '@' if it's a remote workflow`);
       return;
     }
 

@@ -87,18 +87,18 @@ export default class Context {
   inputs: Inputs;
 
   constructor(context: Context) {
-    this.github = new Github(context.github ?? {});
-    this.env = context.env ?? {};
-    this.vars = context.vars ?? {};
+    this.github = new Github(context.github);
+    this.env = { ...context.env };
+    this.vars = { ...context.vars };
     this.job = new Job(context.job ?? {});
     this.jobs = new Jobs(context.jobs ?? {});
-    this.steps = context.steps ?? {};
+    this.steps = { ...context.steps };
     this.runner = new Runner(context.runner ?? {});
-    this.secrets = context.secrets ?? {};
+    this.secrets = { ...context.secrets };
     this.strategy = new Strategy(context.strategy ?? {});
-    this.matrix = context.matrix ?? {};
+    this.matrix = { ...context.matrix };
     this.needs = new Needs(context.needs ?? {});
-    this.inputs = context.inputs ?? {};
+    this.inputs = { ...context.inputs };
   }
 
   clone() {

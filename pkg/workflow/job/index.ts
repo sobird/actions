@@ -244,7 +244,7 @@ class Job {
    * You can use the `matrix` context to create unique output names for each job configuration.
    * For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/contexts#matrix-context Contexts}."
    */
-  outputs?: Expression<JobProps['outputs']>;
+  outputs: Expression<JobProps['outputs']>;
 
   /**
    * A map of variables that are available to all steps in the job.
@@ -603,9 +603,10 @@ class Job {
         if (!ctx) {
           return;
         }
+
+        // set job outputs
         const outputs = this.outputs?.evaluate(ctx);
-        // console.log('outputs', outputs);
-        // console.log('runner.context', ctx.context);
+        // runner.context.jobs[runner.run.jobId].outputs = outputs;
       }),
       // runner.stopContainer(),
     );

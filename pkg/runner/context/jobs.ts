@@ -34,7 +34,7 @@ export class Jobs {
     Object.entries(jobs).forEach(([jobId, job]) => {
       this[jobId] = {
         result: job.result,
-        outputs: job.outputs ?? {},
+        outputs: { ...job.outputs },
       };
     });
   }

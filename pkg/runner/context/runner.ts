@@ -65,15 +65,14 @@ export class Runner {
   }
 
   get Env() {
-    const env: Record<string, unknown> = {};
-    env.RUNNER_NAME = this.name;
-    env.RUNNER_OS = this.os;
-    env.RUNNER_ARCH = this.arch;
-    env.RUNNER_TOOL_CACHE = this.tool_cache;
-    env.RUNNER_TEMP = this.temp;
-    env.RUNNER_ENVIRONMENT = this.environment;
-    env.RUNNER_DEBUG = this.debug;
-
-    return env;
+    return {
+      RUNNER_NAME: this.name,
+      RUNNER_OS: this.os,
+      RUNNER_ARCH: this.arch,
+      RUNNER_TOOL_CACHE: this.tool_cache,
+      RUNNER_TEMP: this.temp,
+      RUNNER_ENVIRONMENT: this.environment,
+      RUNNER_DEBUG: this.debug,
+    };
   }
 }
