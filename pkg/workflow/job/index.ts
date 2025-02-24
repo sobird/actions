@@ -44,7 +44,7 @@ export enum JobType {
   Invalid,
 }
 
-export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | 'outputs' | 'timeout-minutes' | 'services' | 'with' | 'secrets'> {
+export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | 'timeout-minutes' | 'services' | 'with' | 'secrets'> {
   id?: string;
   if?: string;
   'runs-on': string | string[] | { group: string;labels: string; };
@@ -53,6 +53,7 @@ export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | '
   'continue-on-error'?: boolean;
   defaults?: DefaultsProps;
   env?: Record<string, string>;
+  outputs?: Record<string, string>;
   environment?: EnvironmentOptions;
   steps?: StepProps[];
   strategy?: StrategyProps;
@@ -243,7 +244,7 @@ class Job {
    * You can use the `matrix` context to create unique output names for each job configuration.
    * For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/contexts#matrix-context Contexts}."
    */
-  outputs?: Record<string, string>;
+  outputs?: Expression<JobProps['outputs']>;
 
   /**
    * A map of variables that are available to all steps in the job.
@@ -402,7 +403,7 @@ class Job {
     this['runs-on'] = new Expression(job['runs-on'], ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
     this.environment = new Environment(job.environment);
     this.concurrency = new Expression(job.concurrency, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
-    this.outputs = job.outputs;
+    this.outputs = new Expression(job.outputs, ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs']);
     this.env = new Expression(job.env, ['github', 'needs', 'strategy', 'matrix', 'vars', 'secrets', 'inputs']);
     this.defaults = new Defaults(job.defaults);
 
@@ -596,9 +597,17 @@ class Job {
     // }));
 
     return Executor.Pipeline(
-      runner.startContainer(),
+      // runner.startContainer(),
       this.steps.run(),
-      runner.stopContainer(),
+      new Executor((ctx) => {
+        if (!ctx) {
+          return;
+        }
+        const outputs = this.outputs?.evaluate(ctx);
+        // console.log('outputs', outputs);
+        // console.log('runner.context', ctx.context);
+      }),
+      // runner.stopContainer(),
     );
   }
 

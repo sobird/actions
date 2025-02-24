@@ -126,7 +126,9 @@ class Runner {
       console.log('job container image:', job.container.image.evaluate(this));
 
       // execute job unit
-      await job.executor(this).execute(this);
+      // await job.executor(this).execute(this);
+
+      await Executor.Pipeline(this.startContainer(), job.executor(this), this.stopContainer()).execute(this);
     });
   }
 
