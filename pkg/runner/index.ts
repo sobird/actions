@@ -115,7 +115,7 @@ class Runner {
 
       console.log('runner name:', this.name);
 
-      console.log('job', job.name);
+      console.log('job name:', job.name.evaluate(this));
       // todo
       console.log('workflow run-name', workflow['run-name'].evaluate(this));
       console.log('workflow concurrency', workflow.concurrency.evaluate(this));

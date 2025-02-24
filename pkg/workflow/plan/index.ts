@@ -20,7 +20,7 @@ export default class Plan {
     let maxRunNameLen = 0;
     for (const stage of this.stages) {
       for (const run of stage.runs) {
-        const runNameLen = run.name.length;
+        const runNameLen = run.name.source?.length || 0;
         if (runNameLen > maxRunNameLen) {
           maxRunNameLen = runNameLen;
         }
@@ -69,7 +69,9 @@ export default class Plan {
           const jobs = run.job.spread();
           const maxParallel = run.job.strategy.MaxParallel;
 
+          // matrix jobs
           const runnerPipeline = jobs.map((job) => {
+            // for strategy job
             const workflowCloned = workflow.clone();
             workflowCloned.jobs[jobId] = job;
 

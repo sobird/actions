@@ -44,8 +44,9 @@ export enum JobType {
   Invalid,
 }
 
-export interface JobProps extends Pick<Job, 'name' | 'permissions' | 'needs' | 'timeout-minutes' | 'services' | 'with' | 'secrets'> {
+export interface JobProps extends Pick<Job, 'permissions' | 'needs' | 'timeout-minutes' | 'services' | 'with' | 'secrets'> {
   id?: string;
+  name: string;
   if?: string;
   'runs-on': string | string[] | { group: string;labels: string; };
   concurrency?: Concurrency;
@@ -88,7 +89,7 @@ class Job {
   /**
    * Use `jobs.<job_id>.name` to set a name for the job, which is displayed in the GitHub UI.
    */
-  name?: string;
+  name: Expression<JobProps['name']>;
 
   /**
    * For a specific job, you can use `jobs.<job_id>.permissions` to modify the default permissions granted to the `GITHUB_TOKEN`,
@@ -390,7 +391,7 @@ class Job {
   constructor(job: JobProps) {
     this.#id = job.id;
 
-    this.name = job.name;
+    this.name = new Expression(job.name, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs'], [], '');
     this.permissions = job.permissions;
     this.needs = job.needs;
     this.if = new Expression(
@@ -403,8 +404,8 @@ class Job {
     this['runs-on'] = new Expression(job['runs-on'], ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
     this.environment = new Environment(job.environment);
     this.concurrency = new Expression(job.concurrency, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
-    this.outputs = new Expression(job.outputs, ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs']);
-    this.env = new Expression(job.env, ['github', 'needs', 'strategy', 'matrix', 'vars', 'secrets', 'inputs']);
+    this.outputs = new Expression(job.outputs, ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'], [], {});
+    this.env = new Expression(job.env, ['github', 'needs', 'strategy', 'matrix', 'vars', 'secrets', 'inputs'], [], {});
     this.defaults = new Defaults(job.defaults);
 
     this.steps = new Steps(job.steps);
@@ -474,8 +475,10 @@ class Job {
       job.index = index;
       job.total = matrices.length;
 
-      if (!name?.includes('${{') || !name.includes('}}')) {
-        job.name = `${name || job.id}${Object.values(matrix).length > 0 ? ` (${Object.values(matrix).join(', ')})` : ''}`;
+      // console.log('first', name.source?.includes('${{'));
+      // console.log('first', !name.scopes.includes('}}'))
+      if (!name.source?.includes('${{') || !name.source.includes('}}')) {
+        job.name.source = `${name || job.id}${Object.values(matrix).length > 0 ? ` (${Object.values(matrix).join(', ')})` : ''}`;
       }
 
       job.strategy.matrix = Object.entries(matrix).reduce((accu, [key, value]) => {
@@ -604,8 +607,12 @@ class Job {
           return;
         }
 
+        console.log('first', ctx.run.workflow.jobs);
+        console.log('job name:', ctx.run.job.name.evaluate(runner));
         // set job outputs
         const outputs = this.outputs?.evaluate(ctx);
+        this.outputs.defaultValue = outputs;
+        console.log('outputs', outputs);
         // runner.context.jobs[runner.run.jobId].outputs = outputs;
       }),
       // runner.stopContainer(),
