@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 jobs:
-  test-composite-action:
+  local-composite-action:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -17,7 +17,7 @@ jobs:
         id: composite_action
         uses: ./test/actions/hello-world-composite-action
         with:
-          who-to-greet: 'composite'
+          who-to-greet: 'Composite!'
 
       - name: Get the Composite Action output random number
         run: echo "The random number was ${{ steps.composite_action.outputs.random-number }}"
