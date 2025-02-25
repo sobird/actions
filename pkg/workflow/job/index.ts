@@ -82,7 +82,7 @@ class Job {
    * Note: This number is not a zero-based number.
    * For example, for a matrix with four jobs, the value of job-total is 4.
    */
-  #total: number = 0;
+  #total: number = 1;
 
   #result: Needs[string]['result'] = 'success';
 
@@ -613,7 +613,7 @@ class Job {
           console.log('WorkflowCall', runner.run.workflow.workflowCall());
         }
 
-        // console.log('first', ctx.run.workflow.jobs);
+        console.log('job:', ctx.run.job.strategy.Matrices);
         // console.log('job name:', ctx.run.job.name.evaluate(runner));
         // set job outputs
         const outputs = this.outputs?.evaluate(ctx);

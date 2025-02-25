@@ -134,7 +134,7 @@ export default class Strategy {
 
   get Matrices() {
     if (!this.matrix) {
-      return [{}];
+      return [];
     }
     const { include, exclude, ...originalMatrix } = this.matrix;
 

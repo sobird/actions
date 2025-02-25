@@ -73,10 +73,13 @@ export default class Plan {
           const runnerPipeline = jobs.map((job) => {
             // for strategy job
             // @todo workflow 不可克隆 保持在jobs之间共享
-            const workflowCloned = workflow.clone();
-            workflowCloned.jobs[jobId] = job;
+            // const workflowCloned = workflow.clone();
+            // workflowCloned.jobs[jobId] = job;
+            // eslint-disable-next-line no-param-reassign
+            const newRun = new Run(jobId, workflow);
+            newRun.job = job;
 
-            const runner = new Runner(new Run(jobId, workflowCloned), config);
+            const runner = new Runner(newRun, config);
             runner.caller = caller;
 
             // 跳出 workflow_call 递归调用
