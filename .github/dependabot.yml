@@ -1,0 +1,32 @@
+# https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference
+version: 2
+updates:
+  - package-ecosystem: npm            # 指定依赖生态系统为 npm
+    directory: /                      # 指定依赖文件所在的根目录
+    schedule:
+      interval: monthly
+      timezone: "Asia/Shanghai"       # 指定时区
+      time: "09:00"                   # 指定检查时间
+    groups:
+      npm-development:
+        dependency-type: development  # 仅处理开发依赖
+        update-types:
+          - minor
+          - patch
+      npm-production:
+        dependency-type: production   # 仅处理生产依赖
+        update-types:
+          - patch
+
+# 与 GitHub Actions 集成
+# name: Dependabot Auto-Merge
+# on:
+#   pull_request:
+#     types: [opened, synchronize]
+# jobs:
+#   auto-merge:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Auto-Merge Dependabot PRs
+#         if: github.actor == 'dependabot[bot]'
+#         run: gh pr merge --auto --merge "${{ github.event.pull_request.number }}"
