@@ -1,0 +1,31 @@
+on:
+  workflow_call:
+    # Map the workflow outputs to job outputs
+    outputs:
+      workflow_output1:
+        description: "The first job output"
+        value: ${{ jobs.job1.outputs.job1_output1 }}
+      workflow_output2:
+        description: "The second job output"
+        value: ${{ jobs.job2.outputs.job2_output2 }}
+
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    steps:
+    - name: test output 1
+      id: output_test
+      run: |
+        echo "value=hello" >> $GITHUB_OUTPUT
+    outputs:
+      job1_output1: ${{ steps.output_test.outputs.value }}
+
+  job2:
+    runs-on: ubuntu-latest
+    steps:
+    - name: test output 2
+      id: output_test
+      run: |
+        echo "value=world" >> $GITHUB_OUTPUT
+    outputs:
+      job2_output2: ${{ steps.output_test.outputs.value }}

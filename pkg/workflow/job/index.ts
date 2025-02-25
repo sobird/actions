@@ -607,12 +607,18 @@ class Job {
           return;
         }
 
-        console.log('first', ctx.run.workflow.jobs);
-        console.log('job name:', ctx.run.job.name.evaluate(runner));
+        if (runner.caller) {
+          const outputs = this.outputs?.evaluate(ctx);
+          console.log('outputs', outputs);
+          console.log('WorkflowCall', runner.run.workflow.workflowCall());
+        }
+
+        // console.log('first', ctx.run.workflow.jobs);
+        // console.log('job name:', ctx.run.job.name.evaluate(runner));
         // set job outputs
         const outputs = this.outputs?.evaluate(ctx);
         this.outputs.defaultValue = outputs;
-        console.log('outputs', outputs);
+        // console.log('outputs', outputs);
         // runner.context.jobs[runner.run.jobId].outputs = outputs;
       }),
       // runner.stopContainer(),

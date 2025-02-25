@@ -72,6 +72,7 @@ export default class Plan {
           // matrix jobs
           const runnerPipeline = jobs.map((job) => {
             // for strategy job
+            // @todo workflow 不可克隆 保持在jobs之间共享
             const workflowCloned = workflow.clone();
             workflowCloned.jobs[jobId] = job;
 
