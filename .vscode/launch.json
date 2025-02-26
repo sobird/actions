@@ -10,7 +10,7 @@
       "request": "launch",
       "runtimeExecutable": "tsx",
       "program": "${workspaceFolder}/pkg/cmd",
-      "args": ["run", "-W", "test/workflows/outputs/matrix.yml", "-j", "job2", "--image", "-self-hosted", "-v"],
+      "args": ["run", "-W", "test/workflows/uses-reusable/outputs.yml", "-j", "job2", "-v"],
       "env": {}
     },
     {

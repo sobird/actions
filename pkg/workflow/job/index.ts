@@ -537,36 +537,6 @@ class Job {
     return results;
   }
 
-  // 保留该方法，获取任务类型
-  // get type() {
-  //   const { uses } = this;
-  //   if (uses) {
-  //     // 检查是否为YAML文件
-  //     const isYaml = uses.match(/\.(ya?ml)(?:$|@)/);
-
-  //     if (isYaml) {
-  //       const isLocalPath = uses.startsWith('./');
-  //       const isRemotePath = uses.match(/^[^.](.+?\/){2,}\S*\.ya?ml@/);
-  //       // 检查是否包含版本信息
-  //       const hasVersion = uses.match('.ya?ml@');
-
-  //       if (isLocalPath) {
-  //         return JobType.ReusableWorkflowLocal;
-  //       } if (isRemotePath && hasVersion) {
-  //         return JobType.ReusableWorkflowRemote;
-  //       }
-  //     }
-
-  //     // 如果不是有效的工作流路径，返回无效类型
-  //     // throw new Error(`\`uses\` key references invalid workflow path '${this.uses}'. Must start with './' if it's a local workflow, or must start with '<org>/<repo>/' and include an '@' if it's a remote workflow`);
-
-  //     return JobType.Invalid;
-  //   }
-
-  //   // 如果不是可复用的工作流，则返回默认类型
-  //   return JobType.Default;
-  // }
-
   // job executor
   executor(runner: Runner) {
     this.resolveNeeds(runner);
@@ -615,9 +585,10 @@ class Job {
     // }));
 
     return Executor.Pipeline(
-      // runner.startContainer(),
+      runner.startContainer(),
       this.steps.run(),
       new Executor((ctx) => {
+        // job post executor
         if (!ctx) {
           return;
         }
@@ -633,7 +604,7 @@ class Job {
         // jobs 之间共享数据
         workflow.jobs[jobId].Outputs = this.outputs?.evaluate(ctx);
       }),
-      // runner.stopContainer(),
+      runner.stopContainer(),
     );
   }
 

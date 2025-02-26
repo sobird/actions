@@ -131,13 +131,7 @@ class Runner {
       console.log('job container image:', job.container.image.evaluate(this));
 
       // execute job unit
-      // await job.executor(this).execute(this);
-
-      await Executor.Pipeline(
-        this.startContainer(),
-        job.executor(this),
-        this.stopContainer(),
-      ).execute(this);
+      await job.executor(this).execute(this);
     });
   }
 
@@ -187,7 +181,7 @@ class Runner {
       const containerContext = await container.context();
       context.job.container.id = containerContext.id;
       context.job.container.network = containerContext.network;
-      context.job.services = await this.getJobServicesContext();
+      context.job.services = await this.servicesContext();
 
       return container.putContent(workflowDirectory, {
         name: 'event.json',
@@ -203,7 +197,7 @@ class Runner {
     });
   }
 
-  async getJobServicesContext() {
+  async servicesContext() {
     const services = Object.entries(this.services);
     const servicesTmp: Context['job']['services'] = {};
 

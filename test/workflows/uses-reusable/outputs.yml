@@ -10,13 +10,13 @@ permissions:
   contents: read
 
 jobs:
-  outputs-reusable:
+  job1:
     uses: ./test/workflows/workflow_call/outputs.yml
 
-  output-test:
+  job2:
     runs-on: ubuntu-latest
-    needs: outputs-reusable
+    needs: job1
     steps:
     - name: echo outputs
       run: |
-        echo '${{ needs.outputs-reusable.outputs }}'
+        echo '${{ toJSON(needs.job1.outputs) }}'
