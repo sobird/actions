@@ -337,6 +337,7 @@ class Runner {
     return this.config.actionCache?.dir || path.join(os.tmpdir(), 'actions');
   }
 
+  // for use-composite
   clone() {
     const run = new Run(this.run.jobId, this.run.workflow.clone());
     const runner = new Runner(run, this.config);
@@ -476,6 +477,7 @@ class Runner {
     console.debug(`Save intra-action state ${key} = ${value}`);
   }
 
+  // set step outputs
   setOutput(key: string, value: string) {
     const { action } = this.context.github;
     if (action) {

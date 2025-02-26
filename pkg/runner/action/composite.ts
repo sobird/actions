@@ -4,21 +4,25 @@ import Action from '.';
 
 class CompositeAction extends Action {
   protected main() {
-    return new Executor(async (runner) => {
-      if (!runner) {
+    return new Executor(async (parent) => {
+      if (!parent) {
         return;
       }
 
-      const compositeRunner = runner.clone();
+      const compositeRunner = parent.clone();
       compositeRunner.context.steps = {};
 
       const { steps } = this.runs;
 
       await Executor.Pipeline(...steps.PrePipeline, ...steps.MainPipeline).execute(compositeRunner);
 
+      // set parent job status
+      // eslint-disable-next-line no-param-reassign
+      parent.context.job.status = compositeRunner.context.job.status;
+
       // set composite outputs
       Object.entries(this.outputs).forEach(([outputId, output]) => {
-        runner.setOutput(outputId, output.value.evaluate(compositeRunner));
+        parent.setOutput(outputId, output.value.evaluate(compositeRunner));
       });
     });
   }

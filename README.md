@@ -1,5 +1,6 @@
-# Actions
-Impl Actions runner using typescript
+# <img width="24" src="https://github.githubassets.com/images/modules/site/features/actions-icon-actions.svg" alt="actions"> Actions
+
+Impl Github Actions & Runner using typescript, Run your [GitHub Actions](https://developer.github.com/actions/) locally and deploy your own CI/CD platform.
 
 [![npm][npm]][npm-url]
 [![Build Status][build-status]][build-status-url]

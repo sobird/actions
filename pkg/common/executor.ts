@@ -35,7 +35,7 @@ class Executor<T = unknown> {
     if (result instanceof Executor) {
       await result.execute(ctx, next);
     }
-    return result;
+    // return result;
   }
 
   // Executor 的 Then 方法用于链式调用执行器

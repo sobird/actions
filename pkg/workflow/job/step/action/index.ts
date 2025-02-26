@@ -92,6 +92,7 @@ abstract class StepAction extends Step {
         await actionCommandFile.process();
         logger.info('🍏', `Finishing: ${stage} ${name}`);
       } catch (error) {
+        // steps 按照循序执行，如果有一个步骤失败，则后续步骤会跳过，且该步骤所在的job状态变为 failure
         logger.error((error as Error).message);
         context.StepResult = {
           outcome: 'failure',
