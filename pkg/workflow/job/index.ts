@@ -54,7 +54,7 @@ export interface JobProps extends Pick<Job, 'permissions' | 'needs' | 'timeout-m
   'continue-on-error'?: boolean;
   defaults?: DefaultsProps;
   env?: Record<string, string>;
-  outputs?: Record<string, string>;
+  outputs: Record<string, string>;
   environment?: EnvironmentOptions;
   steps?: StepProps[];
   strategy?: StrategyProps;
@@ -85,6 +85,11 @@ class Job {
   #total: number = 1;
 
   #result: Needs[string]['result'] = 'success';
+
+  /**
+   * 每次job运行完成时，都会将 this.outputs.evaluate(runner) 的运行结果存放到此处
+   */
+  #outputs: Record<string, string> = {};
 
   /**
    * Use `jobs.<job_id>.name` to set a name for the job, which is displayed in the GitHub UI.
@@ -447,12 +452,20 @@ class Job {
     this.#total = total;
   }
 
-  get result() {
+  get Result() {
     return this.#result;
   }
 
-  set result(result: Needs[string]['result']) {
+  set Result(result: Needs[string]['result']) {
     this.#result = result;
+  }
+
+  get Outputs() {
+    return this.#outputs;
+  }
+
+  set Outputs(outputs: Record<string, string>) {
+    this.#outputs = outputs;
   }
 
   clone<T extends InstanceType<typeof Job>>(this: T) {
@@ -556,6 +569,8 @@ class Job {
 
   // job executor
   executor(runner: Runner) {
+    this.resolveNeeds(runner);
+
     const usesExecutor = this.uses.executor(runner);
     if (usesExecutor) {
       return usesExecutor;
@@ -613,16 +628,25 @@ class Job {
           console.log('WorkflowCall', runner.run.workflow.workflowCall());
         }
 
-        console.log('job:', ctx.run.job.strategy.Matrices);
-        // console.log('job name:', ctx.run.job.name.evaluate(runner));
-        // set job outputs
-        const outputs = this.outputs?.evaluate(ctx);
-        this.outputs.defaultValue = outputs;
-        console.log('outputs', outputs);
-        // runner.context.jobs[runner.run.jobId].outputs = outputs;
+        // jobs 之间共享数据
+        this.#outputs = this.outputs?.evaluate(ctx);
       }),
       // runner.stopContainer(),
     );
+  }
+
+  resolveNeeds(runner: Runner) {
+    const { jobs } = runner.run.workflow;
+    const needs = this.Needs.map((jobId) => {
+      const job = jobs[jobId];
+      return [jobId, {
+        outputs: job.Outputs,
+        result: job.Result,
+      }];
+    });
+
+    // eslint-disable-next-line no-param-reassign
+    runner.context.needs = Object.fromEntries(needs);
   }
 
   // static SetupSteps(steps: StepProps[] = []) {

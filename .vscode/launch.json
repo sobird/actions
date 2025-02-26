@@ -10,7 +10,7 @@
       "request": "launch",
       "runtimeExecutable": "tsx",
       "program": "${workspaceFolder}/pkg/cmd",
-      "args": ["run", "-W", "test/workflows/uses-composite/with-error.yml", "-j", "failing-composite-action", "--image", "-self-hosted", "-v"],
+      "args": ["run", "-W", "test/workflows/outputs/job.yml", "-j", "job2", "--image", "-self-hosted", "-v"],
       "env": {}
     },
     {
