@@ -1,0 +1,35 @@
+name: job outputs test
+on: push
+
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    outputs:
+      output1: ${{ steps.step1.outputs.output1 }}
+      output2: ${{ steps.step2.outputs.output2 }}
+      output3: ${{ steps.step3.outputs.output3 }}
+
+    steps:
+      - name: step1 output
+        id: step1
+        run: echo "output1=1" >> "$GITHUB_OUTPUT"
+
+      - name: step2 output
+        id: step2
+        run: echo "output2=2" >> "$GITHUB_OUTPUT"
+
+      - name: step3 output
+        id: step3
+        run: echo "output3=3" >> "$GITHUB_OUTPUT"
+
+  job2:
+    runs-on: ubuntu-latest
+    needs: [job1]
+    steps:
+      # Will show
+      # {
+      #   "output1": "1",
+      #   "output2": "2",
+      #   "output3": "3"
+      # }
+      - run: echo '${{ toJSON(needs.job1.outputs) }}'

@@ -247,8 +247,8 @@ class Workflow extends Yaml {
         if (!jobNeeds[jobId]) {
           const job = this.jobs[jobId];
           if (job) {
-            jobNeeds[jobId] = job.getNeeds();
-            tmpJobIds.push(...job.getNeeds());
+            jobNeeds[jobId] = job.Needs;
+            tmpJobIds.push(...job.Needs);
           }
         }
       });
@@ -310,8 +310,8 @@ class Workflow extends Yaml {
         if (!jobNeeds[jobId]) {
           const job = jobs[jobId];
           if (job) {
-            jobNeeds[jobId] = job.getNeeds();
-            newjobIds.push(...job.getNeeds());
+            jobNeeds[jobId] = job.Needs;
+            newjobIds.push(...job.Needs);
           }
         }
       });

@@ -489,7 +489,7 @@ class Job {
     });
   }
 
-  getNeeds() {
+  get Needs() {
     if (!this.needs) {
       return [];
     }
@@ -618,7 +618,7 @@ class Job {
         // set job outputs
         const outputs = this.outputs?.evaluate(ctx);
         this.outputs.defaultValue = outputs;
-        // console.log('outputs', outputs);
+        console.log('outputs', outputs);
         // runner.context.jobs[runner.run.jobId].outputs = outputs;
       }),
       // runner.stopContainer(),

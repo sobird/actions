@@ -167,7 +167,7 @@ class Expression<T> {
       return [];
     }
     const { workflow } = runner.run;
-    let needs = job.getNeeds();
+    let needs = job.Needs;
 
     for (const need of needs) {
       const parentNeeds = this.JobNeedsTransitive(workflow.jobs[need], runner);

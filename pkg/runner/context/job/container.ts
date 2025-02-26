@@ -1,22 +1,4 @@
 export class Container {
-  image: string;
-
-  credentials: {
-    username: string;
-    password: string;
-  };
-
-  env: object;
-
-  /**
-   * The exposed ports of the service container.
-   */
-  ports: Record<string, string>;
-
-  volumes: Record<string, string>;
-
-  options: string[];
-
   /**
    * The ID of the service container.
    */
@@ -28,14 +10,14 @@ export class Container {
    */
   network: string;
 
+  /**
+   * The exposed ports of the service container.
+   */
+  ports: Record<string, string>;
+
   constructor(container: Container) {
-    this.image = container.image;
-    this.credentials = container.credentials ?? {};
-    this.env = container.env ?? {};
-    this.ports = container.ports ?? {};
-    this.volumes = container.volumes ?? {};
-    this.options = container.options ?? [];
     this.id = container.id;
     this.network = container.network;
+    this.ports = container.ports ?? {};
   }
 }

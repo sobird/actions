@@ -199,7 +199,7 @@ class Runner {
 
   async getJobServicesContext() {
     const services = Object.entries(this.services);
-    const servicesTmp: Record<string, object> = {};
+    const servicesTmp: Context['job']['services'] = {};
 
     for await (const [serviceId, service] of services) {
       servicesTmp[serviceId] = await service.context();
