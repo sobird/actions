@@ -48,7 +48,7 @@ class Runner {
 
   container?: Container;
 
-  services: Container[] = [];
+  services: Record<string, Container> = {};
 
   echoOnActionCommand: boolean;
 
@@ -177,6 +177,9 @@ class Runner {
       context.runner.environment = container.Environment as 'github-hosted' | 'self-hosted';
       context.runner.debug = '1';
 
+      // set job context
+      // context.job.container.id = container
+
       return container.putContent(workflowDirectory, {
         name: 'event.json',
         mode: 0o644,
@@ -203,7 +206,7 @@ class Runner {
 
   public startServices() {
     return new Executor(() => {
-      const pipeline = this.services.map((service) => {
+      const pipeline = Object.entries(this.services).map(([, service]) => {
         return service.start();
       });
       return Executor.Parallel(pipeline.length, ...pipeline);
@@ -212,8 +215,8 @@ class Runner {
 
   public stopServices() {
     return new Executor(() => {
-      const pipeline = this.services.map((item) => {
-        return item.remove();
+      const pipeline = Object.entries(this.services).map(([, service]) => {
+        return service.remove();
       });
       return Executor.Parallel(pipeline.length, ...pipeline);
     });

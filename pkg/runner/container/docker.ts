@@ -752,14 +752,14 @@ class DockerContainer extends Container {
 
       containerNetworkMode = networkName;
 
-      runner.services = Object.entries(runner.run.job.services || {}).map(([serviceId, service]) => {
+      runner.services = Object.fromEntries(Object.entries(runner.run.job.services || {}).map(([serviceId, service]) => {
         const serviceEnv = service.env?.evaluate(runner);
         const serviceCredentials = service.credentials?.evaluate(runner);
         const serviceName = runner.ContainerName(serviceId);
         const [serviceBinds, serviceMounts] = runner.ServiceBindsAndMounts(service.volumes);
         const { exposedPorts, portBindings } = service.parsePorts();
 
-        return new DockerContainer({
+        const serviceContainer = new DockerContainer({
           name: serviceName,
           image: service.image.evaluate(runner),
           forcePull: config.pull,
@@ -783,7 +783,9 @@ class DockerContainer extends Container {
           stdout: outputManager,
           stderr: outputManager,
         }, config.workspace);
-      });
+
+        return [serviceId, serviceContainer];
+      }));
 
       const dockerContainer = new DockerContainer({
         name,
@@ -825,7 +827,7 @@ class DockerContainer extends Container {
         dockerContainer.removeVolume(runner.ContainerName()).ifNot(reuseContainer),
         dockerContainer.removeVolume(`${runner.ContainerName()}-env`).ifNot(reuseContainer),
         new Executor(async () => {
-          if (runner.services.length > 0) {
+          if (Object.keys(runner.services).length > 0) {
             logger.info('\u{1F433}', `Cleaning up services for job ${runner.run.job.name}`);
             await runner.stopServices().execute();
           }
