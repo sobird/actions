@@ -396,7 +396,7 @@ class Runner {
 
   ContainerName(id?: string) {
     const { workflow } = this.run;
-    const parts = [`WORKFLOW-${workflow.name || workflow.file}`, `JOB-${this.run.job.name}`];
+    const parts = [`WORKFLOW-${workflow.name || workflow.file}`, `JOB-${this.run.job.name.evaluate(this) || this.run.jobId}`];
     if (id) {
       parts.push(`ID-${id}`);
     }
