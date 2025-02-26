@@ -9,15 +9,16 @@ jobs:
       output_2: ${{ steps.gen_output.outputs.output_2 }}
       output_3: ${{ steps.gen_output.outputs.output_3 }}
     strategy:
+      max-parallel: 3
       matrix:
         version: [1, 2, 3]
     steps:
-      - name: Generate output
+      - name: Generate output ${{ matrix.version }}
         id: gen_output
         run: |
           version="${{ matrix.version }}"
           echo "output_${version}=${version}" >> "$GITHUB_OUTPUT"
-      - name: Print step outputs
+      - name: Print step output ${{ matrix.version }}
         run:  |
           version="${{ matrix.version }}"
           echo "${{toJSON(steps.gen_output)}}"

@@ -20,7 +20,7 @@ class CompositeAction extends Action {
       // eslint-disable-next-line no-param-reassign
       parent.context.job.status = compositeRunner.context.job.status;
 
-      // set composite outputs
+      // set current step composite outputs
       Object.entries(this.outputs).forEach(([outputId, output]) => {
         parent.setOutput(outputId, output.value.evaluate(compositeRunner));
       });

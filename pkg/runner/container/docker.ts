@@ -853,7 +853,7 @@ class DockerContainer extends Container {
         dockerContainer.removeVolume(`${runner.ContainerName()}-env`).ifNot(reuseContainer),
         new Executor(async () => {
           if (Object.keys(runner.services).length > 0) {
-            logger.info('\u{1F433}', `Cleaning up services for job ${runner.run.job.name}`);
+            logger.info('\u{1F433}', `Cleaning up services for job ${runner.name}`);
             await runner.stopServices().execute();
           }
 
@@ -862,7 +862,7 @@ class DockerContainer extends Container {
             // if using service containers
             // it means that the network to which containers are connecting is created by `act_runner`,
             // so, we should remove the network at last.
-            logger.info('\u{1F433}', `Cleaning up network for Job: ${runner.run.job.name}, and network name is: ${networkName}`);
+            logger.info('\u{1F433}', `Cleaning up network for Job: ${runner.name}, and network name is: ${networkName}`);
             await dockerContainer.removeNetwork(networkName).execute();
           }
         }),

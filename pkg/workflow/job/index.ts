@@ -478,9 +478,9 @@ class Job {
   spread() {
     // @todo use selectMatrices()
     const matrices = this.strategy.Matrices;
-    if (matrices.length === 0) {
-      return [this];
-    }
+    // if (matrices.length === 0) {
+    //   return [this];
+    // }
     return matrices.map((matrix, index) => {
       const job = this.clone();
       const { name } = job;
@@ -491,7 +491,7 @@ class Job {
       // console.log('first', name.source?.includes('${{'));
       // console.log('first', !name.scopes.includes('}}'))
       if (!name.source?.includes('${{') || !name.source.includes('}}')) {
-        job.name.source = `${name || job.id}${Object.values(matrix).length > 0 ? ` (${Object.values(matrix).join(', ')})` : ''}`;
+        job.name.source = `${name.source || job.id}${Object.values(matrix).length > 0 ? ` (${Object.values(matrix).join(', ')})` : ''}`;
       }
 
       job.strategy.matrix = Object.entries(matrix).reduce((accu, [key, value]) => {
@@ -629,7 +629,7 @@ class Job {
           console.log('outputs', outputs);
           console.log('WorkflowCall', runner.run.workflow.workflowCall());
         }
-        console.log('this.outputs?.evaluate(ctx)', this.outputs?.evaluate(ctx));
+
         // jobs 之间共享数据
         workflow.jobs[jobId].Outputs = this.outputs?.evaluate(ctx);
       }),

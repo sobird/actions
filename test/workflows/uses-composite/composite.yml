@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 jobs:
-  local-composite-action:
+  job1:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

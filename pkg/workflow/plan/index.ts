@@ -5,6 +5,7 @@ import log4js from 'log4js';
 import Executor from '@/pkg/common/executor';
 import Runner from '@/pkg/runner';
 import Config from '@/pkg/runner/config';
+import Step from '@/pkg/runner/context/step';
 
 import Run from './run';
 import Stage from './stage';
@@ -67,20 +68,24 @@ export default class Plan {
           const { jobId, workflow } = run;
 
           const jobs = run.job.spread();
+          if (jobs.length === 0) {
+            const runner = new Runner(run, config);
+            return runner.executor();
+          }
+
           const maxParallel = run.job.strategy.MaxParallel;
 
-          // matrix jobs
+          // matrix jobs 共享 steps context
+          const steps: Record<string, Step> = {};
           const runnerPipeline = jobs.map((job) => {
-            // for strategy job
-            // @todo workflow 不可克隆 保持在jobs之间共享
-            // const workflowCloned = workflow.clone();
-            // workflowCloned.jobs[jobId] = job;
-            // eslint-disable-next-line no-param-reassign
             const newRun = new Run(jobId, workflow);
+            // matrix jobs not share job
             newRun.job = job;
 
             const runner = new Runner(newRun, config);
             runner.caller = caller;
+            // matrix jobs share steps context
+            runner.context.steps = steps;
 
             // 跳出 workflow_call 递归调用
             if (caller?.containsCaller(runner)) {

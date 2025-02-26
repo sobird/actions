@@ -29,8 +29,14 @@ import { IssueMatchersConfig, IssueMatcherConfig } from './action/command/issueM
 
 const SetEnvBlockList = ['NODE_OPTIONS'];
 
+/**
+ * 每个runner为一个job实例
+ */
 class Runner {
-  name: string = '';
+  // job name
+  get name() {
+    return this.run.job.name.evaluate(this);
+  }
 
   context: Context;
 
@@ -169,7 +175,7 @@ class Runner {
       context.env.ACTIONS_RESULTS_URL = context.env[Constants.Actions.RuntimeUrl];
 
       // set runner context
-      context.runner.name = this.name;
+      context.runner.name = this.config.name;
       context.runner.os = container.OS as 'Linux' | 'Windows' | 'macOS';
       context.runner.arch = container.Arch as 'X86' | 'X64' | 'ARM' | 'ARM64';
       context.runner.tool_cache = container.ToolDir;
