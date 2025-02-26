@@ -38,6 +38,8 @@ export interface HostedContainerOptions {
 }
 
 class HostedContainer extends Container {
+  #id = '';
+
   rootdir: string;
 
   OS = Container.OS(process.platform);
@@ -53,7 +55,10 @@ class HostedContainer extends Container {
 
     const { basedir } = options;
     // hosted container root
-    const rootdir = path.join(basedir, createSha1Hash(options.name));
+    const id = createSha1Hash(options.name);
+    const rootdir = path.join(basedir, id);
+
+    this.#id = id;
 
     this.rootdir = rootdir;
     fs.mkdirSync(path.join(rootdir, options.workdir || ''), { recursive: true });
@@ -65,6 +70,15 @@ class HostedContainer extends Container {
       fs.rmSync(containerWorkdirResolved, { recursive: true });
       fs.symlinkSync(workdir, containerWorkdirResolved);
     });
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  async context() {
+    return {
+      id: this.#id,
+      network: '',
+      ports: {},
+    };
   }
 
   pullImage() {

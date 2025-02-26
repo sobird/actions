@@ -83,6 +83,31 @@ class DockerContainer extends Container {
 
   declare options: DockerContainerOptions;
 
+  async context() {
+    if (!this.container) {
+      return {
+        id: '',
+        network: '',
+        ports: {},
+      };
+    }
+
+    const containerInfo = await this.container?.inspect();
+    const { Ports, Networks } = containerInfo.NetworkSettings;
+
+    const networks = Object.entries(Networks);
+    const [[network]] = networks;
+
+    return {
+      id: this.container?.id || '',
+      network: network || '',
+      ports: Object.fromEntries(Object.entries(Ports).map(([containerPort, HostInfos]) => {
+        const [HostInfo] = HostInfos;
+        return [containerPort, HostInfo.HostPort];
+      })),
+    };
+  }
+
   pullImage(force?: boolean) {
     return new Executor(async () => {
       const {

@@ -80,6 +80,11 @@ export default abstract class Container {
   // abstract hashFiles(...patterns: string[]): string;
   abstract resolve(...paths: string[]): string;
   abstract imageEnv(): Promise<Record<string, string>>;
+  abstract context(): Promise<{
+    id: string;
+    network: string;
+    ports: Record<string, string>
+  }>;
 
   public hashFiles(...patterns: string[]) {
     const followSymlink = patterns[0] === '--follow-symbolic-links';

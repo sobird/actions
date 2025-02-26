@@ -142,7 +142,7 @@ class Runner {
     const executor = JobContainer.Setup(this);
 
     const workflowDirectory = path.join(Constants.Directory.Temp, '_github_workflow');
-    return executor.next(new Executor(() => {
+    return executor.next(new Executor(async () => {
       const { event } = context.github;
       const container = this.container!;
 
@@ -178,7 +178,10 @@ class Runner {
       context.runner.debug = '1';
 
       // set job context
-      // context.job.container.id = container
+      const containerContext = await container.context();
+      context.job.container.id = containerContext.id;
+      context.job.container.network = containerContext.network;
+      context.job.services = await this.getJobServicesContext();
 
       return container.putContent(workflowDirectory, {
         name: 'event.json',
@@ -194,6 +197,16 @@ class Runner {
     });
   }
 
+  async getJobServicesContext() {
+    const services = Object.entries(this.services);
+    const servicesTmp: Record<string, object> = {};
+
+    for await (const [serviceId, service] of services) {
+      servicesTmp[serviceId] = await service.context();
+    }
+
+    return servicesTmp;
+  }
   // public pullServicesImage(force?: boolean) {
   //   return new Executor(() => {
   //     const pipeline = this.services.map((item) => {
