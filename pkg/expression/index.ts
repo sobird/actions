@@ -149,7 +149,7 @@ class Expression<T> {
       const jobNeeds = this.JobNeedsTransitive(job, runner);
 
       for (const need of jobNeeds) {
-        if (workflow.jobs[need].result !== 'success') {
+        if (workflow.jobs[need].Result !== 'success') {
           return true;
         }
       }
@@ -188,7 +188,7 @@ class Expression<T> {
       const { workflow, job } = runner.run;
       const jobNeeds = this.JobNeedsTransitive(job, runner);
       for (const need of jobNeeds) {
-        if (workflow.jobs[need].result === 'failure') {
+        if (workflow.jobs[need].Result === 'failure') {
           return true;
         }
       }

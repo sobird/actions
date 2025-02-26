@@ -622,14 +622,16 @@ class Job {
           return;
         }
 
+        const { jobId, workflow } = runner.run;
+
         if (runner.caller) {
           const outputs = this.outputs?.evaluate(ctx);
           console.log('outputs', outputs);
           console.log('WorkflowCall', runner.run.workflow.workflowCall());
         }
-
+        console.log('this.outputs?.evaluate(ctx)', this.outputs?.evaluate(ctx));
         // jobs 之间共享数据
-        this.#outputs = this.outputs?.evaluate(ctx);
+        workflow.jobs[jobId].Outputs = this.outputs?.evaluate(ctx);
       }),
       // runner.stopContainer(),
     );
