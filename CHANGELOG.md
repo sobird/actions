@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/sobird/actions/compare/v1.0.0...v1.0.1) (2025-02-26)
+
+
+### Bug Fixes
+
+* use composite with error & properly handle job status ([ed41d1f](https://github.com/sobird/actions/commit/ed41d1f082dd8665e02598d8a65cc96a84641c00))
+
 ## 1.0.0 (2025-02-25)
 
 
