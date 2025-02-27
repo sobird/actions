@@ -70,6 +70,7 @@ export default class Plan {
           const jobs = run.job.spread();
           if (jobs.length === 0) {
             const runner = new Runner(run, config);
+            runner.caller = caller;
             return runner.executor();
           }
 

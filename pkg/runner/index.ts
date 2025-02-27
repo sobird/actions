@@ -20,12 +20,13 @@ import Strategy from '@/pkg/workflow/job/strategy';
 import { createSafeName, assignIgnoreCase, createFnv1aHash } from '@/utils';
 
 import Container from './container';
+import Expression from '../expression';
+import { IssueMatchersConfig, IssueMatcherConfig } from './action/command/issueMatcher';
 import DockerContainer from './container/docker';
 import HostedContainer from './container/hosted';
+import { Job } from './context/jobs';
 import Executor from '../common/executor';
-import Expression from '../expression';
 import Run from '../workflow/plan/run';
-import { IssueMatchersConfig, IssueMatcherConfig } from './action/command/issueMatcher';
 
 const SetEnvBlockList = ['NODE_OPTIONS'];
 
@@ -96,6 +97,9 @@ class Runner {
     context.strategy['max-parallel'] = job.strategy['max-parallel'];
     context.strategy['job-index'] = job.index;
     context.strategy['job-total'] = job.total;
+
+    // set jobs
+    context.jobs[jobId] = new Job();
 
     // matrix context
     const matrix = job.strategy.Matrices[0];
@@ -409,10 +413,6 @@ class Runner {
     }
     // 如未配置NetworkMode，则手动创建network
     return [`${this.ContainerName(id)}-Network`, true];
-  }
-
-  setJobContext(job: Context['job']) {
-    //
   }
 
   get Enabled() {

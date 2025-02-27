@@ -44,7 +44,7 @@ export enum JobType {
   Invalid,
 }
 
-export interface JobProps extends Pick<Job, 'permissions' | 'needs' | 'timeout-minutes' | 'services' | 'with' | 'secrets'> {
+export interface JobProps extends Pick<Job, 'permissions' | 'needs' | 'timeout-minutes' | 'services'> {
   id?: string;
   name: string;
   if?: string;
@@ -59,6 +59,8 @@ export interface JobProps extends Pick<Job, 'permissions' | 'needs' | 'timeout-m
   steps?: StepProps[];
   strategy?: StrategyProps;
   uses?: string;
+  with?: Record<string, string | WorkflowDispatchInput>
+  secrets?: Record<string, string> | 'inherit';
 }
 
 /**
@@ -375,7 +377,7 @@ class Job {
    * Unlike `jobs.<job_id>.steps[*].with`, the inputs you pass with `jobs.<job_id>.with` are not available as environment variables in the called workflow.
    * Instead, you can reference the inputs by using the inputs context.
    */
-  with?: Record<string, string | WorkflowDispatchInput>;
+  with: Expression<JobProps['with']>;
 
   /**
    * When a job is used to call a reusable workflow,
@@ -391,7 +393,7 @@ class Job {
    * The identifier must match the name of a secret defined by {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onworkflow_callsecretssecret_id `on.workflow_call.secrets.<secret_id>`} in the called workflow.
    * Allowed expression contexts: `github`, `needs`, and `secrets`.
    */
-  secrets?: Record<string, string> | 'inherit';
+  secrets: Expression<JobProps['secrets']>;
 
   constructor(job: JobProps) {
     this.#id = job.id;
@@ -424,8 +426,8 @@ class Job {
     }));
 
     this.uses = new Uses(job.uses);
-    this.with = job.with;
-    this.secrets = job.secrets;
+    this.with = new Expression(job.with, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
+    this.secrets = new Expression(job.secrets, ['github', 'needs', 'strategy', 'matrix', 'secrets', 'vars', 'inputs']);
   }
 
   get id() {
@@ -540,6 +542,8 @@ class Job {
   // job executor
   executor(runner: Runner) {
     this.resolveNeeds(runner);
+    this.resolveInputs(runner);
+    this.resolveSecrets(runner);
 
     const usesExecutor = this.uses.executor(runner);
     if (usesExecutor) {
@@ -594,15 +598,30 @@ class Job {
         }
 
         const { jobId, workflow } = runner.run;
-
-        if (runner.caller) {
-          const outputs = this.outputs?.evaluate(ctx);
-          console.log('outputs', outputs);
-          console.log('WorkflowCall', runner.run.workflow.workflowCall());
-        }
-
         // jobs 之间共享数据
         workflow.jobs[jobId].Outputs = this.outputs?.evaluate(ctx);
+
+        if (runner.caller) {
+          const jobsContext = Object.fromEntries(Object.entries(workflow.jobs).map(([jobId2, job]) => {
+            return [jobId2, {
+              outputs: job.Outputs,
+              result: job.Result,
+            }];
+          }));
+
+          const outputs = Object.fromEntries(Object.entries(workflow.workflowCall()?.outputs || {}).map(([outputId, output]) => {
+            let value = '';
+            try {
+              value = output.value.evaluate(runner, { jobs: jobsContext });
+            } catch (err) {
+              console.log('err', err);
+            }
+            return [outputId, value];
+          }));
+
+          // eslint-disable-next-line no-param-reassign
+          runner.caller.run.workflow.jobs[runner.caller.run.jobId].Outputs = outputs;
+        }
       }),
       runner.stopContainer(),
     );
@@ -620,6 +639,54 @@ class Job {
 
     // eslint-disable-next-line no-param-reassign
     runner.context.needs = Object.fromEntries(needs);
+  }
+
+  resolveInputs(runner: Runner) {
+    if (runner.caller) {
+      const { workflow } = runner.run;
+      const callerJobWith = runner.caller.run.workflow.jobs[runner.caller.run.jobId].with.evaluate(runner.caller) || {};
+
+      const result = Object.entries(workflow.workflowCall()?.inputs || {}).map(([inputId, input]) => {
+        const value = callerJobWith[inputId];
+        return [inputId, value || input.default.evaluate(runner)];
+      });
+
+      const inputs = Object.fromEntries(result);
+
+      // eslint-disable-next-line no-param-reassign
+      runner.context.inputs = inputs;
+    }
+  }
+
+  /**
+   * The workflow is not valid. ${workflow_path} (Line: 11, Col: 11): Secret ${secret_key} is required, but not provided while calling.
+   *
+   */
+  resolveSecrets(runner: Runner) {
+    if (runner.caller) {
+      const { workflow } = runner.run;
+      const callerJobSecrets = runner.caller.run.workflow.jobs[runner.caller.run.jobId].secrets.evaluate(runner.caller) || {};
+      if (callerJobSecrets === 'inherit') {
+        return;
+      }
+
+      const callerJobSecretKeys = Object.keys(callerJobSecrets);
+
+      const result = Object.entries(workflow.workflowCall()?.secrets || {}).map(([secretId, secret]) => {
+        if (secret.required && !callerJobSecretKeys.includes(secretId)) {
+          throw Error(`Secret ${secretId} is required, but not provided while calling.`);
+        }
+
+        const value = callerJobSecrets[secretId];
+
+        return [secretId, value];
+      });
+
+      const secrets = Object.fromEntries(result);
+
+      // eslint-disable-next-line no-param-reassign
+      runner.context.secrets = secrets;
+    }
   }
 
   // static SetupSteps(steps: StepProps[] = []) {

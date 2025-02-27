@@ -16,6 +16,7 @@ import Plan, { Stage, Run } from './plan';
 import {
   Concurrency, On, OnEvents, Permissions, // todo
 } from './types';
+import WorkflowCall from './workflow_call';
 
 interface WorkflowProps extends Pick<Workflow, 'name' | 'on' | 'permissions' | 'defaults'> {
   file?: string;
@@ -382,24 +383,24 @@ class Workflow extends Yaml {
     }
   }
 
-  workflowCall(): Record<string, OnEvents['workflow_call']['inputs']> | undefined | OnEvents['workflow_call'] {
+  workflowCall(): WorkflowCall | undefined {
     const { on } = this;
     if (typeof on === 'string') {
       if (on === 'workflow_call') {
-        return {};
+        return new WorkflowCall();
       }
       return;
     }
 
     if (Array.isArray(on)) {
       if (on.includes('workflow_call')) {
-        return {};
+        return new WorkflowCall();
       }
       return;
     }
 
     if (typeof on === 'object') {
-      return on.workflow_call;
+      return new WorkflowCall(on.workflow_call);
     }
   }
 }

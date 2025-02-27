@@ -12,7 +12,7 @@ import { Env } from './env';
 import { Github } from './github';
 import { Inputs } from './inputs';
 import { Job } from './job';
-import { Jobs } from './jobs';
+import { Jobs, JobsType } from './jobs';
 import { Matrix } from './matrix';
 import { Needs } from './needs';
 import { Runner } from './runner';
@@ -47,7 +47,7 @@ export default class Context {
 
   job: Job;
 
-  jobs: Jobs;
+  jobs: JobsType;
 
   /**
    * The `steps` context contains information about the steps in the current job that have an {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsid `id`} specified and have already run.
@@ -91,7 +91,7 @@ export default class Context {
     this.env = { ...context.env };
     this.vars = { ...context.vars };
     this.job = new Job(context.job ?? {});
-    this.jobs = new Jobs(context.jobs ?? {});
+    this.jobs = Jobs(context.jobs ?? {});
     this.steps = { ...context.steps };
     this.runner = new Runner(context.runner ?? {});
     this.secrets = { ...context.secrets };

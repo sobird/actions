@@ -1,0 +1,13 @@
+name: reusable workflow inputs test
+
+on: 
+  push:
+    branches:
+      - master
+
+jobs:
+  job1:
+    uses: ./test/workflows/workflow_call/inputs.yml
+    with:
+      username: 'reusable inputs'
+    secrets: inherit

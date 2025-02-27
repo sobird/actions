@@ -1,0 +1,22 @@
+on:
+  workflow_call:
+    inputs:
+      username:
+        description: 'A username passed from the caller workflow'
+        default: 'john-doe'
+        required: false
+        type: string
+    secrets:
+      access-token:
+        description: 'A token passed from the caller workflow'
+        required: true
+
+jobs:
+  print-username:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print the input name to STDOUT
+        run: echo The username is ${{ inputs.username }}
+      - name: Print the secrets to STDOUT
+        run: echo The secrets is ${{ toJSON(secrets) }}
