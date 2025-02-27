@@ -6,10 +6,23 @@ import StepAction from '.';
 
 class StepActionDocker extends StepAction {
   protected get PrepareAction() {
-    return new Executor(() => {
+    return new Executor((runner) => {
+      if (!runner) {
+        return;
+      }
+      // docker hub 默认设置with环境变量到容器
+      const stepWith = this.with.evaluate(runner) || {};
+      const inputs = Object.fromEntries(Object.entries(stepWith).map(([key, value]) => {
+        return [key, {
+          default: value,
+          required: true,
+        }];
+      }));
+
       this.action = new DockerAction({
         name: '(Synthetic)',
         description: 'docker hub action',
+        inputs,
         runs: {
           using: 'docker',
           image: this.uses.uses,

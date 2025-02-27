@@ -132,7 +132,7 @@ class Runs {
     this['pre-entrypoint'] = runs['pre-entrypoint'];
     this.entrypoint = runs.entrypoint;
     this['post-entrypoint'] = runs['post-entrypoint'];
-    this.args = new Expression(runs.args, ['inputs']);
+    this.args = new Expression(runs.args, ['inputs'], [], []);
     this.steps = new Steps(runs.steps);
   }
 }

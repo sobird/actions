@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import log4js from 'log4js';
-import shellQuote, { ParseEntry } from 'shell-quote';
+import shellQuote, { ParseEntry, ControlOperator } from 'shell-quote';
 import * as tar from 'tar';
 
 import Executor, { Conditional } from '@/pkg/common/executor';
@@ -95,9 +95,14 @@ class DockerAction extends Action {
         // forcePull = runner.config.pull;
       }
 
-      // todo
+      // @todo
       const stepWith = stepAction?.with.evaluate(runner);
-      let cmd = shellQuote.parse(stepWith?.args || '');
+      let cmd = shellQuote.parse(stepWith?.args || '', (name) => { return `\${${name}}`; }).map((part) => {
+        if (typeof part === 'object' && (part as { op: ControlOperator }).op) {
+          return (part as { op: ControlOperator }).op;
+        }
+        return part;
+      });
 
       if (cmd.length === 0) {
         cmd = this.runs.args.evaluate(runner);
@@ -114,7 +119,7 @@ class DockerAction extends Action {
       //   entrypointPath = '';
       // }
 
-      const entrypoint = shellQuote.parse(entrypointPath);
+      const entrypoint = [entrypointPath];
 
       runner.Assign(stepAction!.environment, this.runs.env);
       const container = DockerAction.Container(runner, image, cmd, entrypoint);
