@@ -829,7 +829,7 @@ class DockerContainer extends Container {
           LANG: 'C.UTF-8',
         },
         networkMode: containerNetworkMode,
-        networkAliases: [runner.run.name],
+        networkAliases: [runner.name],
         autoRemove: config.containerAutoRemove,
         privileged: config.containerPrivileged,
         usernsMode: config.containerUsernsMode,

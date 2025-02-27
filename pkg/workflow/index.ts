@@ -7,6 +7,8 @@
  * sobird<i@sobird.me> at 2024/05/02 21:27:38 created.
  */
 
+import prompts, { PromptObject, Choice } from 'prompts';
+
 import Yaml from '@/pkg/common/yaml';
 import Expression from '@/pkg/expression';
 
@@ -135,6 +137,8 @@ class Workflow extends Yaml {
    * For more information, see "{@link https://docs.github.com/en/rest/actions#workflow-jobs REST API endpoints for GitHub Actions}."
    */
   public jobs: Record<string, Job>;
+
+  #inputs: Record<string, string> = {};
 
   constructor(workflow: WorkflowProps) {
     super(workflow);
@@ -402,6 +406,66 @@ class Workflow extends Yaml {
     if (typeof on === 'object') {
       return new WorkflowCall(on.workflow_call);
     }
+  }
+
+  get inputs() {
+    return this.#inputs;
+  }
+
+  async WorkflowDispatchPrompts(eventName = 'workflow_dispatch') {
+    if (eventName === 'workflow_dispatch') {
+      const workflowDispatchInputs = this.workflowDispatch()?.inputs || {};
+
+      const questions = Object.entries(workflowDispatchInputs).map(([inputId, input]) => {
+        const option: PromptObject = {
+          type: 'text',
+          name: inputId,
+          message: input.description,
+          initial: input.default,
+        };
+
+        switch (input.type) {
+          case 'string':
+            option.type = 'text';
+            break;
+          case 'boolean':
+            option.type = 'toggle';
+            option.active = 'true';
+            option.inactive = 'false';
+            break;
+          case 'number':
+            option.type = 'number';
+            break;
+          case 'choice':
+            option.type = 'select';
+            option.choices = input.options?.map((value) => {
+              return {
+                title: value,
+                value,
+              } as Choice;
+            }) || [];
+
+            option.initial = option.choices.findIndex((item) => {
+              return item.value === input.default;
+            });
+
+            break;
+          case 'environment':
+            option.type = 'select';
+            break;
+          default:
+        }
+        return option;
+      }).filter((item) => {
+        return !this.#inputs[item.name as string];
+      });
+
+      this.#inputs = await prompts(questions);
+
+      return this.#inputs;
+    }
+
+    return {};
   }
 }
 

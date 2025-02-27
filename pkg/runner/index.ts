@@ -36,7 +36,7 @@ const SetEnvBlockList = ['NODE_OPTIONS'];
 class Runner {
   // job name
   get name() {
-    return this.run.job.name.evaluate(this);
+    return this.run.job.name.evaluate(this) || this.run.jobId;
   }
 
   context: Context;
@@ -100,6 +100,9 @@ class Runner {
 
     // set jobs
     context.jobs[jobId] = new Job();
+
+    // workflow dispatch inputs
+    Object.assign(context.inputs, workflow.inputs);
 
     // matrix context
     const matrix = job.strategy.Matrices[0];
@@ -400,7 +403,7 @@ class Runner {
 
   ContainerName(id?: string) {
     const { workflow } = this.run;
-    const parts = [`WORKFLOW-${workflow.name || workflow.file}`, `JOB-${this.run.job.name.evaluate(this) || this.run.jobId}`];
+    const parts = [`WORKFLOW-${workflow.name || workflow.file}`, `JOB-${this.name}`];
     if (id) {
       parts.push(`ID-${id}`);
     }
@@ -420,7 +423,7 @@ class Runner {
     const jobIf = job.if.evaluate(this);
 
     if (!jobIf) {
-      console.error(`Skipping job '${job.name}' due to '${job.if}'`);
+      console.error(`Skipping job '${this.name}' due to '${job.if}'`);
       return false;
     }
 

@@ -183,7 +183,7 @@ export const runCommand = new Command('run')
       plan = planner.planJob(options.job);
     } else if (eventName) {
       logger.info('Preparing plan for a event: %s', eventName);
-      plan = planner.planEvent(eventName);
+      plan = await planner.planEvent(eventName);
     } else {
       logger.info('Preparing plan with all jobs');
       plan = planner.planAll();
@@ -210,7 +210,7 @@ export const runCommand = new Command('run')
     if (options.containerCapDrop) {
       logger.warn(deprecationWarning, 'container-cap-drop', `--cap-drop=${options.containerCapDrop.join(' ')}`, `--cap-drop=${options.containerCapDrop.join(' ')}`);
     }
-    console.log('options', options);
+
     await runner.options(options, eventName);
     const config = await runner.configure();
     await plan.executor(config).execute();

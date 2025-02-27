@@ -471,6 +471,7 @@ class Runner implements Omit<Options, ''> {
     // this.context.secrets.GITHUB_TOKEN = this.token;
 
     const config: Config = {
+      name: '', // @todo
       context: this.context,
       workspace: this.workspace,
       workdir: path.resolve(this.workdir),

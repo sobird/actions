@@ -15,6 +15,7 @@ import Context from '@/pkg/runner/context';
  * The configuration interface for the runner.
  */
 interface Config {
+  // runner name
   readonly name: string;
   /**
    * The runner context.

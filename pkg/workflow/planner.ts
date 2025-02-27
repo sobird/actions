@@ -28,25 +28,27 @@ class WorkflowPlanner {
   /**
    * builds a new list of runs to execute in parallel for an event name
    */
-  planEvent(eventName: string) {
+  async planEvent(eventName: string) {
     const plan = new Plan();
     if (this.workflows.length === 0) {
       logger.debug('No workflows found by planner');
       return plan;
     }
 
-    this.workflows.forEach((workflow) => {
+    for await (const workflow of this.workflows) {
       const { events } = workflow;
+      await workflow.WorkflowDispatchPrompts(eventName);
+
       if (events.length === 0) {
         logger.debug('No events found for workflow: %s', workflow.file);
-        return;
+      } else if (events.includes(eventName)) {
+        plan.merge(workflow.plan());
       }
-      events.forEach((event) => {
-        if (event === eventName) {
-          plan.merge(workflow.plan());
-        }
-      });
-    });
+    }
+
+    // this.workflows.forEach((workflow) => {
+
+    // });
     return plan;
   }
 

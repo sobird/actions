@@ -13,9 +13,9 @@ class Run {
   //   return this.workflow.jobs[this.jobId];
   // }
 
-  get name() {
-    return this.job.name || this.jobId;
-  }
+  // get name() {
+  //   return this.job.name || this.jobId;
+  // }
 }
 
 export default Run;

@@ -17,18 +17,18 @@ export default class Plan {
   constructor(public stages: Stage[] = []) {}
 
   /** determines the max name length of all jobs */
-  maxRunNameLen() {
-    let maxRunNameLen = 0;
-    for (const stage of this.stages) {
-      for (const run of stage.runs) {
-        const runNameLen = run.name.source?.length || 0;
-        if (runNameLen > maxRunNameLen) {
-          maxRunNameLen = runNameLen;
-        }
-      }
-    }
-    return maxRunNameLen;
-  }
+  // maxRunNameLen() {
+  //   let maxRunNameLen = 0;
+  //   for (const stage of this.stages) {
+  //     for (const run of stage.runs) {
+  //       const runNameLen = run.name.source?.length || 0;
+  //       if (runNameLen > maxRunNameLen) {
+  //         maxRunNameLen = runNameLen;
+  //       }
+  //     }
+  //   }
+  //   return maxRunNameLen;
+  // }
 
   /** Merge stages with existing stages in plan */
   merge(plan: Plan) {
