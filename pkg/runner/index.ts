@@ -379,12 +379,14 @@ class Runner {
   // }
 
   /**
+   * runner context env
+   *
    * @priority
    * ...workflow.env, ...job.env, ...config.env
    */
-  get Env() {
+  Env(stepEnv: Record<string, string>) {
     const { job, workflow } = this.run;
-    const env = { ...workflow.env.evaluate(this), ...job.env.evaluate(this), ...job.container.env?.evaluate(this) };
+    const env = { ...workflow.env.evaluate(this), ...job.env.evaluate(this), ...stepEnv };
     if (this.config.skipCheckout) {
       env.ACTIONS_SKIP_CHECKOUT = 'true';
     }

@@ -20,14 +20,14 @@ class StepActionScript extends StepAction {
   public main() {
     return new Executor(async (ctx) => {
       const runner = ctx!;
+      this.applyEnv(runner, this.environment);
+
       await this.setupShellCommand(runner);
 
       const cmd = shellQuote.parse(this.command) as string[];
       const cwd = this.WorkingDirectory(runner);
 
       const container = runner.container!;
-
-      this.applyEnv(runner, this.environment);
 
       return this.PrintDetails.next(container.exec(cmd, { env: this.environment, cwd }));
     });

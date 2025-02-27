@@ -254,10 +254,9 @@ class Step {
 
     return runner.Assign(
       out,
-      runner.Env,
       runner.context.github.Env,
       runner.context.runner.Env,
-      env,
+      runner.Env(env),
     );
   }
 }

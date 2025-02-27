@@ -10,7 +10,7 @@
       "request": "launch",
       "runtimeExecutable": "tsx",
       "program": "${workspaceFolder}/pkg/cmd",
-      "args": ["run", "-W", "test/workflows/workflow_dispatch.yml", "workflow_dispatch"],
+      "args": ["run", "-W", "test/workflows/uses-composite/env.yml"],
       "env": {}
     },
     {
