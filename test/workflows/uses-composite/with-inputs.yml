@@ -1,0 +1,29 @@
+name: uses-composite-with-inputs
+
+on: push
+jobs:
+  uses-composite-with-inputs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - id: set-output
+      run: echo "::set-output name=var::value"
+    - name: use simple composite action
+      uses: ./test/actions/composite/with-inputs-1
+      with:
+        some: ${{ steps.set-output.outputs.var }}
+    - name: use nested composite action
+      uses: ./test/actions/composite/with-inputs-2
+      with:
+        composite-input: value
+
+    # Remote composite test
+    - name: use remote composite action
+      id: remote-composite
+      uses: sobird/actions/test/actions/composite/with-inputs-1@master
+      with:
+        some: ${{ steps.set-output.outputs.var }}
+    - name: test remote composite output
+      run: |
+        echo "steps.remote-composite.outputs.output=${{ steps.remote-composite.outputs.output }}"
+        [[ "${{ steps.remote-composite.outputs.output == 'value' }}" = "true" ]] || exit 1

@@ -1,0 +1,25 @@
+name: "composite"
+description: "composite"
+
+inputs:
+  composite-input:
+    description: "value"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: test input value
+      run: |
+        echo "input value 1=${{ inputs.composite-input }}"
+        [[ "${{ inputs.composite-input == 'value' }}" = "true" ]] || exit 1
+      shell: bash
+
+    - uses: sobird/actions/test/actions/composite/with-inputs-1@master
+      with:
+        some: value
+    - name: test input value again
+      run: |
+        echo "input value 2=${{ inputs.composite-input }}"
+        [[ "${{ inputs.composite-input == 'value' }}" = "true" ]] || exit 1
+      shell: bash

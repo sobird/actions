@@ -1,0 +1,29 @@
+name: "composite with inputs action"
+description: "composite with inputs action"
+
+inputs:
+  some:
+    description: "some input"
+    required: true
+  other:
+    description: "other input"
+    default: value
+    required: false
+outputs:
+  output:
+    description: "some output"
+    value: "output value"
+
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        echo "action input=${{ inputs.some }}"
+        [[ "${{ inputs.some == 'value' }}" = "true" ]] || exit 1
+      shell: bash
+    - run: |
+        echo "ENV_VAR=$ENV_VAR"
+        [[ "$ENV_VAR" = "value" ]] || exit 1
+      shell: bash
+      env:
+        ENV_VAR: ${{ inputs.other }}

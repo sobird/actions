@@ -24,7 +24,6 @@ export default class Output {
       ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
       ['always', 'cancelled', 'success', 'failure'],
       'always()',
-      true,
     );
   }
 

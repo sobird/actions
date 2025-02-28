@@ -103,7 +103,7 @@ class DockerContainer extends Container {
       network: network || '',
       ports: Object.fromEntries(Object.entries(Ports).map(([containerPort, HostInfos]) => {
         const [HostInfo] = HostInfos;
-        return [containerPort, HostInfo.HostPort];
+        return [parseInt(containerPort, 10), HostInfo.HostPort];
       })),
     };
   }
