@@ -20,6 +20,7 @@ runs:
         some: value
     - name: test input value again
       run: |
+        echo "${{toJSON(inputs)}}"
         echo "input value 2=${{ inputs.composite-input }}"
         [[ "${{ inputs.composite-input == 'value' }}" = "true" ]] || exit 1
       shell: bash

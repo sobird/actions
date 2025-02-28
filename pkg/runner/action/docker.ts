@@ -108,18 +108,22 @@ class DockerAction extends Action {
         cmd = this.runs.args.evaluate(runner);
       }
 
-      let entrypointPath = stepWith?.[entrypointStage];
-      if (!entrypointPath) {
-        entrypointPath = this.runs[entrypointStage] || '';
+      /**
+       * jobs.<job_id>.steps[*].with.entrypoint
+       * 与包含 shell 和 exec 表单的 Docker ENTRYPOINT 指令不同，entrypoint 关键字只接受定义要运行的可执行文件的单个字符串。
+       */
+      let entrypoint: string[] = [];
+      const entrypointPath = stepWith?.[entrypointStage];
+      if (entrypointPath) {
+        entrypoint = [entrypointPath];
+      } else if (this.runs[entrypointStage]) {
+        entrypoint = shellQuote.parse(this.runs[entrypointStage], (name) => { return `\${${name}}`; }).map((part) => {
+          if (typeof part === 'object' && (part as { op: ControlOperator }).op) {
+            return (part as { op: ControlOperator }).op;
+          }
+          return part;
+        }) as string[];
       }
-
-      // entrypointPath = path.resolve(this.Dir, entrypointPath || '');
-
-      // if (!isExecutable(entrypointPath)) {
-      //   entrypointPath = '';
-      // }
-
-      const entrypoint = [entrypointPath];
 
       runner.Assign(stepAction!.environment, this.runs.env);
       const container = DockerAction.Container(runner, image, cmd, entrypoint);

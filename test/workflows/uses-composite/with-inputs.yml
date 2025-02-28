@@ -12,10 +12,19 @@ jobs:
       uses: ./test/actions/composite/with-inputs-1
       with:
         some: ${{ steps.set-output.outputs.var }}
-    - name: use nested composite action
-      uses: ./test/actions/composite/with-inputs-2
+
+    # - name: use nested composite action
+    #   uses: ./test/actions/composite/with-inputs-2
+    #   with:
+    #     composite-input: value
+
+    - name: use simple docker action
+      uses: ./test/actions/docker/hello-world
       with:
-        composite-input: value
+        who-to-greet: docker action
+    
+    - name: print inputs
+      run: echo "${{toJSON(inputs)}}"
 
     # Remote composite test
     - name: use remote composite action
