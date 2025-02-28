@@ -162,7 +162,7 @@ function validateRunID(rawRunID: string) {
 class Artifact {
   constructor(
     public dir: string = DEFAULT_ARTIFACT_DIR,
-    public logger: Logger = log4js.getLogger('Artifact'),
+    public logger: Logger = log4js.getLogger('[artifact server]'),
     public app: Express = express(),
   ) {
     if (!this.dir) {
@@ -273,7 +273,13 @@ class Artifact {
       const idFilter = parseInt(req.body.id_filter, 10);
 
       const safePath = safeResolve(this.dir, runId.toString());
-      const entries = fs.readdirSync(safePath);
+      let entries: string[] = [];
+      try {
+        entries = fs.readdirSync(safePath);
+      } catch (err) {
+        //
+      }
+
       const artifacts = entries
         .filter((entry) => {
           const filename = path.join(safePath, entry);

@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 jobs:
-  test-artifact-server:
+  job1-v4:
     runs-on: ubuntu-latest
     steps:
       # - name: Checkout
@@ -22,6 +22,29 @@ jobs:
           overwrite: true
 
       - uses: actions/download-artifact@v4
+        with:
+          name: test-artifact
+          path: download
+
+      - run: ls download
+
+  job2-v3:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 2
+      matrix:
+        node-version: [8.x, 10.x, 12.x, 13.x]
+    steps:
+      - run: mkdir -p upload
+      - run: echo ${{ matrix.node-version }} > upload/test_${{ matrix.node-version }}.txt
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: test-artifact
+          path: upload
+          overwrite: true
+
+      - uses: actions/download-artifact@v3
         with:
           name: test-artifact
           path: download

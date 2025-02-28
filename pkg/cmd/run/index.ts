@@ -109,7 +109,7 @@ export const runCommand = new Command('run')
   .option('--actions-cache-port <port>', 'the port where the actions/cache server listens. 0 means a randomly available port.', (value: string) => { return Number(value); }, 0)
 
   // artifact server
-  .option('--artifact-path <path>', 'the path where the artifact server stores uploads and retrieves downloads from. If not specified the artifact server will not start')
+  .option('--artifact-path <path>', 'the path where the artifact server stores uploads and retrieves downloads from. If not specified the artifact server will not start', path.join(ACTIONS_HOME, 'artifact'))
   .option('--artifact-addr <addr>', 'the address where the artifact server listens', ip.address())
   .option('--artifact-port <port>', 'the port where the artifact server listens (will only bind to localhost)', (value: string) => { return Number(value); })
 
