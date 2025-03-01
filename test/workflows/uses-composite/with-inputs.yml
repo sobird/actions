@@ -24,7 +24,7 @@ jobs:
         who-to-greet: docker action
     
     - name: print inputs
-      run: echo "${{toJSON(inputs)}}"
+      run: echo "${{toJSON(steps)}}"
 
     # Remote composite test
     - name: use remote composite action

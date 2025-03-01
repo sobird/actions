@@ -25,6 +25,7 @@ import * as tar from 'tar';
 import Executor, { Conditional } from '@/pkg/common/executor';
 import docker from '@/pkg/docker';
 import DockerDemuxer from '@/pkg/docker/demuxer';
+import Options from '@/pkg/docker/options';
 import Runner from '@/pkg/runner';
 
 import Container, { FileEntry, ContainerExecOptions } from '.';
@@ -34,32 +35,36 @@ const logger = log4js.getLogger();
 
 export interface DockerContainerOptions {
   /** container name */
-  name?: string;
+  name: string;
   /** Name of the image as it was passed by the operator (e.g. could be symbolic) */
   image: string;
   /** force pull image */
-  forcePull?: boolean;
+  pull?: boolean;
   /** Current directory (PWD) in the command will be launched */
   workdir: string;
   /** Set platform if server is multi-platform capable */
   platform?: string;
   /** Entrypoint to run when starting the container */
   entrypoint?: string[];
-  authconfig?: AuthConfig;
   cmd?: string[];
   env?: NodeJS.ProcessEnv;
+  authconfig?: AuthConfig;
+  ports?: string[];
   exposedPorts?: { [port: string]: {} };
+  portBindings?: any;
+
   /** Automatically remove the container when it exits */
   autoRemove?: boolean;
   binds?: string[];
+  mounts?: MountConfig;
+
   networkMode?: 'default' | 'host' | 'bridge' | 'container' | 'none' | string;
-  portBindings?: any;
-  mounts?: Record<string, string>;
   capAdd?: string[];
   capDrop?: string[];
   privileged?: boolean;
   usernsMode?: string;
-  networkAliases?: string[];
+  networkAlias?: string[];
+  options: string;
 
   stdout: OutputManager;
   stderr: OutputManager;
@@ -111,11 +116,11 @@ class DockerContainer extends Container {
   pullImage(force?: boolean) {
     return new Executor(async () => {
       const {
-        image, platform, authconfig, forcePull,
+        image, platform, authconfig, pull,
       } = this.options;
 
       const stream = await docker.pullImage(image, {
-        force: force ?? forcePull,
+        force: force ?? pull,
         platform,
         authconfig,
       });
@@ -434,52 +439,50 @@ class DockerContainer extends Container {
 
       const Env = Object.entries(options.env || {}).map(([key, value]) => { return `${key}=${value}`; });
 
-      const Mounts: MountConfig = Object.entries(options.mounts || {}).map(([Source, Target]) => {
-        return {
-          Type: 'volume',
-          Source,
-          Target,
-        };
-      });
+      // const Mounts: MountConfig = Object.entries(options.mounts || {}).map(([Source, Target]) => {
+      //   return {
+      //     Type: 'volume',
+      //     Source,
+      //     Target,
+      //   };
+      // });
 
-      const NetworkMode = options.networkMode || 'default';
-      const isNetworkMode = ['default', 'host', 'bridge', 'container', 'none'].includes(NetworkMode);
-      let endpointsConfig: EndpointsConfig = {};
-      if (!isNetworkMode && options.networkMode !== 'host' && (options.networkAliases || []).length > 0) {
-        const endpointSettings: EndpointSettings = {
-          Aliases: options.networkAliases,
-        };
+      // const NetworkMode = options.networkMode || 'default';
+      // const isNetworkMode = ['default', 'host', 'bridge', 'container', 'none'].includes(NetworkMode);
+      // let endpointsConfig: EndpointsConfig = {};
+      // if (!isNetworkMode && options.networkMode !== 'host' && (options.networkAlias || []).length > 0) {
+      //   const endpointSettings: EndpointSettings = {
+      //     Aliases: options.networkAlias,
+      //   };
 
-        endpointsConfig = {
-          [NetworkMode]: endpointSettings,
-        };
-      }
+      //   endpointsConfig = {
+      //     [NetworkMode]: endpointSettings,
+      //   };
+      // }
 
-      const container = await docker.createContainer({
+      const dockerodeOptions = new Options(options.options).dockerodeOptions({
         name: options.name,
-        Image: options.image,
-        WorkingDir: options.workdir,
-        Entrypoint: options.entrypoint,
+        image: options.image,
+        workdir: options.workdir,
+        entrypoint: options.entrypoint,
         platform: options.platform,
-        Tty: isatty,
-        Cmd: options.cmd,
-        Env,
-        ExposedPorts: options.exposedPorts,
-        HostConfig: {
-          AutoRemove: options.autoRemove,
-          Binds: options.binds,
-          NetworkMode,
-          PortBindings: options.portBindings,
-          Mounts,
-          CapAdd: options.capAdd,
-          CapDrop: options.capDrop,
-          Privileged: options.privileged,
-          UsernsMode: options.usernsMode,
-        },
-        NetworkingConfig: {
-          EndpointsConfig: endpointsConfig,
-        },
+        tty: isatty,
+        cmd: options.cmd,
+        env: Env,
+        publish: options.ports,
+        rm: Boolean(options.autoRemove),
+        network: options.networkMode,
+        mount: options.mounts,
+        capAdd: options.capAdd,
+        capDrop: options.capDrop,
+        privileged: Boolean(options.privileged),
+        userns: options.usernsMode,
+        volume: options.binds,
       });
+
+      console.log('dockerodeOptions', dockerodeOptions);
+
+      const container = await docker.createContainer(dockerodeOptions);
 
       logger.debug('\u{1F433}', `Created container name=${options.name} id=${container.id} from image ${options.image} (platform: ${options.platform || ''})`);
 
@@ -768,7 +771,7 @@ class DockerContainer extends Container {
       // if using service containers, will create a new network for the containers.
       // and it will be removed after at last.
       const [networkName, createAndDeleteNetwork] = runner.ContainerNetworkName();
-      const [binds, mounts] = runner.BindsAndMounts;
+      const [binds, mounts] = runner.Mounts;
 
       let containerNetworkMode = config.containerNetworkMode || 'host';
       if (runner.ContainerImage) {
@@ -787,7 +790,7 @@ class DockerContainer extends Container {
         const serviceContainer = new DockerContainer({
           name: serviceName,
           image: service.image.evaluate(runner),
-          forcePull: config.pull,
+          pull: config.pull,
           workdir: config.workdir,
           authconfig: {
             ...serviceCredentials,
@@ -796,7 +799,7 @@ class DockerContainer extends Container {
           mounts: serviceMounts,
           env: serviceEnv,
           networkMode: networkName,
-          networkAliases: [serviceId],
+          networkAlias: [serviceId],
           autoRemove: config.containerAutoRemove,
           privileged: config.containerPrivileged,
           usernsMode: config.containerUsernsMode,
@@ -815,7 +818,7 @@ class DockerContainer extends Container {
       const dockerContainer = new DockerContainer({
         name,
         image,
-        forcePull: config.pull,
+        pull: config.pull,
         workdir: config.workdir,
         entrypoint: ['tail', '-f', '/dev/null'],
         // entrypoint: ['/bin/sleep', `${config.containerMaxLifetime}`],
@@ -829,7 +832,7 @@ class DockerContainer extends Container {
           LANG: 'C.UTF-8',
         },
         networkMode: containerNetworkMode,
-        networkAliases: [runner.name],
+        networkAlias: [runner.name],
         autoRemove: config.containerAutoRemove,
         privileged: config.containerPrivileged,
         usernsMode: config.containerUsernsMode,
@@ -840,6 +843,8 @@ class DockerContainer extends Container {
         // exposedPorts: {},
         stdout: outputManager,
         stderr: outputManager,
+
+        options: config.containerOptions,
       }, config.workspace);
       runner.container = dockerContainer;
 

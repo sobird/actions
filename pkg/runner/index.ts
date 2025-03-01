@@ -9,6 +9,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
+import { MountConfig } from 'dockerode';
 import log4js, { Logger } from 'log4js';
 
 import Constants from '@/pkg/common/constants';
@@ -324,8 +325,95 @@ class Runner {
 
       mounts = {};
     }
-    console.log('binds', binds);
-    console.log('mounts', mounts);
+    return [binds, mounts];
+  }
+
+  get Mounts(): [string[], MountConfig] {
+    const containerName = this.ContainerName();
+    const defaultSocket = '/var/run/docker.sock';
+    const containerDaemonSocket = this.config.containerDaemonSocket || defaultSocket;
+    const binds: string[] = [];
+    if (containerDaemonSocket !== '-') {
+      const daemonPath = Docker.SocketMountPath(containerDaemonSocket);
+      binds.push(`${daemonPath}:${defaultSocket}`);
+      // binds.push({
+      //   Type: 'bind',
+      //   Source: daemonPath,
+      //   Target: defaultSocket,
+      // });
+    }
+
+    const ToolMount = 'toolcache';
+    const TempMount = `${containerName}-Temp`;
+
+    let hostedWorkDir = '';
+    let hostedToolDir = '';
+    let hostedTempDir = '';
+
+    const containerWorkdir = hostedWorkDir = DockerContainer.Resolve(this.config.workdir);
+    const containerToolDir = hostedToolDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Tool);
+    const containerTempDir = hostedTempDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Temp);
+
+    let mounts: MountConfig = [{
+      Type: 'volume',
+      Source: ToolMount,
+      Target: containerToolDir,
+    }, {
+      Type: 'volume',
+      Source: TempMount,
+      Target: containerTempDir,
+    }];
+
+    const { volumes = [] } = this.run.job.container;
+    volumes.forEach((volume) => {
+      if (!volume.includes(':') || path.isAbsolute(volume)) {
+        binds.push(volume);
+      } else {
+        const [key, value] = volume.split(':');
+        // mounts[key] = value;
+        mounts.push({
+          Type: 'volume',
+          Source: key,
+          Target: value,
+        });
+      }
+    });
+
+    let bindModifiers = '';
+    if (process.platform === 'darwin') {
+      bindModifiers = ':delegated';
+    }
+
+    if (this.config.bindWorkdir) {
+      if (this.IsHosted && this.container) {
+        // docker container
+        hostedWorkDir = this.container.resolve(this.config.workdir);
+        binds.push(`${hostedWorkDir}:${hostedWorkDir}${bindModifiers}`);
+      } else {
+        binds.push(`${this.config.workdir}:${containerWorkdir}${bindModifiers}`);
+      }
+    } else if (this.IsHosted && this.container) {
+      hostedWorkDir = this.container.resolve(this.config.workdir);
+      binds.push(`${hostedWorkDir}:${hostedWorkDir}${bindModifiers}`);
+    } else {
+      // mounts[containerName] = containerWorkdir;
+      mounts.push({
+        Type: 'volume',
+        Source: containerName,
+        Target: containerWorkdir,
+      });
+    }
+
+    if (this.IsHosted && this.container) {
+      hostedToolDir = this.container.ToolDir;
+      hostedTempDir = this.container.TempDir;
+
+      // Always bound ToolDir and TempDir if hosted
+      binds.push(`${hostedToolDir}:${hostedToolDir}:delegated`);
+      binds.push(`${hostedTempDir}:${hostedTempDir}:delegated`);
+
+      mounts = [];
+    }
     return [binds, mounts];
   }
 

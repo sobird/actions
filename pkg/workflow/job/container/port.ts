@@ -150,7 +150,7 @@ export default class Port {
     return portMappings;
   }
 
-  static ParsePorts(ports: string[]) {
+  static ParsePorts(ports: string[] = []) {
     const exposedPorts: ExposedPorts = {};
     const portBindings: PortBindings = {};
 
