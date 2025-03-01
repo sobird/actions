@@ -120,7 +120,19 @@ abstract class Action extends Yaml {
   }
 
   public get Main() {
-    return this.SetEnvironment.next(this.PrintDetails).next(this.main());
+    return new Executor(async (parent) => {
+      if (!parent) {
+        return;
+      }
+      // 为每个action创建一个子Runner实例
+      // @todo 是否需要优化
+      const child = parent.clone();
+      // child.context.steps = {};
+      // stepAction 是否需要优化掉
+      child.stepAction = parent.stepAction;
+
+      await this.SetEnvironment.next(this.PrintDetails).next(this.main()).execute(child);
+    });
   }
 
   public get Post() {

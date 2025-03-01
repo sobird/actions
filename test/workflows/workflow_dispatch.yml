@@ -27,14 +27,30 @@ on:
 jobs:
   job1:
     runs-on: ubuntu-latest
-    if: ${{ inputs.print_tags }} 
+    # if: ${{ inputs.print_tags }} 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Print the input tag to STDOUT
         run: echo  The tags are ${{ inputs.tags }} 
 
-  job2:
-    runs-on: ubuntu-latest
-    if: ${{ inputs.print_tags }} 
-    steps:
-      - name: Print the input tag to STDOUT
-        run: echo  The tags are ${{ inputs.tags }} 
+      - name: use simple composite action
+        uses: ./test/actions/composite/with-inputs
+        with:
+          some: ${{ inputs.tags }}
+
+      - run: env
+
+      - name: Print context
+        run: |
+          echo "github=${{toJSON(github)}}"
+          echo "env=${{toJSON(env)}}"
+          echo "vars=${{toJSON(vars)}}"
+          echo "job=${{toJSON(job)}}"
+          echo "steps=${{toJSON(steps)}}"
+          echo "runner=${{toJSON(runner)}}"
+          echo "secrets=${{toJSON(secrets)}}"
+          echo "strategy=${{toJSON(strategy)}}"
+          echo "matrix=${{toJSON(matrix)}}"
+          echo "needs=${{toJSON(needs)}}"
+          echo "inputs=${{toJSON(inputs)}}"

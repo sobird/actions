@@ -1,0 +1,33 @@
+name: "composite with inputs action"
+description: "composite with inputs action"
+
+inputs:
+  some:
+    description: "some input"
+    required: true
+  other:
+    description: "other input"
+    default: value
+    required: false
+outputs:
+  output:
+    description: "some output"
+    value: "value"
+
+runs:
+  using: "composite"
+  steps:
+    - run: env
+      shell: bash
+      
+    - name: Print composite context
+      run: |
+        echo "github=${{toJSON(github)}}"
+        echo "env=${{toJSON(env)}}"
+        echo "job=${{toJSON(job)}}"
+        echo "steps=${{toJSON(steps)}}"
+        echo "runner=${{toJSON(runner)}}"
+        echo "strategy=${{toJSON(strategy)}}"
+        echo "matrix=${{toJSON(matrix)}}"
+        echo "inputs=${{toJSON(inputs)}}"
+      shell: bash
