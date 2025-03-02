@@ -226,38 +226,38 @@ abstract class Action extends Yaml {
     });
   }
 
-  static async create(action: ActionProps) {
-    const { runs } = action;
-    const { using, image, main } = action.runs;
-    if (using) {
-      if (using === 'docker') {
-        if (!image) {
-          throw new Error(`You are using a Container Action but an image is not provided in ${action.Dir}.`);
-        } else {
-          const DockerAction = (await import('./docker')).default;
-          return new DockerAction(action);
-        }
-      }
+  // static async create(action: ActionProps) {
+  //   const { runs } = action;
+  //   const { using, image, main } = action.runs;
+  //   if (using) {
+  //     if (using === 'docker') {
+  //       if (!image) {
+  //         throw new Error(`You are using a Container Action but an image is not provided in ${action.Dir}.`);
+  //       } else {
+  //         const DockerAction = (await import('./docker')).default;
+  //         return new DockerAction(action);
+  //       }
+  //     }
 
-      if (using === 'node12' || using === 'node16' || using === 'node20') {
-        if (!main) {
-          throw new Error(`You are using a JavaScript Action but there is not an entry JavaScript file provided in ${action.Dir}.`);
-        } else {
-          const NodeJSAction = (await import('./nodejs')).default;
-          return new NodeJSAction(action);
-        }
-      } else if (using === 'composite') {
-        if (!runs.steps) {
-          throw new Error(`You are using a composite action but there are no steps provided in ${action.Dir}.`);
-        } else {
-          const CompositeAction = (await import('./composite')).default;
-          return new CompositeAction(action);
-        }
-      }
-    }
+  //     if (using === 'node12' || using === 'node16' || using === 'node20') {
+  //       if (!main) {
+  //         throw new Error(`You are using a JavaScript Action but there is not an entry JavaScript file provided in ${action.Dir}.`);
+  //       } else {
+  //         const NodeJSAction = (await import('./nodejs')).default;
+  //         return new NodeJSAction(action);
+  //       }
+  //     } else if (using === 'composite') {
+  //       if (!runs.steps) {
+  //         throw new Error(`You are using a composite action but there are no steps provided in ${action.Dir}.`);
+  //       } else {
+  //         const CompositeAction = (await import('./composite')).default;
+  //         return new CompositeAction(action);
+  //       }
+  //     }
+  //   }
 
-    throw new Error("Missing 'using' value. 'using' requires 'composite', 'docker', 'node12', 'node16' or 'node20'.");
-  }
+  //   throw new Error("Missing 'using' value. 'using' requires 'composite', 'docker', 'node12', 'node16' or 'node20'.");
+  // }
 }
 
 export default Action;

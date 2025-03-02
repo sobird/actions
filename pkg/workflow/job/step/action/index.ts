@@ -7,7 +7,8 @@ import { parse } from 'yaml';
 import Executor, { Conditional } from '@/pkg/common/executor';
 import Action, { ActionProps } from '@/pkg/runner/action';
 import ActionCommandFile from '@/pkg/runner/action/command/file';
-import Step, { StepProps } from '@/pkg/workflow/job/step';
+import ActionFactory from '@/pkg/runner/action/factory';
+import Step from '@/pkg/workflow/job/step';
 import { withTimeout } from '@/utils';
 
 const logger = log4js.getLogger();
@@ -177,20 +178,20 @@ abstract class StepAction extends Step {
       runner.context.github.action_path = actionContainerDir;
 
       if (ymlEntry) {
-        this.action = await Action.create(parse(ymlEntry.body));
+        this.action = ActionFactory.create(parse(ymlEntry.body));
         this.action.Dir = actionContainerDir;
         return;
       }
       const yamlEntry = await runner.container?.getContent(path.join(actionDir, 'action.yaml'));
       if (yamlEntry) {
-        this.action = await Action.create(parse(yamlEntry.body));
+        this.action = ActionFactory.create(parse(yamlEntry.body));
         this.action.Dir = actionContainerDir;
         return;
       }
 
       const dockerFileEntry = await runner.container?.getContent(path.join(actionDir, 'Dockerfile'));
       if (dockerFileEntry) {
-        this.action = await Action.create({
+        this.action = ActionFactory.create({
           name: '(Synthetic)',
           description: 'docker file action',
           runs: {
@@ -205,30 +206,30 @@ abstract class StepAction extends Step {
     });
   }
 
-  static async create(step: StepProps) {
-    if (!step.run && !step.uses) {
-      throw Error('every step must define a `uses` or `run` key');
-    }
+  // static async create(step: StepProps) {
+  //   if (!step.run && !step.uses) {
+  //     throw Error('every step must define a `uses` or `run` key');
+  //   }
 
-    if (step.run && step.uses) {
-      throw Error('a step cannot have both the `uses` and `run` keys');
-    }
+  //   if (step.run && step.uses) {
+  //     throw Error('a step cannot have both the `uses` and `run` keys');
+  //   }
 
-    if (step.uses) {
-      if (step.uses.startsWith('docker://')) {
-        const StepActionDocker = (await import('./docker')).default;
-        return new StepActionDocker(step);
-      } if (step.uses.startsWith('./') || step.uses.startsWith('.\\')) {
-        const StepActionLocal = (await import('./local')).default;
-        return new StepActionLocal(step);
-      }
-      const StepActionRemote = (await import('./remote')).default;
-      return new StepActionRemote(step);
-    }
+  //   if (step.uses) {
+  //     if (step.uses.startsWith('docker://')) {
+  //       const StepActionDocker = (await import('./docker')).default;
+  //       return new StepActionDocker(step);
+  //     } if (step.uses.startsWith('./') || step.uses.startsWith('.\\')) {
+  //       const StepActionLocal = (await import('./local')).default;
+  //       return new StepActionLocal(step);
+  //     }
+  //     const StepActionRemote = (await import('./remote')).default;
+  //     return new StepActionRemote(step);
+  //   }
 
-    const StepActionScript = (await import('./script')).default;
-    return new StepActionScript(step);
-  }
+  //   const StepActionScript = (await import('./script')).default;
+  //   return new StepActionScript(step);
+  // }
 }
 
 export default StepAction;

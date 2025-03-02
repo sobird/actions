@@ -4,7 +4,7 @@ import Executor from '@/pkg/common/executor';
 import { createSafeName } from '@/utils';
 
 import { StepProps } from './step';
-import StepAction from './step/action';
+// import StepAction from './step/action';
 import StepActionFactory from './step/action/factory';
 
 // const logger = log4js.getLogger();

@@ -641,6 +641,7 @@ class Job {
     runner.context.needs = Object.fromEntries(needs);
   }
 
+  // eslint-disable-next-line class-methods-use-this
   resolveInputs(runner: Runner) {
     if (runner.caller) {
       const { workflow } = runner.run;
@@ -662,6 +663,7 @@ class Job {
    * The workflow is not valid. ${workflow_path} (Line: 11, Col: 11): Secret ${secret_key} is required, but not provided while calling.
    *
    */
+  // eslint-disable-next-line class-methods-use-this
   resolveSecrets(runner: Runner) {
     if (runner.caller) {
       const { workflow } = runner.run;
