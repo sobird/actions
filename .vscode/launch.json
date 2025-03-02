@@ -10,7 +10,7 @@
       "request": "launch",
       "runtimeExecutable": "tsx",
       "program": "${workspaceFolder}/pkg/cmd",
-      "args": ["run", "-W", "test/workflows/services.yml"],
+      "args": ["run", "-W", "test/workflows/services.yml", "--image", "-self-hosted"],
       "env": {}
     },
     {

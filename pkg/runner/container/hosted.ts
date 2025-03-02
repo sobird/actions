@@ -23,6 +23,7 @@ import { trimSuffix, createSha1Hash } from '@/utils';
 
 import Container, { FileEntry, type ContainerExecOptions } from '.';
 import OutputManager from '../outputManager';
+import DockerContainer from './docker';
 
 export interface HostedContainerOptions {
   /**
@@ -304,7 +305,7 @@ class HostedContainer extends Container {
       runner.container = new HostedContainer({
         name,
         basedir: runner.ActionCacheDir,
-        workdir: config.workdir,
+        workdir: DockerContainer.Resolve(config.workdir),
         binds,
         stdout: outputManager,
         stderr: outputManager,

@@ -463,7 +463,7 @@ class DockerContainer extends Container {
       const dockerodeOptions = new Options(options.options).dockerodeOptions({
         name: options.name,
         image: options.image,
-        workdir: options.workdir,
+        workdir: DockerContainer.Resolve(options.workdir),
         entrypoint: options.entrypoint,
         platform: options.platform,
         tty: isatty,

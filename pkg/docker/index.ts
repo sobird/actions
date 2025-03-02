@@ -72,7 +72,7 @@ export class Docker extends Dockerode {
     for (const p of Docker.SocketLocations) {
       try {
         fs.accessSync(p, fs.constants.F_OK); // 检查文件是否存在
-        if (p.startsWith('\\\\.\\')) {
+        if (p.startsWith('//./')) {
           return `npipe://${p}`;
         }
         return `unix://${p}`;
