@@ -477,6 +477,44 @@ class Runner {
     return [binds, mounts];
   }
 
+  ServiceMounts(volumes: string[] = []): MountConfig {
+    const defaultSocket = '/var/run/docker.sock';
+    const containerDaemonSocket = this.config.containerDaemonSocket || defaultSocket;
+    const binds: MountConfig = [];
+    if (containerDaemonSocket !== '-') {
+      const daemonPath = Docker.SocketMountPath(containerDaemonSocket);
+      // binds.push(`${daemonPath}:${defaultSocket}`);
+      binds.push({
+        Type: 'bind',
+        Source: daemonPath,
+        Target: defaultSocket,
+      });
+    }
+
+    const mounts: MountConfig = [];
+
+    volumes.forEach((volume) => {
+      if (!volume.includes(':') || path.isAbsolute(volume)) {
+        // binds.push(volume);
+        binds.push({
+          Type: 'volume',
+          Source: '',
+          Target: volume,
+        });
+      } else {
+        const [key, value] = volume.split(':');
+        // mounts[key] = value;
+        mounts.push({
+          Type: 'volume',
+          Source: key,
+          Target: value,
+        });
+      }
+    });
+
+    return [...binds, ...mounts];
+  }
+
   get Token() {
     return this.context.github.token;
   }

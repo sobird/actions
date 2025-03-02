@@ -97,6 +97,7 @@ export default class Options {
       name: options.name,
       Image: options.image,
       Env: options.env,
+      Tty: options.tty,
       Entrypoint: options.entrypoint,
       WorkingDir: options.workdir,
       User: options.user,
@@ -114,6 +115,7 @@ export default class Options {
       } : undefined,
       ExposedPorts: exposedPorts,
       HostConfig: {
+        AutoRemove: options.rm,
         Mounts: options.mount,
         NanoCPUs: options.cpus ? options.cpus * 1e9 : undefined,
         Memory: Options.Memory(options.memory),

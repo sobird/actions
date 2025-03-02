@@ -472,6 +472,7 @@ class DockerContainer extends Container {
         publish: options.ports,
         rm: Boolean(options.autoRemove),
         network: options.networkMode,
+        networkAlias: options.networkAlias,
         mount: options.mounts,
         capAdd: options.capAdd,
         capDrop: options.capDrop,
@@ -479,8 +480,6 @@ class DockerContainer extends Container {
         userns: options.usernsMode,
         volume: options.binds,
       });
-
-      console.log('dockerodeOptions', dockerodeOptions);
 
       const container = await docker.createContainer(dockerodeOptions);
 
@@ -784,8 +783,8 @@ class DockerContainer extends Container {
         const serviceEnv = service.env?.evaluate(runner);
         const serviceCredentials = service.credentials?.evaluate(runner);
         const serviceName = runner.ContainerName(serviceId);
-        const [serviceBinds, serviceMounts] = runner.ServiceBindsAndMounts(service.volumes);
-        const { exposedPorts, portBindings } = service.parsePorts();
+        const serviceMounts = runner.ServiceMounts(service.volumes);
+        // const { exposedPorts, portBindings } = service.parsePorts();
 
         const serviceContainer = new DockerContainer({
           name: serviceName,
@@ -795,7 +794,7 @@ class DockerContainer extends Container {
           authconfig: {
             ...serviceCredentials,
           },
-          binds: serviceBinds,
+          // binds: serviceBinds,
           mounts: serviceMounts,
           env: serviceEnv,
           networkMode: networkName,
@@ -811,6 +810,7 @@ class DockerContainer extends Container {
           ports: service.ports,
           stdout: outputManager,
           stderr: outputManager,
+          options: service.options,
         }, config.workspace);
 
         return [serviceId, serviceContainer];
