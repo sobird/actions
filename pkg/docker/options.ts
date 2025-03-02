@@ -8,7 +8,7 @@ import { Command } from '@commander-js/extra-typings';
 import {
   ContainerCreateOptions, EndpointsConfig, EndpointSettings, MountConfig, MountSettings,
 } from 'dockerode';
-import { merge } from 'lodash-es';
+import lodash from 'lodash';
 import shellQuote from 'shell-quote';
 
 import Port from '../workflow/job/container/port';
@@ -89,7 +89,7 @@ export default class Options {
   }
 
   dockerodeOptions(opts: ReturnType<this['parse']>) {
-    const options = merge({}, this.parse(), opts);
+    const options = lodash.merge({}, this.parse(), opts);
 
     const { exposedPorts, portBindings } = Port.ParsePorts(options.publish);
 

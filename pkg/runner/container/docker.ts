@@ -14,7 +14,7 @@ import readline from 'node:readline';
 import tty from 'node:tty';
 
 import Dockerode, {
-  NetworkInspectInfo, AuthConfig, MountConfig, EndpointSettings, EndpointsConfig,
+  NetworkInspectInfo, AuthConfig, MountConfig,
 } from 'dockerode';
 import dotenv from 'dotenv';
 import ignore from 'ignore';
@@ -771,7 +771,7 @@ class DockerContainer extends Container {
       // if using service containers, will create a new network for the containers.
       // and it will be removed after at last.
       const [networkName, createAndDeleteNetwork] = runner.ContainerNetworkName();
-      const [binds, mounts] = runner.Mounts;
+      const mounts = runner.Mounts;
 
       let containerNetworkMode = config.containerNetworkMode || 'host';
       if (runner.ContainerImage) {
@@ -806,8 +806,9 @@ class DockerContainer extends Container {
           platform: config.containerPlatform,
           capAdd: config.containerCapAdd,
           capDrop: config.containerCapDrop,
-          portBindings,
-          exposedPorts,
+          // portBindings,
+          // exposedPorts,
+          ports: service.ports,
           stdout: outputManager,
           stderr: outputManager,
         }, config.workspace);
@@ -815,6 +816,7 @@ class DockerContainer extends Container {
         return [serviceId, serviceContainer];
       }));
 
+      const containerOptions = runner.run.job.container.options || config.containerOptions;
       const dockerContainer = new DockerContainer({
         name,
         image,
@@ -826,7 +828,7 @@ class DockerContainer extends Container {
         authconfig: {
           ...credentials,
         },
-        binds,
+        // binds,
         mounts,
         env: {
           LANG: 'C.UTF-8',
@@ -844,7 +846,7 @@ class DockerContainer extends Container {
         stdout: outputManager,
         stderr: outputManager,
 
-        options: config.containerOptions,
+        options: containerOptions,
       }, config.workspace);
       runner.container = dockerContainer;
 

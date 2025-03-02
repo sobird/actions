@@ -9,7 +9,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import { MountConfig } from 'dockerode';
+import { MountConfig, MountConsistency } from 'dockerode';
 import log4js, { Logger } from 'log4js';
 
 import Constants from '@/pkg/common/constants';
@@ -328,19 +328,19 @@ class Runner {
     return [binds, mounts];
   }
 
-  get Mounts(): [string[], MountConfig] {
+  get Mounts(): MountConfig {
     const containerName = this.ContainerName();
     const defaultSocket = '/var/run/docker.sock';
     const containerDaemonSocket = this.config.containerDaemonSocket || defaultSocket;
-    const binds: string[] = [];
+    const binds: MountConfig = [];
     if (containerDaemonSocket !== '-') {
       const daemonPath = Docker.SocketMountPath(containerDaemonSocket);
-      binds.push(`${daemonPath}:${defaultSocket}`);
-      // binds.push({
-      //   Type: 'bind',
-      //   Source: daemonPath,
-      //   Target: defaultSocket,
-      // });
+      // binds.push(`${daemonPath}:${defaultSocket}`);
+      binds.push({
+        Type: 'bind',
+        Source: daemonPath,
+        Target: defaultSocket,
+      });
     }
 
     const ToolMount = 'toolcache';
@@ -367,7 +367,12 @@ class Runner {
     const { volumes = [] } = this.run.job.container;
     volumes.forEach((volume) => {
       if (!volume.includes(':') || path.isAbsolute(volume)) {
-        binds.push(volume);
+        // anonymous volume
+        binds.push({
+          Type: 'volume',
+          Source: '',
+          Target: volume,
+        });
       } else {
         const [key, value] = volume.split(':');
         // mounts[key] = value;
@@ -379,22 +384,40 @@ class Runner {
       }
     });
 
-    let bindModifiers = '';
+    let bindModifiers: MountConsistency = 'default';
     if (process.platform === 'darwin') {
-      bindModifiers = ':delegated';
+      bindModifiers = 'delegated';
     }
 
     if (this.config.bindWorkdir) {
       if (this.IsHosted && this.container) {
         // docker container
         hostedWorkDir = this.container.resolve(this.config.workdir);
-        binds.push(`${hostedWorkDir}:${hostedWorkDir}${bindModifiers}`);
+        // binds.push(`${hostedWorkDir}:${hostedWorkDir}:${bindModifiers}`);
+        binds.push({
+          Type: 'bind',
+          Source: hostedWorkDir,
+          Target: hostedWorkDir,
+          Consistency: bindModifiers,
+        });
       } else {
-        binds.push(`${this.config.workdir}:${containerWorkdir}${bindModifiers}`);
+        // binds.push(`${this.config.workdir}:${containerWorkdir}${bindModifiers}`);
+        binds.push({
+          Type: 'bind',
+          Source: this.config.workdir,
+          Target: containerWorkdir,
+          Consistency: bindModifiers,
+        });
       }
     } else if (this.IsHosted && this.container) {
       hostedWorkDir = this.container.resolve(this.config.workdir);
-      binds.push(`${hostedWorkDir}:${hostedWorkDir}${bindModifiers}`);
+      // binds.push(`${hostedWorkDir}:${hostedWorkDir}${bindModifiers}`);
+      binds.push({
+        Type: 'bind',
+        Source: hostedWorkDir,
+        Target: hostedWorkDir,
+        Consistency: bindModifiers,
+      });
     } else {
       // mounts[containerName] = containerWorkdir;
       mounts.push({
@@ -409,12 +432,26 @@ class Runner {
       hostedTempDir = this.container.TempDir;
 
       // Always bound ToolDir and TempDir if hosted
-      binds.push(`${hostedToolDir}:${hostedToolDir}:delegated`);
-      binds.push(`${hostedTempDir}:${hostedTempDir}:delegated`);
+      // binds.push(`${hostedToolDir}:${hostedToolDir}:delegated`);
+      // binds.push(`${hostedTempDir}:${hostedTempDir}:delegated`);
+
+      binds.push({
+        Type: 'bind',
+        Source: hostedToolDir,
+        Target: hostedToolDir,
+        Consistency: bindModifiers,
+      });
+
+      binds.push({
+        Type: 'bind',
+        Source: hostedTempDir,
+        Target: hostedTempDir,
+        Consistency: bindModifiers,
+      });
 
       mounts = [];
     }
-    return [binds, mounts];
+    return [...binds, ...mounts];
   }
 
   ServiceBindsAndMounts(volumes: string[] = []): [string[], Record<string, string>] {
