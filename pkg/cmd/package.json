@@ -1,6 +1,6 @@
 {
   "name": "@sobird/actions",
-  "version": "0.0.6",
+  "version": "0.0.8",
   "description": "Impl Actions runner using typescript",
   "type": "module",
   "main": "index.ts",
@@ -25,25 +25,37 @@
   "author": "sobird",
   "license": "MIT",
   "dependencies": {
+    "@bufbuild/protobuf": "^2.2.3",
+    "@commander-js/extra-typings": "^12.0.1",
+    "@connectrpc/connect": "^2.0.1",
+    "@connectrpc/connect-node": "^2.0.1",
     "async-mutex": "^0.5.0",
     "better-sqlite3": "^11.8.1",
     "body-parser": "^1.20.2",
     "chalk": "^5.3.0",
-    "cron": "^3.2.1",
     "dockerode": "^4.0.2",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "git-url-parse": "^14.0.0",
     "ignore": "^5.3.1",
     "ip": "^2.0.1",
     "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
+    "log4js": "^6.9.1",
     "prompts": "^2.4.2",
     "rc": "^1.2.8",
     "retry": "^0.13.1",
     "shell-quote": "^1.8.1",
     "simple-git": "^3.24.0",
-    "sqlite3": "^5.1.7",
-    "tar": "^7.1.0"
+    "tar": "^7.1.0",
+    "yaml": "^2.4.2"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.2",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.0",
+    "@rollup/plugin-replace": "^6.0.2",
+    "@rollup/plugin-terser": "^0.4.4",
     "@types/better-sqlite3": "^7.6.12",
     "@types/body-parser": "^1.19.5",
     "@types/dockerode": "^3.3.35",
@@ -55,8 +67,11 @@
     "@types/rc": "^1.2.4",
     "@types/retry": "^0.12.5",
     "@types/shell-quote": "^1.7.5",
-    "husky": "^9.0.11",
-    "smee-client": "^2.0.4"
+    "rollup": "^4.34.8",
+    "rollup-plugin-clear": "^2.0.7",
+    "rollup-plugin-copy": "^3.5.0",
+    "rollup-plugin-node-externals": "^8.0.0",
+    "rollup-plugin-typescript2": "^0.36.0"
   },
   "files": [
     "dist"

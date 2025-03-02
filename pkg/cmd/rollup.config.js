@@ -55,7 +55,7 @@ export default (env) => {
           delimiters: ['', ''],
           values: {
             '#!/usr/bin/env tsx': '#!/usr/bin/env node',
-            '"actions": "./index.ts"': '"actions": "./dist/index.js"',
+            // '"actions": "./index.ts"': '"actions": "./dist/index.js"',
           },
           preventAssignment: true,
         }),
