@@ -732,12 +732,13 @@ class DockerContainer extends Container {
   }
 
   static Resolve(...paths: string[]) {
-    if (process.platform === 'win32' && paths.includes('/')) {
-      throw Error('You cannot specify linux style local paths (/mnt/etc) on Windows as it does not understand them.');
+    const normalizedPath = path.join(...paths).replace(/\\/g, '/');
+    if (normalizedPath.startsWith('/mnt/')) {
+      return normalizedPath;
     }
 
     const absPath = path.resolve(...paths);
-    const windowsPathRegex = /^([a-zA-Z]):(\\.+)$/;
+    const windowsPathRegex = /^([a-zA-Z]):(\\.*)$/;
     const windowsPathComponents = windowsPathRegex.exec(absPath);
 
     if (windowsPathComponents === null) {
@@ -749,11 +750,7 @@ class DockerContainer extends Container {
     const translatedPath = windowsPathComponents[2].replace(/\\/g, '/');
     const result = `/mnt/${driveLetter}${translatedPath}`;
 
-    if (path.isAbsolute(path.join(...paths))) {
-      return result;
-    }
-
-    return translatedPath;
+    return result;
   }
 
   static Setup(runner: Runner) {

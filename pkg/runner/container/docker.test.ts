@@ -187,6 +187,7 @@ describe('test docker container path', () => {
     testCases.forEach((item) => {
       const [destination, source] = item;
       it(source, () => {
+        console.log('destination', destination)
         expect(docker.resolve(source)).toBe(destination);
       });
     });
@@ -206,3 +207,68 @@ describe('test docker container path', () => {
     });
   }
 });
+
+describe.runIf(process.platform === 'win32')('Windows Platform Resolve', () => {
+  test('should convert standard Windows absolute paths to WSL format', () => {
+    expect(DockerContainer.Resolve('C:\\Project\\src')).toBe('/mnt/c/Project/src')
+    expect(DockerContainer.Resolve('D:/Data/2024')).toBe('/mnt/d/Data/2024')
+  })
+
+  test('should handle mixed path separators consistently', () => {
+    expect(DockerContainer.Resolve('C:/Project\\mixed/path')).toBe('/mnt/c/Project/mixed/path')
+  })
+
+  test('should maintain idempotency for converted paths', () => {
+    const converted = DockerContainer.Resolve('E:\\AppData')
+    expect(DockerContainer.Resolve(converted)).toBe(converted)
+  })
+
+  test('should preserve UNC network paths without modification', () => {
+    expect(DockerContainer.Resolve('\\\\server\\share')).toBe('\\\\server\\share\\')
+    expect(DockerContainer.Resolve('//server/share')).toBe('\\\\server\\share\\')
+  })
+
+  test('should resolve relative paths to absolute container paths', () => {
+    const expected = path.resolve('relative/path').replace(/\\/g, '/')
+        .replace(/^([a-zA-Z]):(\/.*)$/, (_, drive, translatedPath) => `/mnt/${drive.toLowerCase()}${translatedPath}`)
+
+    expect(DockerContainer.Resolve('relative/path')).toBe(expected)
+  })
+
+  test('should normalize directory traversal patterns', () => {
+    expect(DockerContainer.Resolve('C:\\Project\\src\\..')).toBe('/mnt/c/Project')
+  })
+
+  test('should handle root directory paths correctly', () => {
+    expect(DockerContainer.Resolve('C:\\')).toBe('/mnt/c/')
+  })
+
+  test('should preserve spaces in directory names', () => {
+    expect(DockerContainer.Resolve('C:\\Program Files')).toBe('/mnt/c/Program Files')
+  })
+
+  test('should support Unicode characters in paths', () => {
+    expect(DockerContainer.Resolve('D:\\测试目录\\文件@2024')).toBe('/mnt/d/测试目录/文件@2024')
+  })
+})
+
+
+describe.skipIf(process.platform === "win32")('POSIX platforms behavior', () => {
+  beforeAll(() => {
+    Object.defineProperty(process, 'platform', { value: 'linux' })
+  })
+
+  test('should return POSIX paths unmodified', () => {
+    expect(DockerContainer.Resolve('/var/log/app')).toBe('/var/log/app')
+    expect(DockerContainer.Resolve('/mnt/c/Project')).toBe('/mnt/c/Project')
+  })
+
+  test('should convert Windows-style paths when executed on POSIX systems', () => {
+    expect(DockerContainer.Resolve('C:\\Project')).toMatch(/^\/mnt\/c\/Project/)
+  })
+
+  test('should resolve relative paths using POSIX semantics', () => {
+    const expected = path.resolve('docs').replace(/\\/g, '/')
+    expect(DockerContainer.Resolve('docs')).toBe(expected)
+  })
+})
