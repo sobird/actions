@@ -10,7 +10,7 @@
       "request": "launch",
       "runtimeExecutable": "tsx",
       "program": "${workspaceFolder}/pkg/cmd",
-      "args": ["run", "-W", "test/workflows/services.yml", "--image", "-self-hosted"],
+      "args": ["run", "-W", "test/workflows/artifact-server.yml", "-j", "job1-v4", "-v"],
       "env": {}
     },
     {
