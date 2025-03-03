@@ -22,14 +22,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import sqlite3, { Database } from 'better-sqlite3';
 import bodyParser from 'body-parser';
 import express, { Handler } from 'express';
 import ip from 'ip';
 import log4js, { Logger } from 'log4js';
+import sqlite3, { Database } from 'sqlite3';
 
 import {
-  CacheEntry, ArtifactCacheEntry, ReserveCacheRequest, ReserveCacheResponse, CommitCacheRequest,
+  CacheEntry, ArtifactCacheEntry, ReserveCacheRequest, CommitCacheRequest,
 } from './contracts';
 import Storage from './storage';
 import type { AddressInfo } from 'net';
@@ -50,25 +50,29 @@ class ArtifactCache {
       fs.mkdirSync(dir, { recursive: true });
     }
     this.storage = new Storage(path.join(dir, 'artifact'));
-    this.db = sqlite3(path.join(dir, 'artifact.db'), {
-      // verbose: console.log,
+    this.db = new sqlite3.Database(path.join(dir, 'artifact.db'), (err) => {
+      if (err) {
+        this.logger.error('Failed to open database:', err.message);
+      } else {
+        this.initializeDatabase();
+      }
     });
 
-    try {
-      this.db.prepare(`CREATE TABLE caches (
-        id INTEGER PRIMARY KEY, 
-        key TEXT NOT NULL, 
-        version TEXT NOT NULL, 
-        size INTEGER DEFAULT (0), 
-        complete INTEGER DEFAULT (0) NOT NULL, 
-        updatedAt INTEGER DEFAULT (0) NOT NULL, 
-        createdAt INTEGER DEFAULT (0) NOT NULL
-      )`).run();
-      this.db.prepare('CREATE INDEX idx_key ON caches (key)');
-      this.db.prepare('CREATE UNIQUE INDEX idx_key ON caches (key, version)');
-    } catch (err) {
-      this.logger.debug((err as Error).message);
-    }
+    // try {
+    //   this.db.prepare(`CREATE TABLE caches (
+    //     id INTEGER PRIMARY KEY,
+    //     key TEXT NOT NULL,
+    //     version TEXT NOT NULL,
+    //     size INTEGER DEFAULT (0),
+    //     complete INTEGER DEFAULT (0) NOT NULL,
+    //     updatedAt INTEGER DEFAULT (0) NOT NULL,
+    //     createdAt INTEGER DEFAULT (0) NOT NULL
+    //   )`).run();
+    //   this.db.prepare('CREATE INDEX idx_key ON caches (key)');
+    //   this.db.prepare('CREATE UNIQUE INDEX idx_key ON caches (key, version)');
+    // } catch (err) {
+    //   this.logger.debug((err as Error).message);
+    // }
 
     app.set('query parser', 'simple');
     // app.use(bodyParser.json());
@@ -100,9 +104,35 @@ class ArtifactCache {
     });
     // Purge cache storage and DB
     app.post('/_apis/artifactcache/clean', (req, res) => {
-      const { changes } = this.purge(false);
-      res.status(200).json({
-        count: changes,
+      this.purge(false, (changes) => {
+        res.status(200).json({
+          count: changes,
+        });
+      });
+    });
+  }
+
+  private initializeDatabase() {
+    this.db.serialize(() => {
+    // 创建表和索引
+      this.db.run(`CREATE TABLE IF NOT EXISTS caches (
+      id INTEGER PRIMARY KEY, 
+      key TEXT NOT NULL, 
+      version TEXT NOT NULL, 
+      size INTEGER DEFAULT (0), 
+      complete INTEGER DEFAULT (0) NOT NULL, 
+      updatedAt INTEGER DEFAULT (0) NOT NULL, 
+      createdAt INTEGER DEFAULT (0) NOT NULL
+    )`, (err) => {
+        if (err) this.logger.debug(err.message);
+      });
+
+      this.db.run('CREATE INDEX IF NOT EXISTS idx_key ON caches (key)', (err) => {
+        if (err) this.logger.debug(err.message);
+      });
+
+      this.db.run('CREATE UNIQUE INDEX IF NOT EXISTS idx_key_version ON caches (key, version)', (err) => {
+        if (err) this.logger.debug(err.message);
       });
     });
   }
@@ -111,79 +141,96 @@ class ArtifactCache {
   findCache: Handler = (req, res) => {
     const { keys = '', version = '' } = req.query as { keys: string, version: string };
     const [primaryKey, ...restorePaths] = decodeURIComponent(keys).split(',');
-    const idAndKey = this.findCacheEntry(primaryKey, version, restorePaths);
 
-    if (!idAndKey) {
-      this.logger.debug(`Missing key ${primaryKey}`);
-      res.status(204).end();
-      return;
-    }
+    this.findCacheEntry(primaryKey, version, restorePaths, true, (idAndKey) => {
+      if (!idAndKey) {
+        this.logger.debug(`Missing key ${primaryKey}`);
+        res.status(204).end();
+        return;
+      }
 
-    const cacheId = idAndKey.id;
-    const foundPrimaryKey = idAndKey.key;
+      const cacheId = idAndKey.id;
+      const foundPrimaryKey = idAndKey.key;
 
-    const cacheFile = this.storage.filename(cacheId);
-    if (!this.storage.exist(cacheId)) {
-      this.logger.debug(`Missing cache file ${cacheFile}`);
-      res.status(204).end();
-    } else {
-      const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
-      const cacheFileURL = `${baseURL}/_apis/artifactcache/artifacts/${cacheId}`;
-      res.status(200).json({ result: 'hit', archiveLocation: cacheFileURL, cacheKey: foundPrimaryKey } as ArtifactCacheEntry);
-    }
+      const cacheFile = this.storage.filename(cacheId);
+      if (!this.storage.exist(cacheId)) {
+        this.logger.debug(`Missing cache file ${cacheFile}`);
+        res.status(204).end();
+      } else {
+        const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
+        const cacheFileURL = `${baseURL}/_apis/artifactcache/artifacts/${cacheId}`;
+        res.status(200).json({ result: 'hit', archiveLocation: cacheFileURL, cacheKey: foundPrimaryKey } as ArtifactCacheEntry);
+      }
+    });
   };
 
   reserveCache: Handler = (req, res) => {
     const { key, version, cacheSize = 0 } = req.body as ReserveCacheRequest;
-    const { db } = this;
 
     this.logger.debug(`Request to reserve cache ${key} for uploading`);
-    const row = db.prepare<unknown[], CacheEntry>('SELECT * FROM caches WHERE key = ? AND version = ?').get(key, version);
-    if (!row) {
-      const id = db.prepare<unknown[], CacheEntry>('INSERT INTO caches (key, version, size, updatedAt, createdAt) VALUES (?, ?, ?, ?, ?)')
-        .run(key, version, cacheSize, Date.now(), Date.now()).lastInsertRowid;
-      res.status(200).json({ cacheId: id });
-      return;
-    }
 
-    if (row.complete) {
-      const error = `Cache id ${row.id} was already uploaded`;
-      res.status(400).json({ error });
-    } else {
-      this.logger.debug(`Cache id ${row.id} already reserved, but did not start uploading`);
-      res.status(200).json({ cacheId: row.id } as ReserveCacheResponse);
-    }
+    this.db.get<CacheEntry>(
+      'SELECT * FROM caches WHERE key = ? AND version = ?',
+      [key, version],
+      (err, row) => {
+        if (err) {
+          res.status(500).json({ error: err.message });
+          return;
+        }
+
+        if (!row) {
+          this.db.run(
+            'INSERT INTO caches (key, version, size, updatedAt, createdAt) VALUES (?, ?, ?, ?, ?)',
+            [key, version, cacheSize, Date.now(), Date.now()],
+            function cb(error) {
+              if (error) {
+                res.status(500).json({ error: error.message });
+              } else {
+                res.status(200).json({ cacheId: this.lastID });
+              }
+            },
+          );
+        } else if (row.complete) {
+          res.status(400).json({ error: `Cache id ${row.id} was already uploaded` });
+        } else {
+          this.logger.debug(`Cache id ${row.id} already reserved, but did not start uploading`);
+          res.status(200).json({ cacheId: row.id });
+        }
+      },
+    );
   };
 
   uploadCache: Handler = async (req, res) => {
     const { cacheId } = req.params;
     const { db } = this;
 
-    const row = db.prepare<unknown[], CacheEntry>('SELECT * FROM caches WHERE id = ?').get(cacheId);
-    if (!row) {
-      const error = `Cache with id ${cacheId} has not been reserved`;
-      res.status(400).json({ error });
-      return;
-    }
-
-    if (row.complete) {
-      const error = `Upload cache with ${row.id} has already been committed and completed`;
-      res.status(400).json({ error });
-    } else {
-      // the format like "bytes 0-22275422/*" only
-      const contentRange = req.header('Content-Range') || '';
-      const startRange = Number(contentRange.split('-')[0].split(' ')[1]?.trim()) || 0;
-
-      try {
-        await this.storage.write(row.id, startRange, req);
-        req.on('end', () => {
-          res.status(200).json();
-        });
-      } catch (err) {
-        res.status(400).json({ error: (err as Error).message });
-        this.logger.error((err as Error).message);
+    db.get<CacheEntry>('SELECT * FROM caches WHERE id = ?', [cacheId], (error, row) => {
+      if (error) {
+        res.status(500).json({ error: error.message });
+        return;
       }
-    }
+      if (!row) {
+        res.status(400).json({ error: `Cache with id ${cacheId} has not been reserved` });
+        return;
+      }
+
+      if (row.complete) {
+        res.status(400).json({ error: `Upload cache with ${row.id} has already been committed and completed` });
+      } else {
+        // the format like "bytes 0-22275422/*" only
+        const contentRange = req.header('Content-Range') || '';
+        const startRange = Number(contentRange.split('-')[0].split(' ')[1]?.trim()) || 0;
+
+        this.storage.write(row.id, startRange, req).then(() => {
+          req.on('end', () => {
+            res.status(200).json();
+          });
+        }).catch((err) => {
+          res.status(400).json({ error: (err as Error).message });
+          this.logger.error((err as Error).message);
+        });
+      }
+    });
   };
 
   commitCache: Handler = async (req, res) => {
@@ -191,30 +238,38 @@ class ArtifactCache {
     const { size } = req.body as CommitCacheRequest;
     const { db } = this;
 
-    const row = db.prepare<unknown[], CacheEntry>('SELECT * FROM caches WHERE id = ?').get(cacheId);
-
-    if (!row) {
-      const error = `Cache with id ${cacheId} has not been reserved`;
-      this.logger.debug(error);
-      res.status(400).json({ error });
-      return;
-    }
-
-    if (row.complete) {
-      const error = `Upload cache with ${row.id} has already been committed and completed`;
-      this.logger.debug(error);
-      res.status(400).json({ error });
-    } else {
-      try {
-        await this.storage.commit(Number(cacheId), size);
-
-        db.prepare('UPDATE caches SET complete = 1 WHERE id = ?').run(row.id);
-        res.status(200).json({});
-      } catch (error) {
-        this.logger.error((error as Error).message);
-        res.status(400).json({ error: (error as Error).message });
+    db.get<CacheEntry>('SELECT * FROM caches WHERE id = ?', [cacheId], (err, row) => {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
       }
-    }
+
+      if (!row) {
+        const error = `Cache with id ${cacheId} has not been reserved`;
+        this.logger.debug(error);
+        res.status(400).json({ error });
+        return;
+      }
+
+      if (row.complete) {
+        const error = `Upload cache with ${row.id} has already been committed and completed`;
+        this.logger.debug(error);
+        res.status(400).json({ error });
+      } else {
+        this.storage.commit(Number(cacheId), size).then(() => {
+          db.prepare('UPDATE caches SET complete = 1 WHERE id = ?', (err2) => {
+            if (err2) {
+              res.status(500).json({ error: err2.message });
+            } else {
+              res.status(200).json({});
+            }
+          }).run(row.id);
+        }).catch((error) => {
+          this.logger.error((error as Error).message);
+          res.status(400).json({ error: (error as Error).message });
+        });
+      }
+    });
   };
 
   private middleware: Handler = (req, res, next) => {
@@ -222,27 +277,36 @@ class ArtifactCache {
     // if (req.get('Authorization') !== `Bearer ${process.env.AUTH_KEY}`) {
     //   res.status(401).json({ message: 'You are not authorized' });
     // }
-    this.logger.debug(`Request method: ${req.method}, Request url: ${req.originalUrl}`);
+    this.logger.debug(`Request method123: ${req.method}, Request url: ${req.originalUrl}`);
     next();
   };
 
-  purge(onlyUncompleted = true) {
-    const { db } = this;
-    let selectQ;
-    let deleteQ;
-    if (onlyUncompleted === true) {
-      selectQ = 'SELECT * from caches WHERE complete = 0';
-      deleteQ = 'DELETE FROM caches WHERE complete = 0';
-    } else {
-      selectQ = 'SELECT * from caches';
-      deleteQ = 'DELETE FROM caches';
-    }
-    const rows = db.prepare<unknown[], any>(selectQ).all();
-    rows.forEach((row) => {
-      // Remove cached artifacts if any and temporary uploads
-      this.storage.remove(row.id);
+  purge(onlyUncompleted = true, callback: (changes: number) => void = () => {}) {
+    const selectQ = onlyUncompleted ? 'SELECT * from caches WHERE complete = 0' : 'SELECT * from caches';
+    const deleteQ = onlyUncompleted ? 'DELETE FROM caches WHERE complete = 0' : 'DELETE FROM caches';
+
+    this.db.serialize(() => {
+      this.db.all<CacheEntry>(
+        selectQ,
+        (err, rows) => {
+          if (err) {
+            this.logger.error(err.message);
+            return;
+          }
+
+          rows.forEach((row) => {
+            this.storage.remove(row.id);
+          });
+
+          this.db.run(deleteQ, function cb(err2) {
+            if (err2) {
+              return;
+            }
+            callback(this.changes);
+          });
+        },
+      );
     });
-    return db.prepare(deleteQ).run();
   }
 
   // Check if matching cache file exists
@@ -280,24 +344,43 @@ class ArtifactCache {
     version: string,
     restorePaths: string[] = [],
     exactMatch = true,
-  ): { id: number, key: string } | undefined {
-    let row;
-    const { db } = this;
+    callback: (result: { id: number; key: string } | undefined) => void = () => {},
+  ) {
+    let query: string;
+    let params: any[];
 
     if (exactMatch) {
-      row = db.prepare<unknown[], CacheEntry>('SELECT * FROM caches WHERE key = ? AND version = ?').get(primaryKey, version);
+      query = 'SELECT * FROM caches WHERE key = ? AND version = ?';
+      params = [primaryKey, version];
     } else {
-      row = db.prepare<unknown[], CacheEntry>(`SELECT * FROM caches WHERE key LIKE '${primaryKey}%' AND version = '${version}' ORDER BY id DESC`).get();
+      query = 'SELECT * FROM caches WHERE key LIKE ? AND version = ? ORDER BY id DESC';
+      params = [`${primaryKey}%`, version];
     }
 
-    if (row) {
-      return { id: row.id, key: primaryKey };
-    }
+    this.db.get<CacheEntry>(query, params, (err, row) => {
+      if (err) {
+        this.logger.error(err.message);
+        return callback(undefined);
+      }
 
-    if (restorePaths.length > 0) {
-      const [newPrimaryKey, ...newRestoreKeys] = restorePaths;
-      return this.findCacheEntry(newPrimaryKey, version, newRestoreKeys, false);
-    }
+      if (row) {
+        callback({ id: row.id, key: primaryKey });
+      } else if (restorePaths.length > 0) {
+        const [newPrimaryKey, ...newRestoreKeys] = restorePaths;
+        this.findCacheEntry(newPrimaryKey, version, newRestoreKeys, false, callback);
+      } else {
+        callback(undefined);
+      }
+    });
+
+    // if (row) {
+    //   return { id: row.id, key: primaryKey };
+    // }
+
+    // if (restorePaths.length > 0) {
+    //   const [newPrimaryKey, ...newRestoreKeys] = restorePaths;
+    //   return this.findCacheEntry(newPrimaryKey, version, newRestoreKeys, false);
+    // }
   }
 
   async serve(port: number = 0, address: string = ip.address() || 'localhost') {

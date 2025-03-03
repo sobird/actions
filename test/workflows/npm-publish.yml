@@ -16,11 +16,11 @@ jobs:
       with:
         version: 10
 
-    - name: Setup Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        registry-url: https://registry.npmjs.org/
+    # - name: Setup Node
+    #   uses: actions/setup-node@v4
+    #   with:
+    #     node-version: 20
+    #     registry-url: https://registry.npmjs.org/
 
     - name: Restore cache
       id: cache-dependencies
@@ -36,11 +36,11 @@ jobs:
       # if: steps.cache-dependencies.outputs.cache-hit != 'true'
       run: pnpm install --no-frozen-lockfile
 
-    - name: Build ☕️
-      run: |
-        npm run build
-        cd dist
-        npm publish
-      env:
-        NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+    # - name: Build ☕️
+    #   run: |
+    #     npm run build
+    #     cd dist
+    #     npm publish
+    #   env:
+    #     NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 

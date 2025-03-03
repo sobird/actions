@@ -127,16 +127,16 @@ class Runner {
         return;
       }
 
-      console.log('runner name:', this.name);
+      // console.log('runner name:', this.name);
 
-      console.log('job name:', job.name.evaluate(this));
-      // todo
-      console.log('workflow run-name', workflow['run-name'].evaluate(this));
-      console.log('workflow concurrency', workflow.concurrency.evaluate(this));
-      console.log('job runs-on', job['runs-on'].evaluate(this), job.runsOn(this));
-      console.log('workflow file:', this.run.workflow.file);
-      console.log('workflow sha:', this.run.workflow.sha);
-      console.log('job container image:', job.container.image.evaluate(this));
+      // console.log('job name:', job.name.evaluate(this));
+      // // todo
+      // console.log('workflow run-name', workflow['run-name'].evaluate(this));
+      // console.log('workflow concurrency', workflow.concurrency.evaluate(this));
+      // console.log('job runs-on', job['runs-on'].evaluate(this), job.runsOn(this));
+      // console.log('workflow file:', this.run.workflow.file);
+      // console.log('workflow sha:', this.run.workflow.sha);
+      // console.log('job container image:', job.container.image.evaluate(this));
 
       // execute job unit
       await job.executor(this).execute(this);
