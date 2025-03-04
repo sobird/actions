@@ -7377,7 +7377,7 @@ snapshots:
       eslint: 8.54.0
       semver: 7.7.1
 
-  eslint-config-airbnb-base@15.0.0(eslint-plugin-import@2.31.0)(eslint@8.54.0):
+  eslint-config-airbnb-base@15.0.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint@8.54.0))(eslint@8.54.0):
     dependencies:
       confusing-browser-globals: 1.0.11
       eslint: 8.54.0
@@ -7386,22 +7386,19 @@ snapshots:
       object.entries: 1.1.8
       semver: 6.3.1
 
-  eslint-config-airbnb-typescript@17.1.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint@8.54.0)(typescript@5.8.2))(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint-plugin-import@2.31.0)(eslint@8.54.0):
-
+  eslint-config-airbnb-typescript@17.1.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint@8.54.0)(typescript@5.8.2))(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint@8.54.0))(eslint@8.54.0):
     dependencies:
       '@typescript-eslint/eslint-plugin': 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint@8.54.0)(typescript@5.8.2)
       '@typescript-eslint/parser': 6.21.0(eslint@8.54.0)(typescript@5.8.2)
       eslint: 8.54.0
-      eslint-config-airbnb-base: 15.0.0(eslint-plugin-import@2.31.0)(eslint@8.54.0)
+      eslint-config-airbnb-base: 15.0.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint@8.54.0))(eslint@8.54.0)
       eslint-plugin-import: 2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint-import-resolver-typescript@3.7.0)(eslint@8.54.0)
 
-  eslint-config-airbnb@19.0.4(eslint-plugin-import@2.31.0)(eslint-plugin-jsx-a11y@6.10.2(eslint@8.54.0))(eslint-plugin-react-hooks@4.6.2(eslint@8.54.0))(eslint-plugin-react@7.37.4(eslint@8.54.0))(eslint@8.54.0):
+  eslint-config-airbnb@19.0.4(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint@8.54.0))(eslint-plugin-jsx-a11y@6.10.2(eslint@8.54.0))(eslint-plugin-react-hooks@4.6.2(eslint@8.54.0))(eslint-plugin-react@7.37.4(eslint@8.54.0))(eslint@8.54.0):
     dependencies:
       eslint: 8.54.0
-      eslint-config-airbnb-base: 15.0.0(eslint-plugin-import@2.31.0)(eslint@8.54.0)
-
+      eslint-config-airbnb-base: 15.0.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint@8.54.0))(eslint@8.54.0)
       eslint-plugin-import: 2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint-import-resolver-typescript@3.7.0)(eslint@8.54.0)
-
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.54.0)
       eslint-plugin-react: 7.37.4(eslint@8.54.0)
       eslint-plugin-react-hooks: 4.6.2(eslint@8.54.0)
@@ -7436,13 +7433,11 @@ snapshots:
       '@typescript-eslint/eslint-plugin': 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint@8.54.0)(typescript@5.8.2)
       '@typescript-eslint/parser': 6.21.0(eslint@8.54.0)(typescript@5.8.2)
       eslint: 8.54.0
-      eslint-config-airbnb: 19.0.4(eslint-plugin-import@2.31.0)(eslint-plugin-jsx-a11y@6.10.2(eslint@8.54.0))(eslint-plugin-react-hooks@4.6.2(eslint@8.54.0))(eslint-plugin-react@7.37.4(eslint@8.54.0))(eslint@8.54.0)
-      eslint-config-airbnb-base: 15.0.0(eslint-plugin-import@2.31.0)(eslint@8.54.0)
-
-      eslint-config-airbnb-typescript: 17.1.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint@8.54.0)(typescript@5.8.2))(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint-plugin-import@2.31.0)(eslint@8.54.0)
+      eslint-config-airbnb: 19.0.4(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint@8.54.0))(eslint-plugin-jsx-a11y@6.10.2(eslint@8.54.0))(eslint-plugin-react-hooks@4.6.2(eslint@8.54.0))(eslint-plugin-react@7.37.4(eslint@8.54.0))(eslint@8.54.0)
+      eslint-config-airbnb-base: 15.0.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint@8.54.0))(eslint@8.54.0)
+      eslint-config-airbnb-typescript: 17.1.0(@typescript-eslint/eslint-plugin@6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint@8.54.0)(typescript@5.8.2))(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint@8.54.0))(eslint@8.54.0)
       eslint-config-next: 14.2.23(eslint@8.54.0)(typescript@5.8.2)
       eslint-plugin-import: 2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint-import-resolver-typescript@3.7.0)(eslint@8.54.0)
-
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.54.0)
       eslint-plugin-n: 16.6.2(eslint@8.54.0)
       eslint-plugin-promise: 6.6.0(eslint@8.54.0)
@@ -7479,9 +7474,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0)(eslint@8.54.0):
-
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0(eslint-plugin-import@2.31.0)(eslint@8.54.0))(eslint@8.54.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
@@ -7510,9 +7503,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 8.54.0
       eslint-import-resolver-node: 0.3.9
-
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0)(eslint@8.54.0)
-
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.21.0(eslint@8.54.0)(typescript@5.8.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0(eslint-plugin-import@2.31.0)(eslint@8.54.0))(eslint@8.54.0)
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
