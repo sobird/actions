@@ -22,8 +22,8 @@ program
 //   console.log(`Event name: ${eventName}, Config file: ${configFile}`);
 // });
 
-program.addCommand(registerCommand);
-program.addCommand(daemonCommand);
+// program.addCommand(registerCommand);
+// program.addCommand(daemonCommand);
 program.addCommand(configCommand);
 program.addCommand(runCommand);
 

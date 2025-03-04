@@ -82,6 +82,7 @@ export default (env) => {
           targets: [
             { src: '../config/default.yaml', dest: DIST },
             { src: '../runner/container/hashFiles/index.js', dest: `${DIST}/hashFiles` },
+            { src: '../../README.md', dest: '.' },
           ],
           copyOnce: env.watch,
         }),

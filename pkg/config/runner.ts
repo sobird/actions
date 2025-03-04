@@ -33,7 +33,7 @@ import { createAuthorizationToken } from '../common/auth';
 const logger = log4js.getLogger();
 
 const ACTIONS_HOME = path.join(os.homedir(), '.actions');
-
+export const SELF_HOSTED = '-self-hosted';
 class Runner implements Omit<Options, ''> {
   /**
    * path to workflow file(s)
@@ -195,6 +195,8 @@ class Runner implements Omit<Options, ''> {
 
   public image: string;
 
+  public hosted?: true;
+
   public replaceGheActionWithGithubCom: string[];
 
   public replaceGheActionTokenWithGithubCom: string;
@@ -351,6 +353,7 @@ class Runner implements Omit<Options, ''> {
     this.matrix = runner.matrix;
     this.labels = runner.labels ?? [];
     this.image = runner.image;
+    this.hosted = runner.hosted;
     this.pull = runner.pull;
     this.rebuild = runner.rebuild;
     this.reuse = runner.reuse;
@@ -370,6 +373,8 @@ class Runner implements Omit<Options, ''> {
   // merge cli options
   async options(options: Options, eventName?: string) {
     lodash.merge(this, options);
+
+    this.image = this.hosted ? SELF_HOSTED : this.image;
 
     const git = new Git(options.workdir);
     const author = await git.author();

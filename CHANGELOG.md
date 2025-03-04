@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.1.0](https://github.com/sobird/actions/compare/v1.0.1...v1.1.0) (2025-03-04)
+
+
+### Features
+
+* support docker container create options ([2242e66](https://github.com/sobird/actions/commit/2242e6656994109eeda55806ac58fc336a166b89))
+* support job outputs ([077f8c1](https://github.com/sobird/actions/commit/077f8c12d616ee300916d968ac04d61421ff71ff))
+* support matrix outputs ([071bf3a](https://github.com/sobird/actions/commit/071bf3af4a87d347fd52fe2dbab63597afc128d0))
+* support workflow_call outputs & inputs & secrets ([e9558fa](https://github.com/sobird/actions/commit/e9558fabcb3a887eeee73bfc1976f15bf9f9d3c6))
+* workflow_dispatch inputs prompts ([698035c](https://github.com/sobird/actions/commit/698035c2df95c20f56fa33d83ba2c006113920b3))
+
+
+### Bug Fixes
+
+* artifact server ListArtifacts ([21b69ed](https://github.com/sobird/actions/commit/21b69ed010934e980ed812e4ad134a71334904e1))
+* container name generate ([d89c16a](https://github.com/sobird/actions/commit/d89c16a3769f307692c746ee8bf9b961a277a7bd))
+* docker container create workdir need resolve ([ab116e0](https://github.com/sobird/actions/commit/ab116e034f78bd0d02f43f97eaf7301c99cf3e6a))
+* docker hub default setting with environment to container & shell-quote parse perf ([d0fcc08](https://github.com/sobird/actions/commit/d0fcc08eb3ac5928edf1ca3fe381644c621d4626))
+* docker hub with entrypoint is diff docker action main entrypoint ([69d1c22](https://github.com/sobird/actions/commit/69d1c22bcc62479545281ae6604b58217c1dd9a6))
+* reusable workflow should be run before container startup ([e39d47b](https://github.com/sobird/actions/commit/e39d47b7c0748fca53825f28f17b1d181bd2e85e))
+* services --mount ([3a5785a](https://github.com/sobird/actions/commit/3a5785ab6910676cb05a2d65be4b523c197355ea))
+* windows Resolve nodejs action path error ([3345849](https://github.com/sobird/actions/commit/3345849a384d66afc351c3ff783fc3d4c39f6aac))
+* windows workdir error ([3b29fdf](https://github.com/sobird/actions/commit/3b29fdfe2fc84ebaaa28bea40cb2d94178410230))
+* windows workdir error ([e228595](https://github.com/sobird/actions/commit/e228595b80fad08e242ad1f48f423b00b51a6a47))
+
+
+### Performance Improvements
+
+* replace --volume with --mount ([20ce123](https://github.com/sobird/actions/commit/20ce1236688303529d01821fbf4ac54edde2e2e2))
+* replace better-sqlite3 with sqlite3 ([9d795b0](https://github.com/sobird/actions/commit/9d795b0fb363e8f199dc589ae569b8fc775d8475))
+
 ## [1.0.1](https://github.com/sobird/actions/compare/v1.0.0...v1.0.1) (2025-02-26)
 
 

@@ -1,7 +1,8 @@
 on:
-  # push:
-  #   branches:
-  #     - master
+  push:
+    branches:
+      - master
+      - develop
   workflow_dispatch:
 
 permissions:
@@ -13,6 +14,8 @@ name: release-please
 jobs:
   release-please:
     runs-on: self-hosted
+    outputs:
+      pr: ${{ steps.release.outputs.release_created }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -24,6 +27,13 @@ jobs:
           # this is a built-in strategy in release-please, see "Action Inputs"
           # for more options
           release-type: node
+          # The short ref name of the branch or tag that triggered
+          # the workflow run. For example, `main` or `1.x`
+          # target-branch: ${{ github.ref_name }}
+          skip-github-release: true
+
+      - name: print release_created
+        run: echo "${{steps.release.outputs.release_created}}"
 
       - name: Checkout
         if: ${{ steps.release.outputs.release_created }}
@@ -61,12 +71,30 @@ jobs:
       - name: Build ☕️
         if: ${{ steps.release.outputs.release_created }}
         run: |
-          yarn build
+          pnpm build:actions
 
       - name: Publish
         if: ${{ steps.release.outputs.release_created }}
         run: |
-          cd dist
-          npm publish --access public
+          pnpm publish:actions
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+
+  create-pr:
+    runs-on: self-hosted
+    needs: release-please
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: print pr
+        run: echo "${{needs.release-please.outputs.pr}}"
+
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v4
+        with:
+          title: "Merge develop into master"
+          body: "This PR merges the latest changes from develop into master."
+          base: master  # 目标分支
+          branch: develop-to-master  # 临时分支
+          delete-branch: true  # 合并后删除临时分支
