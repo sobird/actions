@@ -123,5 +123,19 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "@bufbuild/buf",
+      "cpu-features",
+      "esbuild",
+      "protobufjs",
+      "sharp",
+      "sqlite3",
+      "ssh2"
+    ],
+    "onlyBuiltDependencies": [
+      "sqlite3"
+    ]
+  }
 }
