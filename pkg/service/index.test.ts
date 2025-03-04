@@ -6,7 +6,7 @@ import {
   UpdateLogRequestSchema, LogRow, LogRowSchema, RunnerSchema, RegisterResponseSchema,
 } from './runner/v1/messages_pb';
 
-// vi.mock('./index');
+vi.mock('./index');
 
 const { RunnerServiceClient, PingServiceClient } = new Client('http://localhost:3000/', '', false);
 
@@ -44,10 +44,8 @@ describe('RunnerServiceClient', () => {
       version: '0.0.1',
     });
 
-    console.log('runner', runner);
-
     // 断言模拟方法的返回值
-    // expect(RunnerServiceClient.register({}, {})).resolves.toEqual('register');
+    expect(runner?.token).not.toBeFalsy();
 
     // 断言模拟方法被调用
     expect(RunnerServiceClient.register).toHaveBeenCalled();

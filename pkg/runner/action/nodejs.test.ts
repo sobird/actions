@@ -39,7 +39,7 @@ const nodejsAction = new NodeJSAction({
 beforeAll(async () => {
   const actionName = 'hello-world-javascript-action';
   const actionDir = path.join(Constants.Directory.Actions, actionName);
-  const putExecutor = runner.container?.put(actionDir, path.join('./.github/actions', actionName));
+  const putExecutor = runner.container?.put(actionDir, path.join('./test/actions', actionName));
   await putExecutor?.execute();
   nodejsAction.Dir = actionDir;
 });
@@ -59,7 +59,7 @@ describe('Test NodeJS Action', () => {
       return new Executor();
     });
 
-    const preExecutor = nodejsAction.pre().if(nodejsAction.HasPre);
+    const preExecutor = nodejsAction.Pre.if(nodejsAction.HasPre);
     await preExecutor.execute(runner);
 
     expect(containerExecMock).toHaveBeenCalled();

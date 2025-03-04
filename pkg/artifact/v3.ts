@@ -1,3 +1,9 @@
+/**
+ * @deprecated v3所有功能已经移植到v4版本
+ *
+ * sobird<i@sobird.me> at 2025/02/13 21:04:53 created.
+ */
+
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -191,7 +197,7 @@ class Artifact {
   }
 
   static SafeResolve(baseDir:string, relPath:string) {
-    return path.join(baseDir, path.normalize(relPath).replace(/^(\.\.(\/|\\|$))+/, ''));
+    // return path.join(baseDir, path.normalize(relPath).replace(/^(\.\.(\/|\\|$))+/, ''));
     return trimSuffix(path.join(baseDir, path.normalize(path.join(path.sep, relPath))), path.sep);
   }
 }

@@ -6,7 +6,7 @@ it('utils assignIgnoreCase test', () => {
     { name: 'test', Age: '22' },
     { Name: 'last', gender: 1 },
   ];
-  const target = assignIgnoreCase(...sources);
+  const target = assignIgnoreCase({}, ...sources);
 
   expect(target).toEqual({
     Name: 'last',

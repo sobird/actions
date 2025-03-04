@@ -1,23 +1,14 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 
 import request from 'supertest';
 
-import Artifact from '.';
+import { createAllDir } from '@/utils/test';
 
-const tmpdir = path.join(os.tmpdir(), 'artifacts');
-const { app, dir } = new Artifact(tmpdir, undefined, 3000);
+import Artifact from './v3';
 
-console.log('tmpdir', tmpdir);
-// 设置 mock-fs
-beforeAll(() => {
-  //
-});
-
-afterAll(() => {
-  // fs.rmdirSync(tmpdir, { recursive: true });
-});
+const tmpdir = createAllDir('artifacts');
+const { app, dir } = new Artifact(tmpdir, undefined);
 
 describe('Artifact Server Test', () => {
   const filename = 'file.txt';
@@ -27,7 +18,6 @@ describe('Artifact Server Test', () => {
 
   it('Test Artifact Upload Prepare', async () => {
     const response = await request(app).post(`/_apis/pipelines/workflows/${runId}/artifacts`);
-    console.log('response.body.fileContainerResourceUrl', response.body.fileContainerResourceUrl);
     expect(response.statusCode).toBe(200);
     expect(response.body.fileContainerResourceUrl).includes(`/upload/${runId}`);
   });
