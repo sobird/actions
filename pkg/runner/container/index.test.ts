@@ -6,6 +6,7 @@ import * as tar from 'tar';
 import { listEntry } from '@/utils/tar';
 import { createAllDir } from '@/utils/test';
 
+import Container from '.';
 import DockerContainer from './docker';
 import HostedContainer from './hosted';
 
@@ -271,5 +272,22 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
       const result = container.lookPath('bash', { PATH: process.env.PATH });
       expect(result).toBe('/bin/bash');
     });
+  });
+});
+
+describe.skipIf(process.platform === 'win32')('Container Normalize', () => {
+  test('should return POSIX paths unmodified', () => {
+    expect(Container.Normalize('/var/log/app')).toBe('/var/log/app');
+    expect(Container.Normalize('/mnt/c/Project')).toBe('/mnt/c/Project');
+    expect(Container.Normalize('\\mnt/c\\Project')).toBe('/mnt/c/Project');
+  });
+
+  test('should convert Windows-style paths when executed on POSIX systems', () => {
+    expect(Container.Normalize('C:\\Project')).toBe('/mnt/c/Project');
+    expect(Container.Normalize('C:/Project\\test')).toBe('/mnt/c/Project/test');
+  });
+
+  test('should resolve relative paths using POSIX semantics', () => {
+    expect(Container.Normalize('docs')).toBe('docs');
   });
 });

@@ -371,6 +371,27 @@ export default abstract class Container {
     return trimPrefix(this.resolve(...paths), this.rootdir);
   }
 
+  static Normalize(pth: string) {
+    const normalizedPath = path.normalize(pth).replace(/\\/g, '/');
+    if (normalizedPath.startsWith('/mnt/')) {
+      return normalizedPath;
+    }
+
+    const windowsPathRegex = /^([a-zA-Z]):(\/.*)$/;
+    const windowsPathComponents = windowsPathRegex.exec(normalizedPath);
+
+    if (windowsPathComponents === null) {
+      return normalizedPath;
+    }
+
+    // win32
+    const driveLetter = windowsPathComponents[1].toLowerCase();
+    const translatedPath = windowsPathComponents[2].replace(/\\/g, '/');
+    const result = `/mnt/${driveLetter}${translatedPath}`;
+
+    return path.normalize(result);
+  }
+
   static GetEnv(env:Record<string, string | undefined>, name: string) {
     if (process.platform === 'win32') {
       for (const k of Object.keys(env)) {
