@@ -82,19 +82,19 @@ export const runCommand = new Command('run')
   .option('--bind-workdir', 'bind working directory to container, rather than copy')
   .addOption(new Option('--no-skip-checkout', 'do not skip actions/checkout').conflicts('bindWorkdir'))
 
-  // log
-  .option('--log-json', 'output logs in json format')
-  .option('--log-prefix-job-id', 'output the job id within non-json logs instead of the entire name')
-  .option('--no-log-output', 'disable logging of output from steps')
+// log
+// .option('--log-json', 'output logs in json format')
+// .option('--log-prefix-job-id', 'output the job id within non-json logs instead of the entire name')
+// .option('--no-log-output', 'disable logging of output from steps')
 
   .option('--token <token>', 'if you want to use private actions on GitHub, you have to set personal access token')
-  .option('--env <envs...>', 'env to make available to actions with optional value (e.g. --env myenv=foo,other=bar)', collectObject, {})
+  .option('--env <envs...>', 'env to make available to actions with optional value (e.g. --env myenv=foo,other=bar)', collectObject)
   .option('--env-file <path>', 'environment file to read and use as env in the containers', '.env')
-  .option('--vars <vars...>', 'variable to make available to actions with optional value (e.g. --vars myvar=foo or --var myvar)', collectObject, {})
+  .option('--vars <vars...>', 'variable to make available to actions with optional value (e.g. --vars myvar=foo or --var myvar)', collectObject)
   .option('--vars-file <path>', 'file with list of vars to read from (e.g. --vars-file .vars)', '.vars')
-  .option('--inputs <inputs...>', 'action inputs to make available to actions (e.g. --inputs myinput=foo)', collectObject, {})
+  .option('--inputs <inputs...>', 'action inputs to make available to actions (e.g. --inputs myinput=foo)', collectObject)
   .option('--inputs-file <path>', 'inputs file to read and use as action inputs', '.inputs')
-  .option('--secrets <secrets...>', 'secret to make available to actions with optional value (e.g. --secrets mysecret=foo,toke=bar)', collectObject, {})
+  .option('--secrets <secrets...>', 'secret to make available to actions with optional value (e.g. --secrets mysecret=foo,toke=bar)', collectObject)
   .option('--secrets-file <path>', 'file with list of secrets to read from (e.g. --secrets-file .secrets)', '.secrets')
 
   .option('--insecure-secrets', "NOT RECOMMENDED! Doesn't hide secrets while printing logs")

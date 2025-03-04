@@ -23,7 +23,6 @@ import { trimSuffix, createSha1Hash } from '@/utils';
 
 import Container, { FileEntry, type ContainerExecOptions } from '.';
 import OutputManager from '../outputManager';
-import DockerContainer from './docker';
 
 export interface HostedContainerOptions {
   /**

@@ -1,6 +1,6 @@
 {
   "name": "@sobird/actions",
-  "version": "0.0.8",
+  "version": "0.0.11",
   "description": "Impl Actions runner using typescript",
   "type": "module",
   "main": "index.ts",
@@ -46,6 +46,7 @@
     "retry": "^0.13.1",
     "shell-quote": "^1.8.1",
     "simple-git": "^3.24.0",
+    "sqlite3": "^5.1.7",
     "tar": "^7.1.0",
     "yaml": "^2.4.2"
   },

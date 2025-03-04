@@ -260,6 +260,9 @@ class Runner {
   // DockerContainer Utils
   // @todo note: docker actions container difference?
   get BindsAndMounts(): [string[], Record<string, string>] {
+    if (!this.container) {
+      return [[], {}];
+    }
     const containerName = this.ContainerName();
     const defaultSocket = '/var/run/docker.sock';
     const containerDaemonSocket = this.config.containerDaemonSocket || defaultSocket;
@@ -276,9 +279,9 @@ class Runner {
     let hostedToolDir = '';
     let hostedTempDir = '';
 
-    const containerWorkdir = hostedWorkDir = DockerContainer.Resolve(this.config.workdir);
-    const containerToolDir = hostedToolDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Tool);
-    const containerTempDir = hostedTempDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Temp);
+    const containerWorkdir = hostedWorkDir = this.container.resolve(this.config.workdir);
+    const containerToolDir = hostedToolDir = this.container.resolve(this.config.workspace, Constants.Directory.Tool);
+    const containerTempDir = hostedTempDir = this.container.resolve(this.config.workspace, Constants.Directory.Temp);
 
     let mounts: Record<string, string> = {
       [ToolMount]: containerToolDir,
@@ -329,6 +332,10 @@ class Runner {
   }
 
   get Mounts(): MountConfig {
+    if (!this.container) {
+      return [];
+    }
+
     const containerName = this.ContainerName();
     const defaultSocket = '/var/run/docker.sock';
     const containerDaemonSocket = this.config.containerDaemonSocket || defaultSocket;
@@ -350,9 +357,9 @@ class Runner {
     let hostedToolDir = '';
     let hostedTempDir = '';
 
-    const containerWorkdir = hostedWorkDir = DockerContainer.Resolve(this.config.workdir);
-    const containerToolDir = hostedToolDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Tool);
-    const containerTempDir = hostedTempDir = DockerContainer.Resolve(this.config.workspace, Constants.Directory.Temp);
+    const containerWorkdir = hostedWorkDir = this.container.resolve(this.config.workdir);
+    const containerToolDir = hostedToolDir = this.container.resolve(this.config.workspace, Constants.Directory.Tool);
+    const containerTempDir = hostedTempDir = this.container.resolve(this.config.workspace, Constants.Directory.Temp);
 
     let mounts: MountConfig = [{
       Type: 'volume',

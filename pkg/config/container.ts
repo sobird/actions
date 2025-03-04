@@ -50,7 +50,7 @@ class Container {
   public forceRebuild: boolean;
 
   /**
-   * And other options to be used when the container is started (eg, --add-host=my.gitea.url:host-gateway).
+   * And other options to be used when the container is started.
    */
   public options: string;
 

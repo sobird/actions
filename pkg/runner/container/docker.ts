@@ -463,7 +463,7 @@ class DockerContainer extends Container {
       const dockerodeOptions = new Options(options.options).dockerodeOptions({
         name: options.name,
         image: options.image,
-        workdir: DockerContainer.Resolve(options.workdir),
+        workdir: options.workdir,
         entrypoint: options.entrypoint,
         platform: options.platform,
         tty: isatty,
@@ -729,30 +729,30 @@ class DockerContainer extends Container {
 
   resolve(...paths: string[]) {
     const dir = DockerContainer.Normalize(path.join(...paths));
-    return path.posix.relative(this.workspace, dir);
+    return path.posix.resolve(this.workspace, dir);
   }
 
-  static Resolve(...paths: string[]) {
-    const normalizedPath = path.join(...paths).replace(/\\/g, '/');
-    if (normalizedPath.startsWith('/mnt/')) {
-      return normalizedPath;
-    }
+  // static Resolve(...paths: string[]) {
+  //   const normalizedPath = path.join(...paths).replace(/\\/g, '/');
+  //   if (normalizedPath.startsWith('/mnt/')) {
+  //     return normalizedPath;
+  //   }
 
-    const absPath = path.resolve(...paths);
-    const windowsPathRegex = /^([a-zA-Z]):(\\.*)$/;
-    const windowsPathComponents = windowsPathRegex.exec(absPath);
+  //   const absPath = path.resolve(...paths);
+  //   const windowsPathRegex = /^([a-zA-Z]):(\\.*)$/;
+  //   const windowsPathComponents = windowsPathRegex.exec(absPath);
 
-    if (windowsPathComponents === null) {
-      return absPath;
-    }
+  //   if (windowsPathComponents === null) {
+  //     return absPath;
+  //   }
 
-    // win32
-    const driveLetter = windowsPathComponents[1].toLowerCase();
-    const translatedPath = windowsPathComponents[2].replace(/\\/g, '/');
-    const result = `/mnt/${driveLetter}${translatedPath}`;
+  //   // win32
+  //   const driveLetter = windowsPathComponents[1].toLowerCase();
+  //   const translatedPath = windowsPathComponents[2].replace(/\\/g, '/');
+  //   const result = `/mnt/${driveLetter}${translatedPath}`;
 
-    return result;
-  }
+  //   return result;
+  // }
 
   static Setup(runner: Runner) {
     return new Executor(() => {
