@@ -463,7 +463,7 @@ class DockerContainer extends Container {
       const dockerodeOptions = new Options(options.options).dockerodeOptions({
         name: options.name,
         image: options.image,
-        workdir: options.workdir,
+        workdir: this.resolve(options.workdir),
         entrypoint: options.entrypoint,
         platform: options.platform,
         tty: isatty,
@@ -504,7 +504,7 @@ class DockerContainer extends Container {
         await container.start();
         logger.debug('\u{1F433}', `Started container: ${container.id}`);
       } catch (err) {
-        logger.error('\u{1F433}', `Failed to start container: ${(err as Error).message}`);
+        logger.warn('\u{1F433}', `Failed to start container: ${(err as Error).message}`);
       }
     });
   }
