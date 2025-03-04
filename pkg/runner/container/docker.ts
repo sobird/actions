@@ -728,7 +728,8 @@ class DockerContainer extends Container {
   }
 
   resolve(...paths: string[]) {
-    return DockerContainer.Resolve(this.workspace, ...paths);
+    const dir = DockerContainer.Normalize(path.join(...paths));
+    return path.posix.relative(this.workspace, dir);
   }
 
   static Resolve(...paths: string[]) {

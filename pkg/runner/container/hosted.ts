@@ -62,7 +62,7 @@ class HostedContainer extends Container {
     this.#id = id;
 
     this.rootdir = rootdir;
-    fs.mkdirSync(path.join(rootdir, options.workdir || ''), { recursive: true });
+    fs.mkdirSync(this.resolve(options.workdir || ''), { recursive: true });
 
     (options.binds || []).forEach((bind) => {
       const [workdir, containerWorkdir] = bind.split(':');
@@ -259,7 +259,7 @@ class HostedContainer extends Container {
     if (dir.startsWith(this.rootdir)) {
       return dir;
     }
-    return trimSuffix(path.isAbsolute(dir) ? path.join(rootdir, dir) : path.join(rootdir, workspace, dir), path.sep);
+    return trimSuffix(path.isAbsolute(dir) ? path.join(rootdir, HostedContainer.Normalize(dir)) : path.join(rootdir, workspace, dir), path.sep);
   }
 
   // resolve(...paths: string[]) {
@@ -305,7 +305,7 @@ class HostedContainer extends Container {
       runner.container = new HostedContainer({
         name,
         basedir: runner.ActionCacheDir,
-        workdir: DockerContainer.Resolve(config.workdir),
+        workdir: config.workdir,
         binds,
         stdout: outputManager,
         stderr: outputManager,

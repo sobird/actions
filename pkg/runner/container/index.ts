@@ -389,7 +389,7 @@ export default abstract class Container {
     const translatedPath = windowsPathComponents[2].replace(/\\/g, '/');
     const result = `/mnt/${driveLetter}${translatedPath}`;
 
-    return path.normalize(result);
+    return path.posix.normalize(result);
   }
 
   static GetEnv(env:Record<string, string | undefined>, name: string) {
