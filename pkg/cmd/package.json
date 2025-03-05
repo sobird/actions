@@ -1,11 +1,11 @@
 {
   "name": "@sobird/actions",
-  "version": "0.0.12",
+  "version": "1.2.0",
   "description": "Impl Actions runner using typescript",
   "type": "module",
   "main": "index.ts",
   "bin": {
-    "actions": "./index.ts"
+    "actions": "index.ts"
   },
   "scripts": {
     "build": "rollup -c --environment NODE_ENV:production",
@@ -76,6 +76,7 @@
     "dist"
   ],
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   }
 }

@@ -26,6 +26,8 @@ jobs:
           # this is a built-in strategy in release-please, see "Action Inputs"
           # for more options
           release-type: node
+          # create a release from a path other than the repository's root
+          # path: pkg/cmd
           # The short ref name of the branch or tag that triggered
           # the workflow run. For example, `main` or `1.x`
           # target-branch: ${{ github.ref_name }}

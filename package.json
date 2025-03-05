@@ -1,6 +1,6 @@
 {
   "name": "actions",
-  "version": "1.1.0",
+  "version": "1.2.1",
   "description": "Impl Github Actions & Runner(Run GitHub actions locally) using typescript",
   "type": "module",
   "main": "index.js",
@@ -14,8 +14,8 @@
     "lint": "next lint",
     "dev:runner": "rollup -cw --environment NODE_ENV:development",
     "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",
-    "build:actions": "pnpm -C pkg/cmd build",
-    "publish:actions": "pnpm -C pkg/cmd publish",
+    "build:actions": "pnpm build -C pkg/cmd",
+    "publish:actions": "pnpm publish -C pkg/cmd",
     "eslint:fix": "eslint src --fix",
     "test": "vitest",
     "cmd": "tsx pkg/cmd",
