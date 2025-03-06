@@ -2,6 +2,7 @@
 version: 2
 updates:
   - package-ecosystem: npm            # 指定依赖生态系统为 npm
+    open-pull-requests-limit: 0
     directory: /                      # 指定依赖文件所在的根目录
     schedule:
       interval: monthly

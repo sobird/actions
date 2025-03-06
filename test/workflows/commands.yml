@@ -1,3 +1,4 @@
+# https://docs.github.com/zh/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions
 name: Workflow Commands Test
 run-name: workflow commands test by ${{ github.actor }}
 on: 
@@ -53,41 +54,31 @@ jobs:
     outputs:
       handle: ${{ steps.generate-secret.outputs.handle }}
     steps:
-    - uses: some/secret-store@v1
-      with:
-        credentials: ${{ secrets.SECRET_STORE_CREDENTIALS }}
-        instance: ${{ secrets.SECRET_STORE_INSTANCE }}
     - name: generate secret
       id: generate-secret
       shell: bash
       run: |
         GENERATED_SECRET=$((RANDOM))
         echo "::add-mask::$GENERATED_SECRET"
-        SECRET_HANDLE=$(secret-store store-secret "$GENERATED_SECRET")
-        echo "handle=$SECRET_HANDLE" >> "$GITHUB_OUTPUT"
+        echo "handle=$GENERATED_SECRET" >> "$GITHUB_OUTPUT"
   secret-consumer:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: secret-generator
     steps:
-    - uses: some/secret-store@v1
-      with:
-        credentials: ${{ secrets.SECRET_STORE_CREDENTIALS }}
-        instance: ${{ secrets.SECRET_STORE_INSTANCE }}
     - name: use secret
       shell: bash
       run: |
         SECRET_HANDLE="${{ needs.secret-generator.outputs.handle }}"
-        RETRIEVED_SECRET=$(secret-store retrieve-secret "$SECRET_HANDLE")
-        echo "::add-mask::$RETRIEVED_SECRET"
-        echo "We retrieved our masked secret: $RETRIEVED_SECRET"
+        echo "::add-mask::$SECRET_HANDLE"
+        echo "We retrieved our masked secret: $SECRET_HANDLE"
 
-  workflow-command-job:
+  command-job:
     runs-on: ubuntu-latest
     steps:
       - name: Disable workflow commands
         run: |
           echo '::warning:: This is a warning message, to demonstrate that commands are being processed.'
-          stopMarker=$(uuidgen)
+          stopMarker=$((RANDOM))
           echo "::$(date +'%T')::$stopMarker"
           echo '::warning:: This will NOT be rendered as a warning, because stop-commands has been invoked.'
           echo "::$stopMarker::"
