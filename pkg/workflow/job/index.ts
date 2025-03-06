@@ -541,7 +541,7 @@ class Job {
 
   // job executor
   executor(runner: Runner) {
-    this.resolveNeeds(runner);
+    // this.resolveNeeds(runner);
     this.resolveInputs(runner);
     this.resolveSecrets(runner);
 

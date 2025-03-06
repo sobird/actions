@@ -122,6 +122,9 @@ class Runner {
 
   executor() {
     const { job, workflow } = this.run;
+    // @todo resolve needs forward
+    job.resolveNeeds(this);
+
     return new Executor(async () => {
       if (!this.Enabled) {
         return;
