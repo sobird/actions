@@ -57,7 +57,24 @@ const literals = [{
   expected: false,
 },
 {
+  source: '${{ true }}',
+  expected: true,
+},
+{
+  source: false,
+  expected: false,
+},
+{
+  source: true,
+  expected: true,
+},
+{
   source: '${{ null }}',
+  // @todo should equal null
+  expected: '',
+},
+{
+  source: null,
   expected: '',
 },
 {

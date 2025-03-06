@@ -26,7 +26,7 @@ class Expression<T> {
     public source: T,
     public scopes: string[],
     public specials: string[] = [],
-    public defaultValue: unknown = undefined,
+    public defaultValue: unknown = '',
     public isIf: boolean = false,
     public type: string = 'job',
   ) {}
@@ -34,6 +34,10 @@ class Expression<T> {
   evaluate(runner: Runner, ctx?: Partial<Context>): T {
     const context = ctx || runner.context;
     const interpret = (source: unknown): any => {
+      if (typeof source === 'boolean') {
+        return source;
+      }
+
       if (typeof source === 'string') {
         let expression = source;
         if (this.isIf && (!source.includes('${{') || !source.includes('}}'))) {
@@ -93,7 +97,7 @@ class Expression<T> {
       return source;
     };
 
-    return interpret(this.source || this.defaultValue);
+    return interpret(this.source ?? this.defaultValue);
   }
 
   toString() {
