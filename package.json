@@ -1,12 +1,9 @@
 {
   "name": "actions",
-  "version": "1.2.2",
+  "version": "1.0.0",
   "description": "Impl Github Actions & Runner(Run GitHub actions locally) using typescript",
   "type": "module",
   "main": "index.js",
-  "bin": {
-    "lact": "./pkg/cmd/index.ts"
-  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
