@@ -67,7 +67,7 @@ class Git {
       try {
         await git.clone(url, dir);
       } catch (error) {
-        logger.error('🍭', `Unable to clone ${url} ${ref}: ${(error as Error).message}`);
+        logger.error('🍭', `Unable to clone ${url}@${ref}: ${(error as Error).message}`);
       }
     }
 

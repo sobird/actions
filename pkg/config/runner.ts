@@ -397,7 +397,7 @@ class Runner implements Omit<Options, ''> {
     const github = {
       actor,
       actor_id,
-      api_url: 'https://api.github.com/',
+      api_url: 'https://api.github.com',
       graphql_url: 'https://api.github.com/graphql',
       repository,
       repository_id,
