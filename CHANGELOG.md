@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/sobird/actions/compare/v1.0.1...v1.0.2) (2025-03-07)
+
+
+### Bug Fixes
+
+* after caching dependencies, prepare will not be executed ([f75ed4a](https://github.com/sobird/actions/commit/f75ed4a91249dac6491868b6657e52ce6b658d96))
+
 ## [1.0.1](https://github.com/sobird/actions/compare/v1.0.0...v1.0.1) (2025-03-07)
 
 
