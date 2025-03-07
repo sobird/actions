@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.1](https://github.com/sobird/actions/compare/v1.0.0...v1.0.1) (2025-03-07)
+
+
+### Bug Fixes
+
+* expression correctly evaluate boolean types ([43ac49c](https://github.com/sobird/actions/commit/43ac49cb7a0c602ab1289b791644af013134f3ec))
+* release-please failed: Not Found & api_url Tail slash is not allowed ([9422929](https://github.com/sobird/actions/commit/94229297ef908a3664890fd49453ecd925b1f92c))
+* the needs of job need to be forward to prevent unresolved usage ([56b59a8](https://github.com/sobird/actions/commit/56b59a81ee1d22f4cd7c6a40c129095b4dd11171))
+
 ## 1.0.0 (2025-03-06)
 
 
