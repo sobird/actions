@@ -72,6 +72,7 @@ jobs:
 
       - name: Build ☕️
         run: |
+          pnpm -C pkg/hashfiles prepare
           pnpm build:actions
 
       - name: Publish
