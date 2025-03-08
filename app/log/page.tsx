@@ -1,7 +1,20 @@
 'use client';
 
+import { createClient } from '@connectrpc/connect';
+import { createConnectTransport } from '@connectrpc/connect-web';
 import Editor, { loader, Monaco } from '@monaco-editor/react';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
+
+import { PingService } from '@/pkg/service/ping/v1/services_pb';
+
+// A transport for clients using the Connect protocol with fetch()
+const transport = createConnectTransport({
+  baseUrl: 'http://localhost:3000/api/actions',
+  useBinaryFormat: true,
+  useHttpGet: true,
+});
+
+const client = createClient(PingService, transport);
 
 const monacoConfig = {
   paths: {
@@ -203,6 +216,12 @@ const logContent = `2025-02-07T04:26:59.8864998Z ##[debug]Evaluating condition f
 2025-02-07T04:27:00.7340387Z ##[debug]Finishing: Checkout`;
 export default function Home() {
   // const monacoRef = useRef(null);
+
+  useEffect(() => {
+    client.ping({ data: 'nihao1212' }).then((res) => {
+      console.log('res', res);
+    });
+  });
 
   function handleEditorDidMount(editor, monaco: Monaco) {
     // monacoRef.current = monaco;
