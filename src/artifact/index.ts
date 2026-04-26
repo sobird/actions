@@ -493,8 +493,8 @@ class Artifact {
     });
 
     // Download Artifact File
-    app.get('/artifact/:container/:path(*)', (req, res) => {
-      const safePath = safeResolve(this.dir, safeResolve(req.params.container, req.params.path));
+    app.get('/artifact/:container/*path', (req: Request<{ container: string; path: string[] }>, res) => {
+      const safePath = safeResolve(this.dir, safeResolve(req.params.container, req.params.path.join('/')));
       try {
         fs.createReadStream(safePath, { encoding: 'utf-8' }).pipe(res);
       } catch {
