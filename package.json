@@ -88,6 +88,7 @@
     "@types/ip": "^1.1.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/lodash": "^4.17.24",
+    "@types/node": "^25.6.0",
     "@types/prompts": "^2.4.9",
     "@types/rc": "^1.2.4",
     "@types/react": "^19.2.14",
