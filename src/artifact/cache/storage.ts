@@ -1,7 +1,7 @@
-import fs from 'fs';
-import type { IncomingMessage, ServerResponse } from 'http';
-import os from 'os';
-import path from 'path';
+import fs from 'node:fs';
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import os from 'node:os';
+import path from 'node:path';
 
 /**
  * Artifact stored in a local specified dir
@@ -38,7 +38,7 @@ class Storage {
       .map((file) => {
         return path.join(file.path, file.name);
       })
-      .sort();
+      .toSorted();
 
     if (files.length === 0) {
       throw Error(`No uploaded parts to commit for id ${id}`);

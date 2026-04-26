@@ -18,8 +18,8 @@
  * sobird<i@sobird.me> at 2024/04/30 1:58:31 created.
  */
 
-import type { AddressInfo } from 'net';
 import fs from 'node:fs';
+import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -94,7 +94,7 @@ class ArtifactCache {
     // Commit the cache parts upload
     app.post('/_apis/artifactcache/caches/:cacheId', bodyParser.json(), this.commitCache);
     // Download artifact with a given id from the cache
-    app.get('/_apis/artifactcache/artifacts/:cacheId', async (req, res) => {
+    app.get('/_apis/artifactcache/artifacts/:cacheId', (req, res) => {
       const { cacheId } = req.params;
       this.db.prepare('UPDATE caches SET updatedAt = ? WHERE id = ?').run(Date.now(), cacheId);
 
