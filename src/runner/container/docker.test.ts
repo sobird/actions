@@ -5,9 +5,7 @@ import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-
 import * as tar from 'tar';
-
 import DockerContainer from './docker';
 
 vi.mock('./docker');
@@ -17,13 +15,16 @@ const docker: DockerContainer = new (DockerContainer as any)();
 docker.options.workdir = workdir;
 
 const tmp = path.join(os.tmpdir(), `container-docker-${randomBytes(8).toString('hex')}`);
-const files = [{
-  name: 'test1.txt',
-  body: 'test1 content',
-}, {
-  name: 'test2.txt',
-  body: 'test2 content',
-}];
+const files = [
+  {
+    name: 'test1.txt',
+    body: 'test1 content',
+  },
+  {
+    name: 'test2.txt',
+    body: 'test2 content',
+  },
+];
 beforeAll(() => {
   fs.mkdirSync(tmp, { recursive: true });
 
@@ -33,7 +34,7 @@ beforeAll(() => {
 });
 
 afterAll(async () => {
-  fs.rmdirSync(tmp, { recursive: true });
+  fs.rmSync(tmp, { recursive: true });
   // const removeExecutor = docker.remove();
   // await removeExecutor.execute();
 });
@@ -229,8 +230,12 @@ describe.runIf(process.platform === 'win32')('Windows Platform Resolve', () => {
   });
 
   test('should resolve relative paths to absolute container paths', () => {
-    const expected = path.resolve('relative/path').replace(/\\/g, '/')
-      .replace(/^([a-zA-Z]):(\/.*)$/, (_, drive, translatedPath) => { return `/mnt/${drive.toLowerCase()}${translatedPath}`; });
+    const expected = path
+      .resolve('relative/path')
+      .replace(/\\/g, '/')
+      .replace(/^([a-zA-Z]):(\/.*)$/, (_, drive, translatedPath) => {
+        return `/mnt/${drive.toLowerCase()}${translatedPath}`;
+      });
 
     expect(DockerContainer.Resolve('relative/path')).toBe(expected);
   });

@@ -7,9 +7,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-
 import { readTar } from '@/utils/readTar';
-
 import ActionCacheOffline from './offline';
 
 vi.setConfig({
@@ -22,7 +20,7 @@ beforeAll(() => {
   fs.mkdirSync(testTmp, { recursive: true });
 });
 afterAll(() => {
-  fs.rmdirSync(testTmp, { recursive: true });
+  fs.rmSync(testTmp, { recursive: true });
 });
 
 describe('ActionCache Tests', () => {

@@ -1,10 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-
 import request from 'supertest';
-
 import { createAllDir } from '@/utils/test';
-
 import Artifact, { safeResolve } from '.';
 
 const testDir = createAllDir('artifacts');
@@ -15,7 +12,7 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-  // fs.rmdirSync(tmpdir, { recursive: true });
+  // fs.rmSync(tmpdir, { recursive: true });
 });
 
 describe('Artifact Server', () => {
@@ -30,10 +27,7 @@ describe('Artifact Server', () => {
   });
 
   it('should upload artifact blob', async () => {
-    const res = await request(app)
-      .put(`/upload/${runId}?itemPath=${itemPath}`)
-      .send(content)
-      .expect(200);
+    const res = await request(app).put(`/upload/${runId}?itemPath=${itemPath}`).send(content).expect(200);
 
     const expectContent = fs.readFileSync(expectFileName).toString();
     expect(res.body.message).toBe('success');
@@ -41,27 +35,20 @@ describe('Artifact Server', () => {
   });
 
   it('should not upload artifact blob without itemPath', async () => {
-    const res = await request(app)
-      .put(`/upload/${runId}`)
-      .send(content)
-      .expect(200);
+    const res = await request(app).put(`/upload/${runId}`).send(content).expect(200);
 
     expect(res.statusCode).toBe(200);
     expect(res.body.message).toBe('Missing itemPath parameter');
   });
 
   it('should finalize artifact upload', async () => {
-    const res = await request(app)
-      .patch(`/_apis/pipelines/workflows/${runId}/artifacts`)
-      .expect(200);
+    const res = await request(app).patch(`/_apis/pipelines/workflows/${runId}/artifacts`).expect(200);
 
     expect(res.body.message).toBe('success');
   });
 
   it('should list artifacts', async () => {
-    const res = await request(app)
-      .get(`/_apis/pipelines/workflows/${runId}/artifacts`)
-      .expect(200);
+    const res = await request(app).get(`/_apis/pipelines/workflows/${runId}/artifacts`).expect(200);
 
     expect(res.statusCode).toBe(200);
     expect(res.body.count).toBe(1);
@@ -78,9 +65,7 @@ describe('Artifact Server', () => {
   });
 
   it('should download artifact file', async () => {
-    const res = await request(app)
-      .get(`/artifact/${runId}/${itemPath}`)
-      .expect(200);
+    const res = await request(app).get(`/artifact/${runId}/${itemPath}`).expect(200);
 
     expect(res.text).toBe(content);
   });
@@ -113,10 +98,7 @@ describe('Test Mkdir FsImpl SafeResolve', () => {
 
   const expectFileName = safeResolve(safeResolve(dir, runId), itemPath);
   it('Test Artifact Upload Blob Unsafe Path', async () => {
-    const res = await request(app)
-      .put(`/upload/${runId}?itemPath=${itemPath}`)
-      .send(content)
-      .expect(200);
+    const res = await request(app).put(`/upload/${runId}?itemPath=${itemPath}`).send(content).expect(200);
 
     expect(res.statusCode).toBe(200);
     expect(fs.existsSync(expectFileName)).toBeTruthy();

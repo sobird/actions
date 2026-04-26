@@ -11,7 +11,7 @@ export function createAllDir(...name: string[]) {
   });
   afterAll(() => {
     try {
-      fs.rmdirSync(dir, { recursive: true });
+      fs.rmSync(dir, { recursive: true });
     } catch (err) {
       //
     }
@@ -26,7 +26,7 @@ export function createEachDir(...name: string[]) {
   });
   afterEach(() => {
     try {
-      fs.rmdirSync(dir, { recursive: true });
+      fs.rmSync(dir, { recursive: true });
     } catch (err) {
       //
     }
@@ -40,7 +40,7 @@ export function createTestFile(name: string = 'test-file', data: string = '') {
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(file, data);
   onTestFinished(() => {
-    fs.rmdirSync(dir, { recursive: true });
+    fs.rmSync(dir, { recursive: true });
   });
   return file;
 }

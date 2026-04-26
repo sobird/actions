@@ -1,29 +1,28 @@
 /* eslint-disable no-template-curly-in-string */
 
-import Runner from "@/runner";
-
-import Job from ".";
+import Runner from '@/runner';
+import Job from '.';
 
 vi.setConfig({
   testTimeout: 10000,
 });
 
-vi.mock("@/pkg/runner");
+vi.mock('@/pkg/runner');
 
 const runner: Runner = new (Runner as any)();
 
 afterEach(() => {
-  // fs.rmdirSync(runner.ActionCacheDir, { recursive: true });
+  // fs.rmSync(runner.ActionCacheDir, { recursive: true });
 });
 
-describe("test workflow job", () => {
-  it("job strategy getMatrices test case", () => {
+describe('test workflow job', () => {
+  it('job strategy getMatrices test case', () => {
     const job = new Job({
-      id: "job1",
-      "runs-on": "${{ matrix.platform }}",
+      id: 'job1',
+      'runs-on': '${{ matrix.platform }}',
       strategy: {
         matrix: {
-          os: ["ubuntu-latest", "macos-latest"],
+          os: ['ubuntu-latest', 'macos-latest'],
           node: [18, 20],
         },
       },
@@ -32,17 +31,17 @@ describe("test workflow job", () => {
     const matrices = job.strategy.Matrices;
 
     expect(matrices).toEqual([
-      { os: "ubuntu-latest", node: 18 },
-      { os: "ubuntu-latest", node: 20 },
-      { os: "macos-latest", node: 18 },
-      { os: "macos-latest", node: 20 },
+      { os: 'ubuntu-latest', node: 18 },
+      { os: 'ubuntu-latest', node: 20 },
+      { os: 'macos-latest', node: 18 },
+      { os: 'macos-latest', node: 20 },
     ]);
   });
 
-  it("job executor test case", async () => {
+  it('job executor test case', async () => {
     const job = new Job({
-      id: "job1",
-      "runs-on": "${{ matrix.platform }}",
+      id: 'job1',
+      'runs-on': '${{ matrix.platform }}',
     });
     const executor = job.executor(runner);
     await executor.execute();
