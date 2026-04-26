@@ -5,6 +5,7 @@
  */
 
 import fs from 'node:fs';
+import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -13,8 +14,6 @@ import express, { Express } from 'express';
 import ip from 'ip';
 
 import { trimSuffix } from '@/utils';
-
-import type { AddressInfo } from 'node:net';
 
 const GZIP_EXT = '.gz__';
 
@@ -33,10 +32,12 @@ class Artifact {
     }
 
     app.use(bodyParser.json());
-    app.use(bodyParser.raw({
-      type: 'application/octet-stream',
-      limit: '50mb',
-    }));
+    app.use(
+      bodyParser.raw({
+        type: 'application/octet-stream',
+        limit: '50mb',
+      }),
+    );
 
     app.get('/', (req, res) => {
       res.send({
@@ -145,7 +146,7 @@ class Artifact {
       const { itemPath } = req.query;
 
       const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
-      const safePath = Artifact.SafeResolve(this.dir, path.join(runId, itemPath as string || ''));
+      const safePath = Artifact.SafeResolve(this.dir, path.join(runId, (itemPath as string) || ''));
 
       try {
         const files = fs.readdirSync(safePath, {
@@ -153,18 +154,20 @@ class Artifact {
           withFileTypes: true,
         });
 
-        const filesInfo = files.filter((file) => {
-          return file.isFile();
-        }).map((file) => {
-          let relPath = path.relative(safePath, path.join(file.parentPath, file.name));
-          relPath = trimSuffix(relPath, GZIP_EXT);
-          const filePath = path.join(itemPath as string || '', relPath);
-          return {
-            path: filePath,
-            itemType: 'file',
-            contentLocation: `${baseURL}/artifact/${runId}/${filePath.replace('\\', '/')}`,
-          };
-        });
+        const filesInfo = files
+          .filter((file) => {
+            return file.isFile();
+          })
+          .map((file) => {
+            let relPath = path.relative(safePath, path.join(file.parentPath, file.name));
+            relPath = trimSuffix(relPath, GZIP_EXT);
+            const filePath = path.join((itemPath as string) || '', relPath);
+            return {
+              path: filePath,
+              itemType: 'file',
+              contentLocation: `${baseURL}/artifact/${runId}/${filePath.replace('\\', '/')}`,
+            };
+          });
 
         res.json({ value: filesInfo });
       } catch (err) {
@@ -177,7 +180,7 @@ class Artifact {
       const safePath = Artifact.SafeResolve(this.dir, Artifact.SafeResolve(req.params.container, req.params.path));
       try {
         fs.createReadStream(safePath, { encoding: 'utf-8' }).pipe(res);
-      } catch (err) {
+      } catch {
         res.setHeader('Content-Encoding', 'gzip');
         fs.createReadStream(safePath + GZIP_EXT, { encoding: 'utf-8' }).pipe(res);
       }
@@ -196,7 +199,7 @@ class Artifact {
     });
   }
 
-  static SafeResolve(baseDir:string, relPath:string) {
+  static SafeResolve(baseDir: string, relPath: string) {
     // return path.join(baseDir, path.normalize(relPath).replace(/^(\.\.(\/|\\|$))+/, ''));
     return trimSuffix(path.join(baseDir, path.normalize(path.join(path.sep, relPath))), path.sep);
   }

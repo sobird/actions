@@ -31,10 +31,9 @@ describe('Artifact Server Test', () => {
   it('Test Artifact Upload Blob with itemPath', async () => {
     const res = fs.readFileSync('package.json');
 
-    const response = await request(app).put(`/upload/${runId}?itemPath=${itemPath}`)
-      .attach('file', res, {
-        filename,
-      });
+    const response = await request(app).put(`/upload/${runId}?itemPath=${itemPath}`).attach('file', res, {
+      filename,
+    });
 
     expect(response.statusCode).toBe(200);
     expect(fs.existsSync(expectFileName)).toBeTruthy();
@@ -42,7 +41,8 @@ describe('Artifact Server Test', () => {
 
   it('Test Artifact Upload Blob Without itemPath', async () => {
     // 使用 supertest 发送一个模拟的文件上传请求
-    const response = await request(app).put(`/upload/${runId}`)
+    const response = await request(app)
+      .put(`/upload/${runId}`)
       .attach('file', Buffer.from('file content123'), filename);
 
     expect(response.statusCode).toBe(200);
@@ -99,10 +99,9 @@ describe('Test Mkdir FsImpl SafeResolve', () => {
   it('Test Artifact Upload Blob Unsafe Path', async () => {
     const res = fs.readFileSync('package.json');
 
-    const response = await request(app).put(`/upload/${runId}?itemPath=${itemPath}`)
-      .attach('file', res, {
-        filename,
-      });
+    const response = await request(app).put(`/upload/${runId}?itemPath=${itemPath}`).attach('file', res, {
+      filename,
+    });
 
     expect(response.statusCode).toBe(200);
     expect(fs.existsSync(expectFileName)).toBeTruthy();

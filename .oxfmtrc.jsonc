@@ -2,12 +2,12 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "experimentalSortImports": {
-    "newlinesBetween": false
+    "newlinesBetween": true,
   },
   "experimentalSortPackageJson": {
-    "sortScripts": true
+    "sortScripts": true,
   },
   "printWidth": 120,
   "singleQuote": true,
-  "ignorePatterns": ["apps/", "assets/", "CLAUDE.md", "docker-compose.yml", "dist/", "node_modules/", "vendor/"]
+  "ignorePatterns": ["apps/", "assets/", "CLAUDE.md", "docker-compose.yml", "dist/", "node_modules/", "vendor/"],
 }

@@ -24,7 +24,10 @@ describe('Artifact Cache Server Test', () => {
   });
 
   it('Reserve cache', async () => {
-    const response = await request(app).post('/_apis/artifactcache/caches').send({ key: 'Linux-npm-xxxx', version: '0.0.1' }).expect(200);
+    const response = await request(app)
+      .post('/_apis/artifactcache/caches')
+      .send({ key: 'Linux-npm-xxxx', version: '0.0.1' })
+      .expect(200);
 
     expect(response.statusCode).toBe(200);
     expect(response.body.cacheId).toBeGreaterThan(0);
@@ -35,7 +38,8 @@ describe('Artifact Cache Server Test', () => {
     const cacheTmpname = storage.tmpName(cacheId, 0);
     const fileBuffer = fs.readFileSync(file);
 
-    const response = await request(app).patch(`/_apis/artifactcache/caches/${cacheId}`)
+    const response = await request(app)
+      .patch(`/_apis/artifactcache/caches/${cacheId}`)
       .set('Content-Type', 'application/octet-stream')
       .send(fileBuffer);
 
@@ -49,8 +53,7 @@ describe('Artifact Cache Server Test', () => {
 
   it('Commit the cache parts upload', async () => {
     const cacheFilename = storage.filename(cacheId);
-    const response = await request(app).post(`/_apis/artifactcache/caches/${cacheId}`)
-      .send({ size: 221 });
+    const response = await request(app).post(`/_apis/artifactcache/caches/${cacheId}`).send({ size: 221 });
 
     expect(response.statusCode).toBe(200);
     expect(fs.existsSync(cacheFilename)).toBeTruthy();

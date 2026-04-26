@@ -1,20 +1,16 @@
 import fs from 'fs';
+import type { IncomingMessage, ServerResponse } from 'http';
 import os from 'os';
 import path from 'path';
-
-import type { IncomingMessage, ServerResponse } from 'http';
 
 /**
  * Artifact stored in a local specified dir
  */
 class Storage {
-  constructor(
-    public dir: string = path.join(os.homedir(), 'artifact'),
-  ) {
+  constructor(public dir: string = path.join(os.homedir(), 'artifact')) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
     }
-    this.dir = dir;
   }
 
   exist(id: number) {
@@ -34,11 +30,15 @@ class Storage {
 
   async commit(id: number, size: number) {
     const tmpDir = this.tmpDir(id);
-    const files = fs.readdirSync(tmpDir, { withFileTypes: true }).filter((file) => {
-      return file.isFile();
-    }).map((file) => {
-      return path.join(file.path, file.name);
-    }).sort();
+    const files = fs
+      .readdirSync(tmpDir, { withFileTypes: true })
+      .filter((file) => {
+        return file.isFile();
+      })
+      .map((file) => {
+        return path.join(file.path, file.name);
+      })
+      .sort();
 
     if (files.length === 0) {
       throw Error(`No uploaded parts to commit for id ${id}`);
@@ -64,7 +64,9 @@ class Storage {
         // currentStream = readStream;
 
         return new Promise((resolve, reject) => {
-          readStream.once('end', () => { return resolve(); });
+          readStream.once('end', () => {
+            return resolve();
+          });
           readStream.once('error', reject);
         });
       });
@@ -84,9 +86,12 @@ class Storage {
     return cacheSize;
   }
 
-  serve(res: ServerResponse<IncomingMessage> & {
-    req: IncomingMessage;
-  }, id: number) {
+  serve(
+    res: ServerResponse<IncomingMessage> & {
+      req: IncomingMessage;
+    },
+    id: number,
+  ) {
     const filename = this.filename(id);
     // res.setHeader('Content-Disposition', `attachment; filename=${path.basename(name)}`);
     fs.createReadStream(filename).pipe(res);

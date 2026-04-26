@@ -100,6 +100,7 @@
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -110,12 +111,10 @@ import log4js, { Logger } from 'log4js';
 
 import { trimSuffix, createFnv1aHash } from '@/utils';
 
-import type { AddressInfo } from 'node:net';
-
 const ZIP_EXT = '.zip';
 const DEFAULT_ARTIFACT_DIR = path.join(os.homedir(), '.artifacts');
 
-export function safeResolve(baseDir:string, relPath:string) {
+export function safeResolve(baseDir: string, relPath: string) {
   return trimSuffix(path.join(baseDir, path.normalize(path.join(path.sep, relPath))), path.sep);
 }
 
@@ -131,9 +130,12 @@ function buildSignature(endpoint: string, expires: string, artifactName: string,
 
 // Verify Signature
 function verifySignature(req: Request, endpoint: string) {
-  const {
-    sig, expires, artifactName, runId,
-  } = req.query as { sig: string, expires: string, artifactName: string, runId: string };
+  const { sig, expires, artifactName, runId } = req.query as {
+    sig: string;
+    expires: string;
+    artifactName: string;
+    runId: string;
+  };
   const expectedSig = buildSignature(endpoint, expires, artifactName, parseInt(runId, 10));
   if (sig !== expectedSig) {
     throw new Error('Unauthorized');
@@ -145,7 +147,7 @@ function verifySignature(req: Request, endpoint: string) {
 }
 
 // Build Artifact URL
-function buildArtifactURL(baseURL: string, endpoint: string, artifactName: string, runId:number) {
+function buildArtifactURL(baseURL: string, endpoint: string, artifactName: string, runId: number) {
   const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString();
   const sig = buildSignature(endpoint, expires, artifactName, runId);
   return `${baseURL}/${endpoint}?sig=${sig}&expires=${encodeURIComponent(expires)}&artifactName=${encodeURIComponent(artifactName)}&runId=${runId}`;
@@ -276,7 +278,7 @@ class Artifact {
       let entries: string[] = [];
       try {
         entries = fs.readdirSync(safePath);
-      } catch (err) {
+      } catch {
         //
       }
 
@@ -286,7 +288,8 @@ class Artifact {
           const fileId = createFnv1aHash(filename);
 
           return (!nameFilter || entry === nameFilter + ZIP_EXT) && (!idFilter || idFilter === fileId);
-        }).map((entry) => {
+        })
+        .map((entry) => {
           const filename = path.join(safePath, entry);
           const stats = fs.statSync(filename);
           const fileId = createFnv1aHash(filename);
@@ -460,7 +463,7 @@ class Artifact {
       const { itemPath } = req.query;
 
       const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
-      const safePath = safeResolve(this.dir, path.join(runId, itemPath as string || ''));
+      const safePath = safeResolve(this.dir, path.join(runId, (itemPath as string) || ''));
 
       try {
         const files = fs.readdirSync(safePath, {
@@ -468,18 +471,20 @@ class Artifact {
           withFileTypes: true,
         });
 
-        const filesInfo = files.filter((file) => {
-          return file.isFile();
-        }).map((file) => {
-          let relPath = path.relative(safePath, path.join(file.parentPath, file.name));
-          relPath = trimSuffix(relPath, ZIP_EXT);
-          const filePath = path.join(itemPath as string || '', relPath);
-          return {
-            path: filePath,
-            itemType: 'file',
-            contentLocation: `${baseURL}/artifact/${runId}/${filePath.replace('\\', '/')}`,
-          };
-        });
+        const filesInfo = files
+          .filter((file) => {
+            return file.isFile();
+          })
+          .map((file) => {
+            let relPath = path.relative(safePath, path.join(file.parentPath, file.name));
+            relPath = trimSuffix(relPath, ZIP_EXT);
+            const filePath = path.join((itemPath as string) || '', relPath);
+            return {
+              path: filePath,
+              itemType: 'file',
+              contentLocation: `${baseURL}/artifact/${runId}/${filePath.replace('\\', '/')}`,
+            };
+          });
 
         res.json({ value: filesInfo });
       } catch (err) {
@@ -492,7 +497,7 @@ class Artifact {
       const safePath = safeResolve(this.dir, safeResolve(req.params.container, req.params.path));
       try {
         fs.createReadStream(safePath, { encoding: 'utf-8' }).pipe(res);
-      } catch (err) {
+      } catch {
         res.setHeader('Content-Encoding', 'gzip');
         fs.createReadStream(safePath + ZIP_EXT, { encoding: 'utf-8' }).pipe(res);
       }

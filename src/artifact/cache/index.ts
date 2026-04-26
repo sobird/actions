@@ -18,6 +18,7 @@
  * sobird<i@sobird.me> at 2024/04/30 1:58:31 created.
  */
 
+import type { AddressInfo } from 'net';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -28,11 +29,8 @@ import ip from 'ip';
 import log4js, { Logger } from 'log4js';
 import sqlite3, { Database } from 'sqlite3';
 
-import {
-  CacheEntry, ArtifactCacheEntry, ReserveCacheRequest, CommitCacheRequest,
-} from './contracts';
+import { CacheEntry, ArtifactCacheEntry, ReserveCacheRequest, CommitCacheRequest } from './contracts';
 import Storage from './storage';
-import type { AddressInfo } from 'net';
 
 const DEFAULT_CACHE_DIR = path.join(os.homedir(), '.cache', 'actions');
 
@@ -114,8 +112,9 @@ class ArtifactCache {
 
   private initializeDatabase() {
     this.db.serialize(() => {
-    // 创建表和索引
-      this.db.run(`CREATE TABLE IF NOT EXISTS caches (
+      // 创建表和索引
+      this.db.run(
+        `CREATE TABLE IF NOT EXISTS caches (
       id INTEGER PRIMARY KEY, 
       key TEXT NOT NULL, 
       version TEXT NOT NULL, 
@@ -123,9 +122,11 @@ class ArtifactCache {
       complete INTEGER DEFAULT (0) NOT NULL, 
       updatedAt INTEGER DEFAULT (0) NOT NULL, 
       createdAt INTEGER DEFAULT (0) NOT NULL
-    )`, (err) => {
-        if (err) this.logger.debug(err.message);
-      });
+    )`,
+        (err) => {
+          if (err) this.logger.debug(err.message);
+        },
+      );
 
       this.db.run('CREATE INDEX IF NOT EXISTS idx_key ON caches (key)', (err) => {
         if (err) this.logger.debug(err.message);
@@ -139,7 +140,7 @@ class ArtifactCache {
 
   // GET /_apis/artifactcache/cache?key=key1,key2&version=1.0.0
   findCache: Handler = (req, res) => {
-    const { keys = '', version = '' } = req.query as { keys: string, version: string };
+    const { keys = '', version = '' } = req.query as { keys: string; version: string };
     const [primaryKey, ...restorePaths] = decodeURIComponent(keys).split(',');
 
     this.findCacheEntry(primaryKey, version, restorePaths, true, (idAndKey) => {
@@ -159,7 +160,9 @@ class ArtifactCache {
       } else {
         const baseURL = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
         const cacheFileURL = `${baseURL}/_apis/artifactcache/artifacts/${cacheId}`;
-        res.status(200).json({ result: 'hit', archiveLocation: cacheFileURL, cacheKey: foundPrimaryKey } as ArtifactCacheEntry);
+        res
+          .status(200)
+          .json({ result: 'hit', archiveLocation: cacheFileURL, cacheKey: foundPrimaryKey } as ArtifactCacheEntry);
       }
     });
   };
@@ -169,35 +172,31 @@ class ArtifactCache {
 
     this.logger.debug(`Request to reserve cache ${key} for uploading`);
 
-    this.db.get<CacheEntry>(
-      'SELECT * FROM caches WHERE key = ? AND version = ?',
-      [key, version],
-      (err, row) => {
-        if (err) {
-          res.status(500).json({ error: err.message });
-          return;
-        }
+    this.db.get<CacheEntry>('SELECT * FROM caches WHERE key = ? AND version = ?', [key, version], (err, row) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
 
-        if (!row) {
-          this.db.run(
-            'INSERT INTO caches (key, version, size, updatedAt, createdAt) VALUES (?, ?, ?, ?, ?)',
-            [key, version, cacheSize, Date.now(), Date.now()],
-            function cb(error) {
-              if (error) {
-                res.status(500).json({ error: error.message });
-              } else {
-                res.status(200).json({ cacheId: this.lastID });
-              }
-            },
-          );
-        } else if (row.complete) {
-          res.status(400).json({ error: `Cache id ${row.id} was already uploaded` });
-        } else {
-          this.logger.debug(`Cache id ${row.id} already reserved, but did not start uploading`);
-          res.status(200).json({ cacheId: row.id });
-        }
-      },
-    );
+      if (!row) {
+        this.db.run(
+          'INSERT INTO caches (key, version, size, updatedAt, createdAt) VALUES (?, ?, ?, ?, ?)',
+          [key, version, cacheSize, Date.now(), Date.now()],
+          function cb(error) {
+            if (error) {
+              res.status(500).json({ error: error.message });
+            } else {
+              res.status(200).json({ cacheId: this.lastID });
+            }
+          },
+        );
+      } else if (row.complete) {
+        res.status(400).json({ error: `Cache id ${row.id} was already uploaded` });
+      } else {
+        this.logger.debug(`Cache id ${row.id} already reserved, but did not start uploading`);
+        res.status(200).json({ cacheId: row.id });
+      }
+    });
   };
 
   uploadCache: Handler = async (req, res) => {
@@ -221,14 +220,17 @@ class ArtifactCache {
         const contentRange = req.header('Content-Range') || '';
         const startRange = Number(contentRange.split('-')[0].split(' ')[1]?.trim()) || 0;
 
-        this.storage.write(row.id, startRange, req).then(() => {
-          req.on('end', () => {
-            res.status(200).json();
+        this.storage
+          .write(row.id, startRange, req)
+          .then(() => {
+            req.on('end', () => {
+              res.status(200).json();
+            });
+          })
+          .catch((err) => {
+            res.status(400).json({ error: (err as Error).message });
+            this.logger.error((err as Error).message);
           });
-        }).catch((err) => {
-          res.status(400).json({ error: (err as Error).message });
-          this.logger.error((err as Error).message);
-        });
       }
     });
   };
@@ -256,18 +258,21 @@ class ArtifactCache {
         this.logger.debug(error);
         res.status(400).json({ error });
       } else {
-        this.storage.commit(Number(cacheId), size).then(() => {
-          db.prepare('UPDATE caches SET complete = 1 WHERE id = ?', (err2) => {
-            if (err2) {
-              res.status(500).json({ error: err2.message });
-            } else {
-              res.status(200).json({});
-            }
-          }).run(row.id);
-        }).catch((error) => {
-          this.logger.error((error as Error).message);
-          res.status(400).json({ error: (error as Error).message });
-        });
+        this.storage
+          .commit(Number(cacheId), size)
+          .then(() => {
+            db.prepare('UPDATE caches SET complete = 1 WHERE id = ?', (err2) => {
+              if (err2) {
+                res.status(500).json({ error: err2.message });
+              } else {
+                res.status(200).json({});
+              }
+            }).run(row.id);
+          })
+          .catch((error) => {
+            this.logger.error((error as Error).message);
+            res.status(400).json({ error: (error as Error).message });
+          });
       }
     });
   };
@@ -286,26 +291,23 @@ class ArtifactCache {
     const deleteQ = onlyUncompleted ? 'DELETE FROM caches WHERE complete = 0' : 'DELETE FROM caches';
 
     this.db.serialize(() => {
-      this.db.all<CacheEntry>(
-        selectQ,
-        (err, rows) => {
-          if (err) {
-            this.logger.error(err.message);
+      this.db.all<CacheEntry>(selectQ, (err, rows) => {
+        if (err) {
+          this.logger.error(err.message);
+          return;
+        }
+
+        rows.forEach((row) => {
+          this.storage.remove(row.id);
+        });
+
+        this.db.run(deleteQ, function cb(err2) {
+          if (err2) {
             return;
           }
-
-          rows.forEach((row) => {
-            this.storage.remove(row.id);
-          });
-
-          this.db.run(deleteQ, function cb(err2) {
-            if (err2) {
-              return;
-            }
-            callback(this.changes);
-          });
-        },
-      );
+          callback(this.changes);
+        });
+      });
     });
   }
 

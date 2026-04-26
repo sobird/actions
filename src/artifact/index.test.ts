@@ -1,7 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+
 import request from 'supertest';
+
 import { createAllDir } from '@/utils/test';
+
 import Artifact, { safeResolve } from '.';
 
 const testDir = createAllDir('artifacts');
