@@ -7,7 +7,9 @@
     "perf": "error",
     "suspicious": "error",
   },
-  "rules": {},
+  "rules": {
+    "unicorn/prefer-node-protocol": "error",
+  },
   "env": {
     "builtin": true,
   },

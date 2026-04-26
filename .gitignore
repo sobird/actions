@@ -50,4 +50,6 @@ event.json
 .actionsrc
 database.sqlite
 unittest.sqlite
+
 hashFiles
+!packages/hashfiles

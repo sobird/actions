@@ -14,6 +14,9 @@
     "type": "git",
     "url": "git+https://github.com/sobird/actions.git"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "files": [
     "dist"
   ],
@@ -24,7 +27,7 @@
     "build:actions": "pnpm -C pkg/cmd build",
     "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",
     "cmd": "tsx pkg/cmd",
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "postinstall": "echo \"postinstall\"",
@@ -114,6 +117,7 @@
     "*": "oxlint --fix"
   },
   "trustedDependencies": [
-    "protobufjs"
+    "protobufjs",
+    "sqlite3"
   ]
 }

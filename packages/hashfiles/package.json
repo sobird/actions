@@ -1,28 +1,28 @@
 {
   "name": "hashfiles",
   "version": "1.0.0",
-  "description": "GitHub Actions HashFiles() expression function",
-  "main": "src/hashFiles.ts",
   "private": true,
-  "scripts": {
-    "build": "tsc",
-    "pack": "ncc build -o ../runner/container/hashFiles -m",
-    "all": "npm run build && npm run pack",
-    "prepare": "npm run all"
-  },
+  "description": "GitHub Actions HashFiles() expression function",
+  "keywords": [
+    "actions"
+  ],
+  "license": "MIT",
+  "author": "GitHub Actions",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/actions/runner.git"
   },
-  "keywords": [
-    "actions"
-  ],
-  "author": "GitHub Actions",
-  "license": "MIT",
+  "main": "src/hashFiles.ts",
+  "scripts": {
+    "build": "tsc",
+    "pack": "ncc build -o ../runner/container/hashFiles -m",
+    "all": "npm run build && npm run pack",
+    "typecheck": "tsc --noEmit"
+  },
   "dependencies": {
-    "@actions/glob": "^0.5.0"
+    "@actions/glob": "0.4.0"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.38.3"
+    "@vercel/ncc": "0.38.0"
   }
 }
