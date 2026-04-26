@@ -1,26 +1,32 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { Writable, Readable } from 'node:stream';
+import fs from "node:fs";
+import path from "node:path";
+import { Writable, Readable } from "node:stream";
 
-import { ContainerCreateOptions } from 'dockerode';
+import { ContainerCreateOptions } from "dockerode";
 
-import Docker from '@/pkg/runner/container/docker';
+import Docker from "@/runner/container/docker";
 
-const Env = ['RUNNER_TOOL_CACHE=/opt/hostedtoolcache', 'RUNNER_OS=Linux', 'RUNNER_ARCH=', 'RUNNER_TEMP=/tmp', 'LANG=C.UTF-8'];
+const Env = [
+  "RUNNER_TOOL_CACHE=/opt/hostedtoolcache",
+  "RUNNER_OS=Linux",
+  "RUNNER_ARCH=",
+  "RUNNER_TEMP=/tmp",
+  "LANG=C.UTF-8",
+];
 
 const containerCreateOptions: ContainerCreateOptions = {
-  Image: 'node:lts-slim',
-  name: 'node-lts-slim',
+  Image: "node:lts-slim",
+  name: "node-lts-slim",
   Cmd: [],
-  Entrypoint: ['/bin/sleep', '3600'],
-  WorkingDir: '/root',
+  Entrypoint: ["/bin/sleep", "3600"],
+  WorkingDir: "/root",
   Env,
   HostConfig: {
     AutoRemove: true,
     Privileged: true,
-    UsernsMode: '',
+    UsernsMode: "",
   },
-  platform: '',
+  platform: "",
 };
 
 const docker = new Docker(containerCreateOptions);
@@ -28,8 +34,8 @@ const docker = new Docker(containerCreateOptions);
 const executer = docker.start();
 await executer.execute();
 
-const putContentExecutor = docker.putContent('', {
-  name: 'print_message.sh',
+const putContentExecutor = docker.putContent("", {
+  name: "print_message.sh",
   mode: 0o777,
   body: `#!/bin/bash
 
@@ -47,7 +53,7 @@ const putContentExecutor = docker.putContent('', {
 });
 await putContentExecutor.execute();
 
-const execExecutor = docker.exec(['sh', '-c', 'echo $PATH']);
+const execExecutor = docker.exec(["sh", "-c", "echo $PATH"]);
 await execExecutor.execute();
 
 // const info = await Docker.docker.info();

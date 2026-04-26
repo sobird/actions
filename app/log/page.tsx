@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { createClient } from '@connectrpc/connect';
-import { createConnectTransport } from '@connectrpc/connect-web';
-import Editor, { loader, Monaco } from '@monaco-editor/react';
-import { useEffect, useRef } from 'react';
+import { createClient } from "@connectrpc/connect";
+import { createConnectTransport } from "@connectrpc/connect-web";
+import Editor, { loader, Monaco } from "@monaco-editor/react";
+import { useEffect, useRef } from "react";
 
-import { PingService } from '@/pkg/service/ping/v1/services_pb';
+import { PingService } from "@/service/ping/v1/services_pb";
 
 // A transport for clients using the Connect protocol with fetch()
 const transport = createConnectTransport({
-  baseUrl: 'http://localhost:3000/api/actions',
+  baseUrl: "http://localhost:3000/api/actions",
   useBinaryFormat: true,
   useHttpGet: true,
 });
@@ -18,7 +18,7 @@ const client = createClient(PingService, transport);
 
 const monacoConfig = {
   paths: {
-    vs: 'https://unpkg.com/monaco-editor@0.44.0/min/vs',
+    vs: "https://unpkg.com/monaco-editor@0.44.0/min/vs",
   },
 };
 
@@ -218,33 +218,33 @@ export default function Home() {
   // const monacoRef = useRef(null);
 
   useEffect(() => {
-    client.ping({ data: 'nihao1212' }).then((res) => {
-      console.log('res', res);
+    client.ping({ data: "nihao1212" }).then((res) => {
+      console.log("res", res);
     });
   });
 
   function handleEditorDidMount(editor, monaco: Monaco) {
     // monacoRef.current = monaco;
 
-    monaco.languages.register({ id: 'myLanguage' });
+    monaco.languages.register({ id: "myLanguage" });
 
-    monaco.languages.setMonarchTokensProvider('myLanguage', {
-      keywords: ['error', 'WARNING', 'info', 'success'], // 关键词列表
+    monaco.languages.setMonarchTokensProvider("myLanguage", {
+      keywords: ["error", "WARNING", "info", "success"], // 关键词列表
       tokenizer: {
         root: [
-          [/##\[group\]/, 'group-start'], // 匹配分组开始标记
-          [/##\[endgroup\]/, 'group-end'], // 匹配分组结束标记
-          [/##\[(info|error|warning|success)\]/, 'log-level'],
+          [/##\[group\]/, "group-start"], // 匹配分组开始标记
+          [/##\[endgroup\]/, "group-end"], // 匹配分组结束标记
+          [/##\[(info|error|warning|success)\]/, "log-level"],
           // [/.*/, 'default-content'], // 默认内容
         ],
         log: [
-          [/\[[0-9]{2}:[0-9]{2}:[0-9]{2}\]/, { token: '@rematch', next: '@pop' }],
-          [/.*/, 'log-content'], // 日志内容
+          [/\[[0-9]{2}:[0-9]{2}:[0-9]{2}\]/, { token: "@rematch", next: "@pop" }],
+          [/.*/, "log-content"], // 日志内容
         ],
       },
     });
 
-    monaco.languages.registerFoldingRangeProvider('myLanguage', {
+    monaco.languages.registerFoldingRangeProvider("myLanguage", {
       provideFoldingRanges: (model, context, token) => {
         const foldingRanges = [];
         const lines = model.getLinesContent();
@@ -273,12 +273,12 @@ export default function Home() {
       },
     });
 
-    monaco.editor.defineTheme('logTheme', {
-      base: 'vs-dark',
+    monaco.editor.defineTheme("logTheme", {
+      base: "vs-dark",
       inherit: true,
       rules: [
-        { token: 'group-start', foreground: '008000', fontStyle: 'bold' }, // 分组开始标记
-        { token: 'group-end', foreground: '008000', fontStyle: 'bold' },
+        { token: "group-start", foreground: "008000", fontStyle: "bold" }, // 分组开始标记
+        { token: "group-end", foreground: "008000", fontStyle: "bold" },
         // { token: 'log-level.info', foreground: '0000FF' }, // 信息级别
         // { token: 'log-level.error', foreground: 'FF0000' }, // 错误级别
         // { token: 'log-level.debug', foreground: 'FFA500' }, // 警告级别
@@ -290,7 +290,7 @@ export default function Home() {
       },
     });
 
-    monaco.editor.setTheme('logTheme');
+    monaco.editor.setTheme("logTheme");
     // here is another way to get monaco instance
     // you can also store it in `useRef` for further usage
     // monacoRef.current = monaco;
@@ -324,14 +324,14 @@ export default function Home() {
   return (
     <div>
       <Editor
-        theme='logTheme'
-        height='90vh'
-        language='myLanguage'
+        theme="logTheme"
+        height="90vh"
+        language="myLanguage"
         defaultValue={logContent}
         onMount={handleEditorDidMount}
         options={{
           readOnly: true,
-          wordWrap: 'on',
+          wordWrap: "on",
           minimap: { enabled: false },
           scrollBeyondLastLine: false,
           folding: true, // 启用代码折叠

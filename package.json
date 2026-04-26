@@ -118,6 +118,7 @@
   },
   "trustedDependencies": [
     "protobufjs",
-    "sqlite3"
+    "sqlite3",
+    "cpu-features"
   ]
 }

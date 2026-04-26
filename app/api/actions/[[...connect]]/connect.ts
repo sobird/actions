@@ -1,7 +1,7 @@
-import { ConnectRouter } from '@connectrpc/connect';
+import { ConnectRouter } from "@connectrpc/connect";
 
-import { PingService } from '@/pkg/service/ping/v1/services_pb';
-import { RunnerService, RunnerServiceImpl, RunnerServiceInterceptors } from '@/services/runner';
+import { PingService } from "@/service/ping/v1/services_pb";
+import { RunnerService, RunnerServiceImpl, RunnerServiceInterceptors } from "@/services/runner";
 
 export const routes = (router: ConnectRouter) => {
   // Register your service implementations here

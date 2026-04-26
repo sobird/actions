@@ -1,4 +1,4 @@
-import * as crypto from "node:crypto";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import stream from "node:stream";
