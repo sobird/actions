@@ -25,18 +25,14 @@
     "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",
     "cmd": "tsx pkg/cmd",
     "dev": "next dev --turbopack",
-    "dev:runner": "rollup -cw --environment NODE_ENV:development",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "postinstall": "echo \"postinstall\"",
-    "postversion": "git push && git push --tags",
     "prepare": "husky",
     "prepublishOnly": "npm run build:actions",
-    "preversion": "",
-    "publish:actions": "pnpm publish -C pkg/cmd",
     "start": "next start",
     "test": "vitest",
-    "version": "git add -A ."
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@actions/core": "^1.11.1",
@@ -63,11 +59,11 @@
     "lodash": "^4.17.21",
     "log4js": "^6.9.1",
     "minimatch": "^10.0.1",
-    "next": "^15.1.7",
+    "next": "^16.2.4",
     "prompts": "^2.4.2",
     "rc": "^1.2.8",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "retry": "^0.13.1",
     "sequelize": "^6.37.5",
     "shell-quote": "^1.8.1",
@@ -80,20 +76,15 @@
     "@bufbuild/buf": "^1.50.0",
     "@commitlint/cli": "^19.2.2",
     "@commitlint/config-conventional": "^19.2.2",
-    "@rollup/plugin-commonjs": "^28.0.2",
-    "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^16.0.0",
-    "@rollup/plugin-replace": "^6.0.2",
-    "@rollup/plugin-terser": "^0.4.4",
     "@tailwindcss/postcss": "^4.0.12",
     "@types/body-parser": "^1.19.5",
+    "@types/bun": "^1.3.13",
     "@types/dockerode": "^3.3.35",
     "@types/express": "^4.17.21",
     "@types/git-url-parse": "^9.0.3",
     "@types/ip": "^1.1.3",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/lodash": "^4.17.16",
-    "@types/node": "^20.17.6",
     "@types/prompts": "^2.4.9",
     "@types/rc": "^1.2.4",
     "@types/react": "^18.3.12",
@@ -103,39 +94,26 @@
     "@types/supertest": "^6.0.2",
     "esbuild": "^0.25.0",
     "husky": "^9.0.11",
+    "lint-staged": "^16.4.0",
     "node-notifier": "^10.0.1",
     "oxfmt": "^0.46.0",
     "oxlint": "^1.61.0",
     "oxlint-tsgolint": "^0.22.0",
     "postcss": "^8.5.3",
-    "rollup": "^4.34.9",
-    "rollup-plugin-clear": "^2.0.7",
-    "rollup-plugin-copy": "^3.5.0",
-    "rollup-plugin-node-externals": "^8.0.0",
-    "rollup-plugin-typescript2": "^0.36.0",
     "smee-client": "^2.0.4",
     "supertest": "^7.0.0",
     "tailwindcss": "^4.0.12",
     "ts-protoc-gen": "^0.15.0",
-    "tsx": "^4.19.3",
-    "typescript": "^5.8.2",
+    "typescript": "^6.0.3",
     "vitest": "^2.1.9"
   },
   "resolutions": {
     "strip-ansi": "6.0.0"
   },
-  "pnpm": {
-    "ignoredBuiltDependencies": [
-      "@bufbuild/buf",
-      "cpu-features",
-      "esbuild",
-      "protobufjs",
-      "sharp",
-      "sqlite3",
-      "ssh2"
-    ],
-    "onlyBuiltDependencies": [
-      "sqlite3"
-    ]
-  }
+  "lint-staged": {
+    "*": "oxlint --fix"
+  },
+  "trustedDependencies": [
+    "protobufjs"
+  ]
 }

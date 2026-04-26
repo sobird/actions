@@ -2,28 +2,35 @@
   "name": "@sobird/actions",
   "version": "1.0.0",
   "description": "Impl Actions runner using typescript",
-  "type": "module",
-  "main": "index.ts",
+  "keywords": [
+    "actions",
+    "actions-runner",
+    "github-actions",
+    "runner"
+  ],
+  "license": "MIT",
+  "author": "sobird",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sobird/actions.git"
+  },
   "bin": {
     "actions": "index.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "index.ts",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   },
   "scripts": {
     "build": "rollup -c --environment NODE_ENV:production",
     "test": "vitest",
     "prepublishOnly": "tsx scripts/prepublish.ts"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/sobird/actions.git"
-  },
-  "keywords": [
-    "actions",
-    "runner",
-    "actions-runner",
-    "github-actions"
-  ],
-  "author": "sobird",
-  "license": "MIT",
   "dependencies": {
     "@bufbuild/protobuf": "^2.2.3",
     "@commander-js/extra-typings": "^12.0.1",
@@ -51,11 +58,6 @@
     "yaml": "^2.4.2"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^28.0.2",
-    "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^16.0.0",
-    "@rollup/plugin-replace": "^6.0.2",
-    "@rollup/plugin-terser": "^0.4.4",
     "@types/body-parser": "^1.19.5",
     "@types/dockerode": "^3.3.35",
     "@types/express": "^4.17.21",
@@ -65,18 +67,6 @@
     "@types/prompts": "^2.4.9",
     "@types/rc": "^1.2.4",
     "@types/retry": "^0.12.5",
-    "@types/shell-quote": "^1.7.5",
-    "rollup": "^4.34.9",
-    "rollup-plugin-clear": "^2.0.7",
-    "rollup-plugin-copy": "^3.5.0",
-    "rollup-plugin-node-externals": "^8.0.0",
-    "rollup-plugin-typescript2": "^0.36.0"
-  },
-  "files": [
-    "dist"
-  ],
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org"
+    "@types/shell-quote": "^1.7.5"
   }
 }
