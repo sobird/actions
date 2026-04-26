@@ -1,8 +1,8 @@
-import crypto from "crypto";
-import fs from "fs";
-import path from "path";
-import stream from "stream";
-import util from "util";
+import * as crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import stream from "node:stream";
+import util from "node:util";
 
 import * as glob from "@actions/glob";
 
