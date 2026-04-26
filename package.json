@@ -2,40 +2,42 @@
   "name": "actions",
   "version": "1.0.2",
   "description": "Impl Github Actions & Runner(Run GitHub actions locally) using typescript",
-  "type": "module",
-  "main": "index.js",
-  "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "dev:runner": "rollup -cw --environment NODE_ENV:development",
-    "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",
-    "build:actions": "pnpm -C pkg/cmd build",
-    "publish:actions": "pnpm publish -C pkg/cmd",
-    "eslint:fix": "eslint src --fix",
-    "test": "vitest",
-    "cmd": "tsx pkg/cmd",
-    "lint:eslint": "eslint src --ext ts,js --report-unused-disable-directives --max-warnings 10",
-    "postinstall": "echo \"postinstall\"",
-    "prepare": "husky",
-    "prepublishOnly": "npm run build:actions",
-    "preversion": "",
-    "version": "git add -A .",
-    "postversion": "git push && git push --tags"
-  },
+  "keywords": [
+    "actions",
+    "actions-runner",
+    "github-actions",
+    "runner"
+  ],
+  "license": "MIT",
+  "author": "sobird",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sobird/actions.git"
   },
-  "keywords": [
-    "actions",
-    "runner",
-    "actions-runner",
-    "github-actions"
+  "files": [
+    "dist"
   ],
-  "author": "sobird",
-  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "build": "next build",
+    "build:actions": "pnpm -C pkg/cmd build",
+    "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",
+    "cmd": "tsx pkg/cmd",
+    "dev": "next dev --turbopack",
+    "dev:runner": "rollup -cw --environment NODE_ENV:development",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "postinstall": "echo \"postinstall\"",
+    "postversion": "git push && git push --tags",
+    "prepare": "husky",
+    "prepublishOnly": "npm run build:actions",
+    "preversion": "",
+    "publish:actions": "pnpm publish -C pkg/cmd",
+    "start": "next start",
+    "test": "vitest",
+    "version": "git add -A ."
+  },
   "dependencies": {
     "@actions/core": "^1.11.1",
     "@bufbuild/protobuf": "^2.2.3",
@@ -100,9 +102,11 @@
     "@types/shell-quote": "^1.7.5",
     "@types/supertest": "^6.0.2",
     "esbuild": "^0.25.0",
-    "eslint-config-sobird": "^0.2.16",
     "husky": "^9.0.11",
     "node-notifier": "^10.0.1",
+    "oxfmt": "^0.46.0",
+    "oxlint": "^1.61.0",
+    "oxlint-tsgolint": "^0.22.0",
     "postcss": "^8.5.3",
     "rollup": "^4.34.9",
     "rollup-plugin-clear": "^2.0.7",
@@ -120,9 +124,6 @@
   "resolutions": {
     "strip-ansi": "6.0.0"
   },
-  "files": [
-    "dist"
-  ],
   "pnpm": {
     "ignoredBuiltDependencies": [
       "@bufbuild/buf",

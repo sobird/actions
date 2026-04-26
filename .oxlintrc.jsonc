@@ -1,0 +1,14 @@
+// https://oxc.rs/docs/guide/usage/linter/config.html
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc"],
+  "categories": {
+    "correctness": "error",
+    "perf": "error",
+    "suspicious": "error",
+  },
+  "rules": {},
+  "env": {
+    "builtin": true,
+  },
+}

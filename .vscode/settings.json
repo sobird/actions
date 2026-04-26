@@ -1,0 +1,22 @@
+{
+  "editor.formatOnSave": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "js/ts.preferences.importModuleSpecifierEnding": "js",
+  "js/ts.reportStyleChecksAsWarnings": false,
+  "js/ts.updateImportsOnFileMove.enabled": "always",
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
+  "js/ts.experimental.useTsgo": true
+}
