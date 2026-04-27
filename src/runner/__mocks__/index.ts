@@ -20,19 +20,9 @@ const config = await Config.Load().runner.configure();
 };
 
 const container = new HostedContainer({} as any);
-
-// start container
 await container.start().execute();
 
-// const mockedConstructor = vi.fn();
-
-// Runner.mockImplementation((value) => {
-//   return {
-//     value: mockedConstructor(value),
-//   };
-// });
-
-const mockRunner = vi.fn().mockImplementation((unknown, conf = {}) => {
+const Mocked = vi.fn(function (unknown, conf = {}) {
   const runner = new Runner(run, {
     ...config,
     ...conf,
@@ -53,4 +43,4 @@ const mockRunner = vi.fn().mockImplementation((unknown, conf = {}) => {
   return runner;
 });
 
-export default mockRunner;
+export default Mocked;

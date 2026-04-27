@@ -7,18 +7,13 @@
  * sobird<i@sobird.me> at 2024/05/17 1:36:37 created.
  */
 
-import { templateSettings, pick, template, isObject, forOwn } from 'lodash-es';
+import { pick, template, isObject, forOwn } from 'lodash-es';
 
 import Runner from '@/runner';
 import Context from '@/runner/context';
 import Job from '@/workflow/job';
 
 import functions from './functions';
-
-templateSettings.interpolate = /\${{([\s\S]+?)}}/g;
-templateSettings.imports = {
-  ...functions,
-};
 
 class Expression<T> {
   constructor(
@@ -58,9 +53,11 @@ class Expression<T> {
 
         // expression = this.getHashFilesFunction(expression);
 
-        const templateExecutor = template(expression);
-
         try {
+          const templateExecutor = template(expression, {
+            interpolate: /\${{([\s\S]+?)}}/g,
+            imports: functions,
+          });
           const output = templateExecutor({
             ...availability,
             ...this.getSpecialFunctions(runner),
