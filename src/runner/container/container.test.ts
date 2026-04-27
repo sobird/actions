@@ -6,7 +6,7 @@ import * as tar from 'tar';
 import { listEntry } from '@/utils/tar';
 import { createAllDir } from '@/utils/test';
 
-import Container from '.';
+import Container from './container';
 import DockerContainer from './docker';
 import HostedContainer from './hosted';
 
@@ -80,9 +80,11 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
       const fileFiles = await listEntry(archive);
       const sourceFiles = fs.readdirSync(fileTestDir);
 
-      expect(fileFiles?.map((item) => {
-        return path.basename(item);
-      })).toEqual(sourceFiles);
+      expect(
+        fileFiles?.map((item) => {
+          return path.basename(item);
+        }),
+      ).toEqual(sourceFiles);
     });
 
     it('put content to container relative directory', async () => {
@@ -94,9 +96,15 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
       const archive = await container.getArchive(destination);
       const fileFiles = await listEntry(archive);
 
-      expect(fileFiles?.map((item) => {
-        return path.basename(item);
-      })).toEqual(files.map((item) => { return item.name; }));
+      expect(
+        fileFiles?.map((item) => {
+          return path.basename(item);
+        }),
+      ).toEqual(
+        files.map((item) => {
+          return item.name;
+        }),
+      );
     });
 
     it('put content to container absolute directory', async () => {
@@ -108,9 +116,15 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
       const archive = await container.getArchive(destination);
       const fileFiles = await listEntry(archive);
 
-      expect(fileFiles?.map((item) => {
-        return path.basename(item);
-      })).toEqual(files.map((item) => { return item.name; }));
+      expect(
+        fileFiles?.map((item) => {
+          return path.basename(item);
+        }),
+      ).toEqual(
+        files.map((item) => {
+          return item.name;
+        }),
+      );
     });
 
     it('put archive to container', async () => {
@@ -124,9 +138,11 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
       const fileFiles = await listEntry(archive2);
       const sourceFiles = fs.readdirSync(fileTestDir);
 
-      expect(fileFiles?.map((item) => {
-        return path.basename(item);
-      })).toEqual(sourceFiles);
+      expect(
+        fileFiles?.map((item) => {
+          return path.basename(item);
+        }),
+      ).toEqual(sourceFiles);
     });
 
     it('get archive to container', async () => {
@@ -136,9 +152,11 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
       const fileFiles = await listEntry(archive);
       const sourceFiles = fs.readdirSync(fileTestDir);
 
-      expect(fileFiles?.map((item) => {
-        return path.basename(item);
-      })).toEqual(sourceFiles);
+      expect(
+        fileFiles?.map((item) => {
+          return path.basename(item);
+        }),
+      ).toEqual(sourceFiles);
     });
 
     it('get file content from container', async () => {
@@ -173,7 +191,10 @@ describe.each([hosted, docker])('Test $constructor.name', (container) => {
         body,
       });
       await putContentExecutor.execute();
-      const execExecutor = container.exec([process.platform === 'win32' ? 'powershell' : 'sh', container.resolve(scriptName)]);
+      const execExecutor = container.exec([
+        process.platform === 'win32' ? 'powershell' : 'sh',
+        container.resolve(scriptName),
+      ]);
       await execExecutor.execute();
 
       // spawn.stdout.on('data', (data) => {

@@ -6,30 +6,30 @@
  * sobird<i@sobird.me> at 2024/05/19 6:18:35 created.
  */
 
-import os from "node:os";
-import path from "node:path";
+import os from 'node:os';
+import path from 'node:path';
 
-import { MountConfig, MountConsistency } from "dockerode";
-import log4js, { Logger } from "log4js";
+import { MountConfig, MountConsistency } from 'dockerode';
+import log4js, { Logger } from 'log4js';
 
-import Constants from "@/common/constants";
-import { Docker } from "@/docker";
-import Config from "@/runner/config";
-import Context from "@/runner/context";
-import StepAction from "@/workflow/job/step/action";
-import Strategy from "@/workflow/job/strategy";
-import { createSafeName, assignIgnoreCase, createFnv1aHash } from "@/utils";
+import Constants from '@/common/constants';
+import { Docker } from '@/docker';
+import Config from '@/runner/config';
+import Context from '@/runner/context';
+import { createSafeName, assignIgnoreCase, createFnv1aHash } from '@/utils';
+import StepAction from '@/workflow/job/step/action';
+import Strategy from '@/workflow/job/strategy';
 
-import Container from "./container";
-import Expression from "../expression";
-import { IssueMatchersConfig, IssueMatcherConfig } from "./action/command/issueMatcher";
-import DockerContainer from "./container/docker";
-import HostedContainer from "./container/hosted";
-import { Job } from "./context/jobs";
-import Executor from "../common/executor";
-import Run from "../workflow/plan/run";
+import Executor from '../common/executor';
+import Expression from '../expression';
+import Run from '../workflow/plan/run';
+import { IssueMatchersConfig, IssueMatcherConfig } from './action/command/issueMatcher';
+import Container from './container/container';
+import DockerContainer from './container/docker';
+import HostedContainer from './container/hosted';
+import { Job } from './context/jobs';
 
-const SetEnvBlockList = ["NODE_OPTIONS"];
+const SetEnvBlockList = ['NODE_OPTIONS'];
 
 /**
  * 每个runner为一个job实例
@@ -84,15 +84,13 @@ class Runner {
     this.context = context;
 
     // Calculate the value of the expression in advance
-    const strategy = new Expression(job.strategy, ["github", "needs", "vars", "inputs"]).evaluate(
-      this,
-    );
+    const strategy = new Expression(job.strategy, ['github', 'needs', 'vars', 'inputs']).evaluate(this);
     job.strategy = new Strategy(strategy);
 
     // github context
     context.github.job = jobId;
-    context.github.workflow = workflow.name || workflow.file || "";
-    context.github.workflow_sha = workflow.sha || "";
+    context.github.workflow = workflow.name || workflow.file || '';
+    context.github.workflow_sha = workflow.sha || '';
 
     // auto gen runId
     const runId = createFnv1aHash(
@@ -101,10 +99,10 @@ class Runner {
     context.github.run_id = context.github.run_id || runId;
 
     // strategy context
-    context.strategy["fail-fast"] = job.strategy["fail-fast"];
-    context.strategy["max-parallel"] = job.strategy["max-parallel"];
-    context.strategy["job-index"] = job.index;
-    context.strategy["job-total"] = job.total;
+    context.strategy['fail-fast'] = job.strategy['fail-fast'];
+    context.strategy['max-parallel'] = job.strategy['max-parallel'];
+    context.strategy['job-index'] = job.index;
+    context.strategy['job-total'] = job.total;
 
     // set jobs
     context.jobs[jobId] = new Job();
@@ -115,13 +113,13 @@ class Runner {
     // matrix context
     const matrix = job.strategy.Matrices[0];
     if (matrix) {
-      context.matrix = matrix as Context["matrix"];
+      context.matrix = matrix as Context['matrix'];
     }
 
     // Initialize 'echo on action command success' property, default to false, unless Step_Debug is set
     this.echoOnActionCommand =
-      context.secrets[Constants.Actions.StepDebug]?.toLowerCase() === "true" ||
-      context.vars[Constants.Actions.StepDebug]?.toLowerCase() === "true" ||
+      context.secrets[Constants.Actions.StepDebug]?.toLowerCase() === 'true' ||
+      context.vars[Constants.Actions.StepDebug]?.toLowerCase() === 'true' ||
       false;
 
     if (config.serverInstance) {
@@ -164,14 +162,14 @@ class Runner {
     const JobContainer = IsHosted ? HostedContainer : DockerContainer;
     const executor = JobContainer.Setup(this);
 
-    const workflowDirectory = path.join(Constants.Directory.Temp, "_github_workflow");
+    const workflowDirectory = path.join(Constants.Directory.Temp, '_github_workflow');
     return executor.next(
       new Executor(async () => {
         const { event } = context.github;
         const container = this.container!;
 
         // set github context
-        context.github.event_path = container.resolve(workflowDirectory, "event.json") || "";
+        context.github.event_path = container.resolve(workflowDirectory, 'event.json') || '';
         if (IsHosted && this.config.bindWorkdir) {
           // resolve actions/cache hosted save cache error: Cannot stat: No such file or directory
           context.github.workspace = this.config.workdir; // 使用仓库物理地址
@@ -179,31 +177,27 @@ class Runner {
           context.github.workspace = container.resolve(this.config.workdir);
         }
 
-        if (
-          !IsHosted &&
-          !this.config.actionsCacheExternal &&
-          context.env[Constants.Actions.CacheUrl]
-        ) {
+        if (!IsHosted && !this.config.actionsCacheExternal && context.env[Constants.Actions.CacheUrl]) {
           const url = new URL(context.env[Constants.Actions.CacheUrl]);
-          url.hostname = "host.docker.internal";
+          url.hostname = 'host.docker.internal';
           context.env[Constants.Actions.CacheUrl] = url.toString();
         }
 
         if (!IsHosted && context.env[Constants.Actions.RuntimeUrl]) {
           const url = new URL(context.env[Constants.Actions.RuntimeUrl]);
-          url.hostname = "host.docker.internal";
+          url.hostname = 'host.docker.internal';
           context.env[Constants.Actions.RuntimeUrl] = url.toString();
         }
         context.env.ACTIONS_RESULTS_URL = context.env[Constants.Actions.RuntimeUrl];
 
         // set runner context
         context.runner.name = this.config.name;
-        context.runner.os = container.OS as "Linux" | "Windows" | "macOS";
-        context.runner.arch = container.Arch as "X86" | "X64" | "ARM" | "ARM64";
+        context.runner.os = container.OS as 'Linux' | 'Windows' | 'macOS';
+        context.runner.arch = container.Arch as 'X86' | 'X64' | 'ARM' | 'ARM64';
         context.runner.tool_cache = container.ToolDir;
         context.runner.temp = container.TempDir;
-        context.runner.environment = container.Environment as "github-hosted" | "self-hosted";
-        context.runner.debug = "1";
+        context.runner.environment = container.Environment as 'github-hosted' | 'self-hosted';
+        context.runner.debug = '1';
 
         // set job context
         const containerContext = await container.context();
@@ -212,7 +206,7 @@ class Runner {
         context.job.services = await this.servicesContext();
 
         return container.putContent(workflowDirectory, {
-          name: "event.json",
+          name: 'event.json',
           mode: 0o644,
           body: JSON.stringify(event),
         });
@@ -228,7 +222,7 @@ class Runner {
 
   async servicesContext() {
     const services = Object.entries(this.services);
-    const servicesTmp: Context["job"]["services"] = {};
+    const servicesTmp: Context['job']['services'] = {};
 
     for await (const [serviceId, service] of services) {
       servicesTmp[serviceId] = await service.context();
@@ -285,30 +279,24 @@ class Runner {
       return [[], {}];
     }
     const containerName = this.ContainerName();
-    const defaultSocket = "/var/run/docker.sock";
+    const defaultSocket = '/var/run/docker.sock';
     const containerDaemonSocket = this.config.containerDaemonSocket || defaultSocket;
     const binds: string[] = [];
-    if (containerDaemonSocket !== "-") {
+    if (containerDaemonSocket !== '-') {
       const daemonPath = Docker.SocketMountPath(containerDaemonSocket);
       binds.push(`${daemonPath}:${defaultSocket}`);
     }
 
-    const ToolMount = "toolcache";
+    const ToolMount = 'toolcache';
     const TempMount = `${containerName}-Temp`;
 
-    let hostedWorkDir = "";
-    let hostedToolDir = "";
-    let hostedTempDir = "";
+    let hostedWorkDir = '';
+    let hostedToolDir = '';
+    let hostedTempDir = '';
 
     const containerWorkdir = (hostedWorkDir = this.container.resolve(this.config.workdir));
-    const containerToolDir = (hostedToolDir = this.container.resolve(
-      this.config.workspace,
-      Constants.Directory.Tool,
-    ));
-    const containerTempDir = (hostedTempDir = this.container.resolve(
-      this.config.workspace,
-      Constants.Directory.Temp,
-    ));
+    const containerToolDir = (hostedToolDir = this.container.resolve(this.config.workspace, Constants.Directory.Tool));
+    const containerTempDir = (hostedTempDir = this.container.resolve(this.config.workspace, Constants.Directory.Temp));
 
     let mounts: Record<string, string> = {
       [ToolMount]: containerToolDir,
@@ -317,17 +305,17 @@ class Runner {
 
     const { volumes = [] } = this.run.job.container;
     volumes.forEach((volume) => {
-      if (!volume.includes(":") && path.isAbsolute(volume)) {
+      if (!volume.includes(':') && path.isAbsolute(volume)) {
         binds.push(volume);
       } else {
-        const [key, value] = volume.split(":");
+        const [key, value] = volume.split(':');
         mounts[key] = value;
       }
     });
 
-    let bindModifiers = "";
-    if (process.platform === "darwin") {
-      bindModifiers = ":delegated";
+    let bindModifiers = '';
+    if (process.platform === 'darwin') {
+      bindModifiers = ':delegated';
     }
 
     if (this.config.bindWorkdir) {
@@ -364,44 +352,38 @@ class Runner {
     }
 
     const containerName = this.ContainerName();
-    const defaultSocket = "/var/run/docker.sock";
+    const defaultSocket = '/var/run/docker.sock';
     const containerDaemonSocket = this.config.containerDaemonSocket || defaultSocket;
     const binds: MountConfig = [];
-    if (containerDaemonSocket !== "-") {
+    if (containerDaemonSocket !== '-') {
       const daemonPath = Docker.SocketMountPath(containerDaemonSocket);
       // binds.push(`${daemonPath}:${defaultSocket}`);
       binds.push({
-        Type: "bind",
+        Type: 'bind',
         Source: daemonPath,
         Target: defaultSocket,
       });
     }
 
-    const ToolMount = "toolcache";
+    const ToolMount = 'toolcache';
     const TempMount = `${containerName}-Temp`;
 
-    let hostedWorkDir = "";
-    let hostedToolDir = "";
-    let hostedTempDir = "";
+    let hostedWorkDir = '';
+    let hostedToolDir = '';
+    let hostedTempDir = '';
 
     const containerWorkdir = (hostedWorkDir = this.container.resolve(this.config.workdir));
-    const containerToolDir = (hostedToolDir = this.container.resolve(
-      this.config.workspace,
-      Constants.Directory.Tool,
-    ));
-    const containerTempDir = (hostedTempDir = this.container.resolve(
-      this.config.workspace,
-      Constants.Directory.Temp,
-    ));
+    const containerToolDir = (hostedToolDir = this.container.resolve(this.config.workspace, Constants.Directory.Tool));
+    const containerTempDir = (hostedTempDir = this.container.resolve(this.config.workspace, Constants.Directory.Temp));
 
     let mounts: MountConfig = [
       {
-        Type: "volume",
+        Type: 'volume',
         Source: ToolMount,
         Target: containerToolDir,
       },
       {
-        Type: "volume",
+        Type: 'volume',
         Source: TempMount,
         Target: containerTempDir,
       },
@@ -409,27 +391,27 @@ class Runner {
 
     const { volumes = [] } = this.run.job.container;
     volumes.forEach((volume) => {
-      if (!volume.includes(":") || path.isAbsolute(volume)) {
+      if (!volume.includes(':') || path.isAbsolute(volume)) {
         // anonymous volume
         binds.push({
-          Type: "volume",
-          Source: "",
+          Type: 'volume',
+          Source: '',
           Target: volume,
         });
       } else {
-        const [key, value] = volume.split(":");
+        const [key, value] = volume.split(':');
         // mounts[key] = value;
         mounts.push({
-          Type: "volume",
+          Type: 'volume',
           Source: key,
           Target: value,
         });
       }
     });
 
-    let bindModifiers: MountConsistency = "default";
-    if (process.platform === "darwin") {
-      bindModifiers = "delegated";
+    let bindModifiers: MountConsistency = 'default';
+    if (process.platform === 'darwin') {
+      bindModifiers = 'delegated';
     }
 
     if (this.config.bindWorkdir) {
@@ -438,7 +420,7 @@ class Runner {
         hostedWorkDir = this.container.resolve(this.config.workdir);
         // binds.push(`${hostedWorkDir}:${hostedWorkDir}:${bindModifiers}`);
         binds.push({
-          Type: "bind",
+          Type: 'bind',
           Source: hostedWorkDir,
           Target: hostedWorkDir,
           Consistency: bindModifiers,
@@ -446,7 +428,7 @@ class Runner {
       } else {
         // binds.push(`${this.config.workdir}:${containerWorkdir}${bindModifiers}`);
         binds.push({
-          Type: "bind",
+          Type: 'bind',
           Source: this.config.workdir,
           Target: containerWorkdir,
           Consistency: bindModifiers,
@@ -456,7 +438,7 @@ class Runner {
       hostedWorkDir = this.container.resolve(this.config.workdir);
       // binds.push(`${hostedWorkDir}:${hostedWorkDir}${bindModifiers}`);
       binds.push({
-        Type: "bind",
+        Type: 'bind',
         Source: hostedWorkDir,
         Target: hostedWorkDir,
         Consistency: bindModifiers,
@@ -464,7 +446,7 @@ class Runner {
     } else {
       // mounts[containerName] = containerWorkdir;
       mounts.push({
-        Type: "volume",
+        Type: 'volume',
         Source: containerName,
         Target: containerWorkdir,
       });
@@ -479,14 +461,14 @@ class Runner {
       // binds.push(`${hostedTempDir}:${hostedTempDir}:delegated`);
 
       binds.push({
-        Type: "bind",
+        Type: 'bind',
         Source: hostedToolDir,
         Target: hostedToolDir,
         Consistency: bindModifiers,
       });
 
       binds.push({
-        Type: "bind",
+        Type: 'bind',
         Source: hostedTempDir,
         Target: hostedTempDir,
         Consistency: bindModifiers,
@@ -498,10 +480,10 @@ class Runner {
   }
 
   ServiceBindsAndMounts(volumes: string[] = []): [string[], Record<string, string>] {
-    const defaultSocket = "/var/run/docker.sock";
+    const defaultSocket = '/var/run/docker.sock';
     const containerDaemonSocket = this.config.containerDaemonSocket || defaultSocket;
     const binds: string[] = [];
-    if (containerDaemonSocket !== "-") {
+    if (containerDaemonSocket !== '-') {
       const daemonPath = Docker.SocketMountPath(containerDaemonSocket);
       binds.push(`${daemonPath}:${defaultSocket}`);
     }
@@ -509,10 +491,10 @@ class Runner {
     const mounts: Record<string, string> = {};
 
     volumes.forEach((volume) => {
-      if (!volume.includes(":") || path.isAbsolute(volume)) {
+      if (!volume.includes(':') || path.isAbsolute(volume)) {
         binds.push(volume);
       } else {
-        const [key, value] = volume.split(":");
+        const [key, value] = volume.split(':');
         mounts[key] = value;
       }
     });
@@ -521,14 +503,14 @@ class Runner {
   }
 
   ServiceMounts(volumes: string[] = []): MountConfig {
-    const defaultSocket = "/var/run/docker.sock";
+    const defaultSocket = '/var/run/docker.sock';
     const containerDaemonSocket = this.config.containerDaemonSocket || defaultSocket;
     const binds: MountConfig = [];
-    if (containerDaemonSocket !== "-") {
+    if (containerDaemonSocket !== '-') {
       const daemonPath = Docker.SocketMountPath(containerDaemonSocket);
       // binds.push(`${daemonPath}:${defaultSocket}`);
       binds.push({
-        Type: "bind",
+        Type: 'bind',
         Source: daemonPath,
         Target: defaultSocket,
       });
@@ -537,18 +519,18 @@ class Runner {
     const mounts: MountConfig = [];
 
     volumes.forEach((volume) => {
-      if (!volume.includes(":") || path.isAbsolute(volume)) {
+      if (!volume.includes(':') || path.isAbsolute(volume)) {
         // binds.push(volume);
         binds.push({
-          Type: "volume",
-          Source: "",
+          Type: 'volume',
+          Source: '',
           Target: volume,
         });
       } else {
-        const [key, value] = volume.split(":");
+        const [key, value] = volume.split(':');
         // mounts[key] = value;
         mounts.push({
-          Type: "volume",
+          Type: 'volume',
           Source: key,
           Target: value,
         });
@@ -563,7 +545,7 @@ class Runner {
   }
 
   get ActionCacheDir() {
-    return this.config.actionCache?.dir || path.join(os.tmpdir(), "actions");
+    return this.config.actionCache?.dir || path.join(os.tmpdir(), 'actions');
   }
 
   // for use-composite
@@ -594,7 +576,7 @@ class Runner {
     const { job, workflow } = this.run;
     const env = { ...workflow.env.evaluate(this), ...job.env.evaluate(this), ...stepEnv };
     if (this.config.skipCheckout) {
-      env.ACTIONS_SKIP_CHECKOUT = "true";
+      env.ACTIONS_SKIP_CHECKOUT = 'true';
     }
 
     this.Assign(this.context.env, env);
@@ -643,14 +625,14 @@ class Runner {
   }
 
   get EnhancedAnnotationsEnabled() {
-    return !!this.context.vars["DistributedTask.EnhancedAnnotations"];
+    return !!this.context.vars['DistributedTask.EnhancedAnnotations'];
   }
 
   get IsHosted() {
     const platform = this.RunsOnImage;
     const image = this.ContainerImage;
 
-    return image === "" && platform?.toLowerCase() === "-self-hosted";
+    return image === '' && platform?.toLowerCase() === '-self-hosted';
   }
 
   // job container image
@@ -663,7 +645,7 @@ class Runner {
   }
 
   get ContainerImage() {
-    return this.run.job.container.image.evaluate(this) || "";
+    return this.run.job.container.image.evaluate(this) || '';
   }
 
   get RunsOnImage() {
@@ -683,7 +665,7 @@ class Runner {
       return this.config.platforms.get(image);
     }
 
-    return "";
+    return '';
   }
 
   get ActionStates() {
@@ -740,7 +722,7 @@ class Runner {
     }
 
     if (this.echoOnActionCommand) {
-      console.log("::add-mask::***");
+      console.log('::add-mask::***');
     }
 
     const masks = value.split(/[\r\n]/).filter((item) => {
@@ -777,7 +759,7 @@ class Runner {
         const owners = config.problemMatcher.map((x) => {
           return `'${x.owner}'`;
         });
-        const joinedOwners = owners.join(", ");
+        const joinedOwners = owners.join(', ');
         this.debug(
           `Added matchers: ${joinedOwners}. Problem matchers scan action output for known warning or error strings and report these inline.`,
         );

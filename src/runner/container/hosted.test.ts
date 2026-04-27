@@ -5,7 +5,7 @@ import * as tar from 'tar';
 
 import { createAllDir } from '@/utils/test';
 
-import { FileEntry } from '.';
+import { FileEntry } from './container';
 import HostedContainer from './hosted';
 
 vi.mock('./hosted');

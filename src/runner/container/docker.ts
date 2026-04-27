@@ -7,27 +7,27 @@
  * sobird<i@sobird.me> at 2024/06/24 15:21:27 created.
  */
 
-import cp from "node:child_process";
-import fs from "node:fs";
-import path from "node:path";
-import readline from "node:readline";
-import tty from "node:tty";
+import cp from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import readline from 'node:readline';
+import tty from 'node:tty';
 
-import Dockerode, { NetworkInspectInfo, AuthConfig, MountConfig } from "dockerode";
-import dotenv from "dotenv";
-import ignore from "ignore";
-import log4js from "log4js";
+import Dockerode, { NetworkInspectInfo, AuthConfig, MountConfig } from 'dockerode';
+import dotenv from 'dotenv';
+import ignore from 'ignore';
+import log4js from 'log4js';
 // import shellQuote from 'shell-quote';
-import * as tar from "tar";
+import * as tar from 'tar';
 
-import Executor, { Conditional } from "@/common/executor";
-import docker from "@/docker";
-import DockerDemuxer from "@/docker/demuxer";
-import Options from "@/docker/options";
-import Runner from "@/runner";
+import Executor, { Conditional } from '@/common/executor';
+import docker from '@/docker';
+import DockerDemuxer from '@/docker/demuxer';
+import Options from '@/docker/options';
+import Runner from '@/runner';
 
-import Container, { FileEntry, ContainerExecOptions } from ".";
-import OutputManager from "../outputManager";
+import OutputManager from '../outputManager';
+import Container, { FileEntry, ContainerExecOptions } from './container';
 
 const logger = log4js.getLogger();
 
@@ -56,7 +56,7 @@ export interface DockerContainerOptions {
   binds?: string[];
   mounts?: MountConfig;
 
-  networkMode?: "default" | "host" | "bridge" | "container" | "none" | string;
+  networkMode?: 'default' | 'host' | 'bridge' | 'container' | 'none' | string;
   capAdd?: string[];
   capDrop?: string[];
   privileged?: boolean;
@@ -78,19 +78,19 @@ class DockerContainer extends Container {
 
   network?: Dockerode.Network;
 
-  OS: string = "";
+  OS: string = '';
 
-  Arch: string = "";
+  Arch: string = '';
 
-  Environment = "github-hosted";
+  Environment = 'github-hosted';
 
   declare options: DockerContainerOptions;
 
   async context() {
     if (!this.container) {
       return {
-        id: "",
-        network: "",
+        id: '',
+        network: '',
         ports: {},
       };
     }
@@ -102,8 +102,8 @@ class DockerContainer extends Container {
     const [[network]] = networks;
 
     return {
-      id: this.container?.id || "",
-      network: network || "",
+      id: this.container?.id || '',
+      network: network || '',
       ports: Object.fromEntries(
         Object.entries(Ports).map(([containerPort, HostInfos]) => {
           const [HostInfo] = HostInfos;
@@ -138,7 +138,7 @@ class DockerContainer extends Container {
             }
           },
           (event) => {
-            console.log(`${event.id ? `${event.id}: ` : ""}${event.status}`);
+            console.log(`${event.id ? `${event.id}: ` : ''}${event.status}`);
           },
         );
       });
@@ -181,7 +181,7 @@ class DockerContainer extends Container {
       const sourceStat = fs.statSync(source);
       if (sourceStat.isDirectory()) {
         info.dir = source;
-        info.base = ".";
+        info.base = '.';
       }
 
       const options: tar.TarOptionsWithAliasesAsyncNoFile = {
@@ -190,7 +190,7 @@ class DockerContainer extends Container {
         portable: true,
       };
 
-      const ignorefile = path.join(source, ".gitignore");
+      const ignorefile = path.join(source, '.gitignore');
       if (useGitIgnore && fs.existsSync(ignorefile)) {
         const ig = ignore({
           ignorecase: false,
@@ -207,12 +207,12 @@ class DockerContainer extends Container {
       const pack = tar.create(options, [info.base]);
 
       try {
-        logger.debug("\u{1F433}", `Upload file from '${source}' to '${dest}'`);
+        logger.debug('\u{1F433}', `Upload file from '${source}' to '${dest}'`);
         return await container.putArchive(pack as unknown as NodeJS.ReadableStream, {
-          path: "/",
+          path: '/',
         });
       } catch (err) {
-        logger.error("Failed to copy dir to container: %s", (err as Error).message);
+        logger.error('Failed to copy dir to container: %s', (err as Error).message);
       }
     });
   }
@@ -247,16 +247,16 @@ class DockerContainer extends Container {
         entry.end(content);
         pack.add(entry);
 
-        logger.debug("\u{1F433}", `Extracting content to '${path.join(dest, file.name)}'`);
+        logger.debug('\u{1F433}', `Extracting content to '${path.join(dest, file.name)}'`);
       }
       pack.end();
 
       try {
         await container.putArchive(pack as unknown as NodeJS.ReadableStream, {
-          path: "/",
+          path: '/',
         });
       } catch (err) {
-        logger.error("Failed to copy content to container: %s", (err as Error).message);
+        logger.error('Failed to copy content to container: %s', (err as Error).message);
       }
     });
   }
@@ -277,7 +277,7 @@ class DockerContainer extends Container {
         mode: 0o777,
         // uid: this.uid,
         // gid: this.gid,
-        type: "Directory",
+        type: 'Directory',
       });
       header.encode();
       const entry = new tar.ReadEntry(header);
@@ -287,10 +287,10 @@ class DockerContainer extends Container {
 
       container
         .putArchive(pack as unknown as NodeJS.ReadableStream, {
-          path: "/",
+          path: '/',
         })
         .catch((err) => {
-          logger.error("Failed to mkdir to copy content to container: %s", (err as Error).message);
+          logger.error('Failed to mkdir to copy content to container: %s', (err as Error).message);
         });
 
       try {
@@ -299,15 +299,15 @@ class DockerContainer extends Container {
         });
 
         await new Promise<void>((resolve, reject) => {
-          stream.on("error", (err) => {
+          stream.on('error', (err) => {
             reject(err);
           });
-          stream.on("finish", () => {
+          stream.on('finish', () => {
             resolve();
           });
         });
       } catch (err) {
-        logger.error("Failed to copy content to container: %s", (err as Error).message);
+        logger.error('Failed to copy content to container: %s', (err as Error).message);
       }
     });
   }
@@ -349,7 +349,7 @@ class DockerContainer extends Container {
       new Executor(async () => {
         const { network } = this;
         if (network) {
-          logger.debug("\u{1F433}", `Network ${name} exists`);
+          logger.debug('\u{1F433}', `Network ${name} exists`);
           return;
         }
 
@@ -387,10 +387,10 @@ class DockerContainer extends Container {
 
       try {
         await network.disconnect();
-        logger.debug("\u{1F433}", `Disconnect Network: ${network.id}`);
+        logger.debug('\u{1F433}', `Disconnect Network: ${network.id}`);
         delete this.container;
       } catch (err) {
-        logger.error("\u{1F433}", `Failed to Disconnect Network: ${(err as Error).message}`);
+        logger.error('\u{1F433}', `Failed to Disconnect Network: ${(err as Error).message}`);
       }
     });
   }
@@ -410,10 +410,7 @@ class DockerContainer extends Container {
           await network.remove();
           delete this.network;
         } else {
-          logger.debug(
-            "\u{1F433}",
-            `Refusing to remove network ${name} because it still has active endpoints`,
-          );
+          logger.debug('\u{1F433}', `Refusing to remove network ${name} because it still has active endpoints`);
         }
       }),
     );
@@ -497,8 +494,8 @@ class DockerContainer extends Container {
       const container = await docker.createContainer(dockerodeOptions);
 
       logger.debug(
-        "\u{1F433}",
-        `Created container name=${options.name} id=${container.id} from image ${options.image} (platform: ${options.platform || ""})`,
+        '\u{1F433}',
+        `Created container name=${options.name} id=${container.id} from image ${options.image} (platform: ${options.platform || ''})`,
       );
 
       this.container = container;
@@ -518,11 +515,11 @@ class DockerContainer extends Container {
       }
 
       try {
-        logger.debug("\u{1F433}", `Starting container: ${container.id}`);
+        logger.debug('\u{1F433}', `Starting container: ${container.id}`);
         await container.start();
-        logger.debug("\u{1F433}", `Started container: ${container.id}`);
+        logger.debug('\u{1F433}', `Started container: ${container.id}`);
       } catch (err) {
-        logger.warn("\u{1F433}", `Failed to start container: ${(err as Error).message}`);
+        logger.warn('\u{1F433}', `Failed to start container: ${(err as Error).message}`);
       }
     });
   }
@@ -535,12 +532,12 @@ class DockerContainer extends Container {
       }
 
       try {
-        logger.debug("\u{1F433}", `Stoping container: ${container.id}`);
+        logger.debug('\u{1F433}', `Stoping container: ${container.id}`);
         await container.stop();
-        logger.debug("\u{1F433}", `Stoped container: ${container.id}`);
+        logger.debug('\u{1F433}', `Stoped container: ${container.id}`);
         delete this.container;
       } catch (err) {
-        logger.error("\u{1F433}", `Failed to stop container: ${(err as Error).message}`);
+        logger.error('\u{1F433}', `Failed to stop container: ${(err as Error).message}`);
       }
     });
   }
@@ -554,10 +551,10 @@ class DockerContainer extends Container {
 
       try {
         await container.remove({ volumes: true, force: true });
-        logger.debug("\u{1F433}", `Removed container: ${container.id}`);
+        logger.debug('\u{1F433}', `Removed container: ${container.id}`);
         delete this.container;
       } catch (error) {
-        logger.error("\u{1F433}", `Failed to remove container: ${(error as Error).message}`);
+        logger.error('\u{1F433}', `Failed to remove container: ${(error as Error).message}`);
       }
     });
   }
@@ -575,7 +572,7 @@ class DockerContainer extends Container {
 
         output.pipe(process.stdout);
       } catch (error) {
-        logger.error("\u{1F433}", `Failed to attach to container: ${(error as Error).message}`);
+        logger.error('\u{1F433}', `Failed to attach to container: ${(error as Error).message}`);
       }
     });
   }
@@ -589,10 +586,10 @@ class DockerContainer extends Container {
 
       const { StatusCode } =
         (await container.wait({
-          condition: "not-running",
+          condition: 'not-running',
         })) || {};
 
-      logger.debug("\u{1F433}", `Return status: ${StatusCode}`);
+      logger.debug('\u{1F433}', `Return status: ${StatusCode}`);
 
       if (StatusCode === 0) {
         return;
@@ -606,7 +603,7 @@ class DockerContainer extends Container {
       try {
         const volume = docker.getVolume(name);
         await volume.remove();
-        logger.debug("\u{1F433}", `Removed volume: ${name}`);
+        logger.debug('\u{1F433}', `Removed volume: ${name}`);
       } catch (err) {
         //
       }
@@ -617,7 +614,7 @@ class DockerContainer extends Container {
     );
   }
 
-  exec(command: string[], { cwd = "", env, user }: ContainerExecOptions = {}) {
+  exec(command: string[], { cwd = '', env, user }: ContainerExecOptions = {}) {
     return new Executor(async () => {
       const { container } = this;
       if (!container) {
@@ -654,7 +651,7 @@ class DockerContainer extends Container {
           .createInterface({
             input: stream,
           })
-          .on("line", async (line) => {
+          .on('line', async (line) => {
             this.options.stdout?.onDataReceived(line);
           });
       } else {
@@ -663,7 +660,7 @@ class DockerContainer extends Container {
           .createInterface({
             input: child.stdout,
           })
-          .on("line", async (line) => {
+          .on('line', async (line) => {
             this.options.stdout?.onDataReceived(line);
           });
 
@@ -671,13 +668,13 @@ class DockerContainer extends Container {
           .createInterface({
             input: child.stderr,
           })
-          .on("line", async (line) => {
+          .on('line', async (line) => {
             this.options.stderr?.onDataReceived(line);
           });
       }
 
       await new Promise((resolve, reject) => {
-        stream.on("end", async () => {
+        stream.on('end', async () => {
           const inspect = await exec.inspect();
 
           switch (inspect.ExitCode) {
@@ -691,7 +688,7 @@ class DockerContainer extends Container {
               reject(Error(`Process completed with exit code ${inspect.ExitCode}.`));
           }
         });
-        stream.on("error", (err) => {
+        stream.on('error', (err) => {
           reject(err);
         });
       });
@@ -701,7 +698,7 @@ class DockerContainer extends Container {
   get defaultPathVariable() {
     const { container } = this;
     if (!container) {
-      return "";
+      return '';
     }
 
     const buffer = cp.execSync(`docker exec ${container.id} printenv ${this.pathVariableName}`);
@@ -721,37 +718,37 @@ class DockerContainer extends Container {
     const img = docker.getImage(image);
     const imageInspectInfo = await img.inspect();
 
-    return dotenv.parse(imageInspectInfo.Config.Env.join("\n"));
+    return dotenv.parse(imageInspectInfo.Config.Env.join('\n'));
   }
 
   spawnSync(command: string, args: string[], options: ContainerExecOptions = {}) {
     const { container } = this;
     const { cwd, env, privileged, user } = options;
 
-    const dockerArgs = ["exec"];
+    const dockerArgs = ['exec'];
     if (env) {
       Object.entries(env).forEach(([key, value]) => {
-        dockerArgs.push("-e", `${key}=${value}`);
+        dockerArgs.push('-e', `${key}=${value}`);
       });
     }
 
     if (cwd) {
-      dockerArgs.push("-w", cwd);
+      dockerArgs.push('-w', cwd);
     }
 
     if (privileged) {
-      dockerArgs.push("--privileged");
+      dockerArgs.push('--privileged');
     }
 
     if (user) {
-      dockerArgs.push("-u", user);
+      dockerArgs.push('-u', user);
     }
 
     dockerArgs.push(container!.id);
     dockerArgs.push(command);
     dockerArgs.push(...args);
 
-    return cp.spawnSync("docker", dockerArgs, { encoding: "utf8" });
+    return cp.spawnSync('docker', dockerArgs, { encoding: 'utf8' });
   }
 
   resolve(...paths: string[]) {
@@ -788,7 +785,7 @@ class DockerContainer extends Container {
       const credentials = runner.Credentials;
       const outputManager = new OutputManager(runner);
 
-      logger.debug("\u{1F338}", `Start image=${image}`);
+      logger.debug('\u{1F338}', `Start image=${image}`);
 
       const name = runner.ContainerName();
       // specify the network to which the container will connect when `docker create` stage. (like execute command line: docker create --network <networkName> <image>)
@@ -797,7 +794,7 @@ class DockerContainer extends Container {
       const [networkName, createAndDeleteNetwork] = runner.ContainerNetworkName();
       const mounts = runner.Mounts;
 
-      let containerNetworkMode = config.containerNetworkMode || "host";
+      let containerNetworkMode = config.containerNetworkMode || 'host';
       if (runner.ContainerImage) {
         containerNetworkMode = networkName;
       }
@@ -853,7 +850,7 @@ class DockerContainer extends Container {
           image,
           pull: config.pull,
           workdir: config.workdir,
-          entrypoint: ["tail", "-f", "/dev/null"],
+          entrypoint: ['tail', '-f', '/dev/null'],
           // entrypoint: ['/bin/sleep', `${config.containerMaxLifetime}`],
           cmd: [],
           authconfig: {
@@ -862,7 +859,7 @@ class DockerContainer extends Container {
           // binds,
           mounts,
           env: {
-            LANG: "C.UTF-8",
+            LANG: 'C.UTF-8',
           },
           networkMode: containerNetworkMode,
           networkAlias: [runner.name],
@@ -893,7 +890,7 @@ class DockerContainer extends Container {
         dockerContainer.removeVolume(`${runner.ContainerName()}-env`).ifNot(reuseContainer),
         new Executor(async () => {
           if (Object.keys(runner.services).length > 0) {
-            logger.info("\u{1F433}", `Cleaning up services for job ${runner.name}`);
+            logger.info('\u{1F433}', `Cleaning up services for job ${runner.name}`);
             await runner.stopServices().execute();
           }
 
@@ -903,7 +900,7 @@ class DockerContainer extends Container {
             // it means that the network to which containers are connecting is created by `act_runner`,
             // so, we should remove the network at last.
             logger.info(
-              "\u{1F433}",
+              '\u{1F433}',
               `Cleaning up network for Job: ${runner.name}, and network name is: ${networkName}`,
             );
             await dockerContainer.removeNetwork(networkName).execute();

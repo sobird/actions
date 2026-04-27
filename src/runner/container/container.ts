@@ -1,16 +1,15 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-import { type SpawnSyncReturns } from "node:child_process";
-import fs from "node:fs";
-import os from "node:os";
-import readline from "node:readline";
-import { fileURLToPath } from "node:url";
-import path from "path";
+import { type SpawnSyncReturns } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import readline from 'node:readline';
+import { fileURLToPath } from 'node:url';
+import path from 'path';
 
-import * as tar from "tar";
+import * as tar from 'tar';
 
-import Constants from "@/common/constants";
-import Executor from "@/common/executor";
-import { trimPrefix } from "@/utils/trimPrefix";
+import Constants from '@/common/constants';
+import Executor from '@/common/executor';
+import { trimPrefix } from '@/utils/trimPrefix';
 
 export interface FileEntry {
   name: string;
@@ -34,29 +33,29 @@ export interface ContainerOptions {
   stderr: string;
 }
 
-const hashFilesDir = path.join(Constants.Directory.Bin, "hashFiles");
+const hashFilesDir = path.join(Constants.Directory.Bin, 'hashFiles');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default abstract class Container {
-  rootdir: string = "";
+  rootdir: string = '';
 
   abstract OS: string;
 
   abstract Arch: string;
 
-  debug = "";
+  debug = '';
 
   abstract Environment: string;
 
-  putHashFileExecutor = this.put(hashFilesDir, path.resolve(__dirname, "hashFiles/index.js"));
+  putHashFileExecutor = this.put(hashFilesDir, path.resolve(__dirname, 'hashFiles/index.js'));
 
   // constructor(public options: ContainerOptions) {}
 
   constructor(
     public options: unknown,
-    public workspace: string = "/home/runner",
+    public workspace: string = '/home/runner',
   ) {}
 
   get ToolDir() {
@@ -78,11 +77,7 @@ export default abstract class Container {
   abstract putArchive(destination: string, archive: NodeJS.ReadableStream): Executor;
   abstract getArchive(destination: string): Promise<NodeJS.ReadableStream>;
   abstract exec(command: string[], options: ContainerExecOptions): Executor;
-  abstract spawnSync(
-    command: string,
-    args: string[],
-    options: ContainerExecOptions,
-  ): SpawnSyncReturns<string>;
+  abstract spawnSync(command: string, args: string[], options: ContainerExecOptions): SpawnSyncReturns<string>;
   // hashFiles功能应由所在容器提供
   // abstract hashFiles(...patterns: string[]): string;
   abstract resolve(...paths: string[]): string;
@@ -94,21 +89,21 @@ export default abstract class Container {
   }>;
 
   public hashFiles(...patterns: string[]) {
-    const followSymlink = patterns[0] === "--follow-symbolic-links";
+    const followSymlink = patterns[0] === '--follow-symbolic-links';
     if (followSymlink) {
       patterns.shift();
     }
 
     const env = {
       // ...process.env,
-      patterns: patterns.join("\n"),
+      patterns: patterns.join('\n'),
     };
 
     const { workdir } = this.options as { workdir: string };
-    const hashFilesScript = this.resolve(hashFilesDir, "index.js");
+    const hashFilesScript = this.resolve(hashFilesDir, 'index.js');
 
-    let hashResult = "";
-    const { stderr } = this.spawnSync("node", [hashFilesScript], { env, cwd: workdir });
+    let hashResult = '';
+    const { stderr } = this.spawnSync('node', [hashFilesScript], { env, cwd: workdir });
     const matches = stderr.match(/__OUTPUT__([a-fA-F0-9]*)__OUTPUT__/g);
     if (matches && matches.length > 0) {
       hashResult = matches[0].slice(10, -10);
@@ -125,27 +120,25 @@ export default abstract class Container {
       archive.pipe(extract as NodeJS.WritableStream);
 
       return await new Promise((resolve) => {
-        extract.on("entry", (entry: tar.ReadEntry) => {
-          if (entry.type === "SymbolicLink") {
-            resolve(
-              this.getContent(Container.SymlinkJoin(filename, entry.header.linkpath || "", ".")),
-            );
+        extract.on('entry', (entry: tar.ReadEntry) => {
+          if (entry.type === 'SymbolicLink') {
+            resolve(this.getContent(Container.SymlinkJoin(filename, entry.header.linkpath || '', '.')));
           }
           if (entry.size === 0) {
             resolve({
               name: entry.path,
               mode: entry.mode,
               size: entry.size,
-              body: "",
+              body: '',
             });
           }
 
-          let body = "";
-          entry.on("data", (chunk: Buffer) => {
+          let body = '';
+          entry.on('data', (chunk: Buffer) => {
             body += chunk;
           });
-          entry.on("end", () => {
-            if (entry.type === "File") {
+          entry.on('end', () => {
+            if (entry.type === 'File') {
               resolve({
                 name: entry.path,
                 mode: entry.mode,
@@ -157,7 +150,7 @@ export default abstract class Container {
           });
         });
       });
-    } catch (error) {
+    } catch {
       //
     }
   }
@@ -171,7 +164,7 @@ export default abstract class Container {
 
     try {
       return JSON.parse(content.body);
-    } catch (err) {
+    } catch {
       return {};
     }
   }
@@ -183,7 +176,7 @@ export default abstract class Container {
     archive.pipe(extract as NodeJS.WritableStream);
 
     return new Promise<void>((resolve, reject) => {
-      extract.on("entry", (entry: tar.ReadEntry) => {
+      extract.on('entry', (entry: tar.ReadEntry) => {
         if (entry.size === 0) {
           resolve();
         }
@@ -193,47 +186,47 @@ export default abstract class Container {
           crlfDelay: Infinity,
         });
 
-        rl.on("line", (line) => {
+        rl.on('line', (line) => {
           if (line.trim()) {
             callback?.(line);
           }
         });
 
-        rl.on("close", () => {
+        rl.on('close', () => {
           resolve();
         });
 
-        rl.on("error", (err) => {
+        rl.on('error', (err) => {
           reject(err);
         });
       });
-      archive.on("error", (err) => {
+      archive.on('error', (err) => {
         reject(err);
       });
     });
   }
 
   async getFileEnv(filename: string): Promise<Record<string, string>> {
-    let key = "";
-    let value = "";
-    let delimiter = "";
+    let key = '';
+    let value = '';
+    let delimiter = '';
     let delimiterValues: string[] = [];
 
     const env: Record<string, string> = {};
 
     const fileEntry = await this.getContent(filename);
-    const lines = fileEntry?.body.split("\n") || [];
+    const lines = fileEntry?.body.split('\n') || [];
 
     lines.forEach((line) => {
-      const equalsIndex = line.indexOf("=");
-      const heredocIndex = line.indexOf("<<");
+      const equalsIndex = line.indexOf('=');
+      const heredocIndex = line.indexOf('<<');
 
       if (delimiter) {
         if (delimiter === line) {
           env[key] = delimiterValues.join(os.EOL);
-          key = "";
-          value = "";
-          delimiter = "";
+          key = '';
+          value = '';
+          delimiter = '';
           delimiterValues = [];
         } else {
           delimiterValues.push(line);
@@ -243,18 +236,16 @@ export default abstract class Container {
 
       // Normal style NAME=VALUE
       if (equalsIndex >= 0 && (heredocIndex < 0 || equalsIndex < heredocIndex)) {
-        const split = line.split("=");
+        const split = line.split('=');
         [key] = split;
         const [, ...rest] = split;
-        value = rest.join("=");
+        value = rest.join('=');
       } else if (heredocIndex >= 0 && (equalsIndex < 0 || heredocIndex < equalsIndex)) {
         // Heredoc style NAME<<EOF
-        const split = line.split("<<", 2);
+        const split = line.split('<<', 2);
 
         if (!split[0] || !split[1]) {
-          throw new Error(
-            `Invalid format '${line}'. Name must not be empty and delimiter must not be empty`,
-          );
+          throw new Error(`Invalid format '${line}'. Name must not be empty and delimiter must not be empty`);
         }
 
         [key, delimiter] = split;
@@ -268,8 +259,8 @@ export default abstract class Container {
         env[key] = value;
       }
 
-      key = "";
-      value = "";
+      key = '';
+      value = '';
     });
 
     if (delimiter) {
@@ -279,21 +270,21 @@ export default abstract class Container {
   }
 
   get pathVariableName() {
-    if (this.OS === "plan9") {
-      return "path";
+    if (this.OS === 'plan9') {
+      return 'path';
     }
-    if (this.OS === "Windows") {
-      return "Path";
+    if (this.OS === 'Windows') {
+      return 'Path';
     }
-    return "PATH";
+    return 'PATH';
   }
 
   joinPath(...paths: string[]) {
-    return paths.join(this.OS === "Windows" ? ";" : ":");
+    return paths.join(this.OS === 'Windows' ? ';' : ':');
   }
 
   splitPath(pathString: string) {
-    return pathString.split(this.OS === "Windows" ? ";" : ":");
+    return pathString.split(this.OS === 'Windows' ? ';' : ':');
   }
 
   lookPath(file: string, env: Record<string, string | undefined>) {
@@ -301,11 +292,11 @@ export default abstract class Container {
       if (Container.isExecutable(file)) {
         return file;
       }
-      return "";
+      return '';
     }
-    const envPath = Container.GetEnv(env, this.pathVariableName) || "";
+    const envPath = Container.GetEnv(env, this.pathVariableName) || '';
     const dirs = this.splitPath(envPath).map((dir) => {
-      return dir.trim() === "" ? "." : dir.trim();
+      return dir.trim() === '' ? '.' : dir.trim();
     });
 
     for (let i = 0; i < dirs.length; i++) {
@@ -316,7 +307,7 @@ export default abstract class Container {
       }
     }
 
-    return "";
+    return '';
   }
 
   get defaultPathVariable() {
@@ -327,17 +318,17 @@ export default abstract class Container {
     if (prependPath.length > 0) {
       let { pathVariableName } = this;
 
-      if (this.OS === "Windows") {
+      if (this.OS === 'Windows') {
         for (const k of Object.keys(env)) {
           if (k.toLowerCase() === pathVariableName.toLowerCase()) {
-            pathVariableName = k as "path" | "Path" | "PATH";
+            pathVariableName = k as 'path' | 'Path' | 'PATH';
             break;
           }
         }
       }
 
       if (!env[pathVariableName]) {
-        let cpath = "";
+        let cpath = '';
         const imageEnv = await this.imageEnv();
         for (const k of Object.keys(imageEnv)) {
           if (k === pathVariableName) {
@@ -346,7 +337,7 @@ export default abstract class Container {
           }
         }
 
-        cpath = cpath || this.defaultPathVariable || "";
+        cpath = cpath || this.defaultPathVariable || '';
         prependPath.push(cpath);
       }
 
@@ -357,7 +348,7 @@ export default abstract class Container {
   }
 
   get isCaseSensitive() {
-    return this.OS !== "Windows";
+    return this.OS !== 'Windows';
   }
 
   directory(directory: keyof typeof Constants.Directory) {
@@ -371,8 +362,8 @@ export default abstract class Container {
     env.RUNNER_TOOL_CACHE = this.resolve(Constants.Directory.Tool);
     env.RUNNER_TEMP = this.resolve(Constants.Directory.Temp);
     env.RUNNER_DEBUG = 1;
-    env.RUNNER_ENVIRONMENT = "";
-    env.RUNNER_NAME = "";
+    env.RUNNER_ENVIRONMENT = '';
+    env.RUNNER_NAME = '';
 
     return env;
   }
@@ -383,8 +374,8 @@ export default abstract class Container {
   }
 
   static Normalize(pth: string) {
-    const normalizedPath = path.normalize(pth).replace(/\\/g, "/");
-    if (normalizedPath.startsWith("/mnt/")) {
+    const normalizedPath = path.normalize(pth).replace(/\\/g, '/');
+    if (normalizedPath.startsWith('/mnt/')) {
       return normalizedPath;
     }
 
@@ -397,56 +388,56 @@ export default abstract class Container {
 
     // win32
     const driveLetter = windowsPathComponents[1].toLowerCase();
-    const translatedPath = windowsPathComponents[2].replace(/\\/g, "/");
+    const translatedPath = windowsPathComponents[2].replace(/\\/g, '/');
     const result = `/mnt/${driveLetter}${translatedPath}`;
 
     return path.posix.normalize(result);
   }
 
   static GetEnv(env: Record<string, string | undefined>, name: string) {
-    if (process.platform === "win32") {
+    if (process.platform === 'win32') {
       for (const k of Object.keys(env)) {
         if (k.toLowerCase() === name.toLowerCase()) {
           return env[k];
         }
       }
-      return "";
+      return '';
     }
-    return env[name] || "";
+    return env[name] || '';
   }
 
   static OS(platform: string) {
     const map: Record<string, string> = {
-      aix: "Aix",
-      darwin: "macOS",
-      freebsd: "Freebsd",
-      linux: "Linux",
-      openbsd: "Openbsd",
-      sunos: "Sunos",
-      win32: "Windows",
+      aix: 'Aix',
+      darwin: 'macOS',
+      freebsd: 'Freebsd',
+      linux: 'Linux',
+      openbsd: 'Openbsd',
+      sunos: 'Sunos',
+      win32: 'Windows',
     };
     return map[platform];
   }
 
   static Arch(arch: string) {
     const map: Record<string, string> = {
-      arm: "ARM",
-      arm64: "ARM64",
-      ia32: "X86",
-      loong64: "LOONG64",
-      mips: "MIPS",
-      mipsel: "MIPSEL",
-      ppc: "PPC",
-      ppc64: "PPC64",
-      riscv64: "RISCV64",
-      s390: "S390",
-      s390x: "S390X",
-      x64: "X64",
+      arm: 'ARM',
+      arm64: 'ARM64',
+      ia32: 'X86',
+      loong64: 'LOONG64',
+      mips: 'MIPS',
+      mipsel: 'MIPSEL',
+      ppc: 'PPC',
+      ppc64: 'PPC64',
+      riscv64: 'RISCV64',
+      s390: 'S390',
+      s390x: 'S390X',
+      x64: 'X64',
 
-      x86_64: "X64",
-      amd64: "X64",
-      386: "X86",
-      aarch64: "ARM64",
+      x86_64: 'X64',
+      amd64: 'X64',
+      386: 'X86',
+      aarch64: 'ARM64',
     };
     return map[arch];
   }
@@ -456,7 +447,7 @@ export default abstract class Container {
     try {
       const stats = fs.statSync(file);
       return !stats.isDirectory() && (stats.mode & 0o111) !== 0;
-    } catch (err) {
+    } catch {
       return false;
     }
   }
@@ -466,7 +457,7 @@ export default abstract class Container {
     const dest = path.join(dir, sym);
     const prefix = path.normalize(parent) + path.sep;
 
-    if (dest.startsWith(prefix) || prefix === "./") {
+    if (dest.startsWith(prefix) || prefix === './') {
       return dest;
     }
 

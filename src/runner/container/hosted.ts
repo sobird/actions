@@ -7,22 +7,22 @@
  * sobird<i@sobird.me> at 2024/06/06 21:49:44 created.
  */
 
-import { spawn, spawnSync } from "node:child_process";
+import { spawn, spawnSync } from 'node:child_process';
 // import { randomBytes } from 'node:crypto';
-import fs from "node:fs";
-import path from "node:path";
-import readline from "node:readline";
+import fs from 'node:fs';
+import path from 'node:path';
+import readline from 'node:readline';
 
-import ignore from "ignore";
-import * as tar from "tar";
+import ignore from 'ignore';
+import * as tar from 'tar';
 
-import Executor, { Conditional } from "@/common/executor";
-import logger from "@/common/logger";
-import Runner from "@/runner";
-import { trimSuffix, createSha1Hash } from "@/utils";
+import Executor, { Conditional } from '@/common/executor';
+import logger from '@/common/logger';
+import Runner from '@/runner';
+import { trimSuffix, createSha1Hash } from '@/utils';
 
-import Container, { FileEntry, type ContainerExecOptions } from ".";
-import OutputManager from "../outputManager";
+import OutputManager from '../outputManager';
+import Container, { FileEntry, type ContainerExecOptions } from './container';
 
 export interface HostedContainerOptions {
   /**
@@ -38,7 +38,7 @@ export interface HostedContainerOptions {
 }
 
 class HostedContainer extends Container {
-  #id = "";
+  #id = '';
 
   rootdir: string;
 
@@ -46,7 +46,7 @@ class HostedContainer extends Container {
 
   Arch = Container.Arch(process.arch);
 
-  Environment = "self-hosted";
+  Environment = 'self-hosted';
 
   emptyExecutor = new Executor();
 
@@ -64,10 +64,10 @@ class HostedContainer extends Container {
     this.#id = id;
 
     this.rootdir = rootdir;
-    fs.mkdirSync(this.resolve(options.workdir || ""), { recursive: true });
+    fs.mkdirSync(this.resolve(options.workdir || ''), { recursive: true });
 
     (options.binds || []).forEach((bind) => {
-      const [workdir, containerWorkdir] = bind.split(":");
+      const [workdir, containerWorkdir] = bind.split(':');
       const containerWorkdirResolved = this.resolve(containerWorkdir);
       fs.mkdirSync(path.dirname(containerWorkdirResolved), { recursive: true });
       fs.rmSync(containerWorkdirResolved, { recursive: true });
@@ -79,7 +79,7 @@ class HostedContainer extends Container {
   async context() {
     return {
       id: this.#id,
-      network: "",
+      network: '',
       ports: {},
     };
   }
@@ -97,7 +97,7 @@ class HostedContainer extends Container {
       const sourceStat = fs.statSync(source);
       if (sourceStat.isDirectory()) {
         info.dir = source;
-        info.base = ".";
+        info.base = '.';
       }
 
       const options: tar.TarOptionsWithAliasesAsyncNoFile = {
@@ -106,7 +106,7 @@ class HostedContainer extends Container {
         portable: true,
       };
 
-      const ignorefile = path.join(source, ".gitignore");
+      const ignorefile = path.join(source, '.gitignore');
       if (useGitIgnore && fs.existsSync(ignorefile)) {
         const ig = ignore({
           ignorecase: false,
@@ -127,11 +127,11 @@ class HostedContainer extends Container {
       pack.pipe(unpack);
 
       await new Promise<void>((resolve, reject) => {
-        pack.on("error", (err) => {
-          logger.error("Failed to copy dir to container: %s", (err as Error).message);
+        pack.on('error', (err) => {
+          logger.error('Failed to copy dir to container: %s', (err as Error).message);
           reject(err);
         });
-        unpack.on("finish", () => {
+        unpack.on('finish', () => {
           resolve();
         });
       });
@@ -166,10 +166,10 @@ class HostedContainer extends Container {
       const pipeline = readStream.pipe(extract);
 
       await new Promise<void>((resolve, reject) => {
-        pipeline.on("error", (err) => {
+        pipeline.on('error', (err) => {
           reject(err);
         });
-        pipeline.on("finish", () => {
+        pipeline.on('finish', () => {
           logger.debug(`Upload archive to container: ${dest}`);
           resolve();
         });
@@ -190,7 +190,7 @@ class HostedContainer extends Container {
     return new Executor().finally(this.putHashFileExecutor);
   }
 
-  exec(commands: string[], { env, cwd = "" }: ContainerExecOptions = {}) {
+  exec(commands: string[], { env, cwd = '' }: ContainerExecOptions = {}) {
     return new Executor(async () => {
       const { NODE_OPTIONS, ...envs } = process.env;
       const [command, ...args] = commands;
@@ -202,14 +202,14 @@ class HostedContainer extends Container {
           ...env,
         },
         shell: true,
-        stdio: "pipe",
+        stdio: 'pipe',
       });
 
       readline
         .createInterface({
           input: child.stdout,
         })
-        .on("line", async (line) => {
+        .on('line', async (line) => {
           this.options.stdout?.onDataReceived(line);
         });
 
@@ -217,13 +217,13 @@ class HostedContainer extends Container {
         .createInterface({
           input: child.stderr,
         })
-        .on("line", async (line) => {
+        .on('line', async (line) => {
           this.options.stderr?.onDataReceived(line);
         });
 
       await new Promise((resolve, reject) => {
-        child.on("error", reject);
-        child.on("exit", (code) => {
+        child.on('error', reject);
+        child.on('exit', (code) => {
           if (code === 0) {
             resolve(code);
           } else {
@@ -235,11 +235,7 @@ class HostedContainer extends Container {
   }
 
   // hosted default
-  public spawnSync(
-    command: string,
-    args: readonly string[],
-    { cwd = "", env }: ContainerExecOptions,
-  ) {
+  public spawnSync(command: string, args: readonly string[], { cwd = '', env }: ContainerExecOptions) {
     const { NODE_OPTIONS, ...envs } = process.env;
 
     return spawnSync(command, args, {
@@ -248,7 +244,7 @@ class HostedContainer extends Container {
         ...envs,
         ...env,
       },
-      encoding: "utf8",
+      encoding: 'utf8',
     });
   }
 
@@ -266,9 +262,7 @@ class HostedContainer extends Container {
       return dir;
     }
     return trimSuffix(
-      path.isAbsolute(dir)
-        ? path.join(rootdir, HostedContainer.Normalize(dir))
-        : path.join(rootdir, workspace, dir),
+      path.isAbsolute(dir) ? path.join(rootdir, HostedContainer.Normalize(dir)) : path.join(rootdir, workspace, dir),
       path.sep,
     );
   }
@@ -328,9 +322,7 @@ class HostedContainer extends Container {
       const reuseContainer = new Conditional(() => {
         return Boolean(config.reuse);
       });
-      runner.cleanContainerExecutor = Executor.Pipeline(
-        runner.container.remove().ifNot(reuseContainer),
-      );
+      runner.cleanContainerExecutor = Executor.Pipeline(runner.container.remove().ifNot(reuseContainer));
     });
   }
 }
