@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop */
 /**
  * function.ts
  *
@@ -11,7 +10,7 @@
 // import fs from 'node:fs';
 
 // import glob from '@actions/glob';
-import _ from 'lodash';
+import { isArray } from 'lodash-es';
 
 /**
  * Returns true if search contains item.
@@ -74,7 +73,9 @@ function endsWith(searchString: string, searchValue: string) {
 function format(string: string, ...replaceValues: string[]) {
   let result = string;
   replaceValues.forEach((value) => {
-    result = result.replace(/{\{(\d+)\}\}/g, () => { return value; });
+    result = result.replace(/{\{(\d+)\}\}/g, () => {
+      return value;
+    });
   });
   result = result.replace(/{(\d+)}/g, (match, index) => {
     return replaceValues[index] === undefined ? match : replaceValues[index];
@@ -126,8 +127,8 @@ function fromJSON(value: string) {
 
   try {
     return JSON.parse(value);
-  } catch (err) {
-    throw new Error(`Invalid JSON: ${(err as Error).message}`);
+  } catch (cause) {
+    throw new Error(`Invalid JSON: ${(cause as Error).message}`, { cause });
   }
 }
 
@@ -187,17 +188,13 @@ export function always() {
 /**
  * Returns true if the workflow was canceled.
  */
-export function cancelled() {
-
-}
+export function cancelled() {}
 
 /**
  * Returns true when any previous step of a job fails.
  * If you have a chain of dependent jobs, failure() returns true if any ancestor job fails.
  */
-export function failure() {
-
-}
+export function failure() {}
 
 // const reg = /^(\w+\.)+\*\.(\w+)$/;
 function objectFilter(array: object, name: string) {
@@ -205,8 +202,10 @@ function objectFilter(array: object, name: string) {
   // const [prefix, suffix] = parts;
   // const result = _.result({}, prefix);
 
-  if (_.isArray(array)) {
-    const res = array.map((item: any) => { return item[name]; });
+  if (isArray(array)) {
+    const res = array.map((item: any) => {
+      return item[name];
+    });
     return res;
   }
 }

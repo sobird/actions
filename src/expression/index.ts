@@ -1,4 +1,3 @@
-/* eslint-disable no-template-curly-in-string */
 /**
  * Expressions
  * 表达式在运行时进行计算取值
@@ -8,16 +7,16 @@
  * sobird<i@sobird.me> at 2024/05/17 1:36:37 created.
  */
 
-import _ from "lodash";
+import { templateSettings, pick, template, isObject, forOwn } from 'lodash-es';
 
-import Runner from "@/runner";
-import Context from "@/runner/context";
-import Job from "@/workflow/job";
+import Runner from '@/runner';
+import Context from '@/runner/context';
+import Job from '@/workflow/job';
 
-import functions from "./functions";
+import functions from './functions';
 
-_.templateSettings.interpolate = /\${{([\s\S]+?)}}/g;
-_.templateSettings.imports = {
+templateSettings.interpolate = /\${{([\s\S]+?)}}/g;
+templateSettings.imports = {
   ...functions,
 };
 
@@ -26,57 +25,57 @@ class Expression<T> {
     public source: T,
     public scopes: string[],
     public specials: string[] = [],
-    public defaultValue: unknown = "",
+    public defaultValue: unknown = '',
     public isIf: boolean = false,
-    public type: string = "job",
+    public type: string = 'job',
   ) {}
 
   evaluate(runner: Runner, ctx?: Partial<Context>): T {
     const context = ctx || runner.context;
     const interpret = (source: unknown): any => {
-      if (typeof source === "boolean") {
+      if (typeof source === 'boolean') {
         return source;
       }
 
-      if (typeof source === "string") {
+      if (typeof source === 'string') {
         let expression = source;
-        if (this.isIf && (!source.includes("${{") || !source.includes("}}"))) {
+        if (this.isIf && (!source.includes('${{') || !source.includes('}}'))) {
           expression = `\${{ ${source} }}`;
         }
 
         expression = expression.replace(/((?:\w+\.)*?\w+)\.\*\.(\w+)/g, "objectFilter($1, '$2')");
 
         expression = expression.replace(/(?:[a-zA-Z_]+)(?:\.[a-zA-Z_][\w-]*-[\w-]+)/g, (a) => {
-          const [first, ...parts] = a.split(".");
+          const [first, ...parts] = a.split('.');
           const output = parts.map((item) => {
             return `['${item}']`;
           });
           output.unshift(first);
-          return output.join("");
+          return output.join('');
         });
 
-        const availability = _.pick(context, ...this.scopes);
+        const availability = pick(context, ...this.scopes);
 
         // expression = this.getHashFilesFunction(expression);
 
-        const template = _.template(expression);
+        const templateExecutor = template(expression);
 
         try {
-          const output = template({
+          const output = templateExecutor({
             ...availability,
             ...this.getSpecialFunctions(runner),
           });
 
-          if (output === "true") {
+          if (output === 'true') {
             return true;
           }
-          if (output === "false") {
+          if (output === 'false') {
             return false;
           }
           return output;
-        } catch (err) {
+        } catch (error) {
           // todo
-          throw new Error((err as Error).message);
+          throw new Error((error as Error).message, { cause: error });
         }
       }
 
@@ -86,9 +85,9 @@ class Expression<T> {
         });
       }
 
-      if (_.isObject(source)) {
+      if (isObject(source)) {
         const output: Record<string, unknown> = {};
-        _.forOwn(source, (item, key) => {
+        forOwn(source, (item, key) => {
           output[key] = interpret(item);
         });
         return output;
@@ -112,25 +111,25 @@ class Expression<T> {
     const fns: Record<string, Function> = {};
     this.specials.forEach((name) => {
       switch (name) {
-        case "hashFiles":
+        case 'hashFiles':
           fns.hashFiles = Expression.CreateHashFilesFunction(runner);
           break;
-        case "success":
-          if (this.type === "step") {
+        case 'success':
+          if (this.type === 'step') {
             fns.success = Expression.CreateStepSuccess(runner);
           } else {
             fns.success = Expression.CreateJobSuccess(runner);
           }
           break;
-        case "failure":
-          if (this.type === "step") {
+        case 'failure':
+          if (this.type === 'step') {
             fns.failure = Expression.CreateStepFailure(runner);
           } else {
             fns.failure = Expression.CreateJobFailure(runner);
           }
 
           break;
-        case "cancelled":
+        case 'cancelled':
           fns.cancelled = Expression.CreateCancelled(runner);
           break;
         default:
@@ -153,7 +152,7 @@ class Expression<T> {
       const jobNeeds = this.JobNeedsTransitive(job, runner);
 
       for (const need of jobNeeds) {
-        if (workflow.jobs[need].Result !== "success") {
+        if (workflow.jobs[need].Result !== 'success') {
           return true;
         }
       }
@@ -162,7 +161,7 @@ class Expression<T> {
         return true;
       }
 
-      return runner.context.job.status === "success";
+      return runner.context.job.status === 'success';
     };
   }
 
@@ -183,7 +182,7 @@ class Expression<T> {
 
   static CreateStepSuccess(runner: Runner) {
     return () => {
-      return runner.context.job.status === "success";
+      return runner.context.job.status === 'success';
     };
   }
 
@@ -192,24 +191,24 @@ class Expression<T> {
       const { workflow, job } = runner.run;
       const jobNeeds = this.JobNeedsTransitive(job, runner);
       for (const need of jobNeeds) {
-        if (workflow.jobs[need].Result === "failure") {
+        if (workflow.jobs[need].Result === 'failure') {
           return true;
         }
       }
 
-      return runner.context.job.status === "failure";
+      return runner.context.job.status === 'failure';
     };
   }
 
   static CreateStepFailure(runner: Runner) {
     return () => {
-      return runner.context.job.status === "failure";
+      return runner.context.job.status === 'failure';
     };
   }
 
   static CreateCancelled(runner: Runner) {
     return () => {
-      return runner.context.job.status === "cancelled";
+      return runner.context.job.status === 'cancelled';
     };
   }
 }

@@ -1,21 +1,21 @@
 /**
  * step remote uses
  *
- * @see @/pkg/workflow/job/job-reusable-workflow.ts
+ * @see @/workflow/job/job-reusable-workflow.ts
  *
  * sobird<i@sobird.me> at 2024/05/21 16:20:47 created.
  */
 
-import path from "node:path";
+import path from 'node:path';
 
-import log4js from "log4js";
+import log4js from 'log4js';
 
-import Constants from "@/common/constants";
-import Executor, { Conditional } from "@/common/executor";
-import Git from "@/common/git";
-import Reusable from "@/workflow/reusable";
+import Constants from '@/common/constants';
+import Executor, { Conditional } from '@/common/executor';
+import Git from '@/common/git';
+import Reusable from '@/workflow/reusable';
 
-import StepAction from ".";
+import StepAction from '.';
 
 const logger = log4js.getLogger();
 
@@ -28,14 +28,14 @@ class StepActionRemote extends StepAction {
       const { server_url: serverUrl } = runner!.context.github;
       uses.url = uses.url || runner.config.actionInstance || serverUrl;
 
-      if (!uses.url.startsWith("http://") && !uses.url.startsWith("https://")) {
+      if (!uses.url.startsWith('http://') && !uses.url.startsWith('https://')) {
         uses.url = `https://${uses.url}`;
       }
 
       const replaceGheActionWithGithubCom = runner.config.replaceGheActionWithGithubCom || [];
       replaceGheActionWithGithubCom.forEach((action) => {
         if (uses.repository === action) {
-          uses.url = "https://github.com";
+          uses.url = 'https://github.com';
           uses.token = runner.config.replaceGheActionTokenWithGithubCom;
         }
       });
@@ -45,9 +45,7 @@ class StepActionRemote extends StepAction {
       }
 
       const repositoryDir = path.join(runner.ActionCacheDir, uses.repository, uses.ref);
-      return Git.CloneExecutor(repositoryDir, uses.repositoryUrl, uses.ref).finally(
-        this.reusableAction(uses),
-      );
+      return Git.CloneExecutor(repositoryDir, uses.repositoryUrl, uses.ref).finally(this.reusableAction(uses));
     }).ifNot(this.SkipCheckoutSelf);
   }
 
@@ -63,11 +61,11 @@ class StepActionRemote extends StepAction {
 
       if (await this.SkipCheckoutSelf.evaluate(runner)) {
         if (runner?.config.bindWorkdir) {
-          logger.debug("Skipping local actions/checkout because you bound your workspace");
+          logger.debug('Skipping local actions/checkout because you bound your workspace');
           return;
         }
         // const workdir = runner.container?.resolve(runner.config.workdir) || '';
-        const copyToPath = path.join(runner.config.workdir, this.with.evaluate(runner)?.path || "");
+        const copyToPath = path.join(runner.config.workdir, this.with.evaluate(runner)?.path || '');
 
         return runner.container?.put(copyToPath, runner.config.workdir, runner.config.useGitignore);
       }
@@ -115,7 +113,7 @@ class StepActionRemote extends StepAction {
       const { actionCache } = runner.config;
       if (actionCache) {
         await actionCache.fetch(reusable.repositoryUrl, reusable.repository, reusable.ref);
-        const archive = await actionCache.archive(reusable.repository, reusable.ref, ".");
+        const archive = await actionCache.archive(reusable.repository, reusable.ref, '.');
         const actionDir = path.join(Constants.Directory.Actions, reusable.repository, reusable.ref);
 
         return runner.container?.putArchive(actionDir, archive).next(this.LoadAction(actionDir));

@@ -1,50 +1,49 @@
-/* eslint-disable no-template-curly-in-string */
 // todo 要同时测试 DockerContainer 和 HostedContainer
-import Runner from "@/runner";
+import Runner from '@/runner';
 
-import Expression from ".";
-import { type Job } from "../runner/context/job";
-import Step from "../runner/context/step";
+import Expression from '.';
+import { type Job } from '../runner/context/job';
+import Step from '../runner/context/step';
 
-vi.mock("@/pkg/runner");
+vi.mock('@/runner');
 
 afterAll(async () => {});
 
 const context = {
   github: {
-    actor: "sobird",
-    event_name: "push",
+    actor: 'sobird',
+    event_name: 'push',
     event: {
       issue: {
         labels: [
           {
-            name: "bug",
+            name: 'bug',
           },
           {
-            name: "error",
+            name: 'error',
           },
         ],
       },
     },
-    "who-to-greet": "hello",
-    server_url: "https://github.com",
-    token: "token",
+    'who-to-greet': 'hello',
+    server_url: 'https://github.com',
+    token: 'token',
   },
   steps: {
-    "actions-setup-node-v4": {
-      outputs: { "node-version": "v20.18.2" },
-      outcome: "success",
-      conclusion: "success",
+    'actions-setup-node-v4': {
+      outputs: { 'node-version': 'v20.18.2' },
+      outcome: 'success',
+      conclusion: 'success',
     },
-    "yarn-cache": {
-      outputs: { "cache-hit": "false" },
-      outcome: "success",
-      conclusion: "success",
+    'yarn-cache': {
+      outputs: { 'cache-hit': 'false' },
+      outcome: 'success',
+      conclusion: 'success',
     },
-    "actions-checkout-v4": { outputs: {}, outcome: "success", conclusion: "success" },
+    'actions-checkout-v4': { outputs: {}, outcome: 'success', conclusion: 'success' },
   },
   runner: {
-    os: "Linux",
+    os: 'Linux',
   },
 };
 
@@ -54,11 +53,11 @@ const runner: Runner = new (Runner as any)(undefined, {
 
 const literals = [
   {
-    source: "${{ false }}",
+    source: '${{ false }}',
     expected: false,
   },
   {
-    source: "${{ true }}",
+    source: '${{ true }}',
     expected: true,
   },
   {
@@ -70,37 +69,37 @@ const literals = [
     expected: true,
   },
   {
-    source: "${{ null }}",
+    source: '${{ null }}',
     // @todo should equal null
-    expected: "",
+    expected: '',
   },
   {
     source: null,
-    expected: "",
+    expected: '',
   },
   {
-    source: "${{ 711 }}",
-    expected: "711",
+    source: '${{ 711 }}',
+    expected: '711',
   },
   {
-    source: "${{ -9.2 }}",
-    expected: "-9.2",
+    source: '${{ -9.2 }}',
+    expected: '-9.2',
   },
   {
-    source: "${{ 0xff }}",
-    expected: "255",
+    source: '${{ 0xff }}',
+    expected: '255',
   },
   {
-    source: "${{ github.event }}",
-    expected: "[object Object]",
+    source: '${{ github.event }}',
+    expected: '[object Object]',
   },
   {
     source: "${{ github.server_url == 'https://github.com' && github.token || '' }}",
-    expected: "token",
+    expected: 'token',
   },
   {
-    source: "${{ github.who-to-greet }}",
-    expected: "hello",
+    source: '${{ github.who-to-greet }}',
+    expected: 'hello',
   },
   {
     source: "${{ steps.yarn-cache.outputs.cache-hit != 'true' }}",
@@ -110,40 +109,40 @@ const literals = [
 
 const operators = [
   {
-    source: "${{ (2 + 2) * 3 }}",
-    expected: "12",
+    source: '${{ (2 + 2) * 3 }}',
+    expected: '12',
   },
   {
     source: "${{ github['actor'] }}",
-    expected: "sobird",
+    expected: 'sobird',
   },
   {
-    source: "${{ github.actor }}",
-    expected: "sobird",
+    source: '${{ github.actor }}',
+    expected: 'sobird',
   },
   {
-    source: "${{ !true }}",
+    source: '${{ !true }}',
     expected: false,
   },
   {
-    source: "${{ 123 < 456 && 123 <= 456 && 123 <=123 }}",
+    source: '${{ 123 < 456 && 123 <= 456 && 123 <=123 }}',
     expected: true,
   },
   {
-    source: "${{ 456 > 123 && 456 >= 123 && 456 >= 456 }}",
+    source: '${{ 456 > 123 && 456 >= 123 && 456 >= 456 }}',
     expected: true,
   },
   {
-    source: "${{ 123 == 123 }}",
+    source: '${{ 123 == 123 }}',
     expected: true,
   },
   {
-    source: "${{ 123 != 456 }}",
+    source: '${{ 123 != 456 }}',
     expected: true,
   },
   {
-    source: "${{ 0 || 456 }}",
-    expected: "456",
+    source: '${{ 0 || 456 }}',
+    expected: '456',
   },
 ];
 
@@ -158,7 +157,7 @@ const functions = [
   },
   {
     source: '${{ fromJSON(\'["push", "pull_request"]\') }}',
-    expected: "push,pull_request",
+    expected: 'push,pull_request',
   },
   {
     source: '${{ contains(fromJSON(\'["push", "pull_request"]\'), github.event_name) }}',
@@ -174,7 +173,7 @@ const functions = [
   },
   {
     source: "${{ format('Hello {0} {1} {2}', 'Mona', 'the', 'Octocat') }}",
-    expected: "Hello Mona the Octocat",
+    expected: 'Hello Mona the Octocat',
   },
   // {
   //   source: "${{ format('{{Hello {0} {1} {2}}}', 'Mona', 'the', 'Octocat') }}",
@@ -182,80 +181,76 @@ const functions = [
   // },
   {
     source: "${{ join(github.event.issue.labels.*.name, ', ') }}",
-    expected: "bug, error",
+    expected: 'bug, error',
   },
   {
-    source: "${{ toJSON(github) }}",
+    source: '${{ toJSON(github) }}',
     expected: JSON.stringify(runner.context.github),
   },
   {
     source: "${{ runner.os }}-dependencies-${{ hashFiles('pnpm-lock.yaml') }}",
-    expected: "Linux-dependencies-",
+    expected: 'Linux-dependencies-',
   },
 ];
 
-describe("Expression Literals", () => {
+describe('Expression Literals', () => {
   literals.forEach((item) => {
     it(`${item.source}`, () => {
-      const expression = new Expression(item.source, ["github", "steps"]);
+      const expression = new Expression(item.source, ['github', 'steps']);
       const result = expression.evaluate(runner);
       expect(result).toBe(item.expected);
     });
   });
 });
 
-describe("Expression Operators", () => {
+describe('Expression Operators', () => {
   operators.forEach((item) => {
     it(`${item.source}`, () => {
-      const expression = new Expression(item.source, ["github"]);
+      const expression = new Expression(item.source, ['github']);
       const result = expression.evaluate(runner);
       expect(result).toBe(item.expected);
     });
   });
 });
 
-describe("Expression Functions", () => {
+describe('Expression Functions', () => {
   functions.forEach((item) => {
     it(`${item.source}`, () => {
-      const expression = new Expression(item.source, ["github", "runner"], ["hashFiles"]);
+      const expression = new Expression(item.source, ['github', 'runner'], ['hashFiles']);
       const result = expression.evaluate(runner as unknown as Runner);
       expect(result).toBe(item.expected);
     });
   });
 
   it('${{ hashFiles("**/package.json") }}', () => {
-    const expression = new Expression(
-      '${{ hashFiles("bin/hashFiles/index.js") }}',
-      ["github"],
-      ["hashFiles"],
-    );
+    const expression = new Expression('${{ hashFiles("bin/hashFiles/index.js") }}', ['github'], ['hashFiles']);
     const hash = expression.evaluate(runner);
     expect(hash.length).toBe(64);
   });
 
-  describe("always()", () => {
+  describe('always()', () => {
     const testCases = [
       { jobStatus: null, expected: true },
-      { jobStatus: "cancelled", expected: true },
-      { jobStatus: "failure", expected: true },
-      { jobStatus: "success", expected: true },
+      { jobStatus: 'cancelled', expected: true },
+      { jobStatus: 'failure', expected: true },
+      { jobStatus: 'success', expected: true },
     ];
 
     testCases.forEach(({ jobStatus, expected }) => {
       it(`should return ${expected} when jobStatus is ${jobStatus}`, () => {
-        const expression = new Expression("always()", [], [], true, true);
+        const expression = new Expression('always()', [], [], true, true);
         const result = expression.evaluate(runner);
         expect(result).toBe(expected);
       });
     });
   });
 
-  describe("cancelled()", () => {
+  describe('cancelled()', () => {
     const testCases = [
-      { jobStatus: "cancelled", expected: true },
+      { jobStatus: 'cancelled', expected: true },
       { jobStatus: null, expected: false },
-      { jobStatus: "failure", expected: false },
-      { jobStatus: "success", expected: false },
+      { jobStatus: 'failure', expected: false },
+      { jobStatus: 'success', expected: false },
     ];
 
     testCases.forEach(({ jobStatus, expected }) => {
@@ -264,19 +259,19 @@ describe("Expression Functions", () => {
           status: jobStatus,
         } as Job;
 
-        const expression = new Expression("cancelled()", [], ["cancelled"], true, true);
+        const expression = new Expression('cancelled()', [], ['cancelled'], true, true);
         const result = expression.evaluate(runner);
         expect(result).toBe(expected);
       });
     });
   });
 
-  describe("failure()", () => {
+  describe('failure()', () => {
     const testCases = [
-      { jobStatus: "failure", expected: true },
+      { jobStatus: 'failure', expected: true },
       { jobStatus: null, expected: false },
-      { jobStatus: "cancelled", expected: false },
-      { jobStatus: "success", expected: false },
+      { jobStatus: 'cancelled', expected: false },
+      { jobStatus: 'success', expected: false },
     ];
 
     testCases.forEach(({ jobStatus, expected }) => {
@@ -285,20 +280,20 @@ describe("Expression Functions", () => {
           status: jobStatus,
         } as Job;
 
-        const expression = new Expression("failure()", [], ["failure"], true, true);
+        const expression = new Expression('failure()', [], ['failure'], true, true);
         const result = expression.evaluate(runner);
         expect(result).toBe(expected);
       });
     });
   });
 
-  describe("failure() with composite conditions", () => {
+  describe('failure() with composite conditions', () => {
     const testCases = [
-      { jobStatus: "failure", actionStatus: "failure", expected: true },
-      { jobStatus: "failure", actionStatus: "success", expected: false },
-      { jobStatus: "success", actionStatus: "failure", expected: true },
-      { jobStatus: "success", actionStatus: "success", expected: false },
-      { jobStatus: "success", actionStatus: null, expected: false },
+      { jobStatus: 'failure', actionStatus: 'failure', expected: true },
+      { jobStatus: 'failure', actionStatus: 'success', expected: false },
+      { jobStatus: 'success', actionStatus: 'failure', expected: true },
+      { jobStatus: 'success', actionStatus: 'success', expected: false },
+      { jobStatus: 'success', actionStatus: null, expected: false },
     ];
 
     testCases.forEach(({ jobStatus, actionStatus, expected }) => {
@@ -311,19 +306,19 @@ describe("Expression Functions", () => {
           conclusion: actionStatus,
         } as Step;
 
-        const expression = new Expression("failure()", [], ["failure"], true, true, "step");
+        const expression = new Expression('failure()', [], ['failure'], true, true, 'step');
         const result = expression.evaluate(runner);
         expect(result).toBe(expected);
       });
     });
   });
 
-  describe("success()", () => {
+  describe('success()', () => {
     const testCases = [
       { jobStatus: null, expected: true },
-      { jobStatus: "success", expected: true },
-      { jobStatus: "cancelled", expected: false },
-      { jobStatus: "failure", expected: false },
+      { jobStatus: 'success', expected: true },
+      { jobStatus: 'cancelled', expected: false },
+      { jobStatus: 'failure', expected: false },
     ];
 
     testCases.forEach(({ jobStatus, expected }) => {
@@ -335,20 +330,20 @@ describe("Expression Functions", () => {
         //   conclusion: actionStatus,
         // };
 
-        const expression = new Expression("success()", [], ["success"], true, true);
+        const expression = new Expression('success()', [], ['success'], true, true);
         const result = expression.evaluate(runner);
         expect(result).toBe(expected);
       });
     });
   });
 
-  describe("success() with composite conditions", () => {
+  describe('success() with composite conditions', () => {
     const testCases = [
-      { jobStatus: "failure", actionStatus: "failure", expected: false },
-      { jobStatus: "failure", actionStatus: "success", expected: true },
-      { jobStatus: "success", actionStatus: "failure", expected: false },
-      { jobStatus: "success", actionStatus: "success", expected: true },
-      { jobStatus: "success", actionStatus: null, expected: true },
+      { jobStatus: 'failure', actionStatus: 'failure', expected: false },
+      { jobStatus: 'failure', actionStatus: 'success', expected: true },
+      { jobStatus: 'success', actionStatus: 'failure', expected: false },
+      { jobStatus: 'success', actionStatus: 'success', expected: true },
+      { jobStatus: 'success', actionStatus: null, expected: true },
     ];
 
     testCases.forEach(({ jobStatus, actionStatus, expected }) => {
@@ -361,7 +356,7 @@ describe("Expression Functions", () => {
           conclusion: actionStatus,
         } as Step;
 
-        const expression = new Expression("success()", [], ["success"], true, true, "step");
+        const expression = new Expression('success()', [], ['success'], true, true, 'step');
         const result = expression.evaluate(runner);
         expect(result).toBe(expected);
       });

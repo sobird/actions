@@ -1,13 +1,14 @@
 /* eslint-disable no-template-curly-in-string */
 
 import Runner from '@/runner';
+
 import Job from '.';
 
 vi.setConfig({
   testTimeout: 10000,
 });
 
-vi.mock('@/pkg/runner');
+vi.mock('@/runner');
 
 const runner: Runner = new (Runner as any)();
 

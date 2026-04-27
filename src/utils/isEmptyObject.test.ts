@@ -1,4 +1,4 @@
-// import Defaults from '@/pkg/workflow/job/defaults';
+// import Defaults from '@/workflow/job/defaults';
 
 import { isEmptyDeep } from './isEmptyObject';
 
