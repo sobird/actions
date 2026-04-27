@@ -4,10 +4,8 @@
  * @see https://docs.docker.com/reference/cli/docker/container/create/#options
  */
 
-import { Command } from '@commander-js/extra-typings';
-import {
-  ContainerCreateOptions, EndpointsConfig, EndpointSettings, MountConfig, MountSettings,
-} from 'dockerode';
+import { Command } from 'commander';
+import { ContainerCreateOptions, EndpointsConfig, EndpointSettings, MountConfig, MountSettings } from 'dockerode';
 import lodash from 'lodash';
 import shellQuote from 'shell-quote';
 
@@ -19,15 +17,17 @@ export default class Options {
   parse() {
     const program = new Command()
       .description('docker container create options')
-    // .storeOptionsAsProperties(false)
+      // .storeOptionsAsProperties(false)
       .option('--name <name>', 'Assign a name to the container')
       .option('--image <image>', 'Container image')
       .option('--platform <platform>', 'API 1.32+ Set platform if server is multi-platform capable')
-      .option('--cpus <number>', 'API 1.25+ Number of CPUs', (value: string) => { return Number(value); })
+      .option('--cpus <number>', 'API 1.25+ Number of CPUs', (value: string) => {
+        return Number(value);
+      })
       .option('--memory <size>', 'Memory limit(e.g. 512m)')
       .option('--memory-swap <size>', "Swap limit equal to memory plus swap: '-1' to enable unlimited swap")
       .option('-v, --volume <path...>', 'Bind mount a volume(e.g. /host/path:/container/path)')
-      .option('-p --publish <port...>', 'Publish a container\'s port(s) to the host(e.g. 8080:80)')
+      .option('-p --publish <port...>', "Publish a container's port(s) to the host(e.g. 8080:80)")
       .option('--env <env...>', 'Set environment variables(e.g. MY_ENV=value)')
       .option('--restart <policy>', 'Restart policy to apply when a container exits(e.g. always)')
       .option('--network <network>', 'Connect a container to a network(e.g. bridge)')
@@ -55,18 +55,25 @@ export default class Options {
       .option('--health-interval <interval>', 'Time between running the check (ms|s|m|h) (default 0s) (e.g. 5s)')
       .option('--health-retries <retries>', 'Consecutive failures needed to report unhealthy')
       .option('--health-timeout <timeout>', 'Maximum time to allow one check to run (ms|s|m|h) (default 0s) (e.g. 3s)')
-      .option('--health-start-period <period>', 'API 1.29+ Start period for the container to initialize before starting health-retries countdown (ms|s|m|h) (default 0s) (e.g. 10s)')
+      .option(
+        '--health-start-period <period>',
+        'API 1.29+ Start period for the container to initialize before starting health-retries countdown (ms|s|m|h) (default 0s) (e.g. 10s)',
+      )
       .option('--stop-signal <signal>', 'Signal to stop the container (e.g. SIGTERM)')
       .option('--stop-timeout <timeout>', 'API 1.25+ Timeout (in seconds) to stop a container')
       .option('--sysctl <sysctl>', 'Sysctl options (e.g. net.core.somaxconn=1024)')
       .option('--shm-size <size>', 'Size of /dev/shm (e.g. 64m)')
       .option('--group-add <group>', 'Add additional groups to join (e.g. 1000)')
-      .option('--read-only', 'Mount the container\'s root filesystem as read only')
+      .option('--read-only', "Mount the container's root filesystem as read only")
       .option('--ipc <ipc>', 'IPC mode to use (e.g. host)')
       .option('--pid <pid>', 'PID namespace to use (e.g. host)')
       .option('--uts <uts>', 'UTS namespace to use (e.g. host)')
-      .option('-t --tty', 'Allocate a pseudo-TTY')
-      .option('--rm', 'Automatically remove the container and its associated anonymous volumes when it exits')
+      .option('--tty', 'Allocate a pseudo-TTY', undefined as boolean | undefined)
+      .option(
+        '--rm',
+        'Automatically remove the container and its associated anonymous volumes when it exits',
+        undefined as boolean | undefined,
+      )
       .option('--cgroup-parent <parent>', 'Optional parent cgroup for the container')
       .option('--device-read-bps <bps>', 'Limit read rate (bytes per second) from a device (e.g. /dev/sda:1mb)')
       .option('--device-write-bps <bps>', 'Limit write rate (bytes per second) to a device (e.g. /dev/sda:1mb)')
@@ -74,14 +81,18 @@ export default class Options {
       .option('--device-write-iops <iops>', 'Limit write rate (IO per second) to a device(e.g. /dev/sda:1000)')
       .option('--oom-kill-disable', 'Disable OOM Killer')
       .option('--oom-score-adj <score>', "Tune host's OOM preferences (-1000 to 1000)")
-      .option('--privileged', 'Give extended privileges to this container')
+      .option('--privileged', 'Give extended privileges to this container', undefined as boolean | undefined)
       .option('--pids-limit <limit>', 'Tune container pids limit (set -1 for unlimited)')
       .option('--cpuset-cpus <cpus>', 'CPUs in which to allow execution (0-3, 0,1)')
       .option('--cpuset-mems <mems>', 'MEMs in which to allow execution (0-3, 0,1)')
       .option('--isolation <isolation>', 'Container isolation technology (e.g. hyperv 或 process)')
-      .option('--mount <mount...>', 'Attach a filesystem mount to the container (e.g., type=bind,source=/host/path,target=/container/path,readonly)', (value: string, previous: MountConfig = []) => {
-        return previous.concat(Options.Mount(value));
-      });
+      .option(
+        '--mount <mount...>',
+        'Attach a filesystem mount to the container (e.g., type=bind,source=/host/path,target=/container/path,readonly)',
+        (value: string, previous: MountConfig = []) => {
+          return previous.concat(Options.Mount(value));
+        },
+      );
 
     const args = shellQuote.parse(this.options) as string[];
     program.parse(args, { from: 'user' });
@@ -106,13 +117,15 @@ export default class Options {
       Domainname: options.domainname,
       StopSignal: options.stopSignal,
       StopTimeout: options.stopTimeout,
-      Healthcheck: options.healthCmd ? {
-        Test: options.healthCmd,
-        Interval: options.healthInterval,
-        Retries: options.healthRetries,
-        Timeout: options.healthTimeout,
-        StartPeriod: options.healthStartPeriod,
-      } : undefined,
+      Healthcheck: options.healthCmd
+        ? {
+            Test: options.healthCmd,
+            Interval: options.healthInterval,
+            Retries: options.healthRetries,
+            Timeout: options.healthTimeout,
+            StartPeriod: options.healthStartPeriod,
+          }
+        : undefined,
       ExposedPorts: exposedPorts,
       HostConfig: {
         AutoRemove: options.rm,
@@ -207,7 +220,7 @@ export default class Options {
 
     mounts.split(',').forEach((part) => {
       const [key, value] = part.split('=');
-      const Key = key.charAt(0).toUpperCase() + key.slice(1) as keyof MountSettings;
+      const Key = (key.charAt(0).toUpperCase() + key.slice(1)) as keyof MountSettings;
 
       switch (Key) {
         case 'Type':

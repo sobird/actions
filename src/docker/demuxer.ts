@@ -1,8 +1,14 @@
-/* eslint-disable no-underscore-dangle */
-import {
-  Transform, TransformOptions, PassThrough, TransformCallback,
-} from 'stream';
+import { Transform, TransformOptions, PassThrough, TransformCallback } from 'node:stream';
 
+/**
+ * Docker Stream Demuxer
+ *
+ * 把这个“大杂烩”流拆回成两个独立的流：stdout 和 stderr。(1 代表 stdout，2 代表 stderr)
+ *
+ * 当你通过 Docker 远程 API 或 docker attach 获取交互式流数据时，Docker 并不会直接给你纯净的文本，
+ * 而是将 stdout（标准输出）和 stderr（标准错误）混合在同一个 TCP 数据流中。
+ * 为了区分它们，Docker 采用了一种特殊的 **8 字节头部协议**。
+ */
 export default class DockerDemuxer extends Transform {
   buffer = Buffer.alloc(0);
 
@@ -19,8 +25,6 @@ export default class DockerDemuxer extends Transform {
   _transform(chunk: Buffer, encoding: string, callback: TransformCallback) {
     // 将新数据追加到缓冲区
     this.buffer = Buffer.concat([this.buffer, chunk]);
-
-    console.log('this.buffer', this.buffer.toString());
 
     // 解析流数据
     while (this.buffer.length >= 8) {
@@ -53,6 +57,9 @@ export default class DockerDemuxer extends Transform {
     if (this.buffer.length > 0) {
       console.warn('Remaining data in buffer:', this.buffer.toString());
     }
+
+    this.stdout.end();
+    this.stderr.end();
     callback();
   }
 }

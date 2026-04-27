@@ -1,8 +1,5 @@
-/* eslint-disable no-param-reassign */
 /**
  * Docker Container
- *
- * @deprecated see index.test.ts
  *
  * sobird<i@sobird.me> at 2024/06/24 15:21:27 created.
  */
@@ -604,7 +601,7 @@ class DockerContainer extends Container {
         const volume = docker.getVolume(name);
         await volume.remove();
         logger.debug('\u{1F433}', `Removed volume: ${name}`);
-      } catch (err) {
+      } catch {
         //
       }
     }).if(

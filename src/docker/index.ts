@@ -6,14 +6,14 @@
  * sobird<i@sobird.me> at 2024/04/25 19:09:50 created.
  */
 
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-import Dockerode, { ContainerCreateOptions, AuthConfig } from "dockerode";
-import log4js from "log4js";
+import Dockerode, { ContainerCreateOptions, AuthConfig } from 'dockerode';
+import log4js from 'log4js';
 
-import Executor from "@/common/executor";
+import Executor from '@/common/executor';
 
 const logger = log4js.getLogger();
 
@@ -25,11 +25,7 @@ export interface PullImageInputs {
 
 export class Docker extends Dockerode {
   async pullImage(repoTag: string, inputs: PullImageInputs = {}) {
-    logger.debug(
-      "\u{1F433} Docker pull %s",
-      repoTag,
-      inputs.platform ? `(${inputs.platform})` : "",
-    );
+    logger.debug('\u{1F433} Docker pull %s', repoTag, inputs.platform ? `(${inputs.platform})` : '');
 
     const { force, ...options } = inputs;
 
@@ -50,7 +46,7 @@ export class Docker extends Dockerode {
       );
     }
 
-    logger.debug(`Pulling image '${repoTag}'${inputs.platform ? `(${inputs.platform})` : ""}`);
+    logger.debug(`Pulling image '${repoTag}'${inputs.platform ? `(${inputs.platform})` : ''}`);
     return super.pull(repoTag, options);
   }
 
@@ -59,26 +55,24 @@ export class Docker extends Dockerode {
       const container = await this.createContainer(options);
 
       logger.debug(
-        "Created container name=%s id=%s from image %s (platform: %s)",
+        'Created container name=%s id=%s from image %s (platform: %s)',
         options.name,
         container.id,
         options.Image,
         options.platform,
       );
-      logger.debug("ENV ==>", options.Env);
+      logger.debug('ENV ==>', options.Env);
     });
   }
 
   static SocketLocations = [
     `${os.homedir()}/.docker/run/docker.sock`,
-    "/var/run/docker.sock",
-    "/run/podman/podman.sock",
-    "//./pipe/docker_engine",
+    '/var/run/docker.sock',
+    '/run/podman/podman.sock',
+    '//./pipe/docker_engine',
     `${os.homedir()}/.colima/docker.sock`,
-    process.env.XDG_RUNTIME_DIR ? path.join(process.env.XDG_RUNTIME_DIR, "docker.sock") : "",
-    process.env.XDG_RUNTIME_DIR
-      ? path.join(process.env.XDG_RUNTIME_DIR, "podman", "podman.sock")
-      : "",
+    process.env.XDG_RUNTIME_DIR ? path.join(process.env.XDG_RUNTIME_DIR, 'docker.sock') : '',
+    process.env.XDG_RUNTIME_DIR ? path.join(process.env.XDG_RUNTIME_DIR, 'podman', 'podman.sock') : '',
   ];
 
   static Host() {
@@ -89,16 +83,16 @@ export class Docker extends Dockerode {
     for (const p of Docker.SocketLocations) {
       try {
         fs.accessSync(p, fs.constants.F_OK); // 检查文件是否存在
-        if (p.startsWith("//./")) {
+        if (p.startsWith('//./')) {
           return `npipe://${p}`;
         }
         return `unix://${p}`;
-      } catch (err) {
+      } catch {
         // 文件不存在，继续检查下一个路径
       }
     }
 
-    return "";
+    return '';
   }
 
   // 检查daemonPath是否是有效的Docker主机URI
@@ -114,7 +108,7 @@ export class Docker extends Dockerode {
     if (!daemonPath) {
       return false;
     }
-    const index = daemonPath.indexOf("://");
+    const index = daemonPath.indexOf('://');
     if (index !== -1) {
       const scheme = daemonPath.substring(0, index);
       return /^[A-Za-z]+$/.test(scheme);
@@ -122,8 +116,8 @@ export class Docker extends Dockerode {
     return false;
   }
 
-  static SocketAndHost(containerSocket: string = "") {
-    logger.debug("Handling container host and socket");
+  static SocketAndHost(containerSocket: string = '') {
+    logger.debug('Handling container host and socket');
 
     let dockerHost = Docker.Host();
 
@@ -143,10 +137,7 @@ export class Docker extends Dockerode {
     // Case B: DOCKER_HOST is empty; use sane defaults
 
     // Set host for sanity's sake, when the socket isn't useful
-    if (
-      !dockerHost &&
-      (socketHost.socket === "-" || !Docker.isHostURI(socketHost.socket) || !socketHost.socket)
-    ) {
+    if (!dockerHost && (socketHost.socket === '-' || !Docker.isHostURI(socketHost.socket) || !socketHost.socket)) {
       dockerHost = Docker.Host();
       socketHost.host = dockerHost;
     }
@@ -165,7 +156,7 @@ export class Docker extends Dockerode {
     // Default to DOCKER_HOST if set
     if (!socketHost.socket && dockerHost) {
       // Cases: 4A
-      logger.debug("Defaulting container socket to DOCKER_HOST");
+      logger.debug('Defaulting container socket to DOCKER_HOST');
       socketHost.socket = socketHost.host;
     }
 
@@ -200,24 +191,24 @@ export class Docker extends Dockerode {
     // Cases: 2B <- but is already handled at the top
     // I.e. this path should never be taken
     logger.error(`No DOCKER_HOST and an invalid container socket '${socketHost.socket}'`);
-    socketHost.socket = "";
+    socketHost.socket = '';
     return socketHost;
   }
 
   static SocketMountPath(socketPath: string) {
-    const protoIndex = socketPath.indexOf("://");
+    const protoIndex = socketPath.indexOf('://');
     if (protoIndex !== -1) {
       const scheme = socketPath.substring(0, protoIndex);
-      if (scheme.toLowerCase() === "npipe") {
+      if (scheme.toLowerCase() === 'npipe') {
         // Linux container mount on Windows, use the default socket path of the VM / WSL2
-        return "/var/run/docker.sock";
+        return '/var/run/docker.sock';
       }
-      if (scheme.toLowerCase() === "unix") {
+      if (scheme.toLowerCase() === 'unix') {
         return socketPath.substring(protoIndex + 3);
       }
       if (/[^a-zA-Z]/.test(scheme)) {
         // Unknown protocol, use default
-        return "/var/run/docker.sock";
+        return '/var/run/docker.sock';
       }
     }
     return socketPath;
