@@ -1,6 +1,3 @@
-/**
- * @deprecated
- */
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -12,10 +9,13 @@ import { FileEntry } from '.';
 import HostedContainer from './hosted';
 
 vi.mock('./hosted');
-const hosted: HostedContainer = new (HostedContainer as any)();
+
+const hosted: HostedContainer = new HostedContainer();
+
+console.log('hosted', hosted);
 
 const workdir = '/home/runner';
-const testdir = createAllDir('hosted-test');
+const _testdir = createAllDir('hosted-test');
 const filedir = createAllDir('hosted-test', 'file');
 
 const files = [
@@ -45,7 +45,6 @@ beforeAll(() => {
 });
 
 afterAll(async () => {
-  console.log('testdir', testdir);
   const removeExecutor = hosted.remove();
   await removeExecutor.execute();
 });
@@ -150,12 +149,14 @@ describe('Test Hosted Container', () => {
       });
     });
 
-    const expectedFiles = archiveFiles.map((item) => { return item.name; });
+    const expectedFiles = archiveFiles.map((item) => {
+      return item.name;
+    });
     const testFiles = files.reduce((a: string[], b) => {
       return a.concat([b.name, b.linkName, b.symlinkName]);
     }, []);
 
-    expect(expectedFiles.sort()).toEqual(testFiles.sort());
+    expect(expectedFiles.toSorted()).toEqual(testFiles.toSorted());
   });
 
   it('get file content from container', async () => {
@@ -264,13 +265,7 @@ describe('Test Hosted Container Path Resolve', () => {
   }
 });
 
-const paths = [
-  '/usr/local/opt/mysql-client/bin',
-  '/usr/local/bin',
-  '/usr/bin',
-  '/bin',
-  ' ',
-];
+const paths = ['/usr/local/opt/mysql-client/bin', '/usr/local/bin', '/usr/bin', '/bin', ' '];
 
 describe('Container Shared Utils Test', () => {
   it('Join Path', () => {
