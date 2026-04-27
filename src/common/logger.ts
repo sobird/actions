@@ -1,13 +1,15 @@
 import log4js, { LoggingEvent } from 'log4js';
 
+export interface LogContext {
+  stage: string;
+  raw_output: boolean;
+  jobResult: string;
+  stepResult: string;
+  stepNumber: string;
+}
+
 export interface LogEntry extends LoggingEvent {
-  context: {
-    stage: string;
-    raw_output: true;
-    jobResult: string;
-    stepResult: string;
-    stepNumber: string;
-  }
+  context: LogContext;
 }
 
 export interface LoggerHook {

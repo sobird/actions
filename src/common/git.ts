@@ -55,15 +55,14 @@ class Git {
         repoURL.username = 'token';
         repoURL.password = token;
       }
-      // eslint-disable-next-line no-param-reassign
       url = repoURL.toString();
-    } catch (err) {
+    } catch {
       //
     }
 
     try {
       await git.revparse('HEAD');
-    } catch (err) {
+    } catch {
       try {
         await git.clone(url, dir);
       } catch (error) {
@@ -81,7 +80,7 @@ class Git {
   async revision() {
     try {
       return await this.git.revparse(['HEAD']);
-    } catch (err) {
+    } catch {
       return '';
     }
   }
@@ -160,7 +159,9 @@ class Git {
   }
 
   async remoteURL(remoteName: string = 'origin') {
-    return (await this.git.getRemotes(true)).find((remote) => { return remote.name === remoteName; })?.refs.fetch;
+    return (await this.git.getRemotes(true)).find((remote) => {
+      return remote.name === remoteName;
+    })?.refs.fetch;
   }
 
   static SimpleGit(basePath: string, options?: Partial<SimpleGitOptions>) {
@@ -182,22 +183,24 @@ class Git {
   }
 
   static CloneExecutor(dir: string, url: string, ref: string = 'HEAD', offlineMode: boolean = false) {
-    return Executor.Mutex(new Executor(async () => {
-      logger.info('🍭', `Git clone '${url}' # ref=${ref}`);
-      logger.debug('🍭', `Cloning ${url} to ${dir}`);
+    return Executor.Mutex(
+      new Executor(async () => {
+        logger.info('🍭', `Git clone '${url}' # ref=${ref}`);
+        logger.debug('🍭', `Cloning ${url} to ${dir}`);
 
-      const git = await this.Clone(dir, url, ref);
+        const git = await this.Clone(dir, url, ref);
 
-      if (!offlineMode) {
-        const { updated } = await git.fetch();
-        if (updated.length === 0) {
-          return;
+        if (!offlineMode) {
+          const { updated } = await git.fetch();
+          if (updated.length === 0) {
+            return;
+          }
+          await git.pull(['--force']);
         }
-        await git.pull(['--force']);
-      }
 
-      logger.debug('🍭', `Cloned ${url} to ${dir}`);
-    }));
+        logger.debug('🍭', `Cloned ${url} to ${dir}`);
+      }),
+    );
   }
 }
 

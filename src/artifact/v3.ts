@@ -10,7 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import bodyParser from 'body-parser';
-import express, { Express } from 'express';
+import express, { Express, Request } from 'express';
 import ip from 'ip';
 
 import { trimSuffix } from '@/utils';
@@ -176,8 +176,11 @@ class Artifact {
     });
 
     // Download Artifact File
-    app.get('/artifact/:container/:path(*)', (req, res) => {
-      const safePath = Artifact.SafeResolve(this.dir, Artifact.SafeResolve(req.params.container, req.params.path));
+    app.get('/artifact/:container/*path', (req: Request<{ container: string; path: string[] }>, res) => {
+      const safePath = Artifact.SafeResolve(
+        this.dir,
+        Artifact.SafeResolve(req.params.container, req.params.path.join('/')),
+      );
       try {
         fs.createReadStream(safePath, { encoding: 'utf-8' }).pipe(res);
       } catch {
