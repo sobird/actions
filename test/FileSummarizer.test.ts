@@ -5,11 +5,11 @@
  * sobird<i@sobird.me> at 2024/04/26 21:58:36 created.
  */
 
-import fs from 'fs';
+import fs from 'node:fs';
 
 import { summarizeFilesInDirectorySync } from './FileSummarizer';
 
-vi.mock('fs');
+vi.mock('node:fs');
 
 describe('listFilesInDirectorySync', () => {
   const MOCK_FILE_INFO = {
@@ -19,14 +19,12 @@ describe('listFilesInDirectorySync', () => {
 
   beforeEach(() => {
     // Set up some mocked out file info before each test
-    // eslint-disable-next-line no-underscore-dangle, global-require
     (fs as any).__setMockFiles(MOCK_FILE_INFO);
   });
 
   test('includes all files in the directory in the summary', () => {
-    // eslint-disable-next-line global-require
     const fileSummary = summarizeFilesInDirectorySync('/path/to');
-
+    console.log('fileSummary', fileSummary);
     expect(fileSummary.length).toBe(2);
   });
 });

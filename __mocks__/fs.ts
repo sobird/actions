@@ -1,11 +1,9 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-/* eslint-disable no-underscore-dangle */
 // This is a custom function that our tests can use during setup to specify
 // what the files on the "mock" filesystem should look like when any of the
 // `fs` APIs are used.
 // __mocks__/fs.js
 
-import path from 'path';
+import path from 'node:path';
 
 // This is a custom function that our tests can use during setup to specify
 // what the files on the "mock" filesystem should look like when any of the
@@ -13,7 +11,7 @@ import path from 'path';
 let mockFiles = Object.create(null);
 function __setMockFiles(newMockFiles: { [key in string]: string }) {
   mockFiles = Object.create(null);
-  // eslint-disable-next-line no-restricted-syntax, guard-for-in
+
   for (const file in newMockFiles) {
     const dir = path.dirname(file);
 
