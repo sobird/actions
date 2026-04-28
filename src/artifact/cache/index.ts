@@ -79,13 +79,14 @@ class ArtifactCache {
     //   type: 'application/octet-stream',
     //   limit: '500mb',
     // }));
-    app.use(this.middleware);
-    const cacheRateLimiter = rateLimit({
-      windowMs: 15 * 60 * 1000,
-      max: 100,
-      standardHeaders: true,
-      legacyHeaders: false,
-    });
+    app.use(
+      rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 100,
+        standardHeaders: true,
+        legacyHeaders: false,
+      }),
+    );
 
     app.get('/', (req, res) => {
       res.send({
@@ -94,15 +95,15 @@ class ArtifactCache {
     });
 
     // Find a cache by keys and version
-    app.get('/_apis/artifactcache/cache', cacheRateLimiter, this.findCache);
+    app.get('/_apis/artifactcache/cache', this.findCache);
     // Reserve a cache for an upcoming upload
-    app.post('/_apis/artifactcache/caches', cacheRateLimiter, bodyParser.json(), this.reserveCache);
+    app.post('/_apis/artifactcache/caches', bodyParser.json(), this.reserveCache);
     // Upload cache file parts with a cache id
-    app.patch('/_apis/artifactcache/caches/:cacheId', cacheRateLimiter, this.uploadCache);
+    app.patch('/_apis/artifactcache/caches/:cacheId', this.uploadCache);
     // Commit the cache parts upload
-    app.post('/_apis/artifactcache/caches/:cacheId', cacheRateLimiter, bodyParser.json(), this.commitCache);
+    app.post('/_apis/artifactcache/caches/:cacheId', bodyParser.json(), this.commitCache);
     // Download artifact with a given id from the cache
-    app.get('/_apis/artifactcache/artifacts/:cacheId', cacheRateLimiter, (req, res) => {
+    app.get('/_apis/artifactcache/artifacts/:cacheId', (req, res) => {
       const { cacheId } = req.params;
       this.db.prepare('UPDATE caches SET updatedAt = ? WHERE id = ?').run(Date.now(), cacheId);
 
@@ -290,7 +291,7 @@ class ArtifactCache {
     // if (req.get('Authorization') !== `Bearer ${process.env.AUTH_KEY}`) {
     //   res.status(401).json({ message: 'You are not authorized' });
     // }
-    this.logger.debug(`Request method123: ${req.method}, Request url: ${req.originalUrl}`);
+    this.logger.debug(`Request method: ${req.method}, Request url: ${req.originalUrl}`);
     next();
   };
 
