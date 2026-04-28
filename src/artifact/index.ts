@@ -238,7 +238,10 @@ class Artifact {
           res.status(400).send('Invalid comp parameter');
         }
       } catch (err) {
-        res.status(401).send((err as Error).message);
+        res
+          .status(401)
+          .set('Content-Type', 'text/plain')
+          .send((err as Error).message);
       }
     });
 
@@ -333,7 +336,10 @@ class Artifact {
         const file = fs.createReadStream(safePath);
         file.pipe(res);
       } catch (err) {
-        res.status(401).send((err as Error).message);
+        res
+          .status(401)
+          .set('Content-Type', 'text/plain')
+          .send((err as Error).message);
       }
     });
 

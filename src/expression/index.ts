@@ -38,7 +38,9 @@ class Expression<T> {
           expression = `\${{ ${source} }}`;
         }
 
-        expression = expression.replace(/((?:\w+\.)*?\w+)\.\*\.(\w+)/g, "objectFilter($1, '$2')");
+        expression = expression.replace(/([\w.]+)\.\*\.(\w+)/g, (match, p1, p2) => {
+          return `objectFilter(${p1}, '${p2}')`;
+        });
 
         expression = expression.replace(/(?:[a-zA-Z_]+)(?:\.[a-zA-Z_][\w-]*-[\w-]+)/g, (a) => {
           const [first, ...parts] = a.split('.');
