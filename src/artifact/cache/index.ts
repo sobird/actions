@@ -25,6 +25,7 @@ import path from 'node:path';
 
 import bodyParser from 'body-parser';
 import express, { Handler } from 'express';
+import rateLimit from 'express-rate-limit';
 import ip from 'ip';
 import log4js, { Logger } from 'log4js';
 import sqlite3, { Database } from 'sqlite3';
@@ -79,6 +80,13 @@ class ArtifactCache {
     //   limit: '500mb',
     // }));
     app.use(this.middleware);
+    const cacheRateLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 100,
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+
     app.get('/', (req, res) => {
       res.send({
         status: 'success',
@@ -86,15 +94,15 @@ class ArtifactCache {
     });
 
     // Find a cache by keys and version
-    app.get('/_apis/artifactcache/cache', this.findCache);
+    app.get('/_apis/artifactcache/cache', cacheRateLimiter, this.findCache);
     // Reserve a cache for an upcoming upload
-    app.post('/_apis/artifactcache/caches', bodyParser.json(), this.reserveCache);
+    app.post('/_apis/artifactcache/caches', cacheRateLimiter, bodyParser.json(), this.reserveCache);
     // Upload cache file parts with a cache id
-    app.patch('/_apis/artifactcache/caches/:cacheId', this.uploadCache);
+    app.patch('/_apis/artifactcache/caches/:cacheId', cacheRateLimiter, this.uploadCache);
     // Commit the cache parts upload
-    app.post('/_apis/artifactcache/caches/:cacheId', bodyParser.json(), this.commitCache);
+    app.post('/_apis/artifactcache/caches/:cacheId', cacheRateLimiter, bodyParser.json(), this.commitCache);
     // Download artifact with a given id from the cache
-    app.get('/_apis/artifactcache/artifacts/:cacheId', (req, res) => {
+    app.get('/_apis/artifactcache/artifacts/:cacheId', cacheRateLimiter, (req, res) => {
       const { cacheId } = req.params;
       this.db.prepare('UPDATE caches SET updatedAt = ? WHERE id = ?').run(Date.now(), cacheId);
 
