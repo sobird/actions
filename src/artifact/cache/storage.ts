@@ -1,130 +1,104 @@
-import fs from 'node:fs';
-import type { IncomingMessage, ServerResponse } from 'node:http';
+import { existsSync, mkdirSync, createReadStream, createWriteStream } from 'node:fs';
+import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import type { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 
 /**
  * Artifact stored in a local specified dir
  */
-class Storage {
+export class Storage {
   constructor(public dir: string = path.join(os.homedir(), 'artifact')) {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
+    if (!existsSync(dir)) {
+      mkdirSync(dir, { recursive: true, mode: 0o755 });
     }
   }
 
   exist(id: number) {
-    const name = this.filename(id);
-    return fs.existsSync(name);
+    const name = this.getFinalPath(id);
+    return existsSync(name);
   }
 
-  async write(id: number, offset: number, req: IncomingMessage) {
-    const name = this.tmpName(id, offset);
-
+  async write(id: number, offset: number, stream: Readable) {
     const tmpDir = this.tmpDir(id);
-    if (!fs.existsSync(tmpDir)) {
-      fs.mkdirSync(tmpDir, { recursive: true, mode: 0o755 });
-    }
-    req.pipe(fs.createWriteStream(name));
+    const chunkPath = this.getChunkPath(id, offset);
+
+    await fs.mkdir(tmpDir, { recursive: true, mode: 0o755 });
+    await pipeline(stream, createWriteStream(chunkPath));
   }
 
   async commit(id: number, size: number) {
     const tmpDir = this.tmpDir(id);
-    const files = fs
-      .readdirSync(tmpDir, { withFileTypes: true })
+
+    if (!existsSync(tmpDir)) {
+      throw new Error(`No chunks found for ID: ${id}`);
+    }
+
+    const entries = await fs.readdir(tmpDir, { withFileTypes: true });
+    const chunkFiles = entries
       .filter((file) => {
         return file.isFile();
       })
       .map((file) => {
-        return path.join(file.path, file.name);
+        return path.join(file.parentPath, file.name);
       })
       .toSorted();
 
-    if (files.length === 0) {
-      throw Error(`No uploaded parts to commit for id ${id}`);
+    if (chunkFiles.length === 0) {
+      throw new Error(`No chunks found for ID: ${id}`);
     }
 
-    const cacheFile = this.filename(id);
-    const cacheDir = path.dirname(cacheFile);
+    const finalPath = this.getFinalPath(id);
+    await fs.mkdir(path.dirname(finalPath), { recursive: true });
 
-    if (!fs.existsSync(cacheDir)) {
-      fs.mkdirSync(cacheDir, { recursive: true, mode: 0o755 });
+    const targetStream = createWriteStream(finalPath);
+
+    try {
+      for await (const file of chunkFiles) {
+        await pipeline(createReadStream(file), targetStream, { end: false });
+      }
+    } finally {
+      targetStream.end();
     }
 
-    const target = fs.createWriteStream(cacheFile);
-    // const readStream = fs.createReadStream(files[0]);
-    // readStream.pipe(target);
+    const { size: actualSize } = await fs.stat(finalPath);
 
-    await files.reduce(async (chain, file) => {
-      // const result = await chain();
-      return chain.then(() => {
-        const readStream = fs.createReadStream(file);
-        readStream.pipe(target, { end: false }); // end: false 表示不关闭写入流
-        // 保存对当前流的引用，以便在流结束时使用
-        // currentStream = readStream;
-
-        return new Promise((resolve, reject) => {
-          readStream.once('end', () => {
-            return resolve();
-          });
-          readStream.once('error', reject);
-        });
-      });
-    }, Promise.resolve());
-
-    target.end();
-
-    const cacheSize = fs.statSync(cacheFile).size;
-
-    if (size >= 0 && cacheSize !== size) {
-      throw new Error(`Uploaded size mismatch: received ${cacheSize} expected ${size}`);
+    if (size >= 0 && actualSize !== size) {
+      await fs.unlink(finalPath);
+      throw new Error(`Size mismatch: received ${actualSize} expected ${size}`);
     }
 
-    // Remove temporary files
-    fs.rmSync(tmpDir, { recursive: true, force: true });
-
-    return cacheSize;
+    await fs.rm(tmpDir, { recursive: true, force: true });
+    return actualSize;
   }
 
-  serve(
-    res: ServerResponse<IncomingMessage> & {
-      req: IncomingMessage;
-    },
-    id: number,
-  ) {
-    const filename = this.filename(id);
-    // res.setHeader('Content-Disposition', `attachment; filename=${path.basename(name)}`);
-    fs.createReadStream(filename).pipe(res);
+  getReadStream(id: number) {
+    const filePath = this.getFinalPath(id);
+    if (!existsSync(filePath)) {
+      throw new Error(`File not found for ID: ${id}`);
+    }
+    return createReadStream(filePath);
   }
 
-  remove(id: number) {
-    const filename = this.filename(id);
-
-    if (this.exist(id)) {
-      fs.unlinkSync(filename);
-    }
-
-    const tmpDir = this.tmpDir(id);
-
-    if (fs.existsSync(tmpDir)) {
-      fs.rmSync(tmpDir);
-    }
+  async remove(id: number) {
+    await Promise.all([
+      fs.rm(this.getFinalPath(id), { force: true }),
+      fs.rm(this.tmpDir(id), { recursive: true, force: true }),
+    ]);
   }
 
-  filename(id: number) {
-    const no = (id % 0xff).toString(16).toUpperCase().padStart(2, '0');
-    return path.join(this.dir, no, `${id}`);
+  getFinalPath(id: number) {
+    const partition = (id % 0xff).toString(16).padStart(2, '0').toUpperCase();
+    return path.join(this.dir, partition, id.toString());
   }
 
   tmpDir(id: number) {
     return path.join(this.dir, 'tmp', `${id}`);
   }
 
-  tmpName(id: number, offset: number) {
-    const hex = offset.toString(16).toUpperCase();
-    const paddedHex = Array(16 - hex.length).join('0') + hex;
-    return path.join(this.tmpDir(id), paddedHex);
+  getChunkPath(id: number, offset: number) {
+    const chunkName = offset.toString(16).toUpperCase().padStart(16, '0');
+    return path.join(this.tmpDir(id), chunkName);
   }
 }
-
-export default Storage;
