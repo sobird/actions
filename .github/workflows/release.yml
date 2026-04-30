@@ -1,6 +1,6 @@
 # You may also need to set "Allow GitHub Actions to create and approve pull requests" under repository Settings > Actions > General.
 
-name: release-please
+name: Release
 
 on:
   push:
