@@ -1,17 +1,18 @@
 import crypto from 'node:crypto';
-import fs from 'node:fs';
+import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { Readable } from 'node:stream';
 
 import simpleGit from 'simple-git';
-import * as tar from 'tar';
 
 class ActionCache {
   constructor(public dir: string = path.join(os.tmpdir(), 'actions')) {}
 
   async fetch(url: string, repository: string, ref: string, token?: string) {
     const repoPath = path.join(this.dir, `${repository}.git`);
-    fs.mkdirSync(repoPath, { recursive: true });
+    await fs.mkdir(repoPath, { recursive: true });
+
     const git = simpleGit(repoPath);
 
     try {
@@ -22,69 +23,41 @@ class ActionCache {
       }
       // eslint-disable-next-line no-param-reassign
       url = repoURL.toString();
-    } catch (err) {
+    } catch {
       //
     }
 
     try {
       await git.clone(url, repoPath, ['--bare']);
-    } catch (err) {
+    } catch {
       //
     }
 
-    const branchName = crypto.randomBytes(16).toString('hex');
-
     try {
+      const branchName = crypto.randomBytes(16).toString('hex');
       await git.fetch(['origin', `${ref}:${branchName}`, '--force']);
-    } catch (err) {
+      const hash = await git.revparse(ref);
+      git.deleteLocalBranch(branchName);
+      return hash;
+    } catch {
       return '';
     }
-
-    const hash = await git.revparse(ref);
-    git.deleteLocalBranch(branchName);
-    return hash;
   }
 
-  async archive(repository: string, ref: string, prefix: string = '.') {
+  async archive(repository: string, ref: string, subPath: string = '.') {
     const repoPath = path.join(this.dir, `${repository}.git`);
-    fs.mkdirSync(repoPath, { recursive: true });
+    await fs.mkdir(repoPath, { recursive: true });
+
     const git = simpleGit(repoPath);
+    subPath = path.normalize(subPath || '.');
 
-    const commit = await git.revparse(ref);
-    const cleanPrefix = path.normalize(prefix || '.');
-
-    const files = (await git.raw(['ls-tree', '-r', '--name-only', commit, cleanPrefix])).split('\n').filter(Boolean);
-
-    let count = 0;
-    const pack = new tar.Pack({ portable: true });
-    files.forEach((file) => {
-      git.show(`${commit}:${file}`, (err, content) => {
-        if (err) {
-          return;
-        }
-        const buffer = Buffer.from(content);
-        const header = new tar.Header({
-          path: file,
-          size: buffer.byteLength,
-          mtime: new Date(),
-        });
-        header.encode();
-        const entry = new tar.ReadEntry(header);
-        entry.end(buffer);
-        pack.add(entry);
-
-        count += 1;
-        if (count === files.length) {
-          pack.end();
-        }
-      });
-    });
-
-    if (files.length === 0) {
-      pack.end();
+    try {
+      const buffer = await git.raw(['archive', '--format=tar', ref, subPath]);
+      return Readable.from(buffer);
+    } catch (err) {
+      console.error('Git archive failed:', err);
+      throw err;
     }
-
-    return pack as unknown as NodeJS.ReadableStream;
   }
 }
 

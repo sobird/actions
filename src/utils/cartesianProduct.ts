@@ -7,19 +7,24 @@
 
 /**
  * calculates the Cartesian product of N arrays
+ *
  * @param ...arrays
  * @returns
  */
 export function cartN(...arrays: unknown[][]) {
   // 笛卡尔积长度
-  const length = arrays.reduce((acc, val) => { return acc * val.length; }, 1);
+  const length = arrays.reduce((acc, val) => {
+    return acc * val.length;
+  }, 1);
   if (length === 0) return [];
 
-  const result = new Array(length);
-  const tmparr = new Array(length * arrays.length);
+  const result: unknown[][] = Array.from({ length });
+  const tmparr = Array.from({ length: length * arrays.length });
 
   // 初始化每个数组的索引
-  const indices = arrays.map(() => { return 0; });
+  const indices = arrays.map(() => {
+    return 0;
+  });
 
   for (let i = 0; i < length; i++) {
     const start = i * arrays.length;
