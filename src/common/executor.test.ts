@@ -4,7 +4,7 @@
  * sobird<i@sobird.me> at 2024/05/04 23:43:52 created.
  */
 
-import { asyncFunction } from '@/utils';
+import { sleep } from '@/utils/sleep';
 
 import Executor, { Conditional } from './executor';
 
@@ -25,16 +25,20 @@ describe('Test Conditional', () => {
 
   it('not() return true test case', async () => {
     const result = await new Conditional(async () => {
-      await asyncFunction();
+      await sleep();
       return true;
-    }).not().evaluate();
+    })
+      .not()
+      .evaluate();
     expect(result).toBeFalsy();
   });
 
   it('not() return false test case', async () => {
     const result = await new Conditional(() => {
       return false;
-    }).not().evaluate();
+    })
+      .not()
+      .evaluate();
     expect(result).toBeTruthy();
   });
 });
@@ -52,11 +56,14 @@ describe('Test Static Method', () => {
 
   it('multiple success case', async () => {
     let runcount = 0;
-    const successWorkflow = Executor.Pipeline(new Executor(() => {
-      runcount += 1;
-    }), new Executor(() => {
-      runcount += 1;
-    }));
+    const successWorkflow = Executor.Pipeline(
+      new Executor(() => {
+        runcount += 1;
+      }),
+      new Executor(() => {
+        runcount += 1;
+      }),
+    );
 
     await expect(successWorkflow.execute()).resolves.not.toThrow();
     expect(runcount).toBe(2);
@@ -69,12 +76,19 @@ describe('Test Member Method', () => {
     // 链式调佣，支持异步
     await new Executor(() => {
       trueCount += 1;
-    }).next(new Executor(async () => {
-      await asyncFunction();
-      trueCount += 1;
-    })).next(new Executor(() => {
-      trueCount += 1;
-    })).execute();
+    })
+      .next(
+        new Executor(async () => {
+          await sleep();
+          trueCount += 1;
+        }),
+      )
+      .next(
+        new Executor(() => {
+          trueCount += 1;
+        }),
+      )
+      .execute();
 
     expect(trueCount).toBe(3);
   });
@@ -83,9 +97,13 @@ describe('Test Member Method', () => {
     let trueCount = 0;
     await new Executor(() => {
       trueCount += 1;
-    }).if(new Conditional(() => {
-      return true;
-    })).execute();
+    })
+      .if(
+        new Conditional(() => {
+          return true;
+        }),
+      )
+      .execute();
     expect(trueCount).toBe(1);
   });
 
@@ -93,9 +111,13 @@ describe('Test Member Method', () => {
     let falseCount = 0;
     await new Executor(() => {
       falseCount += 1;
-    }).if(new Conditional(async () => {
-      return false;
-    })).execute();
+    })
+      .if(
+        new Conditional(async () => {
+          return false;
+        }),
+      )
+      .execute();
     expect(falseCount).toBe(0);
   });
 
@@ -103,13 +125,22 @@ describe('Test Member Method', () => {
     let falseCount = 0;
     await new Executor(() => {
       falseCount += 1;
-    }).if(new Conditional(async () => {
-      return true;
-    })).if(new Conditional(async () => {
-      return true;
-    })).if(new Conditional(async () => {
-      return false;
-    }))
+    })
+      .if(
+        new Conditional(async () => {
+          return true;
+        }),
+      )
+      .if(
+        new Conditional(async () => {
+          return true;
+        }),
+      )
+      .if(
+        new Conditional(async () => {
+          return false;
+        }),
+      )
       .execute();
     expect(falseCount).toBe(0);
   });
@@ -118,9 +149,13 @@ describe('Test Member Method', () => {
     let falseCount = 0;
     await new Executor(() => {
       falseCount += 1;
-    }).ifNot(new Conditional(async () => {
-      return true;
-    })).execute();
+    })
+      .ifNot(
+        new Conditional(async () => {
+          return true;
+        }),
+      )
+      .execute();
     expect(falseCount).toBe(0);
   });
 
@@ -128,7 +163,9 @@ describe('Test Member Method', () => {
     let count = 0;
     await new Executor(() => {
       count += 1;
-    }).ifBool(true).execute();
+    })
+      .ifBool(true)
+      .execute();
     expect(count).toBe(1);
   });
 
@@ -136,7 +173,9 @@ describe('Test Member Method', () => {
     let count = 0;
     await new Executor(() => {
       count += 1;
-    }).ifBool(false).execute();
+    })
+      .ifBool(false)
+      .execute();
     expect(count).toBe(0);
   });
 });
@@ -145,13 +184,17 @@ describe('Test Conditional Executor', () => {
   it('Conditional Executor: return true case', async () => {
     let trueCount = 0;
     let falseCount = 0;
-    const conditionalExecutor = Executor.Conditional(new Conditional(() => {
-      return true;
-    }), new Executor(() => {
-      trueCount += 1;
-    }), new Executor(() => {
-      falseCount += 1;
-    }));
+    const conditionalExecutor = Executor.Conditional(
+      new Conditional(() => {
+        return true;
+      }),
+      new Executor(() => {
+        trueCount += 1;
+      }),
+      new Executor(() => {
+        falseCount += 1;
+      }),
+    );
     await expect(conditionalExecutor.execute()).resolves.not.toThrow();
     expect(trueCount).toBe(1);
     expect(falseCount).toBe(0);
@@ -160,13 +203,17 @@ describe('Test Conditional Executor', () => {
   it('Conditional Executor: return false case', async () => {
     let trueCount = 0;
     let falseCount = 0;
-    const conditionalExecutor = Executor.Conditional(new Conditional(async () => {
-      return false;
-    }), new Executor(() => {
-      trueCount += 1;
-    }), new Executor(() => {
-      falseCount += 1;
-    }));
+    const conditionalExecutor = Executor.Conditional(
+      new Conditional(async () => {
+        return false;
+      }),
+      new Executor(() => {
+        trueCount += 1;
+      }),
+      new Executor(() => {
+        falseCount += 1;
+      }),
+    );
     await expect(conditionalExecutor.execute()).resolves.not.toThrow();
     expect(trueCount).toBe(0);
     expect(falseCount).toBe(1);
@@ -175,13 +222,17 @@ describe('Test Conditional Executor', () => {
   it('Conditional Executor: return false string case', async () => {
     let trueCount = 0;
     let falseCount = 0;
-    const conditionalExecutor = Executor.Conditional(new Conditional(async () => {
-      return Boolean('false');
-    }), new Executor(() => {
-      trueCount += 1;
-    }), new Executor(() => {
-      falseCount += 1;
-    }));
+    const conditionalExecutor = Executor.Conditional(
+      new Conditional(async () => {
+        return Boolean('false');
+      }),
+      new Executor(() => {
+        trueCount += 1;
+      }),
+      new Executor(() => {
+        falseCount += 1;
+      }),
+    );
     await expect(conditionalExecutor.execute()).resolves.not.toThrow();
     expect(trueCount).toBe(1);
     expect(falseCount).toBe(0);
@@ -200,7 +251,7 @@ describe('Parallel Executor', () => {
         maxCount = activeCount;
       }
 
-      await asyncFunction(100);
+      await sleep(100);
       activeCount -= 1;
     });
 
@@ -220,7 +271,7 @@ describe('Parallel Executor', () => {
         maxCount = activeCount;
       }
 
-      await asyncFunction(100);
+      await sleep(100);
       activeCount -= 1;
     });
 
@@ -240,7 +291,7 @@ describe('Parallel Executor', () => {
     //     maxCount = activeCount;
     //   }
 
-    //   await asyncFunction();
+    //   await sleep();
     //   activeCount -= 1;
     // });
 
@@ -273,7 +324,7 @@ describe('Mutex Executor', () => {
         maxCount = activeCount;
       }
 
-      await asyncFunction(100);
+      await sleep(100);
       activeCount -= 1;
     });
 
