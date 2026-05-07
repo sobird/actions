@@ -12,7 +12,7 @@ export function createAllDir(...name: string[]) {
   afterAll(() => {
     try {
       fs.rmSync(dir, { recursive: true });
-    } catch (err) {
+    } catch {
       //
     }
   });
@@ -27,7 +27,7 @@ export function createEachDir(...name: string[]) {
   afterEach(() => {
     try {
       fs.rmSync(dir, { recursive: true });
-    } catch (err) {
+    } catch {
       //
     }
   });

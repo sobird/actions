@@ -5,7 +5,7 @@ export function isExecutable(file: string) {
   try {
     const stats = fs.statSync(file);
     return !stats.isDirectory() && (stats.mode & 0o111) !== 0;
-  } catch (err) {
+  } catch {
     return false;
   }
 }

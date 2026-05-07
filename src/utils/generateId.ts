@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 export function generateId(string: string) {
   const hash = crypto.createHash('sha256').update(string);

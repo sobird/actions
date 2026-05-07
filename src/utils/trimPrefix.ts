@@ -1,6 +1,3 @@
 export function trimPrefix(str: string, prefix: string) {
-  if (str.startsWith(prefix)) {
-    return str.slice(prefix.length);
-  }
-  return str;
+  return str.startsWith(prefix) ? str.slice(prefix.length) : str;
 }

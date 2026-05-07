@@ -1,26 +1,16 @@
+import { setTimeout } from 'node:timers/promises';
+
 export async function withTimeout<T>(awaited: Promise<T> | T, ms?: number, message: string = 'Operation timed out') {
-  const timer = setTimeout(() => {
+  const ac = new AbortController();
+  const signal = ac.signal;
+
+  const timeoutPromise = setTimeout(ms, null, { signal }).then(() => {
     throw new Error(message);
-  }, ms);
+  });
 
   try {
-    return await awaited;
+    return await Promise.race([awaited, timeoutPromise]);
   } finally {
-    clearTimeout(timer);
+    ac.abort();
   }
 }
-
-// function someAsyncOperation() {
-//   return new Promise((resolve, reject) => {
-//     setTimeout(() => {
-//       resolve(new Error('Operation succeeded'));
-//     }, 10000);
-//   });
-// }
-
-// try {
-//   const result = await withTimeout(someAsyncOperation(), 3000);
-//   console.log('result', result);
-// } catch (err) {
-//   console.log('err', err);
-// }
