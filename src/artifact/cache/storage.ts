@@ -9,7 +9,7 @@ import { pipeline } from 'node:stream/promises';
  * Artifact stored in a local specified dir
  */
 export class Storage {
-  constructor(public dir: string = path.join(os.homedir(), 'artifact')) {
+  constructor(public dir: string = path.join(os.tmpdir(), 'artifact', 'cache')) {
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true, mode: 0o755 });
     }
