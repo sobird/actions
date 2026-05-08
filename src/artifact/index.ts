@@ -106,6 +106,7 @@ import path from 'node:path';
 
 import bodyParser from 'body-parser';
 import express, { Express, Handler, Request } from 'express';
+import rateLimit from 'express-rate-limit';
 import ip from 'ip';
 import log4js, { Logger } from 'log4js';
 
@@ -180,8 +181,16 @@ class Artifact {
     //   type: 'application/octet-stream',
     //   limit: '50mb',
     // }));
-
+    app.use(
+      rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 100,
+        standardHeaders: true,
+        legacyHeaders: false,
+      }),
+    );
     app.use(this.middleware);
+
     app.get('/', (req, res) => {
       res.send({
         status: 'success',

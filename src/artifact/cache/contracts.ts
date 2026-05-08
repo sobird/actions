@@ -1,4 +1,4 @@
-interface CacheEntry {
+export interface CacheEntry {
   id: number;
   key: string;
   version: string;
@@ -35,13 +35,19 @@ export interface ReserveCacheResponse {
   cacheId: number;
 }
 
-export interface InternalCacheOptions {
-  compressionMethod?: CompressionMethod;
-  enableCrossOsArchive?: boolean;
-  cacheSize?: number;
-}
-
 export interface ArchiveTool {
   path: string;
   type: string;
+}
+
+export enum ReserveStatus {
+  Created, // 新创建
+  Exists, // 已存在但未完成（可重用）
+  Completed, // 已完成（冲突）
+}
+
+export interface ReserveResult {
+  status: ReserveStatus;
+  cacheId?: number;
+  error?: string;
 }

@@ -3,7 +3,7 @@ import type { Readable } from 'node:stream';
 import type { Logger } from 'log4js';
 import type { Database } from 'sqlite3';
 
-import type { CacheEntry } from './contracts';
+import { CacheEntry, ReserveResult, ReserveStatus } from './contracts';
 import type { Storage } from './storage.ts';
 
 export class ArtifactCacheService {
@@ -12,6 +12,15 @@ export class ArtifactCacheService {
     private storage: Storage,
     private logger: Logger,
   ) {}
+
+  private getCacheById(id: string): Promise<CacheEntry | undefined> {
+    return new Promise((resolve, reject) => {
+      this.db.get<CacheEntry>('SELECT * FROM caches WHERE id = ?', [id], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+  }
 
   /**
    * Check if matching cache file exists
@@ -88,19 +97,20 @@ export class ArtifactCacheService {
 
     if (!idAndKey) {
       this.logger.debug(`Missing key ${primaryKey}`);
-      return;
+      return null;
     }
 
     const cacheId = idAndKey.id;
     const cacheFile = this.storage.getFinalPath(cacheId);
     if (!this.storage.exist(cacheId)) {
       this.logger.debug(`Missing cache file ${cacheFile}`);
+      return null;
     } else {
       return idAndKey;
     }
   }
 
-  async reserveCache(key: string, version: string, cacheSize = 0) {
+  async reserveCache(key: string, version?: string, cacheSize = 0): Promise<ReserveResult> {
     this.logger.debug(`Request to reserve cache ${key} for uploading`);
 
     // 查找是否已存在该缓存
@@ -116,7 +126,7 @@ export class ArtifactCacheService {
 
     if (!row) {
       // 如果缓存不存在，创建新的缓存条目
-      return new Promise<{ lastID: number }>((resolve, reject) => {
+      const lastID = await new Promise<number>((resolve, reject) => {
         this.db.run(
           'INSERT INTO caches (key, version, size, updatedAt, createdAt) VALUES (?, ?, ?, ?, ?)',
           [key, version, cacheSize, Date.now(), Date.now()],
@@ -124,33 +134,29 @@ export class ArtifactCacheService {
             if (error) {
               reject(error);
             } else {
-              resolve({ lastID: this.lastID });
+              resolve(this.lastID);
             }
           },
         );
       });
+
+      return { status: ReserveStatus.Created, cacheId: lastID };
     } else if (row.complete) {
       // 如果缓存已经完成上传，返回错误
-      // res.status(400).json({ error: `Cache id ${row.id} was already uploaded` });
+      const error = `Cache id ${row.id} was already uploaded`;
+      this.logger.debug(error);
+      return { status: ReserveStatus.Completed, cacheId: row.id, error };
     } else {
+      const error = `Cache id ${row.id} already reserved, but did not start uploading`;
       // 如果缓存已经被保留，返回缓存的ID
-      this.logger.debug(`Cache id ${row.id} already reserved, but did not start uploading`);
+      this.logger.debug(error);
+      return { status: ReserveStatus.Exists, cacheId: row.id, error };
     }
   }
 
   async uploadCache(cacheId: string, offset: number, stream: Readable) {
-    const { db } = this;
-
     // 查找缓存条目
-    const cacheEntry = await new Promise<CacheEntry | null>((resolve, reject) => {
-      db.get<CacheEntry>('SELECT * FROM caches WHERE id = ?', [cacheId], (error, row) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(row);
-        }
-      });
-    });
+    const cacheEntry = await this.getCacheById(cacheId);
 
     if (!cacheEntry) {
       return { error: `Cache with id ${cacheId} has not been reserved` };
@@ -162,6 +168,11 @@ export class ArtifactCacheService {
 
     // 使用 storage.write 来进行数据写入
     await this.storage.write(cacheEntry.id, offset, stream);
+  }
+
+  async downloadCache(cacheId: string) {
+    this.db.prepare('UPDATE caches SET updatedAt = ? WHERE id = ?').run(Date.now(), cacheId);
+    return this.storage.getReadStream(Number(cacheId));
   }
 
   async commitCache(cacheId: string, size: number) {
@@ -225,7 +236,7 @@ export class ArtifactCacheService {
     });
 
     // 执行删除操作
-    await new Promise((resolve, reject) => {
+    return new Promise<number>((resolve, reject) => {
       this.db.run(deleteQ, function (err) {
         if (err) {
           reject(err);

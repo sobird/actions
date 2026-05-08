@@ -11,6 +11,7 @@ import path from 'node:path';
 
 import bodyParser from 'body-parser';
 import express, { Express, Request } from 'express';
+import rateLimit from 'express-rate-limit';
 import ip from 'ip';
 
 import { trimSuffix } from '@/utils';
@@ -36,6 +37,14 @@ class Artifact {
       bodyParser.raw({
         type: 'application/octet-stream',
         limit: '50mb',
+      }),
+    );
+    app.use(
+      rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 100,
+        standardHeaders: true,
+        legacyHeaders: false,
       }),
     );
 

@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { Readable } from 'node:stream';
 
 import * as tar from 'tar';
 
@@ -28,20 +29,20 @@ class ActionCacheRepository extends ActionCache {
         this.cacheDirCache[`${repository}@${ref}`] = this.repositories[pathKey];
         return ref;
       }
-    } catch (err) {
+    } catch {
       // Handle URL parsing error
     }
 
     return super.fetch(url, repository, ref, token);
   }
 
-  async archive(repository: string, ref: string, prefix: string = '.') {
+  async archive(repository: string, ref: string, subPath: string = '.') {
     const repositoryKey = `${repository}@${ref}`;
     if (this.cacheDirCache[repositoryKey]) {
-      const file = path.join(this.cacheDirCache[repositoryKey], prefix);
-      return tar.create({ portable: true, cwd: file }, ['']) as unknown as NodeJS.ReadableStream;
+      const file = path.join(this.cacheDirCache[repositoryKey], subPath);
+      return tar.create({ portable: true, cwd: file }, ['']) as unknown as Readable;
     }
-    return super.archive(repository, ref, prefix) as unknown as NodeJS.ReadableStream;
+    return super.archive(repository, ref, subPath);
   }
 }
 
