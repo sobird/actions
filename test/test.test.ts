@@ -1,4 +1,4 @@
-import { createEachDir, createTestFile } from '@/utils/test';
+import { createEachDir, createTestFile } from './__helpers__';
 
 const eachDir = createEachDir('test-dir');
 

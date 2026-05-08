@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import * as tar from 'tar';
 
-import { createAllDir } from '@/utils/test';
+import { createAllDir } from '@/test/__helpers__';
 
 import { FileEntry } from './container';
 import HostedContainer from './hosted';

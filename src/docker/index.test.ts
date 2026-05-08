@@ -1,4 +1,4 @@
-import { createTestFile } from '@/utils/test';
+import { createTestFile } from '@/test/__helpers__';
 
 import docker, { Docker } from '.';
 

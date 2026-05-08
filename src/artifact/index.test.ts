@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import request from 'supertest';
 
-import { createAllDir } from '@/utils/test';
+import { createAllDir } from '@/test/__helpers__';
 
 import Artifact, { safeResolve } from '.';
 

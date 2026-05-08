@@ -2,7 +2,7 @@ import fs from 'node:fs';
 
 import request from 'supertest';
 
-import { createAllDir, createTestFile } from '@/utils/test';
+import { createAllDir, createTestFile } from '@/test/__helpers__';
 
 import ArtifactCache from '.';
 

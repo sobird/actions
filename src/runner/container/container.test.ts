@@ -3,8 +3,8 @@ import path from 'node:path';
 
 import * as tar from 'tar';
 
+import { createAllDir } from '@/test/__helpers__';
 import { listEntry } from '@/utils/tar';
-import { createAllDir } from '@/utils/test';
 
 import Container from './container';
 import DockerContainer from './docker';

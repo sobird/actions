@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import { SimpleGit } from 'simple-git';
 
-import { createEachDir } from '@/utils/test';
+import { createEachDir } from '@/test/__helpers__';
 
 import Git from './git';
 
@@ -12,7 +12,7 @@ vi.setConfig({
 
 interface TestCase {
   prepare: (git: SimpleGit) => Promise<void>;
-  assert: (ref?: string, err?: Error) => Promise<void>
+  assert: (ref?: string, err?: Error) => Promise<void>;
 }
 
 describe('Test Git', () => {
