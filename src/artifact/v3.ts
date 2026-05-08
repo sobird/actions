@@ -174,7 +174,7 @@ class Artifact {
             return {
               path: filePath,
               itemType: 'file',
-              contentLocation: `${baseURL}/artifact/${runId}/${filePath.replace('\\', '/')}`,
+              contentLocation: `${baseURL}/artifact/${runId}/${filePath.replace(/\\/g, '/')}`,
             };
           });
 
