@@ -11,6 +11,7 @@ export function createSha1Hash(content: string = '') {
  * More info: https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function#FNV_hash_parameters
  */
 const HASH_BASE = 0x811c9dc5;
+const MAX_FNV1A_INPUT_LENGTH = 8192;
 
 /**
  * Generates 32 bit FNV-1a hash from the given string.
@@ -27,8 +28,11 @@ const HASH_BASE = 0x811c9dc5;
  * * 在 JavaScript 中，直接进行大整数乘法可能会触发浮点数逻辑（JS 数字是 64 位浮点数），而通过位移操作可以确保在 32 位整数范围内进行运算，且性能通常更快。
  */
 export function createFnv1aHash(name: string, hash = HASH_BASE): number {
-  for (let i = 0; i < name.length; i++) {
-    hash ^= name.charCodeAt(i);
+  const safeName = typeof name === 'string' ? name : String(name ?? '');
+  const length = Math.min(safeName.length, MAX_FNV1A_INPUT_LENGTH);
+
+  for (let i = 0; i < length; i++) {
+    hash ^= safeName.charCodeAt(i);
     hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
   }
 
