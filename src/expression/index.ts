@@ -38,7 +38,7 @@ class Expression<T> {
           expression = `\${{ ${source} }}`;
         }
 
-        expression = expression.replace(/([\w.]+)\.\*\.(\w+)/g, (match, p1, p2) => {
+        expression = expression.replace(/([a-zA-Z0-9_$]+(?:\.[a-zA-Z0-9_$]+)*)\.\*\.(\w+)/g, (match, p1, p2) => {
           return `objectFilter(${p1}, '${p2}')`;
         });
 
