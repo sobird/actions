@@ -6,6 +6,8 @@ import jwt from 'jsonwebtoken';
 
 import logger from './logger';
 
+const JWT_SECRET = process.env.JWT_SECRET || 'dd';
+
 // 定义 actionsClaims 结构
 class ActionsClaims {
   constructor(registeredClaims, scp, taskID, runID, jobID, ac) {
@@ -50,7 +52,7 @@ export function createAuthorizationToken(taskID: number, runID: number, jobID: n
   };
 
   // 使用 HS256 算法签名
-  const token = jwt.sign(claims, 'dd', { algorithm: 'HS256' }); // 使用空密钥
+  const token = jwt.sign(claims, JWT_SECRET, { algorithm: 'HS256' });
   return token;
 }
 
@@ -69,7 +71,7 @@ export function parseAuthorizationToken(req: IncomingMessage) {
 
   try {
     // 验证并解析 JWT
-    const token = jwt.verify(parts[1], '', { algorithms: ['HS256'] }); // 使用空密钥
+    const token = jwt.verify(parts[1], JWT_SECRET, { algorithms: ['HS256'] });
     if (!token || !token.taskID) {
       throw new Error('invalid token claim');
     }
