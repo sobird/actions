@@ -38,18 +38,20 @@ class Expression<T> {
           expression = `\${{ ${source} }}`;
         }
 
-        expression = expression.replace(/([a-zA-Z0-9_$]+(?:\.[a-zA-Z0-9_$]+)*)\.\*\.(\w+)/g, (match, p1, p2) => {
-          return `objectFilter(${p1}, '${p2}')`;
-        });
-
-        expression = expression.replace(/(?:[a-zA-Z_]+)(?:\.[a-zA-Z_][\w-]*-[\w-]+)/g, (a) => {
-          const [first, ...parts] = a.split('.');
-          const output = parts.map((item) => {
-            return `['${item}']`;
+        if (typeof expression === 'string' && expression.length < 1000) {
+          expression = expression.replace(/([\w.]+)\.\*\.(\w+)/g, (match, p1, p2) => {
+            return `objectFilter(${p1}, '${p2}')`;
           });
-          output.unshift(first);
-          return output.join('');
-        });
+
+          expression = expression.replace(/(?:[a-zA-Z_]+)(?:\.[a-zA-Z_][\w-]*-[\w-]+)/g, (a) => {
+            const [first, ...parts] = a.split('.');
+            const output = parts.map((item) => {
+              return `['${item}']`;
+            });
+            output.unshift(first);
+            return output.join('');
+          });
+        }
 
         const availability = pick(context, ...this.scopes);
 
