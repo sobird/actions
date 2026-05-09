@@ -37,8 +37,8 @@ beforeAll(() => {
 
 afterAll(async () => {
   fs.rmSync(tmp, { recursive: true });
-  // const removeExecutor = docker.remove();
-  // await removeExecutor.execute();
+  const removeExecutor = docker.remove();
+  await removeExecutor.execute();
 });
 
 vi.setConfig({

@@ -291,13 +291,14 @@ class DockerContainer extends Container {
       pack.add(entry);
       pack.end();
 
-      container
-        .putArchive(pack as unknown as NodeJS.ReadableStream, {
+      try {
+        const stream = await container.putArchive(pack as unknown as NodeJS.ReadableStream, {
           path: '/',
-        })
-        .catch((err) => {
-          logger.error('Failed to mkdir to copy content to container: %s', (err as Error).message);
         });
+        await finished(stream);
+      } catch (err) {
+        logger.error('Failed to mkdir to copy content to container: %s', (err as Error).message);
+      }
 
       try {
         const stream = await container.putArchive(archive, {
