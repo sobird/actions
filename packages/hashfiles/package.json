@@ -14,9 +14,10 @@
   },
   "main": "src/hashFiles.ts",
   "scripts": {
-    "build": "tsc",
-    "pack": "ncc build -o ../runner/container/hashFiles -m",
     "all": "npm run build && npm run pack",
+    "build": "tsc",
+    "pack": "ncc build -m",
+    "prepare": "npm run all",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

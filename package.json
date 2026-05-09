@@ -24,7 +24,6 @@
     "build": "next build",
     "build:actions": "tsup",
     "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",
-    "cmd": "tsx pkg/cmd",
     "dev": "next dev",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",

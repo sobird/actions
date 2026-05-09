@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/naming-convention */
+// oxlint-disable no-underscore-dangle
 import { spawnSync } from 'node:child_process';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
