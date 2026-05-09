@@ -1,19 +1,19 @@
 /* eslint-disable class-methods-use-this */
-import path from "node:path";
+import path from 'node:path';
 
-import log4js from "log4js";
-import { parse } from "yaml";
+import log4js from 'log4js';
+import { parse } from 'yaml';
 
-import Executor, { Conditional } from "@/common/executor";
-import Action, { ActionProps } from "@/runner/action";
-import ActionCommandFile from "@/runner/action/command/file";
-import ActionFactory from "@/runner/action/factory";
-import Step from "@/workflow/job/step";
-import { withTimeout } from "@/utils";
+import Executor, { Conditional } from '@/common/executor';
+import Action, { ActionProps } from '@/runner/action';
+import ActionCommandFile from '@/runner/action/command/file';
+import ActionFactory from '@/runner/action/factory';
+import { withTimeout } from '@/utils';
+import Step from '@/workflow/job/step';
 
 const logger = log4js.getLogger();
 
-type StepStage = "Pre" | "Main" | "Post";
+type StepStage = 'Pre' | 'Main' | 'Post';
 
 abstract class StepAction extends Step {
   /**
@@ -38,14 +38,11 @@ abstract class StepAction extends Step {
   }
 
   public get Pre() {
-    return Executor.Pipeline(
-      this.PrepareAction,
-      this.runtime(this.pre(), "Pre").if(this.ShouldRunPre),
-    );
+    return Executor.Pipeline(this.PrepareAction, this.runtime(this.pre(), 'Pre').if(this.ShouldRunPre));
   }
 
   public get Main() {
-    return this.runtime(this.main(), "Main");
+    return this.runtime(this.main(), 'Main');
   }
 
   public get Post() {
@@ -53,7 +50,7 @@ abstract class StepAction extends Step {
       new Executor(() => {
         return this.action?.Post;
       }),
-      "Post",
+      'Post',
     ).if(this.ShouldRunPost);
   }
 
@@ -79,68 +76,64 @@ abstract class StepAction extends Step {
 
         if (!enabled) {
           context.StepResult = {
-            outcome: "skipped",
-            conclusion: "skipped",
+            outcome: 'skipped',
+            conclusion: 'skipped',
           };
-          logger.debug("Skipping step '%s' due to '%s'", this.Name(runner), this.if.source || "");
+          logger.debug("Skipping step '%s' due to '%s'", this.Name(runner), this.if.source || '');
           return;
         }
       } catch (err) {
         context.StepResult = {
-          outcome: "failure",
-          conclusion: "failure",
+          outcome: 'failure',
+          conclusion: 'failure',
         };
-        logger.error(
-          '\u274C Error in if-expression: "if: %s" (%s)',
-          this.if.source,
-          (err as Error).message,
-        );
+        logger.error('\u274C Error in if-expression: "if: %s" (%s)', this.if.source, (err as Error).message);
         return;
       }
 
-      logger.info("\u{1F525} Starting: %s %s", stage, this.Name(runner));
+      logger.info('\u{1F525} Starting: %s %s', stage, this.Name(runner));
 
       const actionCommandFile = new ActionCommandFile(runner);
       await actionCommandFile.initialize(this.uuid);
-      const timeoutMinutes = Number(this["timeout-minutes"].evaluate(runner)) || 60;
+      const timeoutMinutes = Number(this['timeout-minutes'].evaluate(runner)) || 60;
 
       const name = this.Name(runner);
       try {
         // this.applyEnv(runner, this.environment);
         await withTimeout(executor.execute(runner), timeoutMinutes * 60 * 1000);
         await actionCommandFile.process();
-        logger.info("🍏", `Finishing: ${stage} ${name}`);
+        logger.info('🍏', `Finishing: ${stage} ${name}`);
       } catch (error) {
         // steps 按照循序执行，如果有一个步骤失败，则后续步骤会跳过，且该步骤所在的job状态变为 failure
         logger.error((error as Error).message);
         context.StepResult = {
-          outcome: "failure",
+          outcome: 'failure',
         };
 
         try {
-          const continueOnError = this["continue-on-error"].evaluate(runner);
+          const continueOnError = this['continue-on-error'].evaluate(runner);
           if (continueOnError) {
-            logger.info("Failed but continue next step");
+            logger.info('Failed but continue next step');
             context.StepResult = {
-              conclusion: "success",
+              conclusion: 'success',
             };
           } else {
             context.StepResult = {
-              conclusion: "failure",
+              conclusion: 'failure',
             };
           }
         } catch (err) {
           context.StepResult = {
-            conclusion: "failure",
+            conclusion: 'failure',
           };
 
           logger.error(
-            "🍎",
-            `Error in continue-on-error-expression: "continue-on-error: ${this["continue-on-error"].source}" (${(err as Error).message})`,
+            '🍎',
+            `Error in continue-on-error-expression: "continue-on-error: ${this['continue-on-error'].source}" (${(err as Error).message})`,
           );
         }
 
-        logger.error("🍎", `Failure: ${stage} ${name}`);
+        logger.error('🍎', `Failure: ${stage} ${name}`);
       }
     });
   }
@@ -170,7 +163,7 @@ abstract class StepAction extends Step {
         return false;
       }
 
-      if (StepResult.conclusion === "skipped") {
+      if (StepResult.conclusion === 'skipped') {
         logger.debug("Skipping post step for '%s'; main step was skipped", this.Name(runner));
         return false;
       }
@@ -191,8 +184,8 @@ abstract class StepAction extends Step {
   LoadAction(actionDir: string) {
     return new Executor(async (ctx) => {
       const runner = ctx!;
-      const actionContainerDir = runner.container?.resolve(actionDir) || "";
-      const ymlFile = path.join(actionDir, "action.yml");
+      const actionContainerDir = runner.container?.resolve(actionDir) || '';
+      const ymlFile = path.join(actionDir, 'action.yml');
       const ymlEntry = await runner.container?.getContent(ymlFile);
 
       // set context github action path
@@ -203,23 +196,21 @@ abstract class StepAction extends Step {
         this.action.Dir = actionContainerDir;
         return;
       }
-      const yamlEntry = await runner.container?.getContent(path.join(actionDir, "action.yaml"));
+      const yamlEntry = await runner.container?.getContent(path.join(actionDir, 'action.yaml'));
       if (yamlEntry) {
         this.action = ActionFactory.create(parse(yamlEntry.body));
         this.action.Dir = actionContainerDir;
         return;
       }
 
-      const dockerFileEntry = await runner.container?.getContent(
-        path.join(actionDir, "Dockerfile"),
-      );
+      const dockerFileEntry = await runner.container?.getContent(path.join(actionDir, 'Dockerfile'));
       if (dockerFileEntry) {
         this.action = ActionFactory.create({
-          name: "(Synthetic)",
-          description: "docker file action",
+          name: '(Synthetic)',
+          description: 'docker file action',
           runs: {
-            using: "docker",
-            image: "Dockerfile",
+            using: 'docker',
+            image: 'Dockerfile',
           },
         } as ActionProps);
         this.action.Dir = actionContainerDir;

@@ -42,7 +42,7 @@ export interface DockerContainerOptions {
   /** Entrypoint to run when starting the container */
   entrypoint?: string[];
   cmd?: string[];
-  env?: NodeJS.ProcessEnv;
+  env?: Record<string, string>;
   authconfig?: AuthConfig;
   ports?: string[];
   exposedPorts?: { [port: string]: {} };
@@ -59,10 +59,10 @@ export interface DockerContainerOptions {
   privileged?: boolean;
   usernsMode?: string;
   networkAlias?: string[];
-  options: string;
+  options?: string;
 
-  stdout: OutputManager;
-  stderr: OutputManager;
+  stdout?: OutputManager;
+  stderr?: OutputManager;
 }
 
 const isatty = tty.isatty(process.stdout.fd);
@@ -81,7 +81,14 @@ class DockerContainer extends Container {
 
   Environment = 'github-hosted';
 
-  declare options: DockerContainerOptions;
+  // declare options: DockerContainerOptions;
+
+  constructor(
+    public options: DockerContainerOptions,
+    public workspace: string = '/home/runner',
+  ) {
+    super(options, workspace);
+  }
 
   async context() {
     if (!this.container) {
@@ -618,8 +625,6 @@ class DockerContainer extends Container {
         return;
       }
 
-      // todo
-
       const WorkingDir = this.resolve(this.options.workdir, cwd);
       const Env = Object.entries(env || {}).map(([key, value]) => {
         return `${key}=${value}`;
@@ -778,7 +783,7 @@ class DockerContainer extends Container {
   static Setup(runner: Runner) {
     return new Executor(() => {
       const { config } = runner;
-      const image = runner.PlatformImage;
+      const image = runner.PlatformImage ?? '';
       const credentials = runner.Credentials;
       const outputManager = new OutputManager(runner);
 
@@ -809,7 +814,7 @@ class DockerContainer extends Container {
           const serviceContainer = new DockerContainer(
             {
               name: serviceName,
-              image: service.image.evaluate(runner),
+              image: service.image.evaluate(runner) ?? '',
               pull: config.pull,
               workdir: config.workdir,
               authconfig: {

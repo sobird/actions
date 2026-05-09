@@ -1,21 +1,21 @@
-import os from "node:os";
-import path from "node:path";
-import { format } from "node:util";
+import os from 'node:os';
+import path from 'node:path';
+import { format } from 'node:util';
 
-import shellQuote from "shell-quote";
+import shellQuote from 'shell-quote';
 
-import Constants from "@/common/constants";
-import Executor from "@/common/executor";
-import Runner from "@/runner";
+import Constants from '@/common/constants';
+import Executor from '@/common/executor';
+import Runner from '@/runner';
 
-import StepAction from ".";
+import StepAction from '.';
 
 class StepActionScript extends StepAction {
-  public command: string = "";
+  public command: string = '';
 
-  private cmd = "";
+  private cmd = '';
 
-  private script = "";
+  private script = '';
 
   public main() {
     return new Executor(async (ctx) => {
@@ -47,15 +47,15 @@ class StepActionScript extends StepAction {
       runner.output(`shell: ${this.cmd}`);
 
       if (env.length > 0) {
-        runner.output("env:");
+        runner.output('env:');
         env.forEach(([key, value]) => {
-          if (value !== null && value !== "") {
+          if (value !== null && value !== '') {
             runner.output(`  ${key}: ${value}`);
           }
         });
       }
 
-      runner.output("##[endgroup]");
+      runner.output('##[endgroup]');
 
       console.log(this.command);
     });
@@ -74,7 +74,7 @@ class StepActionScript extends StepAction {
     this.command = format(cmd, resolvedScriptPath);
 
     runner.container
-      ?.putContent(".", {
+      ?.putContent('.', {
         name: scriptFilePath,
         mode: 0o755,
         body: script,
@@ -87,7 +87,7 @@ class StepActionScript extends StepAction {
   async setupShell(runner: Runner) {
     let { shell } = this;
     if (!shell) {
-      shell = runner.Defaults.run.evaluate(runner)?.shell || "";
+      shell = runner.Defaults.run.evaluate(runner)?.shell || '';
     }
 
     await runner.container?.applyPath(runner.prependPath, this.environment);
@@ -95,9 +95,9 @@ class StepActionScript extends StepAction {
     if (!shell) {
       //
       if (runner.container && runner.IsHosted) {
-        let shellWithFallback = ["bash", "sh"];
-        if (runner.container.OS === "Windows") {
-          shellWithFallback = ["pwsh", "powershell"];
+        let shellWithFallback = ['bash', 'sh'];
+        if (runner.container.OS === 'Windows') {
+          shellWithFallback = ['pwsh', 'powershell'];
         }
         [shell] = shellWithFallback;
         const cmd = runner.container.lookPath(shellWithFallback[0], this.environment);
@@ -106,7 +106,7 @@ class StepActionScript extends StepAction {
         }
       } else if (runner.ContainerImage) {
         // Currently only linux containers are supported, use sh by default like actions/runner
-        shell = "sh";
+        shell = 'sh';
       }
     }
 
@@ -114,22 +114,19 @@ class StepActionScript extends StepAction {
   }
 
   WorkingDirectory(runner: Runner) {
-    return (
-      this["working-directory"].evaluate(runner) ||
-      runner.Defaults.run.evaluate(runner)?.["working-directory"]
-    );
+    return this['working-directory'].evaluate(runner) || runner.Defaults.run.evaluate(runner)?.['working-directory'];
   }
 
   static FixUpScriptContent(scriptType: string, content: string) {
     let contents = content;
     switch (scriptType) {
-      case "cmd":
+      case 'cmd':
         // Note, use @echo off instead of using the /Q command line switch.
         // When /Q is used, echo can't be turned on.
         contents = `@echo off${os.EOL}${contents}`;
         break;
-      case "powershell":
-      case "pwsh":
+      case 'powershell':
+      case 'pwsh':
         contents = `$ErrorActionPreference = 'stop'${os.EOL}${contents}${os.EOL}if ((Test-Path -LiteralPath variable:\\LASTEXITCODE)) { exit $LASTEXITCODE }`;
         break;
       default:
@@ -140,13 +137,13 @@ class StepActionScript extends StepAction {
   static GetShellCommandAndExt(shell: string) {
     return (
       {
-        cmd: ['cmd /D /E:ON /V:OFF /S /C "CALL "%s""', ".cmd"],
-        pwsh: ["pwsh -command \". '%s'\"", ".ps1"],
-        powershell: ["powershell -command \". '%s'\"", ".ps1"],
-        bash: ["bash --noprofile --norc -e -o pipefail %s", ".sh"],
-        sh: ["sh -e %s", ".sh"],
-        python: ["python %s", ".py"],
-      }[shell || "bash"] || [shell, ""]
+        cmd: ['cmd /D /E:ON /V:OFF /S /C "CALL "%s""', '.cmd'],
+        pwsh: ['pwsh -command ". \'%s\'"', '.ps1'],
+        powershell: ['powershell -command ". \'%s\'"', '.ps1'],
+        bash: ['bash --noprofile --norc -e -o pipefail %s', '.sh'],
+        sh: ['sh -e %s', '.sh'],
+        python: ['python %s', '.py'],
+      }[shell || 'bash'] || [shell, '']
     );
   }
 }

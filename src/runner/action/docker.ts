@@ -1,32 +1,32 @@
-import path from "node:path";
+import path from 'node:path';
 
-import log4js from "log4js";
-import shellQuote, { ParseEntry, ControlOperator } from "shell-quote";
-import * as tar from "tar";
+import log4js from 'log4js';
+import shellQuote, { ControlOperator } from 'shell-quote';
+import * as tar from 'tar';
 
-import Executor, { Conditional } from "@/common/executor";
-import docker from "@/docker";
-import Runner from "@/runner";
-import DockerContainer from "@/runner/container/docker";
-import { createSafeName } from "@/utils";
+import Executor, { Conditional } from '@/common/executor';
+import docker from '@/docker';
+import Runner from '@/runner';
+import DockerContainer from '@/runner/container/docker';
+import { createSafeName } from '@/utils';
 
-import Action from ".";
+import Action from '.';
 
 const logger = log4js.getLogger();
 
-type EntrypointStage = "pre-entrypoint" | "entrypoint" | "post-entrypoint";
+type EntrypointStage = 'pre-entrypoint' | 'entrypoint' | 'post-entrypoint';
 
 class DockerAction extends Action {
   protected pre() {
-    return this.run("pre-entrypoint").if(this.HasPre);
+    return this.run('pre-entrypoint').if(this.HasPre);
   }
 
   protected main() {
-    return this.run("entrypoint");
+    return this.run('entrypoint');
   }
 
   protected post() {
-    return this.run("post-entrypoint").if(this.HasPost);
+    return this.run('post-entrypoint').if(this.HasPost);
   }
 
   private run(entrypointStage: EntrypointStage) {
@@ -39,7 +39,7 @@ class DockerAction extends Action {
       // let forcePull = false;
       if (DockerAction.IsDockerfile(image)) {
         let actionPath = path.basename(this.Dir);
-        image = `${createSafeName("actions", actionPath)}:latest`;
+        image = `${createSafeName('actions', actionPath)}:latest`;
 
         try {
           const dockerImage = docker.getImage(image);
@@ -53,7 +53,7 @@ class DockerAction extends Action {
             logger.debug(
               "Image '%s' for architecture '%s' already exists",
               image,
-              runner.config.containerPlatform || "",
+              runner.config.containerPlatform || '',
             );
           } else {
             try {
@@ -61,7 +61,7 @@ class DockerAction extends Action {
             } catch (err) {
               logger.error((err as Error).message);
             }
-            throw new Error("Image need build");
+            throw new Error('Image need build');
           }
         } catch (error) {
           logger.error((error as Error).message);
@@ -73,11 +73,7 @@ class DockerAction extends Action {
             logger.error((err as Error).message);
             if (runner.config.actionCache) {
               await runner.config.actionCache.fetch(uses.repositoryUrl, uses.repository, uses.ref);
-              archive = await runner.config.actionCache.archive(
-                uses.repository,
-                uses.ref,
-                uses.path,
-              );
+              archive = await runner.config.actionCache.archive(uses.repository, uses.ref, uses.path);
               actionPath = uses.path;
             }
           }
@@ -86,13 +82,13 @@ class DockerAction extends Action {
           const pack = new tar.Pack();
           archive.pipe(parser);
 
-          parser.on("entry", (entry: tar.ReadEntry) => {
+          parser.on('entry', (entry: tar.ReadEntry) => {
             // strip action dir
             // eslint-disable-next-line no-param-reassign
             entry.path = path.relative(actionPath, entry.path);
             pack.add(entry);
           });
-          parser.on("finish", () => {
+          parser.on('finish', () => {
             pack.end();
           });
 
@@ -106,22 +102,22 @@ class DockerAction extends Action {
           });
         }
       } else {
-        image = image.substring("docker://".length);
+        image = image.substring('docker://'.length);
         // forcePull = runner.config.pull;
       }
 
       // @todo
       const stepWith = stepAction?.with.evaluate(runner);
       let cmd = shellQuote
-        .parse(stepWith?.args || "", (name) => {
+        .parse(stepWith?.args || '', (name) => {
           return `\${${name}}`;
         })
         .map((part) => {
-          if (typeof part === "object" && (part as { op: ControlOperator }).op) {
+          if (typeof part === 'object' && (part as { op: ControlOperator }).op) {
             return (part as { op: ControlOperator }).op;
           }
           return part;
-        });
+        }) as string[];
 
       if (cmd.length === 0) {
         cmd = this.runs.args.evaluate(runner);
@@ -141,7 +137,7 @@ class DockerAction extends Action {
             return `\${${name}}`;
           })
           .map((part) => {
-            if (typeof part === "object" && (part as { op: ControlOperator }).op) {
+            if (typeof part === 'object' && (part as { op: ControlOperator }).op) {
               return (part as { op: ControlOperator }).op;
             }
             return part;
@@ -150,22 +146,21 @@ class DockerAction extends Action {
 
       runner.Assign(stepAction!.environment, this.runs.env);
       const container = DockerAction.Container(runner, image, cmd, entrypoint);
-      return Executor.Pipeline(
+      return Executor.Pipeline(container.remove().ifBool(!runner.config.reuse), container.start(true)).finally(
         container.remove().ifBool(!runner.config.reuse),
-        container.start(true),
-      ).finally(container.remove().ifBool(!runner.config.reuse));
+      );
     });
   }
 
   public get HasPre() {
     return new Conditional((runner) => {
-      return !!this.runs["pre-if"].evaluate(runner!) && !!this.runs["pre-entrypoint"];
+      return !!this.runs['pre-if'].evaluate(runner!) && !!this.runs['pre-entrypoint'];
     });
   }
 
   public get HasPost() {
     return new Conditional((runner) => {
-      return !!this.runs["post-if"].evaluate(runner!) && !!this.runs["post-entrypoint"];
+      return !!this.runs['post-if'].evaluate(runner!) && !!this.runs['post-entrypoint'];
     });
   }
 
@@ -182,7 +177,7 @@ class DockerAction extends Action {
     if (stepAction?.with) {
       // eslint-disable-next-line no-restricted-syntax, guard-for-in
       for (const k in stepAction.with) {
-        inputs[k] = stepAction.with.evaluate(runner)?.[k] || "";
+        inputs[k] = stepAction.with.evaluate(runner)?.[k] || '';
       }
     }
 
@@ -190,25 +185,25 @@ class DockerAction extends Action {
   }
 
   public static IsDockerfile(image: string) {
-    if (image.startsWith("docker://")) {
+    if (image.startsWith('docker://')) {
       return false;
     }
-    const imageWithoutPath = image.split("/").pop();
-    return imageWithoutPath?.startsWith("Dockerfile") || imageWithoutPath?.endsWith("Dockerfile");
+    const imageWithoutPath = image.split('/').pop();
+    return imageWithoutPath?.startsWith('Dockerfile') || imageWithoutPath?.endsWith('Dockerfile');
   }
 
-  static Container(runner: Runner, image: string, cmd: ParseEntry[], entrypoint: ParseEntry[]) {
+  static Container(runner: Runner, image: string, cmd: string[], entrypoint: string[]) {
     const { environment } = runner.stepAction!;
 
     const { config } = runner;
-    const [binds, mounts] = runner.BindsAndMounts;
+    const mounts = runner.Mounts;
     const credentials = runner.Credentials;
 
     const name = runner.ContainerName(runner.context.github.action);
 
     let networkMode = `container:${runner.ContainerName()}`;
     if (runner.IsHosted) {
-      networkMode = "default";
+      networkMode = 'default';
     }
 
     return new DockerContainer(
@@ -222,7 +217,7 @@ class DockerAction extends Action {
         authconfig: {
           ...credentials,
         },
-        binds,
+        // binds,
         mounts,
         networkMode,
         privileged: config.containerPrivileged,

@@ -29,7 +29,7 @@ import DockerContainer from './container/docker';
 import HostedContainer from './container/hosted';
 import { Job } from './context/jobs';
 
-const SetEnvBlockList = ['NODE_OPTIONS'];
+const SetEnvBlockList = new Set(['NODE_OPTIONS']);
 
 /**
  * 每个runner为一个job实例
@@ -131,7 +131,7 @@ class Runner {
   }
 
   executor() {
-    const { job, workflow } = this.run;
+    const { job, workflow: _workflow } = this.run;
     // @todo resolve needs forward
     job.resolveNeeds(this);
 
@@ -273,7 +273,10 @@ class Runner {
   }
 
   // DockerContainer Utils
-  // @todo note: docker actions container difference?
+  /**
+   * @todo note: docker actions container difference?
+   * @deprecated
+   */
   get BindsAndMounts(): [string[], Record<string, string>] {
     if (!this.container) {
       return [[], {}];
@@ -695,7 +698,7 @@ class Runner {
   }
 
   setEnv(key: string, value: string) {
-    if (SetEnvBlockList.includes(key.toUpperCase())) {
+    if (SetEnvBlockList.has(key.toUpperCase())) {
       console.log(`Can't update ${key} environment variable using set-env command.`);
       // AddIssue
       return;
@@ -752,7 +755,7 @@ class Runner {
         this.matchers = newMatchers;
 
         // Fire events
-        for (const matcher of config.problemMatcher) {
+        for (const _matcher of config.problemMatcher) {
           // this._onMatcherChanged(null, new MatcherChangedEventArgs(matcher));
         }
 
@@ -780,6 +783,7 @@ class Runner {
 
   error(message: string) {
     //
+    process.stderr.write(message + os.EOL);
   }
 
   containsCaller(target: Runner) {

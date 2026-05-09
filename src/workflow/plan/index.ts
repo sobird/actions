@@ -1,14 +1,14 @@
-import os from "node:os";
+import os from 'node:os';
 
-import log4js from "log4js";
+import log4js from 'log4js';
 
-import Executor from "@/common/executor";
-import Runner from "@/runner";
-import Config from "@/runner/config";
-import Step from "@/runner/context/step";
+import Executor from '@/common/executor';
+import Runner from '@/runner';
+import Config from '@/runner/config';
+import Step from '@/runner/context/step';
 
-import Run from "./run";
-import Stage from "./stage";
+import Run from './run';
+import Stage from './stage';
 
 const logger = log4js.getLogger();
 // I hava a plan
@@ -35,7 +35,7 @@ export default class Plan {
     const { stages } = plan;
     // 确定新阶段列表的大小
     const newSize = Math.max(this.stages.length, stages.length);
-    const newStages: Stage[] = new Array(newSize);
+    const newStages: Stage[] = Array.from({ length: newSize });
 
     // 合并阶段
     for (let i = 0; i < newSize; i++) {
@@ -92,9 +92,9 @@ export default class Plan {
               // 跳出 workflow_call 递归调用
               if (caller?.containsCaller(runner)) {
                 logger.error(
-                  "Workflow is not valid: detected cyclic reference",
+                  'Workflow is not valid: detected cyclic reference',
                   caller.run.jobId,
-                  "<=>",
+                  '<=>',
                   runner.run.jobId,
                 );
                 return new Executor();
@@ -110,7 +110,7 @@ export default class Plan {
           });
 
           const ncpu = os.cpus().length;
-          logger.debug("Detected CPUs:", ncpu);
+          logger.debug('Detected CPUs:', ncpu);
           await Executor.Parallel(ncpu, ...jobPipeline).execute();
         }),
       );

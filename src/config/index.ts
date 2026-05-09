@@ -1,23 +1,23 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable max-classes-per-file */
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import rc from "rc";
-import { parse } from "yaml";
+import rc from 'rc';
+import { parse } from 'yaml';
 
-import { ACTIONS_HOME } from "@/common/constants";
+import { ACTIONS_HOME } from '@/common/constants';
 
-import Daemon from "./daemon";
-import { Registration } from "./registration";
-import Runner from "./runner";
+import Daemon from './daemon';
+import { Registration } from './registration';
+import Runner from './runner';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 interface Log {
-  level: "trace" | "debug" | "info" | "warn" | "error" | "fatal";
+  level: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 }
 
 class Config {
@@ -35,7 +35,7 @@ class Config {
    */
   public actionsPath: string;
 
-  public file: string = path.join(ACTIONS_HOME, "config");
+  public file: string = path.join(ACTIONS_HOME, 'config');
 
   public registration: Registration;
 
@@ -43,15 +43,15 @@ class Config {
     this.log = config.log ?? {};
     this.daemon = new Daemon(config.daemon ?? {});
     this.runner = new Runner(config.runner ?? {});
-    this.actionsPath = config.actionsPath ?? path.join(ACTIONS_HOME, "actions");
+    this.actionsPath = config.actionsPath ?? path.join(ACTIONS_HOME, 'actions');
     this.registration = Registration.Load(config.registration.file);
   }
 
   save() {
-    fs.writeFileSync(this.file, JSON.stringify(this, null, 2), "utf8");
+    fs.writeFileSync(this.file, JSON.stringify(this, null, 2), 'utf8');
   }
 
-  static Load(file?: string, appname = "actions") {
+  static Load(file?: string, appname = 'actions') {
     const config = rc(appname, parse(Config.Default), { config: file }, (content) => {
       return parse(content) as Config;
     });
@@ -59,7 +59,7 @@ class Config {
   }
 
   static get Default() {
-    return fs.readFileSync(path.resolve(__dirname, "default.yaml"), "utf-8");
+    return fs.readFileSync(path.resolve(__dirname, 'default.yaml'), 'utf-8');
   }
 }
 

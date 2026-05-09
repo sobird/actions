@@ -157,4 +157,4 @@ runner:
   containerCapDrop: []
   containerMaxLifetime: 3600
   # And other options to be used when the container is started (eg, --add-host=my.gitea.url:host-gateway).
-  containerOptions:
+  containerOptions: ""

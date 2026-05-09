@@ -23,6 +23,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "actions:test": "tsx src/cmd run -W test/workflows/basic.yml -v",
     "build": "next build",
     "build:actions": "pnpm -C pkg/cmd build",
     "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",

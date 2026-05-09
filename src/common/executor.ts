@@ -4,10 +4,10 @@
  *
  * sobird<i@sobird.me> at 2024/05/04 21:32:57 created.
  */
-import { Mutex } from "async-mutex";
-import log4js from "log4js";
+import { Mutex } from 'async-mutex';
+import log4js from 'log4js';
 
-import Runner from "@/runner";
+import Runner from '@/runner';
 
 const mutex = new Mutex();
 
@@ -186,7 +186,7 @@ class Executor<T = unknown> {
       const release = await mutex.acquire();
       try {
         await executor.execute(ctx);
-      } catch (err) {
+      } catch {
         // todo
       } finally {
         release();
@@ -199,7 +199,7 @@ class Executor<T = unknown> {
       let index = -1;
       const dispatch = async (i: number) => {
         if (i <= index) {
-          throw new Error("next() called multiple times");
+          throw new Error('next() called multiple times');
         }
         index = i;
         let executor = executors[i];
