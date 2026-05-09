@@ -641,8 +641,8 @@ class DockerContainer extends Container {
       });
 
       const stream = await exec.start({
-        hijack: true,
-        stdin: true,
+        // hijack: true,
+        // stdin: true,
         // Detach: true,
         // https://github.com/apocas/dockerode/issues/736
         Tty: isatty,

@@ -1,30 +1,27 @@
 {
-  // 使用 IntelliSense 了解相关属性。 
+  // 使用 IntelliSense 了解相关属性。
   // 悬停以查看现有属性的描述。
   // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
     {
       "name": "debug actions run",
-      "type": "node",
+      "type": "bun",
       "request": "launch",
-      "runtimeExecutable": "tsx",
-      "program": "${workspaceFolder}/pkg/cmd",
-      "args": ["run", "-W", "test/workflows/npm-publish.yml", "-j", "test-npm-publish", "--image=-self-hosted", "-v"],
+      "program": "${workspaceFolder}/src/cmd",
+      "args": ["run", "-W", "test/workflows/basic.yml", "-v"],
       "env": {}
     },
     {
       "name": "debug a file",
       "type": "node",
       "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
+      "skipFiles": ["<node_internals>/**"],
       "runtimeExecutable": "tsx",
       "program": "${file}",
       // "preLaunchTask": "tsc:build - tsconfig.json",
       "env": {},
       "autoAttachChildProcesses": true
-    },
+    }
   ]
 }
