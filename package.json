@@ -14,6 +14,9 @@
     "type": "git",
     "url": "git+https://github.com/sobird/actions.git"
   },
+  "bin": {
+    "actions": "dist/index.js"
+  },
   "files": [
     "dist"
   ],

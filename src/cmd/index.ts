@@ -1,11 +1,11 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env node
 
 import { Command } from '@commander-js/extra-typings';
 
+import pkg from '../../package.json' with { type: 'json' };
 import { configCommand } from './config';
-import { daemonCommand } from './daemon';
-import pkg from './package.json' with { type: 'json' };
-import { registerCommand } from './register';
+// import { daemonCommand } from './daemon';
+// import { registerCommand } from './register';
 import { runCommand } from './run';
 
 const program = new Command();
@@ -30,6 +30,6 @@ program.addCommand(runCommand);
 try {
   program.exitOverride();
   program.parse(process.argv);
-} catch (err) {
+} catch {
   // custom processing...
 }
