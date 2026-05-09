@@ -26,7 +26,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "actions:test": "bun src/cmd run -W test/workflows/basic.yml -v",
+    "actions:test": "tsx src/cmd run -W test/workflows/basic.yml -v",
     "build": "next build",
     "build:actions": "tsup",
     "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",
@@ -111,11 +111,12 @@
     "supertest": "^7.2.2",
     "tailwindcss": "^4.3.0",
     "ts-protoc-gen": "^0.15.0",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5"
   },
   "lint-staged": {
-    "*": "oxlint --fix"
+    "**/*.{js,ts,jsx,tsx}": "oxlint --fix"
   },
   "trustedDependencies": [
     "@bufbuild/buf",
