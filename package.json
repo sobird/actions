@@ -22,7 +22,7 @@
   "scripts": {
     "actions:test": "tsx src/cmd run -W test/workflows/basic.yml -v",
     "build": "next build",
-    "build:actions": "pnpm -C pkg/cmd build",
+    "build:actions": "tsup",
     "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",
     "cmd": "tsx pkg/cmd",
     "dev": "next dev",
@@ -62,24 +62,24 @@
     "lodash-es": "^4.18.1",
     "log4js": "^6.9.1",
     "minimatch": "^10.2.5",
-    "next": "^16.2.4",
+    "next": "^16.2.6",
     "prompts": "^2.4.2",
     "rc": "^1.2.8",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "retry": "^0.13.1",
     "sequelize": "^6.37.8",
     "shell-quote": "^1.8.3",
     "simple-git": "^3.36.0",
     "sqlite3": "^6.0.1",
-    "tar": "^7.5.13",
-    "yaml": "^2.8.3"
+    "tar": "^7.5.15",
+    "yaml": "^2.8.4"
   },
   "devDependencies": {
-    "@bufbuild/buf": "^1.68.4",
-    "@commitlint/cli": "^20.5.2",
-    "@commitlint/config-conventional": "^20.5.0",
-    "@tailwindcss/postcss": "^4.2.4",
+    "@bufbuild/buf": "^1.69.0",
+    "@commitlint/cli": "^20.5.3",
+    "@commitlint/config-conventional": "^20.5.3",
+    "@tailwindcss/postcss": "^4.3.0",
     "@types/body-parser": "^1.19.6",
     "@types/dockerode": "^4.0.1",
     "@types/express": "^5.0.6",
@@ -87,7 +87,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/lodash": "^4.17.24",
     "@types/lodash-es": "^4.17.12",
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.6.2",
     "@types/prompts": "^2.4.9",
     "@types/rc": "^1.2.4",
     "@types/react": "^19.2.14",
@@ -99,26 +99,19 @@
     "lint-staged": "^16.4.0",
     "node-notifier": "^10.0.1",
     "oxfmt": "^0.46.0",
-    "oxlint": "^1.61.0",
-    "oxlint-tsgolint": "^0.22.0",
-    "postcss": "^8.5.11",
+    "oxlint": "^1.63.0",
+    "oxlint-tsgolint": "^0.22.1",
+    "postcss": "^8.5.14",
     "smee-client": "^5.0.0",
     "supertest": "^7.2.2",
-    "tailwindcss": "^4.2.4",
+    "tailwindcss": "^4.3.0",
     "ts-protoc-gen": "^0.15.0",
+    "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5"
   },
-  "resolutions": {
-    "strip-ansi": "6.0.0"
-  },
   "lint-staged": {
     "*": "oxlint --fix"
-  },
-  "trustedDependencies": [
-    "protobufjs",
-    "sqlite3",
-    "cpu-features"
-  ]
+  }
 }
