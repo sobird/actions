@@ -26,7 +26,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "actions:test": "tsx src/cmd run -W test/workflows/basic.yml -v",
+    "actions:test": "bun src/cmd run -W test/workflows/basic.yml -v",
     "build": "next build",
     "build:actions": "tsup",
     "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",

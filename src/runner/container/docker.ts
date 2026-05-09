@@ -8,6 +8,7 @@ import cp from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
+import { finished } from 'node:stream/promises';
 import tty from 'node:tty';
 
 import Dockerode, { NetworkInspectInfo, AuthConfig, MountConfig } from 'dockerode';
@@ -188,10 +189,11 @@ class DockerContainer extends Container {
         info.base = '.';
       }
 
-      const options: tar.TarOptionsWithAliasesAsyncNoFile = {
+      const options: tar.TarOptionsWithAliasesSync = {
         cwd: info.dir,
         prefix: dest,
         portable: true,
+        sync: true,
       };
 
       const ignorefile = path.join(source, '.gitignore');
@@ -302,14 +304,8 @@ class DockerContainer extends Container {
           path: dest,
         });
 
-        await new Promise<void>((resolve, reject) => {
-          stream.on('error', (err) => {
-            reject(err);
-          });
-          stream.on('finish', () => {
-            resolve();
-          });
-        });
+        await finished(stream);
+        logger.info('Successfully copied archive to %s', dest);
       } catch (err) {
         logger.error('Failed to copy content to container: %s', (err as Error).message);
       }
