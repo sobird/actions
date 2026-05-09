@@ -1,0 +1,11 @@
+packages:
+  - packages/*
+
+onlyBuiltDependencies:
+  - '@bufbuild/buf'
+  - cpu-features
+  - esbuild
+  - protobufjs
+  - sharp
+  - sqlite3
+  - ssh2

@@ -14,9 +14,6 @@
     "type": "git",
     "url": "git+https://github.com/sobird/actions.git"
   },
-  "workspaces": [
-    "packages/*"
-  ],
   "files": [
     "dist"
   ],
@@ -84,10 +81,8 @@
     "@commitlint/config-conventional": "^20.5.0",
     "@tailwindcss/postcss": "^4.2.4",
     "@types/body-parser": "^1.19.6",
-    "@types/bun": "^1.3.13",
     "@types/dockerode": "^4.0.1",
     "@types/express": "^5.0.6",
-    "@types/git-url-parse": "^16.0.2",
     "@types/ip": "^1.1.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/lodash": "^4.17.24",
@@ -111,6 +106,7 @@
     "supertest": "^7.2.2",
     "tailwindcss": "^4.2.4",
     "ts-protoc-gen": "^0.15.0",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5"
   },
