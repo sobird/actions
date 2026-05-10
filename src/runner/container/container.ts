@@ -3,8 +3,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline';
-import { fileURLToPath } from 'node:url';
 
+// ?raw for vitest; with { type: 'text' } for bun;
+import hashfilesDist from '@actions/hashfiles/dist/index.js?raw' with { type: 'text' };
 import * as tar from 'tar';
 
 import Constants from '@/common/constants';
@@ -35,9 +36,6 @@ export interface ContainerOptions {
 
 const hashFilesDir = path.join(Constants.Directory.Bin, 'hashFiles');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 export default abstract class Container {
   rootdir: string = '';
 
@@ -49,7 +47,10 @@ export default abstract class Container {
 
   abstract Environment: string;
 
-  putHashFileExecutor = this.put(hashFilesDir, path.resolve(__dirname, 'hashFiles/index.js'));
+  putHashFileExecutor = this.putContent(hashFilesDir, {
+    name: 'index.js',
+    body: hashfilesDist,
+  });
 
   // constructor(public options: ContainerOptions) {}
 
