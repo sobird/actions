@@ -1,6 +1,7 @@
 import { rm } from 'node:fs/promises';
 
-const isDevelopment = process.env.NODE_ENV === 'development';
+import { external } from './config.ts';
+
 const outdir = 'dist';
 
 // Clean output directory
@@ -12,7 +13,8 @@ const result = await Bun.build({
   outdir,
   target: 'node',
   format: 'esm',
-  minify: !isDevelopment,
+  minify: true,
+  external,
 });
 
 if (!result.success) {

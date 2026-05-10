@@ -18,7 +18,6 @@
     "all": "npm run build && npm run pack",
     "build": "bun build.ts",
     "pack": "ncc build -m",
-    "prepare": "npm run all",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
