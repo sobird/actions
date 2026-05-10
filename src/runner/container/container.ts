@@ -1,16 +1,20 @@
 import { type SpawnSyncReturns } from 'node:child_process';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline';
 
 // ?raw for vitest; with { type: 'text' } for bun;
-import hashfilesDist from '@actions/hashfiles/dist/index.js?raw' with { type: 'text' };
+// import hashfilesDist from '@actions/hashfiles/dist/index.js?raw' with { type: 'text' };
 import * as tar from 'tar';
 
 import Constants from '@/common/constants';
 import Executor from '@/common/executor';
 import { trimPrefix } from '@/utils/trimPrefix';
+
+const require = createRequire(import.meta.url);
+const hashfilesDist = fs.readFileSync(require.resolve('@actions/hashfiles/dist/index.js'), 'utf-8');
 
 export interface FileEntry {
   name: string;

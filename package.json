@@ -28,7 +28,7 @@
   "scripts": {
     "actions:test": "bun src/cmd run -W test/workflows/basic.yml -v",
     "build": "next build",
-    "build:actions": "tsup",
+    "build:actions": "bun scripts/build.ts",
     "build:buf": "buf generate https://gitea.com/sobird/actions-proto-def.git",
     "dev": "next dev",
     "lint": "oxlint",
