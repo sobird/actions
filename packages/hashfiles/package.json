@@ -1,5 +1,5 @@
 {
-  "name": "hashfiles",
+  "name": "@actions/hashfiles",
   "version": "1.0.0",
   "private": true,
   "description": "GitHub Actions HashFiles() expression function",
@@ -12,7 +12,8 @@
     "type": "git",
     "url": "git+https://github.com/actions/runner.git"
   },
-  "main": "src/hashFiles.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "scripts": {
     "all": "npm run build && npm run pack",
     "build": "tsc",
