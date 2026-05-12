@@ -6,7 +6,9 @@
       "name": "actions",
       "dependencies": {
         "@actions/core": "^3.0.1",
+        "@actions/expressions": "^0.3.56",
         "@actions/hashfiles": "workspace:*",
+        "@actions/workflow-parser": "^0.3.56",
         "@bufbuild/protobuf": "^2.12.0",
         "@commander-js/extra-typings": "^14.0.0",
         "@connectrpc/connect": "^2.1.1",
@@ -108,6 +110,8 @@
 
     "@actions/exec": ["@actions/exec@3.0.0", "https://registry.npmmirror.com/@actions/exec/-/exec-3.0.0.tgz", { "dependencies": { "@actions/io": "^3.0.2" } }, "sha512-6xH/puSoNBXb72VPlZVm7vQ+svQpFyA96qdDBvhB8eNZOE8LtPf9L4oAsfzK/crCL8YZ+19fKYVnM63Sl+Xzlw=="],
 
+    "@actions/expressions": ["@actions/expressions@0.3.56", "https://registry.npmmirror.com/@actions/expressions/-/expressions-0.3.56.tgz", {}, "sha512-5DZVfBOIFaUPl7zp5ggWPnUxGfnnuMzvu3jz1YYkme1dgDAl8Wh91mJYiPtNG6lK8ShYFmefMozzm8h0gf+/hw=="],
+
     "@actions/glob": ["@actions/glob@0.4.0", "https://registry.npmmirror.com/@actions/glob/-/glob-0.4.0.tgz", { "dependencies": { "@actions/core": "^1.9.1", "minimatch": "^3.0.4" } }, "sha512-+eKIGFhsFa4EBwaf/GMyzCdWrXWymGXfFmZU3FHQvYS8mPcHtTtZONbkcqqUMzw9mJ/pImEBFET1JNifhqGsAQ=="],
 
     "@actions/hashfiles": ["@actions/hashfiles@workspace:packages/hashfiles"],
@@ -115,6 +119,8 @@
     "@actions/http-client": ["@actions/http-client@4.0.1", "https://registry.npmmirror.com/@actions/http-client/-/http-client-4.0.1.tgz", { "dependencies": { "tunnel": "^0.0.6", "undici": "^6.23.0" } }, "sha512-+Nvd1ImaOZBSoPbsUtEhv+1z99H12xzncCkz0a3RuehINE81FZSe2QTj3uvAPTcJX/SCzUQHQ0D1GrPMbrPitg=="],
 
     "@actions/io": ["@actions/io@3.0.2", "https://registry.npmmirror.com/@actions/io/-/io-3.0.2.tgz", {}, "sha512-nRBchcMM+QK1pdjO7/idu86rbJI5YHUKCvKs0KxnSYbVe3F51UfGxuZX4Qy/fWlp6l7gWFwIkrOzN+oUK03kfw=="],
+
+    "@actions/workflow-parser": ["@actions/workflow-parser@0.3.56", "https://registry.npmmirror.com/@actions/workflow-parser/-/workflow-parser-0.3.56.tgz", { "dependencies": { "@actions/expressions": "^0.3.56", "cronstrue": "^2.21.0", "yaml": "^2.0.0-8" } }, "sha512-iRHG5szB81BVCLS+1ia9uIXjf2fGnWy2u02SyXNGm9W/ajY8jP1S9j/q/WeZGkRoGBCofC5lISWQ4X6eEZRRoA=="],
 
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "https://registry.npmmirror.com/@alloc/quick-lru/-/quick-lru-5.2.0.tgz", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
 
@@ -753,6 +759,8 @@
     "cpu-features": ["cpu-features@0.0.10", "https://registry.npmmirror.com/cpu-features/-/cpu-features-0.0.10.tgz", { "dependencies": { "buildcheck": "~0.0.6", "nan": "^2.19.0" } }, "sha512-9IkYqtX3YHPCzoVg1Py+o9057a3i0fp7S530UWokCSaFVTc7CwXPRiOjRjBQQ18ZCNafx78YfnG+HALxtVmOGA=="],
 
     "cron": ["cron@4.4.0", "https://registry.npmmirror.com/cron/-/cron-4.4.0.tgz", { "dependencies": { "@types/luxon": "~3.7.0", "luxon": "~3.7.0" } }, "sha512-fkdfq+b+AHI4cKdhZlppHveI/mgz2qpiYxcm+t5E5TsxX7QrLS1VE0+7GENEk9z0EeGPcpSciGv6ez24duWhwQ=="],
+
+    "cronstrue": ["cronstrue@2.61.0", "https://registry.npmmirror.com/cronstrue/-/cronstrue-2.61.0.tgz", { "bin": { "cronstrue": "bin/cli.js" } }, "sha512-ootN5bvXbIQI9rW94+QsXN5eROtXWwew6NkdGxIRpS/UFWRggL0G5Al7a9GTBFEsuvVhJ2K3CntIIVt7L2ILhA=="],
 
     "csstype": ["csstype@3.2.3", "https://registry.npmmirror.com/csstype/-/csstype-3.2.3.tgz", {}, "sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ=="],
 
