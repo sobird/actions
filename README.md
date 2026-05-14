@@ -68,5 +68,5 @@ actions run -j job-name --hosted
 [typescript]: https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white
 [build-status]: https://img.shields.io/github/actions/workflow/status/sobird/actions/release.yml?label=CI&logo=github&style=flat-square
 [build-status-url]: https://github.com/sobird/actions/actions
-[size]: https://img.shields.io/badge/dynamic/json?style=flat-square&label=mass&query=$.publish.pretty&url=https://packagephobia.com/v2/api.json?p=@sobird/actions&color=blueviolet
+[size]: https://img.shields.io/badge/dynamic/json?style=flat-square&label=mass&query=$.publish.pretty&url=https://packagephobia.com/v2/api.json?p=@sobird/actions&color=blueviolet&logo=pkgsrc
 [size-url]: https://packagephobia.com/result?p=@sobird/actions

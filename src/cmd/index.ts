@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-import { Command } from '@commander-js/extra-typings';
+import { Command } from 'commander';
 
 import pkg from '../../package.json' with { type: 'json' };
 import { configCommand } from './config';
-// import { daemonCommand } from './daemon';
-// import { registerCommand } from './register';
+import { daemonCommand } from './daemon';
+import { registerCommand } from './register';
 import { runCommand } from './run';
 
 const program = new Command();
@@ -22,8 +22,8 @@ program
 //   console.log(`Event name: ${eventName}, Config file: ${configFile}`);
 // });
 
-// program.addCommand(registerCommand);
-// program.addCommand(daemonCommand);
+program.addCommand(registerCommand);
+program.addCommand(daemonCommand);
 program.addCommand(configCommand);
 program.addCommand(runCommand);
 
