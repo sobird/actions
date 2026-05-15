@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.1.0](https://github.com/sobird/actions/compare/v1.0.2...v1.1.0) (2026-05-15)
+
+
+### Features
+
+* add artifact cache service ([60329b1](https://github.com/sobird/actions/commit/60329b181796510881e381917e8f6f4ca5183e95))
+
+
+### Bug Fixes
+
+* bun not support dockerode container.putArchive ([a7fbf43](https://github.com/sobird/actions/commit/a7fbf43911417031db334de1d676c8c2b324b7bc))
+* bun not support dockerode exec.start hijack: true and stdin: true ([305b0fd](https://github.com/sobird/actions/commit/305b0fd6b17e7090c8b9b0b5893a0a52f5464bf7))
+* correct crypto import and enable lint-staged ([2a1cf7a](https://github.com/sobird/actions/commit/2a1cf7a6a2558641e107723ad22ac2b6f83e3037))
+* improve artifact route typing and path handling ([76aeb5c](https://github.com/sobird/actions/commit/76aeb5cd9c0355c755c15440cd330d2055ddfa33))
+* polynomial regular expression used on uncontrolled data ([e6cd728](https://github.com/sobird/actions/commit/e6cd72826b84e8dc55307f2a3ec189531438c868))
+* polynomial regular expression used on uncontrolled data ([79fc3d3](https://github.com/sobird/actions/commit/79fc3d303cbf27104039134f22286da8169afdf4))
+* Potential fix for code scanning alert no. 26: JWT missing secret or public key verification ([933947b](https://github.com/sobird/actions/commit/933947bc82f87db9ec856c6e75353c1d39fbf15f))
+* remove rate limiting from artifact cache endpoints ([49ec7df](https://github.com/sobird/actions/commit/49ec7df32013040cbdc55fe9bfa64bae00f71ca8))
+* resolve Bun compatibility with dockerode streams ([e7de1b9](https://github.com/sobird/actions/commit/e7de1b9a10342b445fd0269436e907ebc7a8903b))
+* restore proper error handling and test cleanup ([d4abeb2](https://github.com/sobird/actions/commit/d4abeb225c15f37792c5bdb91a515e1852822e36))
+* update imports and modernize code patterns ([ffd5ce3](https://github.com/sobird/actions/commit/ffd5ce330e76a2e5b7d66f4b56c358ca12dc5e68))
+
 ## [1.0.2](https://github.com/sobird/actions/compare/v1.0.1...v1.0.2) (2025-03-07)
 
 
