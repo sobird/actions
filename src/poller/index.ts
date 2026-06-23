@@ -92,7 +92,7 @@ class Poller {
     const { tasksVersion } = this;
     try {
       const fetchTaskResponse = await withTimeout(
-        this.client.fetchTask({ tasksVersion }),
+        (signal) => this.client.fetchTask({ tasksVersion }, { signal }),
         this.config.daemon.fetchTimeout,
       );
 
