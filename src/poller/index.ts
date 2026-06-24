@@ -96,15 +96,21 @@ class Poller {
         this.config.daemon.fetchTimeout,
       );
 
+      if (!fetchTaskResponse) {
+        return;
+      }
+
       if (fetchTaskResponse.tasksVersion > tasksVersion) {
         this.tasksVersion = fetchTaskResponse.tasksVersion;
       }
 
-      if (fetchTaskResponse.task) {
-        return fetchTaskResponse.task;
+      if (!fetchTaskResponse.task) {
+        return;
       }
 
       this.tasksVersion = BigInt(0);
+
+      return fetchTaskResponse.task;
     } catch (error) {
       logger.error('Failed to fetch task', (error as ConnectError).message);
     }
