@@ -183,14 +183,9 @@ class Executor<T = unknown> {
   // 创建一个互斥的执行器
   static Mutex(executor: Executor) {
     return new Executor(async (ctx) => {
-      const release = await mutex.acquire();
-      try {
-        await executor.execute(ctx);
-      } catch {
-        // todo
-      } finally {
-        release();
-      }
+      return mutex.runExclusive(async () => {
+        return executor.execute(ctx);
+      });
     });
   }
 
