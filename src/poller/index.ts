@@ -1,3 +1,4 @@
+// oxlint-disable no-await-in-loop
 /**
  * 轮询器/调度器，轮询服务器实例分配的任务，在这之前需要先向服务器声明runner的labels
  *
@@ -5,11 +6,13 @@
  */
 
 import { ConnectError } from '@connectrpc/connect';
+import { Semaphore } from 'async-mutex';
 import log4js from 'log4js';
 
 import type { Client, Config } from '@/index';
 import { Needs } from '@/runner/context/needs';
 import { withTimeout } from '@/utils';
+import { sleep } from '@/utils';
 
 import { WithLoggerHook } from '../common/logger';
 import Reporter from '../reporter';
@@ -23,37 +26,46 @@ class Poller {
 
   runningTasks = new Map();
 
+  private semaphore: Semaphore;
+
   constructor(
     public client: typeof Client.prototype.RunnerServiceClient,
     public config: InstanceType<typeof Config>,
     public runnerVersion?: string,
-  ) {}
+  ) {
+    this.semaphore = new Semaphore(this.config.daemon.capacity);
+  }
 
   async poll() {
     const { daemon } = this.config;
 
-    const checkInterval = setInterval(async () => {
-      if (this.runningTasks.size >= daemon.capacity) {
-        return;
-      }
-      logger.debug('Fetching task', this.tasksVersion, this.runningTasks.size, daemon.capacity);
-      const task = await this.fetchTask();
-
-      if (this.runningTasks.has(task?.id)) {
-        throw new Error(`Task ${task?.id} is already running`);
-      }
-
+    while (true) {
       try {
-        if (task) {
-          this.runningTasks.set(task.id, task);
-          await this.assign(task);
-          this.runningTasks.delete(task.id);
-        }
+        await this.semaphore.runExclusive(async () => {
+          await sleep(daemon.fetchInterval);
+
+          const task = await this.fetchTask();
+          if (!task) return;
+
+          if (this.runningTasks.has(task.id)) {
+            logger.warn(`Task ${task.id} is already running, skipping.`);
+            return;
+          }
+
+          try {
+            this.runningTasks.set(task.id, task);
+            await this.assign(task);
+          } catch (taskError) {
+            logger.error(`Failed to run task ${task.id}:`, taskError);
+          } finally {
+            this.runningTasks.delete(task.id);
+          }
+        });
       } catch (error) {
-        logger.error('Failed to run task', error);
-        clearInterval(checkInterval);
+        logger.error('Unexpected error in poll loop:', error);
+        await sleep(1000);
       }
-    }, daemon.fetchInterval);
+    }
   }
 
   async assign(task: Task) {
