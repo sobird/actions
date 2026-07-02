@@ -1,4 +1,3 @@
-import Config from '@/config';
 import Runner from '@/runner';
 // import DockerContainer from '@/runner/container/docker';
 import HostedContainer from '@/runner/container/hosted';

@@ -1,66 +1,36 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-/* eslint-disable max-classes-per-file */
 import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-import rc from 'rc';
-import { parse } from 'yaml';
+import { cosmiconfigSync } from 'cosmiconfig';
 
-import { ACTIONS_HOME } from '@/common/constants';
+import { readJsonSync } from '@/utils';
 
-import Daemon from './daemon';
-import { Registration } from './registration';
-import Runner from './runner';
+import { ConfigSchema, Registration } from './schema';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+export function getConfig() {
+  const explorer = cosmiconfigSync('actions');
+  const result = explorer.search();
+  const fileConfig = result?.config || {};
 
-interface Log {
-  level: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+  const parseResult = ConfigSchema.safeParse(fileConfig);
+
+  if (!parseResult.success) {
+    console.error('❌ Configuration error:', parseResult.error);
+    process.exit(1);
+  }
+
+  return parseResult.data;
 }
 
-class Config {
-  static Registration = Registration;
+export function saveRegistration(registration: Registration) {
+  const config = getConfig();
+  const configPath = config.runner.file ?? '.runner';
 
-  public log: Log;
-
-  public daemon: Daemon;
-
-  public runner: Runner;
-
-  /**
-   * The directory of actions.
-   * If it's empty, $ACTIONS_HOME/actions/ will be used.
-   */
-  public actionsPath: string;
-
-  public file: string = path.join(ACTIONS_HOME, 'config');
-
-  public registration: Registration;
-
-  constructor(config: Config) {
-    this.log = config.log ?? {};
-    this.daemon = new Daemon(config.daemon ?? {});
-    this.runner = new Runner(config.runner ?? {});
-    this.actionsPath = config.actionsPath ?? path.join(ACTIONS_HOME, 'actions');
-    this.registration = Registration.Load(config.registration.file);
-  }
-
-  save() {
-    fs.writeFileSync(this.file, JSON.stringify(this, null, 2), 'utf8');
-  }
-
-  static Load(file?: string, appname = 'actions') {
-    const config = rc(appname, parse(Config.Default), { config: file }, (content) => {
-      return parse(content) as Config;
-    });
-    return new Config(config);
-  }
-
-  static get Default() {
-    return fs.readFileSync(path.resolve(__dirname, 'default.yaml'), 'utf-8');
-  }
+  fs.writeFileSync(configPath, JSON.stringify(registration, null, 2), 'utf8');
 }
 
-export default Config;
+export function getRegistration(): Registration {
+  const config = getConfig();
+  const configPath = config.runner.file ?? '.runner';
+
+  return readJsonSync(configPath);
+}

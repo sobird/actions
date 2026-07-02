@@ -6,27 +6,28 @@
       "name": "actions",
       "dependencies": {
         "@actions/core": "^3.0.1",
-        "@actions/expressions": "^0.3.56",
+        "@actions/expressions": "^0.3.58",
         "@actions/hashfiles": "workspace:*",
-        "@actions/workflow-parser": "^0.3.56",
-        "@bufbuild/protobuf": "^2.12.0",
-        "@clack/prompts": "^1.4.0",
+        "@actions/workflow-parser": "^0.3.58",
+        "@bufbuild/protobuf": "^2.12.1",
+        "@clack/prompts": "^1.6.0",
         "@commander-js/extra-typings": "^14.0.0",
-        "@connectrpc/connect": "^2.1.1",
-        "@connectrpc/connect-next": "^2.1.1",
-        "@connectrpc/connect-node": "^2.1.1",
-        "@connectrpc/connect-web": "^2.1.1",
+        "@connectrpc/connect": "^2.1.2",
+        "@connectrpc/connect-next": "^2.1.2",
+        "@connectrpc/connect-node": "^2.1.2",
+        "@connectrpc/connect-web": "^2.1.2",
         "@monaco-editor/react": "^4.7.0",
         "@octokit/webhooks": "^14.2.0",
         "async-mutex": "^0.5.0",
-        "body-parser": "^2.2.2",
+        "body-parser": "^2.3.0",
         "chalk": "^5.6.2",
         "commander": "^14.0.3",
+        "cosmiconfig": "^9.0.2",
         "cron": "^4.4.0",
-        "dockerode": "^5.0.0",
+        "dockerode": "^5.0.1",
         "dotenv": "^17.4.2",
         "express": "^5.2.1",
-        "express-rate-limit": "^8.5.1",
+        "express-rate-limit": "^8.5.2",
         "git-url-parse": "^16.1.0",
         "ignore": "^7.0.5",
         "ip": "^2.0.1",
@@ -35,28 +36,27 @@
         "lodash-es": "^4.18.1",
         "log4js": "^6.9.1",
         "minimatch": "^10.2.5",
-        "next": "^16.2.6",
+        "next": "^16.2.9",
         "prompts": "^2.4.2",
-        "rc": "^1.2.8",
-        "react": "^19.2.6",
-        "react-dom": "^19.2.6",
+        "react": "^19.2.7",
+        "react-dom": "^19.2.7",
         "retry": "^0.13.1",
         "sequelize": "^6.37.8",
-        "shell-quote": "^1.8.3",
+        "shell-quote": "^1.9.0",
         "simple-git": "^3.36.0",
         "sqlite3": "^6.0.1",
         "ssh2": "^1.17.0",
-        "tar": "^7.5.15",
-        "yaml": "^2.8.4",
+        "tar": "^7.5.19",
+        "yaml": "^2.9.0",
         "zod": "^4.4.3",
       },
       "devDependencies": {
-        "@bufbuild/buf": "^1.69.0",
+        "@bufbuild/buf": "^1.71.0",
         "@commitlint/cli": "^20.5.3",
         "@commitlint/config-conventional": "^20.5.3",
-        "@tailwindcss/postcss": "^4.3.0",
+        "@tailwindcss/postcss": "^4.3.2",
         "@types/body-parser": "^1.19.6",
-        "@types/bun": "^1.3.13",
+        "@types/bun": "^1.3.14",
         "@types/dockerode": "^4.0.1",
         "@types/express": "^5.0.6",
         "@types/ip": "^1.1.3",
@@ -64,8 +64,7 @@
         "@types/lodash": "^4.17.24",
         "@types/lodash-es": "^4.17.12",
         "@types/prompts": "^2.4.9",
-        "@types/rc": "^1.2.4",
-        "@types/react": "^19.2.14",
+        "@types/react": "^19.2.17",
         "@types/react-dom": "^19.2.3",
         "@types/retry": "^0.12.5",
         "@types/shell-quote": "^1.7.5",
@@ -74,16 +73,16 @@
         "lint-staged": "^16.4.0",
         "node-notifier": "^10.0.1",
         "oxfmt": "^0.46.0",
-        "oxlint": "^1.63.0",
+        "oxlint": "^1.72.0",
         "oxlint-tsgolint": "^0.22.1",
-        "postcss": "^8.5.14",
+        "postcss": "^8.5.16",
         "smee-client": "^5.0.0",
         "supertest": "^7.2.2",
-        "tailwindcss": "^4.3.0",
+        "tailwindcss": "^4.3.2",
         "ts-protoc-gen": "^0.15.0",
-        "tsx": "^4.21.0",
+        "tsx": "^4.22.4",
         "typescript": "^6.0.3",
-        "vitest": "^4.1.5",
+        "vitest": "^4.1.9",
       },
     },
     "packages/hashfiles": {
@@ -595,8 +594,6 @@
 
     "@types/methods": ["@types/methods@1.1.4", "https://registry.npmmirror.com/@types/methods/-/methods-1.1.4.tgz", {}, "sha512-ymXWVrDiCxTBE3+RIrrP533E70eA+9qu7zdWoHuOmGujkYtzf4HQF96b8nwHLqhuf4ykX61IGRIB38CC6/sImQ=="],
 
-    "@types/minimist": ["@types/minimist@1.2.5", "https://registry.npmmirror.com/@types/minimist/-/minimist-1.2.5.tgz", {}, "sha512-hov8bUuiLiyFPGyFPE1lwWhmzYbirOXQNNo40+y3zow8aFVTeyn3VWL0VFFfdNddA8S4Vf0Tc062rzyNr7Paag=="],
-
     "@types/ms": ["@types/ms@2.1.0", "https://registry.npmmirror.com/@types/ms/-/ms-2.1.0.tgz", {}, "sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA=="],
 
     "@types/node": ["@types/node@25.6.0", "https://registry.npmmirror.com/@types/node/-/node-25.6.0.tgz", { "dependencies": { "undici-types": "~7.19.0" } }, "sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ=="],
@@ -608,8 +605,6 @@
     "@types/qs": ["@types/qs@6.15.0", "https://registry.npmmirror.com/@types/qs/-/qs-6.15.0.tgz", {}, "sha512-JawvT8iBVWpzTrz3EGw9BTQFg3BQNmwERdKE22vlTxawwtbyUSlMppvZYKLZzB5zgACXdXxbD3m1bXaMqP/9ow=="],
 
     "@types/range-parser": ["@types/range-parser@1.2.7", "https://registry.npmmirror.com/@types/range-parser/-/range-parser-1.2.7.tgz", {}, "sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ=="],
-
-    "@types/rc": ["@types/rc@1.2.4", "https://registry.npmmirror.com/@types/rc/-/rc-1.2.4.tgz", { "dependencies": { "@types/minimist": "*" } }, "sha512-xD6+epQoMH79A1uwmJIq25D+XZ57jUzCQ1DGSvs3tGKdx7QDYOOaMh6m5KBkEIW4+Cy5++bZ7NLDfdpNiYVKYA=="],
 
     "@types/react": ["@types/react@19.2.17", "https://registry.npmmirror.com/@types/react/-/react-19.2.17.tgz", { "dependencies": { "csstype": "^3.2.2" } }, "sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw=="],
 
@@ -757,7 +752,7 @@
 
     "cookiejar": ["cookiejar@2.1.4", "https://registry.npmmirror.com/cookiejar/-/cookiejar-2.1.4.tgz", {}, "sha512-LDx6oHrK+PhzLKJU9j5S7/Y3jM/mUHvD/DeI1WQmJn652iPC5Y4TBzC9l+5OMOXlyTTA+SmVUPm0HQUwpD5Jqw=="],
 
-    "cosmiconfig": ["cosmiconfig@9.0.1", "https://registry.npmmirror.com/cosmiconfig/-/cosmiconfig-9.0.1.tgz", { "dependencies": { "env-paths": "^2.2.1", "import-fresh": "^3.3.0", "js-yaml": "^4.1.0", "parse-json": "^5.2.0" }, "peerDependencies": { "typescript": ">=4.9.5" }, "optionalPeers": ["typescript"] }, "sha512-hr4ihw+DBqcvrsEDioRO31Z17x71pUYoNe/4h6Z0wB72p7MU7/9gH8Q3s12NFhHPfYBBOV3qyfUxmr/Yn3shnQ=="],
+    "cosmiconfig": ["cosmiconfig@9.0.2", "https://registry.npmmirror.com/cosmiconfig/-/cosmiconfig-9.0.2.tgz", { "dependencies": { "env-paths": "^2.2.1", "import-fresh": "^3.3.0", "js-yaml": "^4.1.0", "parse-json": "^5.2.0" }, "peerDependencies": { "typescript": ">=4.9.5" }, "optionalPeers": ["typescript"] }, "sha512-gtTZxTDau1wL7Y7zifc2dd8jHSK/k6BTx/2Xp/BpdlAdnlYWFVt7qhJqgwi7637yRwRQ3qL4ZidbB4I8tA5VOg=="],
 
     "cosmiconfig-typescript-loader": ["cosmiconfig-typescript-loader@6.3.0", "https://registry.npmmirror.com/cosmiconfig-typescript-loader/-/cosmiconfig-typescript-loader-6.3.0.tgz", { "dependencies": { "jiti": "2.6.1" }, "peerDependencies": { "@types/node": "*", "cosmiconfig": ">=9", "typescript": ">=5" } }, "sha512-Akr82WH1Wfqatyiqpj8HDkO2o2KmJRu1FhKfSNJP3K4IdXwHfEyL7MOb62i1AGQVLtIQM+iCE9CGOtrfhR+mmA=="],
 
@@ -1177,7 +1172,7 @@
 
     "require-from-string": ["require-from-string@2.0.2", "https://registry.npmmirror.com/require-from-string/-/require-from-string-2.0.2.tgz", {}, "sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw=="],
 
-    "resolve-from": ["resolve-from@5.0.0", "https://registry.npmmirror.com/resolve-from/-/resolve-from-5.0.0.tgz", {}, "sha512-qYg9KP24dD5qka9J47d0aVky0N+b4fTU89LN9iDnjB5waksiC49rvMB0PrUJQGoTmH50XPiqOvAjDfaijGxYZw=="],
+    "resolve-from": ["resolve-from@4.0.0", "https://registry.npmmirror.com/resolve-from/-/resolve-from-4.0.0.tgz", {}, "sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g=="],
 
     "restore-cursor": ["restore-cursor@5.1.0", "https://registry.npmmirror.com/restore-cursor/-/restore-cursor-5.1.0.tgz", { "dependencies": { "onetime": "^7.0.0", "signal-exit": "^4.1.0" } }, "sha512-oMA2dcrw6u0YfxJQXm342bFKX/E4sG9rbTzO9ptUcR/e8A33cHuvStiYOwH7fszkZlZ1z/ta9AAoPk2F4qIOHA=="],
 
@@ -1361,6 +1356,10 @@
 
     "@actions/http-client/undici": ["undici@6.25.0", "https://registry.npmmirror.com/undici/-/undici-6.25.0.tgz", {}, "sha512-ZgpWDC5gmNiuY9CnLVXEH8rl50xhRCuLNA97fAUnKi8RRuV4E6KG31pDTsLVUKnohJE0I3XDrTeEydAXRw47xg=="],
 
+    "@commitlint/load/cosmiconfig": ["cosmiconfig@9.0.1", "https://registry.npmmirror.com/cosmiconfig/-/cosmiconfig-9.0.1.tgz", { "dependencies": { "env-paths": "^2.2.1", "import-fresh": "^3.3.0", "js-yaml": "^4.1.0", "parse-json": "^5.2.0" }, "peerDependencies": { "typescript": ">=4.9.5" }, "optionalPeers": ["typescript"] }, "sha512-hr4ihw+DBqcvrsEDioRO31Z17x71pUYoNe/4h6Z0wB72p7MU7/9gH8Q3s12NFhHPfYBBOV3qyfUxmr/Yn3shnQ=="],
+
+    "@commitlint/resolve-extends/resolve-from": ["resolve-from@5.0.0", "https://registry.npmmirror.com/resolve-from/-/resolve-from-5.0.0.tgz", {}, "sha512-qYg9KP24dD5qka9J47d0aVky0N+b4fTU89LN9iDnjB5waksiC49rvMB0PrUJQGoTmH50XPiqOvAjDfaijGxYZw=="],
+
     "@grpc/grpc-js/@grpc/proto-loader": ["@grpc/proto-loader@0.8.0", "https://registry.npmmirror.com/@grpc/proto-loader/-/proto-loader-0.8.0.tgz", { "dependencies": { "lodash.camelcase": "^4.3.0", "long": "^5.0.0", "protobufjs": "^7.5.3", "yargs": "^17.7.2" }, "bin": { "proto-loader-gen-types": "build/bin/proto-loader-gen-types.js" } }, "sha512-rc1hOQtjIWGxcxpb9aHAfLpIctjEnsDehj0DAiVfBlmT84uvR0uUtN2hEi/ecvWVjXUGf5qPF4qEgiLOx1YIMQ=="],
 
     "@tailwindcss/oxide-wasm32-wasi/@emnapi/core": ["@emnapi/core@1.11.1", "https://registry.npmmirror.com/@emnapi/core/-/core-1.11.1.tgz", { "dependencies": { "@emnapi/wasi-threads": "1.2.2", "tslib": "^2.4.0" }, "bundled": true }, "sha512-RSvbQmHzdKzNsLYa/wHrbc3KN4sYLKAdPZxqiM2HATqv/SBk2/ENSHpvXGaLOMcsAyz0poEGqkmmKYG3OWiJEQ=="],
@@ -1394,8 +1393,6 @@
     "form-data/mime-types": ["mime-types@2.1.35", "https://registry.npmmirror.com/mime-types/-/mime-types-2.1.35.tgz", { "dependencies": { "mime-db": "1.52.0" } }, "sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw=="],
 
     "global-directory/ini": ["ini@6.0.0", "https://registry.npmmirror.com/ini/-/ini-6.0.0.tgz", {}, "sha512-IBTdIkzZNOpqm7q3dRqJvMaldXjDHWkEDfrwGEQTs5eaQMWV+djAhR+wahyNNMAa+qpbDUhBMVt4ZKNwpPm7xQ=="],
-
-    "import-fresh/resolve-from": ["resolve-from@4.0.0", "https://registry.npmmirror.com/resolve-from/-/resolve-from-4.0.0.tgz", {}, "sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g=="],
 
     "lint-staged/yaml": ["yaml@2.8.3", "https://registry.npmmirror.com/yaml/-/yaml-2.8.3.tgz", { "bin": { "yaml": "bin.mjs" } }, "sha512-AvbaCLOO2Otw/lW5bmh9d/WEdcDFdQp2Z2ZUH3pX9U2ihyUY0nvLv7J6TrWowklRGPYbB/IuIMfYgxaCPg5Bpg=="],
 

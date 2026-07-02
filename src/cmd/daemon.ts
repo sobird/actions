@@ -25,7 +25,12 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
     const options = program.optsWithGlobals();
     const version = program.parent?.version();
     const appname = program.parent!.name();
+
+    console.log('appname', appname, version, options);
+
     const appconf = await Config.Load(options.config, appname);
+
+    console.log('appconf', appconf);
 
     logger.level = appconf.log.level;
     logger.info('Starting runner daemon');

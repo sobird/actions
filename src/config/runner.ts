@@ -1,8 +1,5 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 /**
- * Runner Configurator
- *
- * sobird<i@sobird.me> at 2024/08/13 20:25:25 created.
+ * Runner配置类 - 重构为基于新类型的实现
  */
 
 import os from "node:os";
@@ -27,12 +24,14 @@ import { readConfSync, generateId, readJsonSync, lodash } from "@/utils";
 
 import Container from "./container";
 import { createAuthorizationToken } from "../common/auth";
+import type { RunnerConfig } from "./types";
 
 const logger = log4js.getLogger();
 
 const ACTIONS_HOME = path.join(os.homedir(), ".actions");
 export const SELF_HOSTED = "-self-hosted";
-class Runner implements Omit<Options, ""> {
+
+class Runner implements Omit<Options, "">, RunnerConfig {
   /**
    * path to workflow file(s)
    */
@@ -288,84 +287,83 @@ class Runner implements Omit<Options, ""> {
 
   public containerOptions: string;
 
-  constructor(runner: Runner) {
+  constructor(runner: Partial<RunnerConfig> = {}) {
     // common
-    this.workflows = runner.workflows;
-    this.recursive = runner.recursive;
+    this.workflows = (runner as any).workflows || "";
+    this.recursive = (runner as any).recursive || false;
     this.workspace = runner.workspace || "/home/runner";
     this.workdir = runner.workdir || "";
-    this.bindWorkdir = runner.bindWorkdir;
-    this.remoteName = runner.remoteName;
-    this.defaultBranch = runner.defaultBranch;
+    this.bindWorkdir = runner.bindWorkdir === true;
+    this.remoteName = runner.remoteName || "";
+    this.defaultBranch = runner.defaultBranch || "";
 
     // remote actions
-    this.skipCheckout = runner.skipCheckout;
-    this.useGitignore = runner.useGitignore;
-    this.serverInstance = runner.serverInstance;
+    this.skipCheckout = runner.skipCheckout || false;
+    this.useGitignore = runner.useGitignore !== false;
+    this.serverInstance = runner.serverInstance || "";
     this.actionInstance = runner.actionInstance || "github.com";
-    this.replaceGheActionWithGithubCom = runner.replaceGheActionWithGithubCom;
-    this.replaceGheActionTokenWithGithubCom = runner.replaceGheActionTokenWithGithubCom;
+    this.replaceGheActionWithGithubCom = runner.replaceGheActionWithGithubCom || [];
+    this.replaceGheActionTokenWithGithubCom = runner.replaceGheActionTokenWithGithubCom || "";
 
     // context
-    this.context = new Context(runner.context ?? {});
-    this.actor = runner.actor;
-    this.token = runner.token;
-    this.eventFile = runner.eventFile;
-    this.env = runner.env ?? {};
-    this.envFile = runner.envFile ?? "";
-    this.vars = runner.vars ?? {};
-    this.varsFile = runner.varsFile;
-    this.inputs = runner.inputs ?? {};
-    this.inputsFile = runner.inputsFile;
-    this.secrets = runner.secrets ?? {};
-    this.secretsFile = runner.secretsFile;
+    this.context = new Context(runner.context || {});
+    this.actor = runner.actor || "";
+    this.token = runner.token || "";
+    this.eventFile = runner.eventFile || "event.json";
+    this.env = runner.env || {};
+    this.envFile = runner.envFile || "";
+    this.vars = runner.vars || {};
+    this.varsFile = runner.varsFile || "";
+    this.inputs = runner.inputs || {};
+    this.inputsFile = runner.inputsFile || "";
+    this.secrets = runner.secrets || {};
+    this.secretsFile = runner.secretsFile || "";
 
-    this.insecure = runner.insecure ?? false;
+    this.insecure = runner.insecure || false;
 
     // logger
-    this.logOutput = runner.logOutput;
+    this.logOutput = runner.logOutput !== false;
     this.logJson = runner.logJson;
     this.logPrefixJobId = runner.logPrefixJobId;
     this.insecureSecrets = runner.insecureSecrets;
 
     // actions/cache
-    this.actionsCache = runner.actionsCache ?? true;
+    this.actionsCache = runner.actionsCache !== false;
     this.actionsCachePath = runner.actionsCachePath || path.join(ACTIONS_HOME, "artifact", "cache");
     this.actionsCacheAddr = runner.actionsCacheAddr || ip.address();
-    this.actionsCachePort = runner.actionsCachePort ?? 0;
-    this.actionsCacheExternal = runner.actionsCacheExternal ?? "";
+    this.actionsCachePort = runner.actionsCachePort || 0;
+    this.actionsCacheExternal = runner.actionsCacheExternal || "";
 
     // cache actions
-    this.cacheActions = runner.cacheActions;
+    this.cacheActions = runner.cacheActions as true;
     this.actionsPath = runner.actionsPath || path.join(ACTIONS_HOME, "actions");
-    this.repositories = runner.repositories;
-    this.actionsOffline = runner.actionsOffline;
+    this.repositories = runner.repositories || {};
 
     // Artifact Server
-    this.artifactPath = runner.artifactPath;
+    this.artifactPath = runner.artifactPath || "";
     this.artifactAddr = runner.artifactAddr || ip.address();
-    this.artifactPort = runner.artifactPort;
+    this.artifactPort = runner.artifactPort || 0;
 
     // container
-    this.container = new Container(runner.container ?? {});
-    this.matrix = runner.matrix;
-    this.labels = runner.labels ?? [];
-    this.image = runner.image;
-    this.hosted = runner.hosted;
-    this.pull = runner.pull;
-    this.rebuild = runner.rebuild;
-    this.reuse = runner.reuse;
+    this.container = new Container(runner.container || {});
+    this.matrix = runner.matrix || {};
+    this.labels = runner.labels || [];
+    this.image = runner.image || "";
+    this.hosted = runner.hosted as true;
+    this.pull = runner.pull !== false;
+    this.rebuild = runner.rebuild !== false;
+    this.reuse = runner.reuse !== false;
     this.containerNamePrefix = runner.containerNamePrefix;
-    this.containerNetwork = runner.containerNetwork;
-    this.containerPlatform = runner.containerPlatform;
-    this.containerDaemonSocket = runner.containerDaemonSocket;
-    this.containerPrivileged = runner.containerPrivileged;
-    this.containerAutoRemove = runner.containerAutoRemove;
-    this.containerUsernsMode = runner.containerUsernsMode;
-    this.containerCapAdd = runner.containerCapAdd;
-    this.containerCapDrop = runner.containerCapDrop;
+    this.containerNetwork = runner.containerNetwork || "";
+    this.containerPlatform = runner.containerPlatform || "";
+    this.containerDaemonSocket = runner.containerDaemonSocket || "";
+    this.containerPrivileged = runner.containerPrivileged as true;
+    this.containerAutoRemove = runner.containerAutoRemove as true;
+    this.containerUsernsMode = runner.containerUsernsMode || "";
+    this.containerCapAdd = runner.containerCapAdd || [];
+    this.containerCapDrop = runner.containerCapDrop || [];
     this.containerMaxLifetime = runner.containerMaxLifetime || 3600;
-    this.containerOptions = runner.containerOptions;
+    this.containerOptions = runner.containerOptions || "";
   }
 
   // merge cli options

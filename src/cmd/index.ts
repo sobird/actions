@@ -3,10 +3,10 @@
 import { Command } from 'commander';
 
 import pkg from '../../package.json' with { type: 'json' };
-import { configCommand } from './config';
-import { daemonCommand } from './daemon';
+// import { configCommand } from './config';
+// import { daemonCommand } from './daemon';
 import { registerCommand } from './register';
-import { runCommand } from './run';
+// import { runCommand } from './run';
 
 const program = new Command();
 
@@ -23,9 +23,9 @@ program
 // });
 
 program.addCommand(registerCommand);
-program.addCommand(daemonCommand);
-program.addCommand(configCommand);
-program.addCommand(runCommand);
+// program.addCommand(daemonCommand);
+// program.addCommand(configCommand);
+// program.addCommand(runCommand);
 
 try {
   program.exitOverride();
