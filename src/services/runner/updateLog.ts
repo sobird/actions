@@ -1,18 +1,18 @@
-import { create } from "@bufbuild/protobuf";
-import { ConnectError } from "@connectrpc/connect";
+import { create } from '@bufbuild/protobuf';
+import { ConnectError } from '@connectrpc/connect';
 
-import models from "@/models";
-import Constants from "@/common/constants";
-import Log from "@/log";
-import { UpdateLogResponseSchema } from "@/service/runner/v1/messages_pb";
+import Constants from '@/common/constants';
+import { UpdateLogResponseSchema } from '@/gen/runner/v1/messages_pb';
+import Log from '@/log';
+import models from '@/models';
 
-import type { ServiceMethodImpl } from ".";
+import type { ServiceMethodImpl } from '.';
 
 const { XRunnerUUID } = Constants.Protocol;
 
-export const updateLog: ServiceMethodImpl["updateLog"] = async (req, { requestHeader }) => {
+export const updateLog: ServiceMethodImpl['updateLog'] = async (req, { requestHeader }) => {
   const runnerUUID = requestHeader.get(XRunnerUUID);
-  console.log("runnerUUID", runnerUUID);
+  console.log('runnerUUID', runnerUUID);
 
   const response = create(UpdateLogResponseSchema);
 
@@ -27,11 +27,11 @@ export const updateLog: ServiceMethodImpl["updateLog"] = async (req, { requestHe
 
   if (task?.logInStorage) {
     // AlreadyExists
-    throw new ConnectError("log file has been archived", 6);
+    throw new ConnectError('log file has been archived', 6);
   }
 
   const rows = req.rows.slice(ack - Number(req.index));
-  const ns = await Log.write("test.log", task?.logSize || 0, rows);
+  const ns = await Log.write('test.log', task?.logSize || 0, rows);
 
   task!.logLength += rows.length;
   ns.forEach((item) => {

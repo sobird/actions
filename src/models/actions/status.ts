@@ -4,7 +4,7 @@
  * sobird<i@sobird.me> at 2024/12/01 21:08:55 created.
  */
 
-import { Result } from "@/service/runner/v1/messages_pb";
+import { Result } from '@/gen/runner/v1/messages_pb';
 
 export enum EStatus {
   Unknown, // 0, consistent with runnerv1.Result_RESULT_UNSPECIFIED

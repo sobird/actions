@@ -1,14 +1,14 @@
-import { createClient, createRouterTransport, ConnectError } from "@connectrpc/connect";
+import { createClient, createRouterTransport, ConnectError } from '@connectrpc/connect';
 
-import { routes } from "@/app/api/actions/[[...connect]]/connect";
-import { RunnerService } from "@/service/runner/v1/services_pb";
+import { routes } from '@/app/api/actions/[[...connect]]/connect';
+import { RunnerService } from '@/gen/runner/v1/services_pb';
 
-describe("RunnerService register", () => {
-  it("getServers", async () => {
+describe('RunnerService register', () => {
+  it('getServers', async () => {
     // Create an in-memory transport with the routes from connect.ts
     const transport = createRouterTransport(routes, {
       transport: {
-        baseUrl: "http://test.com/",
+        baseUrl: 'http://test.com/',
       },
     });
 
@@ -16,8 +16,8 @@ describe("RunnerService register", () => {
 
     expect(
       client.register({
-        token: "ddd",
+        token: 'ddd',
       }),
-    ).rejects.toThrowError(new ConnectError("missing runner token, name", 3));
+    ).rejects.toThrowError(new ConnectError('missing runner token, name', 3));
   });
 });

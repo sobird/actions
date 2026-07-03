@@ -4,15 +4,14 @@
  *
  * sobird<i@sobird.me> at 2024/04/26 0:19:33 created.
  */
-import util from "node:util";
+import util from 'node:util';
 
-import { create, clone } from "@bufbuild/protobuf";
-import { timestampFromDate } from "@bufbuild/protobuf/wkt";
-import { ConnectError } from "@connectrpc/connect";
-import log4js, { LoggingEvent } from "log4js";
-import retry from "retry";
+import { create, clone } from '@bufbuild/protobuf';
+import { timestampFromDate } from '@bufbuild/protobuf/wkt';
+import { ConnectError } from '@connectrpc/connect';
+import log4js, { LoggingEvent } from 'log4js';
+import retry from 'retry';
 
-import type { Client } from "@/index";
 import {
   LogRow,
   LogRowSchema,
@@ -23,10 +22,11 @@ import {
   StepState,
   StepStateSchema,
   Result,
-} from "@/service/runner/v1/messages_pb";
-import { Replacer } from "@/utils";
+} from '@/gen/runner/v1/messages_pb';
+import type { Client } from '@/index';
+import { Replacer } from '@/utils';
 
-import { LoggerHook, LogEntry } from "../common/logger";
+import { LoggerHook, LogEntry } from '../common/logger';
 
 const logger = log4js.getLogger();
 
@@ -47,7 +47,7 @@ class Reporter implements LoggerHook {
 
   public debugOutputEnabled = false;
 
-  private stopCommandEndToken = "";
+  private stopCommandEndToken = '';
 
   private logOffset = BigInt(0);
 
@@ -60,22 +60,22 @@ class Reporter implements LoggerHook {
     public task: Task = create(TaskSchema),
     public cancel = () => {},
   ) {
-    ["token", "gitea_runtime_token"].forEach((key) => {
+    ['token', 'gitea_runtime_token'].forEach((key) => {
       const value = task.context?.[key];
       if (value) {
-        this.logReplacer.add(value, "***");
+        this.logReplacer.add(value, '***');
       }
     });
 
     Object.entries(task.secrets).forEach(([, value]) => {
-      this.logReplacer.add(value, "***");
+      this.logReplacer.add(value, '***');
     });
 
     this.state = create(TaskStateSchema, {
       id: task.id,
     });
 
-    if (task.secrets.ACTIONS_STEP_DEBUG === "true") {
+    if (task.secrets.ACTIONS_STEP_DEBUG === 'true') {
       this.debugOutputEnabled = true;
     }
   }
@@ -121,7 +121,7 @@ class Reporter implements LoggerHook {
 
       // 更新任务状态
       const { stage } = entry.context;
-      if (stage !== "Main") {
+      if (stage !== 'Main') {
         // 处理作业结果
         const jobResult = Reporter.parseResult(entry.context.jobResult);
         if (jobResult !== undefined) {
@@ -213,7 +213,7 @@ class Reporter implements LoggerHook {
     //   return;
     // }
 
-    logger.debug("Reporting task:", this.task.id);
+    logger.debug('Reporting task:', this.task.id);
 
     // 报告任务日志
     await this.reportLog(false);
@@ -244,7 +244,7 @@ class Reporter implements LoggerHook {
   setOutputs(outputs: Map<string, string>): void {
     outputs.forEach((value, key) => {
       if (key.length > 255) {
-        logger.warn("Ignore output because the key is too long", key);
+        logger.warn('Ignore output because the key is too long', key);
         return;
       }
       if (value.length > 1024 * 1024) {
@@ -271,7 +271,7 @@ class Reporter implements LoggerHook {
       if (this.state.result === Result.UNSPECIFIED) {
         if (!lastWords) {
           // 提前终止
-          lastWords = "Early termination";
+          lastWords = 'Early termination';
         }
         // 更新所有未指定结果的步骤为已取消
         this.state.steps.map((item) => {
@@ -308,7 +308,7 @@ class Reporter implements LoggerHook {
     try {
       await this.retryReportLog();
     } catch (error) {
-      logger.error("Failed to report logs:", error);
+      logger.error('Failed to report logs:', error);
     }
   }
 
@@ -343,17 +343,17 @@ class Reporter implements LoggerHook {
       // 获取服务端确认的日志索引
       const { ackIndex } = updateLogResponse;
       if (ackIndex < this.logOffset) {
-        logger.info("Submitted logs are lost");
+        logger.info('Submitted logs are lost');
       }
 
       this.logRows = this.logRows.slice(Number(ackIndex - this.logOffset));
       this.logOffset = ackIndex;
 
       if (noMore && ackIndex < this.logOffset + BigInt(rows.length)) {
-        logger.info("Not all logs are submitted");
+        logger.info('Not all logs are submitted');
       }
     } catch (error) {
-      logger.error("Update log fail:", (error as ConnectError).message);
+      logger.error('Update log fail:', (error as ConnectError).message);
     }
   }
 
@@ -372,14 +372,14 @@ class Reporter implements LoggerHook {
       }
 
       updateTaskResponse.sentOutputs.forEach((outputKey) => {
-        this.outputs.set(outputKey, "");
+        this.outputs.set(outputKey, '');
       });
 
       // 如果任务被取消
       if (updateTaskResponse.state && updateTaskResponse.state.result === Result.CANCELLED) {
-        logger.debug("Task canceled!");
+        logger.debug('Task canceled!');
         // @todo 清除reported定时器
-        this.close("Task canceled!");
+        this.close('Task canceled!');
         this.cancel();
       }
 
@@ -394,7 +394,7 @@ class Reporter implements LoggerHook {
         logger.info(`There are still outputs that have not been sent: ${notSent}`);
       }
     } catch (error) {
-      logger.error("Update task fail:", (error as ConnectError).message);
+      logger.error('Update task fail:', (error as ConnectError).message);
     }
   }
 
@@ -425,10 +425,10 @@ class Reporter implements LoggerHook {
 
   static parseResult(result: any): Result {
     // 解析结果字符串的逻辑
-    let str = "";
-    if (typeof result === "string") {
+    let str = '';
+    if (typeof result === 'string') {
       str = result;
-    } else if (result && typeof result.toString === "function") {
+    } else if (result && typeof result.toString === 'function') {
       str = result.toString();
     }
     return stringToResult[str];
@@ -443,40 +443,40 @@ class Reporter implements LoggerHook {
    * @param value
    */
   handleCommand(originalContent: string, command: string, parameters: string, value: string) {
-    if (this.stopCommandEndToken !== "" && command !== this.stopCommandEndToken) {
+    if (this.stopCommandEndToken !== '' && command !== this.stopCommandEndToken) {
       return originalContent;
     }
 
     switch (command) {
-      case "add-mask":
+      case 'add-mask':
         /**
          * @todo
          * 此处逻辑可能有问题，这将会mask添加到实例全局
          */
         this.addMask(value);
         return null;
-      case "debug":
+      case 'debug':
         if (this.debugOutputEnabled) {
           return value;
         }
         return null;
       // The following cases are placeholders for future implementation
       // and currently just return the original content.
-      case "notice":
+      case 'notice':
         return originalContent;
-      case "warning":
+      case 'warning':
         return originalContent;
-      case "error":
+      case 'error':
         return originalContent;
-      case "group":
+      case 'group':
         return originalContent;
-      case "endgroup":
+      case 'endgroup':
         return originalContent;
-      case "stop-commands":
+      case 'stop-commands':
         this.stopCommandEndToken = value;
         return null;
       case this.stopCommandEndToken:
-        this.stopCommandEndToken = "";
+        this.stopCommandEndToken = '';
         return null;
       default:
         return originalContent;
@@ -492,7 +492,7 @@ class Reporter implements LoggerHook {
    */
   parseLogRow(entry: LoggingEvent) {
     const cmdRegex = /^::([^ :]+)( .*)?::(.*)$/;
-    let content = entry.data.join().replace(/\r|\n$/g, "");
+    let content = entry.data.join().replace(/\r|\n$/g, '');
 
     const matches = cmdRegex.exec(content);
     if (matches) {
@@ -518,7 +518,7 @@ class Reporter implements LoggerHook {
    * @param mask
    */
   addMask(mask: string): void {
-    this.logReplacer.add(mask, "***");
+    this.logReplacer.add(mask, '***');
   }
 }
 

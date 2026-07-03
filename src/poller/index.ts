@@ -15,8 +15,8 @@ import { withTimeout } from '@/utils';
 import { sleep } from '@/utils';
 
 import { WithLoggerHook } from '../common/logger';
+import { Task } from '../gen/runner/v1/messages_pb';
 import Reporter from '../reporter';
-import { Task } from '../service/runner/v1/messages_pb';
 import Workflow from '../workflow';
 
 const logger = log4js.getLogger();

@@ -1,14 +1,11 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-import fs from 'fs';
+// oxlint-disable no-underscore-dangle
+import fs from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'path';
 
 import { create } from '@bufbuild/protobuf';
 
-import context from './data/context';
-import {
-  PingResponseSchema,
-} from '../ping/v1/messages_pb';
+import { PingResponseSchema } from '../ping/v1/messages_pb';
 import {
   UpdateLogResponseSchema,
   DeclareResponseSchema,
@@ -19,6 +16,7 @@ import {
   TaskStateSchema,
   TaskNeedSchema,
 } from '../runner/v1/messages_pb';
+import context from './data/context';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -61,20 +59,24 @@ const mock = vi.fn().mockImplementation(() => {
     },
     RunnerServiceClient: {
       register: vi.fn(),
-      declare: vi.fn().mockResolvedValue(create(DeclareResponseSchema, {
-        runner: create(RunnerSchema),
-      })),
-      fetchTask: vi.fn().mockResolvedValue(fetchTaskResponse),
-      updateTask: vi.fn().mockResolvedValue(create(UpdateTaskResponseSchema, {
-        state: create(TaskStateSchema, {
-          id: BigInt(123),
-          result: 0,
-          startedAt: undefined,
-          stoppedAt: undefined,
-          steps: [],
+      declare: vi.fn().mockResolvedValue(
+        create(DeclareResponseSchema, {
+          runner: create(RunnerSchema),
         }),
-        sentOutputs: [],
-      })),
+      ),
+      fetchTask: vi.fn().mockResolvedValue(fetchTaskResponse),
+      updateTask: vi.fn().mockResolvedValue(
+        create(UpdateTaskResponseSchema, {
+          state: create(TaskStateSchema, {
+            id: BigInt(123),
+            result: 0,
+            startedAt: undefined,
+            stoppedAt: undefined,
+            steps: [],
+          }),
+          sentOutputs: [],
+        }),
+      ),
       updateLog: vi.fn((request) => {
         return create(UpdateLogResponseSchema, {
           ackIndex: request.index + BigInt(request.rows.length),

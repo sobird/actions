@@ -4,7 +4,7 @@
  * sobird<i@sobird.me> at 2024/11/16 23:31:19 created.
  */
 
-import { randomBytes, pbkdf2Sync, timingSafeEqual } from "node:crypto";
+import { randomBytes, pbkdf2Sync, timingSafeEqual } from 'node:crypto';
 
 import {
   DataTypes,
@@ -21,12 +21,12 @@ import {
   type HasManyHasAssociationsMixin,
   type HasManyCreateAssociationMixin,
   type HasManyCountAssociationsMixin,
-} from "sequelize";
+} from 'sequelize';
 
-import { sequelize, BaseModel } from "@/lib/sequelize";
-import { RunnerStatus } from "@/service/runner/v1/messages_pb";
+import { RunnerStatus } from '@/gen/runner/v1/messages_pb';
+import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import type { Models, ActionsTask } from ".";
+import type { Models, ActionsTask } from '.';
 
 /** These are all the attributes in the ActionsRunner model */
 export type ActionsRunnerAttributes = InferAttributes<ActionsRunner>;
@@ -34,7 +34,7 @@ export type ActionsRunnerAttributes = InferAttributes<ActionsRunner>;
 /** Some attributes are optional in `ActionsRunner.build` and `ActionsRunner.create` calls */
 export type ActionsRunnerCreationAttributes = InferCreationAttributes<ActionsRunner>;
 
-export type ActionsTaskPrimaryKey = ActionsTask["id"];
+export type ActionsTaskPrimaryKey = ActionsTask['id'];
 
 const RunnerOfflineTime = 60 * 1000;
 const RunnerIdleTime = 10 * 1000;
@@ -68,7 +68,7 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
 
   declare lastActive: CreationOptional<Date>;
 
-  declare isOnline: CreationOptional<Boolean>;
+  declare isOnline: CreationOptional<boolean>;
 
   declare labels: string[];
 
@@ -100,7 +100,7 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
   declare countActionsTasks: HasManyCountAssociationsMixin;
 
   static associate({ ActionsTask }: Models) {
-    this.hasMany(ActionsTask, { foreignKey: "runnerId" });
+    this.hasMany(ActionsTask, { foreignKey: 'runnerId' });
   }
 
   public verifyToken(token: string) {
@@ -112,7 +112,7 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
   }
 
   public static hashToken(token: string, salt: string) {
-    return pbkdf2Sync(token, salt, 100000, 64, "sha512").toString("hex");
+    return pbkdf2Sync(token, salt, 100000, 64, 'sha512').toString('hex');
   }
 }
 
@@ -150,24 +150,24 @@ ActionsRunner.init(
     token: {
       type: DataTypes.VIRTUAL,
       defaultValue: () => {
-        return randomBytes(20).toString("hex");
+        return randomBytes(20).toString('hex');
       },
       unique: true,
       allowNull: false,
-      comment: "runner token",
+      comment: 'runner token',
     },
     tokenSalt: {
       type: DataTypes.STRING,
       unique: true,
       allowNull: false,
       defaultValue: () => {
-        return randomBytes(16).toString("hex");
+        return randomBytes(16).toString('hex');
       },
-      comment: "token salt",
+      comment: 'token salt',
     },
     tokenHash: {
       type: DataTypes.STRING,
-      comment: "token hash",
+      comment: 'token hash',
     },
     lastOnline: {
       type: DataTypes.DATE,
@@ -189,14 +189,14 @@ ActionsRunner.init(
     },
     labels: {
       type: DataTypes.JSON,
-      comment: "Store labels defined in state file (default: .runner file) of `runner`",
+      comment: 'Store labels defined in state file (default: .runner file) of `runner`',
     },
     status: {
       type: DataTypes.VIRTUAL,
       get() {
         const now = Date.now();
-        const lastOnline = this.getDataValue("lastOnline");
-        const lastActive = this.getDataValue("lastActive");
+        const lastOnline = this.getDataValue('lastOnline');
+        const lastActive = this.getDataValue('lastActive');
         if (now - lastOnline.getTime() > RunnerOfflineTime) {
           return RunnerStatus.OFFLINE;
         }
@@ -209,7 +209,7 @@ ActionsRunner.init(
   },
   {
     sequelize,
-    modelName: "ActionsRunner",
+    modelName: 'ActionsRunner',
   },
 );
 

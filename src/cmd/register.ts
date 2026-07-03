@@ -35,7 +35,7 @@ async function doRegister(options: RegisterOptions) {
         logger.info('Successfully pinged the instance server');
 
         clearTimeout(timer);
-        resolve(response);
+        resolve(response.data);
       } catch (err) {
         logger.fatal('Cannot ping the instance server:', (err as Error).message);
         timer = setTimeout(ping, 1000);

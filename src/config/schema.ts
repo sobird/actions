@@ -9,17 +9,6 @@ export const LogSchema = z
   })
   .prefault({});
 
-export const RegistrationSchema = z.object({
-  id: z.bigint(),
-  uuid: z.string(),
-  name: z.string(),
-  token: z.string(),
-  address: z.string(),
-  labels: z.array(z.string()),
-});
-
-export type Registration = z.infer<typeof RegistrationSchema>;
-
 export const DaemonSchema = z
   .object({
     capacity: z.number().int().positive().default(1).describe('Execute how many tasks concurrently at the same time.'),
@@ -265,3 +254,14 @@ export const ConfigSchema = z
 
 export type Config = z.infer<typeof ConfigSchema>;
 export type ConfigInput = z.input<typeof ConfigSchema>;
+
+export const RegistrationSchema = z.object({
+  id: z.bigint(),
+  uuid: z.string(),
+  name: z.string(),
+  token: z.string(),
+  address: z.string(),
+  labels: z.array(z.string()),
+});
+
+export type Registration = z.infer<typeof RegistrationSchema>;

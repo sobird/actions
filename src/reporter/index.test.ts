@@ -5,8 +5,8 @@
  */
 import log4js from 'log4js';
 
+import Client from '../gen';
 import Reporter from './index';
-import Client from '../service';
 
 vi.mock('log4js');
 vi.mock('../client');
@@ -44,32 +44,20 @@ describe('Reporter', () => {
       {
         name: 'notice',
         debugOutputEnabled: false,
-        args: [
-          "::notice file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work",
-        ],
-        want: [
-          "::notice file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work",
-        ],
+        args: ["::notice file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
+        want: ["::notice file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
       },
       {
         name: 'warning',
         debugOutputEnabled: false,
-        args: [
-          "::warning file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work",
-        ],
-        want: [
-          "::warning file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work",
-        ],
+        args: ["::warning file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
+        want: ["::warning file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
       },
       {
         name: 'error',
         debugOutputEnabled: false,
-        args: [
-          "::error file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work",
-        ],
-        want: [
-          "::error file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work",
-        ],
+        args: ["::error file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
+        want: ["::error file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
       },
       {
         name: 'group',
@@ -171,10 +159,12 @@ describe('Reporter', () => {
       reporter.resetSteps(5);
 
       tests.forEach((item) => {
-        expect(() => { reporter.fire(logger.info(item.message) as any); }).not.toThrow();
-      // 断言模拟方法被调用
-      // expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
-      // expect(RunnerServiceClient.updateTask).toHaveBeenCalled();
+        expect(() => {
+          reporter.fire(logger.info(item.message) as any);
+        }).not.toThrow();
+        // 断言模拟方法被调用
+        // expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
+        // expect(RunnerServiceClient.updateTask).toHaveBeenCalled();
       });
 
       expect((reporter as any).state.steps[stepNumber].logLength).toBe(BigInt(3));
@@ -192,7 +182,9 @@ describe('Reporter', () => {
 
     it('outputs: value > 1024 * 1024', () => {
       const outputs = new Map();
-      const value = Array(1024 * 1024 + 1).fill('1').join('');
+      const value = Array(1024 * 1024 + 1)
+        .fill('1')
+        .join('');
       outputs.set('key', value);
       reporter.setOutputs(outputs);
       expect((reporter as any).outputs.size).toBe(0);
@@ -207,18 +199,18 @@ describe('Reporter', () => {
     });
   });
 
-  it(('test reportLog'), async () => {
+  it('test reportLog', async () => {
     await expect(reporter.reportLog(true)).rejects.toThrow('not all logs are submitted');
     await expect(reporter.reportLog(false)).resolves.not.toThrow();
     expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
   });
 
-  it(('test reportState'), async () => {
+  it('test reportState', async () => {
     await expect(reporter.reportState()).resolves.not.toThrow();
     expect(RunnerServiceClient.updateTask).toHaveBeenCalled();
   });
 
-  it(('test runDaemon'), async () => {
+  it('test runDaemon', async () => {
     await expect(reporter.runDaemon()).resolves.not.toThrow();
     expect(RunnerServiceClient.updateTask).toHaveBeenCalled();
     expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
