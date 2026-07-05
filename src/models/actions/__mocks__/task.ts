@@ -1,6 +1,6 @@
 import { CreationAttributes } from 'sequelize';
 
-import ActionsTask from '../task';
+import ActionTask from '../task';
 
 const seeds = [
   {
@@ -39,9 +39,9 @@ const seeds = [
     logSize: 90179,
     logExpired: false,
   },
-] as CreationAttributes<ActionsTask>[];
+] as CreationAttributes<ActionTask>[];
 
-await ActionsTask.sync({ force: true });
-await ActionsTask.bulkCreate(seeds, { individualHooks: true, validate: true });
+await ActionTask.sync({ force: true });
+await ActionTask.bulkCreate(seeds, { individualHooks: true, validate: true });
 
-export default ActionsTask;
+export default ActionTask;

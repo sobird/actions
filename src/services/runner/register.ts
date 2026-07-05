@@ -11,7 +11,7 @@ export const register: ServiceMethodImpl['register'] = async (req) => {
     throw new ConnectError('missing runner token, name', 3);
   }
 
-  const runnerToken = await models.Actions.RunnerToken.findOne({
+  const runnerToken = await models.Actions.ActionRunnerToken.findOne({
     where: {
       token: req.token,
     },

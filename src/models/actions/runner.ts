@@ -26,20 +26,20 @@ import {
 import { RunnerStatus } from '@/gen/runner/v1/messages_pb';
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import type { Models, ActionsTask } from '.';
+import type { Models, ActionTask } from '.';
 
-/** These are all the attributes in the ActionsRunner model */
-export type ActionsRunnerAttributes = InferAttributes<ActionsRunner>;
+/** These are all the attributes in the ActionRunner model */
+export type ActionRunnerAttributes = InferAttributes<ActionRunner>;
 
-/** Some attributes are optional in `ActionsRunner.build` and `ActionsRunner.create` calls */
-export type ActionsRunnerCreationAttributes = InferCreationAttributes<ActionsRunner>;
+/** Some attributes are optional in `ActionRunner.build` and `ActionRunner.create` calls */
+export type ActionRunnerCreationAttributes = InferCreationAttributes<ActionRunner>;
 
-export type ActionsTaskPrimaryKey = ActionsTask['id'];
+export type ActionTaskPrimaryKey = ActionTask['id'];
 
 const RunnerOfflineTime = 60 * 1000;
 const RunnerIdleTime = 10 * 1000;
 
-class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCreationAttributes> {
+class ActionRunner extends BaseModel<ActionRunnerAttributes, ActionRunnerCreationAttributes> {
   declare id?: bigint;
 
   declare uuid: CreationOptional<string>;
@@ -78,36 +78,36 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
   // Since TS cannot determine model association at compile time
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
-  declare getActionsTasks: HasManyGetAssociationsMixin<ActionsTask>;
+  declare getActionTasks: HasManyGetAssociationsMixin<ActionTask>;
 
   /** Remove all previous associations and set the new ones */
-  declare setActionsTasks: HasManySetAssociationsMixin<ActionsTask, ActionsTaskPrimaryKey>;
+  declare setActionTasks: HasManySetAssociationsMixin<ActionTask, ActionTaskPrimaryKey>;
 
-  declare addActionsTask: HasManyAddAssociationMixin<ActionsTask, ActionsTaskPrimaryKey>;
+  declare addActionTask: HasManyAddAssociationMixin<ActionTask, ActionTaskPrimaryKey>;
 
-  declare addActionsTasks: HasManyAddAssociationsMixin<ActionsTask, ActionsTaskPrimaryKey>;
+  declare addActionTasks: HasManyAddAssociationsMixin<ActionTask, ActionTaskPrimaryKey>;
 
-  declare removeActionsTask: HasManyRemoveAssociationMixin<ActionsTask, ActionsTaskPrimaryKey>;
+  declare removeActionTask: HasManyRemoveAssociationMixin<ActionTask, ActionTaskPrimaryKey>;
 
-  declare removeActionsTasks: HasManyRemoveAssociationsMixin<ActionsTask, ActionsTaskPrimaryKey>;
+  declare removeActionTasks: HasManyRemoveAssociationsMixin<ActionTask, ActionTaskPrimaryKey>;
 
-  declare hasActionsTask: HasManyHasAssociationMixin<ActionsTask, ActionsTaskPrimaryKey>;
+  declare hasActionTask: HasManyHasAssociationMixin<ActionTask, ActionTaskPrimaryKey>;
 
-  declare hasActionsTasks: HasManyHasAssociationsMixin<ActionsTask, ActionsTaskPrimaryKey>;
+  declare hasActionTasks: HasManyHasAssociationsMixin<ActionTask, ActionTaskPrimaryKey>;
 
-  declare createActionsTask: HasManyCreateAssociationMixin<ActionsTask>;
+  declare createActionTask: HasManyCreateAssociationMixin<ActionTask>;
 
-  declare countActionsTasks: HasManyCountAssociationsMixin;
+  declare countActionTasks: HasManyCountAssociationsMixin;
 
-  static associate({ ActionsTask }: Models) {
-    this.hasMany(ActionsTask, { foreignKey: 'runnerId' });
+  static associate({ ActionTask }: Models) {
+    this.hasMany(ActionTask, { foreignKey: 'runnerId' });
   }
 
   public verifyToken(token: string) {
     if (!token) {
       return false;
     }
-    const tokenHash = ActionsRunner.hashToken(token, this.tokenSalt);
+    const tokenHash = ActionRunner.hashToken(token, this.tokenSalt);
     return timingSafeEqual(Buffer.from(tokenHash), Buffer.from(this.tokenHash));
   }
 
@@ -116,7 +116,7 @@ class ActionsRunner extends BaseModel<ActionsRunnerAttributes, ActionsRunnerCrea
   }
 }
 
-ActionsRunner.init(
+ActionRunner.init(
   {
     uuid: {
       type: DataTypes.UUIDV4,
@@ -209,13 +209,13 @@ ActionsRunner.init(
   },
   {
     sequelize,
-    modelName: 'ActionsRunner',
+    modelName: 'ActionRunner',
   },
 );
 
-ActionsRunner.beforeCreate((model) => {
+ActionRunner.beforeCreate((model) => {
   // eslint-disable-next-line no-param-reassign
-  model.tokenHash = ActionsRunner.hashToken(model.token, model.tokenSalt);
+  model.tokenHash = ActionRunner.hashToken(model.token, model.tokenSalt);
 });
 
-export default ActionsRunner;
+export default ActionRunner;

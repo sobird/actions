@@ -18,29 +18,29 @@ import {
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import type { Models, ActionsSchedule } from '.';
+import type { Models, ActionSchedule } from '.';
 
-export type ActionsSchedulePrimaryKey = ActionsSchedule['id'];
+export type ActionSchedulePrimaryKey = ActionSchedule['id'];
 
 /**
- * These are all the attributes in the ActionsScheduleSpec model
+ * These are all the attributes in the ActionScheduleSpec model
  */
-export type ActionsScheduleSpecAttributes = InferAttributes<ActionsScheduleSpec>;
+export type ActionScheduleSpecAttributes = InferAttributes<ActionScheduleSpec>;
 
-/** Some attributes are optional in `ActionsScheduleSpec.build` and `ActionsScheduleSpec.create` calls */
-export type ActionsScheduleSpecCreationAttributes = InferCreationAttributes<ActionsScheduleSpec>;
+/** Some attributes are optional in `ActionScheduleSpec.build` and `ActionScheduleSpec.create` calls */
+export type ActionScheduleSpecCreationAttributes = InferCreationAttributes<ActionScheduleSpec>;
 
-class ActionsScheduleSpec extends BaseModel<ActionsScheduleSpecAttributes, ActionsScheduleSpecCreationAttributes> {
+class ActionScheduleSpec extends BaseModel<ActionScheduleSpecAttributes, ActionScheduleSpecCreationAttributes> {
   declare repositoryId: bigint;
 
-  // foreign keys are automatically added by associations methods (like ActionsScheduleSpec.belongsTo)
-  // by branding them using the `ForeignKey` type, `ActionsScheduleSpec.init` will know it does not need to
+  // foreign keys are automatically added by associations methods (like ActionScheduleSpec.belongsTo)
+  // by branding them using the `ForeignKey` type, `ActionScheduleSpec.init` will know it does not need to
   // display an error if scheduleId is missing.
-  declare scheduleId: ForeignKey<ActionsSchedule['id']>;
+  declare scheduleId: ForeignKey<ActionSchedule['id']>;
 
   // `Schedule` is an eagerly-loaded association.
   // We tag it as `NonAttribute`
-  declare Schedule: NonAttribute<ActionsSchedule>;
+  declare Schedule: NonAttribute<ActionSchedule>;
 
   // Next time the job will run, or the zero time if Cron has not been
   // started or this entry's schedule is unsatisfiable
@@ -55,20 +55,20 @@ class ActionsScheduleSpec extends BaseModel<ActionsScheduleSpecAttributes, Actio
     return this.findAll({ where: { id: ids } });
   }
 
-  static associate({ ActionsSchedule }: Models) {
-    this.belongsTo(ActionsSchedule, { foreignKey: 'scheduleId' });
+  static associate({ ActionSchedule }: Models) {
+    this.belongsTo(ActionSchedule, { foreignKey: 'scheduleId' });
   }
 
-  // belongsTo ActionsSchedule associate methods
+  // belongsTo ActionSchedule associate methods
 
-  declare getActionsSchedule: BelongsToGetAssociationMixin<ActionsSchedule>;
+  declare getActionSchedule: BelongsToGetAssociationMixin<ActionSchedule>;
 
-  declare setActionsSchedule: BelongsToSetAssociationMixin<ActionsSchedule, ActionsSchedulePrimaryKey>;
+  declare setActionSchedule: BelongsToSetAssociationMixin<ActionSchedule, ActionSchedulePrimaryKey>;
 
-  declare createActionsSchedule: BelongsToCreateAssociationMixin<ActionsSchedule>;
+  declare createActionSchedule: BelongsToCreateAssociationMixin<ActionSchedule>;
 }
 
-ActionsScheduleSpec.init(
+ActionScheduleSpec.init(
   {
     repositoryId: {
       type: DataTypes.BIGINT,
@@ -89,8 +89,8 @@ ActionsScheduleSpec.init(
   },
   {
     sequelize,
-    modelName: 'ActionsScheduleSpec',
+    modelName: 'ActionScheduleSpec',
   },
 );
 
-export default ActionsScheduleSpec;
+export default ActionScheduleSpec;

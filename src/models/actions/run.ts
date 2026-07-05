@@ -23,18 +23,15 @@ import {
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import type { Models, ActionsJob } from '.';
+import type { Models, ActionRunJob } from '.';
 import Status from './status';
 
-/** These are all the attributes in the ActionsRun model */
-export type ActionsRunAttributes = InferAttributes<ActionsRun>;
+export type ActionRunAttributes = InferAttributes<ActionRun>;
+export type ActionRunCreationAttributes = InferCreationAttributes<ActionRun>;
 
-/** Some attributes are optional in `ActionsRun.build` and `ActionsRun.create` calls */
-export type ActionsRunCreationAttributes = InferCreationAttributes<ActionsRun>;
+export type ActionRunJobPrimaryKey = ActionRunJob['id'];
 
-export type ActionsJobPrimaryKey = ActionsJob['id'];
-
-class ActionsRun extends BaseModel<ActionsRunAttributes, ActionsRunCreationAttributes> {
+class ActionRun extends BaseModel<ActionRunAttributes, ActionRunCreationAttributes> {
   declare title: string;
 
   declare ownerId: number;
@@ -83,41 +80,41 @@ class ActionsRun extends BaseModel<ActionsRunAttributes, ActionsRunCreationAttri
     return t.commit();
   }
 
-  static associate({ ActionsJob }: Models) {
-    this.hasMany(ActionsJob, { foreignKey: 'runId' });
+  static associate({ ActionRunJob }: Models) {
+    this.hasMany(ActionRunJob, { foreignKey: 'runId' });
   }
 
   // associates method
   // Since TS cannot determine model association at compile time
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
-  declare getActionsJobs: HasManyGetAssociationsMixin<ActionsJob>;
+  declare getActionRunJobs: HasManyGetAssociationsMixin<ActionRunJob>;
 
   /** Remove all previous associations and set the new ones */
-  declare setActionsJobs: HasManySetAssociationsMixin<ActionsJob, ActionsJobPrimaryKey>;
+  declare setActionRunJobs: HasManySetAssociationsMixin<ActionRunJob, ActionRunJobPrimaryKey>;
 
-  declare addActionsJob: HasManyAddAssociationMixin<ActionsJob, ActionsJobPrimaryKey>;
+  declare addActionRunJob: HasManyAddAssociationMixin<ActionRunJob, ActionRunJobPrimaryKey>;
 
-  declare addActionsJobs: HasManyAddAssociationsMixin<ActionsJob, ActionsJobPrimaryKey>;
+  declare addActionRunJobs: HasManyAddAssociationsMixin<ActionRunJob, ActionRunJobPrimaryKey>;
 
-  declare removeActionsJob: HasManyRemoveAssociationMixin<ActionsJob, ActionsJobPrimaryKey>;
+  declare removeActionRunJob: HasManyRemoveAssociationMixin<ActionRunJob, ActionRunJobPrimaryKey>;
 
-  declare removeActionsJobs: HasManyRemoveAssociationsMixin<ActionsJob, ActionsJobPrimaryKey>;
+  declare removeActionRunJobs: HasManyRemoveAssociationsMixin<ActionRunJob, ActionRunJobPrimaryKey>;
 
-  declare hasActionsJob: HasManyHasAssociationMixin<ActionsJob, ActionsJobPrimaryKey>;
+  declare hasActionRunJob: HasManyHasAssociationMixin<ActionRunJob, ActionRunJobPrimaryKey>;
 
-  declare hasActionsJobs: HasManyHasAssociationsMixin<ActionsJob, ActionsJobPrimaryKey>;
+  declare hasActionRunJobs: HasManyHasAssociationsMixin<ActionRunJob, ActionRunJobPrimaryKey>;
 
-  declare createActionsJob: HasManyCreateAssociationMixin<ActionsJob>;
+  declare createActionRunJob: HasManyCreateAssociationMixin<ActionRunJob>;
 
-  declare countActionsJobs: HasManyCountAssociationsMixin;
+  declare countActionRunJobs: HasManyCountAssociationsMixin;
 
   static validate() {
     throw Error('dd');
   }
 }
 
-ActionsRun.init(
+ActionRun.init(
   {
     id: {
       type: DataTypes.BIGINT,
@@ -195,14 +192,8 @@ ActionsRun.init(
   },
   {
     sequelize,
-    modelName: 'ActionsRun',
+    modelName: 'ActionRun',
   },
 );
 
-// ActionsRun.prototype.validate('dddd');
-
-// ActionsRun.beforeCreate((model) => {
-
-// });
-
-export default ActionsRun;
+export default ActionRun;

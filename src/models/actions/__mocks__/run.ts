@@ -1,6 +1,6 @@
 import { CreationAttributes } from 'sequelize';
 
-import ActionsRun from '../run';
+import ActionRun from '../run';
 import Status from '../status';
 
 const seeds = [
@@ -42,13 +42,11 @@ const seeds = [
     started: new Date(1683636528000),
     stopped: new Date(1683636626000),
   },
-] as CreationAttributes<ActionsRun>[];
+] as CreationAttributes<ActionRun>[];
 
-beforeAll(async () => {
+beforeAll(async () => {});
 
-});
+await ActionRun.sync({ force: true });
+await ActionRun.bulkCreate(seeds, { individualHooks: true, validate: true });
 
-await ActionsRun.sync({ force: true });
-await ActionsRun.bulkCreate(seeds, { individualHooks: true, validate: true });
-
-export default ActionsRun;
+export default ActionRun;

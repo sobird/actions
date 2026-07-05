@@ -4,22 +4,19 @@
  * sobird<i@sobird.me> at 2024/11/16 20:02:24 created.
  */
 
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 
-import {
-  DataTypes,
-  type InferAttributes, InferCreationAttributes, CreationOptional,
-} from 'sequelize';
+import { DataTypes, type InferAttributes, type InferCreationAttributes, type CreationOptional } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-/** These are all the attributes in the ActionsRunnerToken model */
-export type ActionsRunnerTokenAttributes = InferAttributes<ActionsRunnerToken>;
+/** These are all the attributes in the ActionRunnerToken model */
+export type ActionRunnerTokenAttributes = InferAttributes<ActionRunnerToken>;
 
-/** Some attributes are optional in `ActionsRunnerToken.build` and `ActionsRunnerToken.create` calls */
-export type ActionsRunnerTokenCreationAttributes = InferCreationAttributes<ActionsRunnerToken>;
+/** Some attributes are optional in `ActionRunnerToken.build` and `ActionRunnerToken.create` calls */
+export type ActionRunnerTokenCreationAttributes = InferCreationAttributes<ActionRunnerToken>;
 
-class ActionsRunnerToken extends BaseModel<ActionsRunnerTokenAttributes, ActionsRunnerTokenCreationAttributes> {
+class ActionRunnerToken extends BaseModel<ActionRunnerTokenAttributes, ActionRunnerTokenCreationAttributes> {
   declare token: CreationOptional<string>;
 
   declare ownerId: number;
@@ -52,9 +49,7 @@ class ActionsRunnerToken extends BaseModel<ActionsRunnerTokenAttributes, Actions
         ownerId,
         repositoryId,
       },
-      order: [
-        ['id', 'DESC'],
-      ],
+      order: [['id', 'DESC']],
     });
 
     if (!runnerToken) {
@@ -65,11 +60,13 @@ class ActionsRunnerToken extends BaseModel<ActionsRunnerTokenAttributes, Actions
   }
 }
 
-ActionsRunnerToken.init(
+ActionRunnerToken.init(
   {
     token: {
       type: DataTypes.STRING,
-      defaultValue: () => { return randomBytes(40).toString('hex'); },
+      defaultValue: () => {
+        return randomBytes(40).toString('hex');
+      },
       allowNull: false,
       unique: true,
       comment: 'actions runner registration token',
@@ -90,12 +87,7 @@ ActionsRunnerToken.init(
   },
   {
     sequelize,
-    modelName: 'ActionsRunnerToken',
   },
 );
 
-// ActionsRunnerToken.beforeCreate((model) => {
-
-// });
-
-export default ActionsRunnerToken;
+export default ActionRunnerToken;

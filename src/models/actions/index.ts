@@ -1,22 +1,22 @@
-import ActionsJob from './job';
-import ActionsRun from './run';
-import ActionsRunner from './runner';
-import ActionsRunnerToken from './runner_token';
-import ActionsSchedule from './schedule';
-import ActionsScheduleSpec from './schedule_spec';
-import ActionsStep from './step';
-import ActionsTask from './task';
-import ActionsTaskVersion from './task_version';
+import ActionRun from './run';
+import ActionRunJob from './run_job';
+import ActionRunner from './runner';
+import ActionRunnerToken from './runner_token';
+import ActionSchedule from './schedule';
+import ActionScheduleSpec from './schedule_spec';
+import ActionStep from './step';
+import ActionTask from './task';
+import ActionTaskVersion from './task_version';
 
 export const models = {
-  ActionsJob,
-  ActionsRun,
-  ActionsRunner,
-  ActionsRunnerToken,
-  ActionsSchedule,
-  ActionsScheduleSpec,
-  ActionsStep,
-  ActionsTask,
+  ActionRunJob,
+  ActionRun,
+  ActionRunner,
+  ActionRunnerToken,
+  ActionSchedule,
+  ActionScheduleSpec,
+  ActionStep,
+  ActionTask,
 } as const;
 
 Object.values(models).forEach((model: any) => {
@@ -26,22 +26,22 @@ Object.values(models).forEach((model: any) => {
 export type Models = typeof models;
 
 export {
-  ActionsJob,
-  ActionsRun,
-  ActionsRunner,
-  ActionsRunnerToken,
-  ActionsSchedule,
-  ActionsScheduleSpec,
-  ActionsStep,
-  ActionsTask,
+  ActionRunJob,
+  ActionRun,
+  ActionRunner,
+  ActionRunnerToken,
+  ActionSchedule,
+  ActionScheduleSpec,
+  ActionStep,
+  ActionTask,
 };
 
 export default {
-  Job: ActionsJob,
-  Run: ActionsRun,
-  Runner: ActionsRunner,
-  RunnerToken: ActionsRunnerToken,
-  Step: ActionsStep,
-  Task: ActionsTask,
-  TaskVersion: ActionsTaskVersion,
+  Job: ActionRunJob,
+  Run: ActionRun,
+  Runner: ActionRunner,
+  ActionRunnerToken: ActionRunnerToken,
+  Step: ActionStep,
+  Task: ActionTask,
+  TaskVersion: ActionTaskVersion,
 };

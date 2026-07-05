@@ -15,17 +15,17 @@ import {
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import type { Models, ActionsTask } from '.';
+import type { Models, ActionTask } from '.';
 
-/** These are all the attributes in the ActionsStep model */
-export type ActionsStepAttributes = InferAttributes<ActionsStep>;
+/** These are all the attributes in the ActionStep model */
+export type ActionStepAttributes = InferAttributes<ActionStep>;
 
-/** Some attributes are optional in `ActionsStep.build` and `ActionsStep.create` calls */
-export type ActionsStepCreationAttributes = InferCreationAttributes<ActionsStep>;
+/** Some attributes are optional in `ActionStep.build` and `ActionStep.create` calls */
+export type ActionStepCreationAttributes = InferCreationAttributes<ActionStep>;
 
-export type ActionsTaskPrimaryKey = ActionsTask['id'];
+export type ActionTaskPrimaryKey = ActionTask['id'];
 
-class ActionsStep extends BaseModel<ActionsStepAttributes, ActionsStepCreationAttributes> {
+class ActionStep extends BaseModel<ActionStepAttributes, ActionStepCreationAttributes> {
   declare name: string;
 
   declare taskId: number;
@@ -44,22 +44,22 @@ class ActionsStep extends BaseModel<ActionsStepAttributes, ActionsStepCreationAt
 
   declare stopped: Date;
 
-  static associate({ ActionsTask }: Models) {
-    this.belongsTo(ActionsTask, { foreignKey: 'taskId' });
+  static associate({ ActionTask }: Models) {
+    this.belongsTo(ActionTask, { foreignKey: 'taskId' });
   }
 
   // associates method
   // Since TS cannot determine model association at compile time
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
-  declare getActionsTask: BelongsToGetAssociationMixin<ActionsTask>;
+  declare getActionTask: BelongsToGetAssociationMixin<ActionTask>;
 
-  declare setActionsTask: BelongsToSetAssociationMixin<ActionsTask, ActionsTaskPrimaryKey>;
+  declare setActionTask: BelongsToSetAssociationMixin<ActionTask, ActionTaskPrimaryKey>;
 
-  declare createActionsTask: BelongsToCreateAssociationMixin<ActionsTask>;
+  declare createActionTask: BelongsToCreateAssociationMixin<ActionTask>;
 }
 
-ActionsStep.init(
+ActionStep.init(
   {
     name: {
       type: DataTypes.STRING,
@@ -94,8 +94,8 @@ ActionsStep.init(
   },
   {
     sequelize,
-    modelName: 'ActionsStep',
+    modelName: 'ActionStep',
   },
 );
 
-export default ActionsStep;
+export default ActionStep;

@@ -1,4 +1,4 @@
-import ActionsRunnerToken from '../runner_token';
+import ActionActionRunnerToken from '../runner_token';
 
 vi.mock('@/lib/sequelize');
 
@@ -11,13 +11,11 @@ const seed = [
     ownerId: 1,
     repositoryId: 2,
   },
-] as ActionsRunnerToken[];
+] as ActionActionRunnerToken[];
 
-beforeAll(async () => {
+beforeAll(async () => {});
 
-});
+await ActionActionRunnerToken.sync({ force: true });
+await ActionActionRunnerToken.bulkCreate(seed, { individualHooks: true, validate: true });
 
-await ActionsRunnerToken.sync({ force: true });
-await ActionsRunnerToken.bulkCreate(seed, { individualHooks: true, validate: true });
-
-export default ActionsRunnerToken;
+export default ActionActionRunnerToken;

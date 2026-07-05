@@ -1,9 +1,9 @@
-import { ActionsJob } from '@/models/actions';
+import { ActionRunJob } from '@/models/actions';
 
 vi.mock('./job');
 // vi.mock('./run');
 
 it('ddd', async () => {
-  const actionsJob = await ActionsJob.findOne();
-  console.log('rows', await actionsJob?.getActionsRun());
+  const actionRunJob = await ActionRunJob.findOne();
+  console.log('rows', await actionRunJob?.getActionRun());
 });

@@ -1,6 +1,6 @@
 import { CreationAttributes } from 'sequelize';
 
-import ActionsScheduleSpec from '../schedule_spec';
+import ActionScheduleSpec from '../schedule_spec';
 
 // needs
 vi.mock('@/lib/sequelize');
@@ -20,10 +20,10 @@ const seeds = [
     next: new Date(),
     prev: new Date(),
   },
-] as CreationAttributes<ActionsScheduleSpec>[];
+] as CreationAttributes<ActionScheduleSpec>[];
 
-// ActionsScheduleSpec Setup
-await ActionsScheduleSpec.sync({ force: true });
-await ActionsScheduleSpec.bulkCreate(seeds, { individualHooks: true, validate: true });
+// ActionScheduleSpec Setup
+await ActionScheduleSpec.sync({ force: true });
+await ActionScheduleSpec.bulkCreate(seeds, { individualHooks: true, validate: true });
 
-export default ActionsScheduleSpec;
+export default ActionScheduleSpec;

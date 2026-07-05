@@ -4,23 +4,20 @@
  * sobird<i@sobird.me> at 2024/11/25 14:57:01 created.
  */
 
-import {
-  DataTypes,
-  type InferAttributes, InferCreationAttributes, CreationOptional,
-} from 'sequelize';
+import { DataTypes, type InferAttributes, InferCreationAttributes, CreationOptional } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-/** These are all the attributes in the ActionsTaskVersion model */
-export type ActionsTaskVersionAttributes = InferAttributes<ActionsTaskVersion>;
+/** These are all the attributes in the ActionTaskVersion model */
+export type ActionTaskVersionAttributes = InferAttributes<ActionTaskVersion>;
 
-/** Some attributes are optional in `ActionsTaskVersion.build` and `ActionsTaskVersion.create` calls */
-export type ActionsTaskVersionCreationAttributes = InferCreationAttributes<ActionsTaskVersion>;
+/** Some attributes are optional in `ActionTaskVersion.build` and `ActionTaskVersion.create` calls */
+export type ActionTaskVersionCreationAttributes = InferCreationAttributes<ActionTaskVersion>;
 
 // If both ownerID and repoID is zero, its scope is global.
 // If ownerID is not zero and repoID is zero, its scope is org (there is no user-level runner currrently).
 // If ownerID is zero and repoID is not zero, its scope is repo.
-class ActionsTaskVersion extends BaseModel<ActionsTaskVersionAttributes, ActionsTaskVersionCreationAttributes> {
+class ActionTaskVersion extends BaseModel<ActionTaskVersionAttributes, ActionTaskVersionCreationAttributes> {
   declare token: CreationOptional<string>;
 
   declare ownerId: number;
@@ -75,7 +72,7 @@ class ActionsTaskVersion extends BaseModel<ActionsTaskVersionAttributes, Actions
   }
 }
 
-ActionsTaskVersion.init(
+ActionTaskVersion.init(
   {
     token: {
       type: DataTypes.STRING,
@@ -100,12 +97,12 @@ ActionsTaskVersion.init(
   },
   {
     sequelize,
-    modelName: 'ActionsTaskVersion',
+    modelName: 'ActionTaskVersion',
   },
 );
 
-// ActionsTaskVersion.beforeCreate((model) => {
+// ActionTaskVersion.beforeCreate((model) => {
 
 // });
 
-export default ActionsTaskVersion;
+export default ActionTaskVersion;

@@ -1,33 +1,33 @@
-import { Interceptor, ConnectError, createContextKey, HandlerContext } from "@connectrpc/connect";
+import { Interceptor, ConnectError, createContextKey, HandlerContext } from '@connectrpc/connect';
 
-import { ActionsRunner } from "@/models/actions";
-import Constants from "@/common/constants";
+import Constants from '@/common/constants';
+import { ActionRunner } from '@/models/actions';
 
-const runnerModelContextKey = createContextKey<ActionsRunner | null>(null, {
-  description: "current runner model",
+const runnerModelContextKey = createContextKey<ActionRunner | null>(null, {
+  description: 'current runner model',
 });
 
 const { XRunnerUUID, XRunnerToken } = Constants.Protocol;
 const withRunner: Interceptor = (next) => {
   return async (req) => {
     const methodName = req.method.name;
-    if (methodName === "Register") {
+    if (methodName === 'Register') {
       return next(req);
     }
     const uuid = req.header.get(XRunnerUUID)!;
     const token = req.header.get(XRunnerToken)!;
-    console.log("token", token);
+    console.log('token', token);
 
-    const runner = await ActionsRunner.findOne({ where: { uuid } });
+    const runner = await ActionRunner.findOne({ where: { uuid } });
 
     if (!runner) {
-      throw new ConnectError("unregistered runner", 16);
+      throw new ConnectError('unregistered runner', 16);
     }
 
     // auth token
 
     runner.lastOnline = new Date();
-    if (methodName === "UpdateTask" || methodName === "UpdateLog") {
+    if (methodName === 'UpdateTask' || methodName === 'UpdateLog') {
       runner.lastActive = new Date();
     }
 
@@ -38,7 +38,7 @@ const withRunner: Interceptor = (next) => {
   };
 };
 
-export function RunnerModelFrom(values: HandlerContext["values"]) {
+export function RunnerModelFrom(values: HandlerContext['values']) {
   return values.get(runnerModelContextKey);
 }
 

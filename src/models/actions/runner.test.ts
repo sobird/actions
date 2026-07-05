@@ -1,15 +1,15 @@
-import { ActionsRunner } from '@/models/actions';
+import { ActionRunner } from '@/models/actions';
 
 vi.mock('@/lib/sequelize');
 vi.mock('./task');
 vi.mock('./runner');
 
-const rows = await ActionsRunner.findOne();
+const rows = await ActionRunner.findOne();
 console.log('rows', rows?.get());
 
 describe('Test Actions Runner Model', () => {
-  it('ActionsRunnerToken.create', async () => {
-    const actionsRunner = await ActionsRunner.create({
+  it('ActionActionRunnerToken.create', async () => {
+    const actionsRunner = await ActionRunner.create({
       name: 'test',
       version: '0.1.1',
       labels: ['ubuntu-latest=actions/runner-images:ubuntu-latest'],
@@ -20,7 +20,7 @@ describe('Test Actions Runner Model', () => {
   });
 
   it('verifyToken', async () => {
-    const actionsRunner = await ActionsRunner.create({
+    const actionsRunner = await ActionRunner.create({
       name: 'test',
       version: '0.1.1',
       labels: ['ubuntu-latest=actions/runner-images:ubuntu-latest'],
@@ -33,7 +33,7 @@ describe('Test Actions Runner Model', () => {
   });
 
   it('isOnline', async () => {
-    const runner = await ActionsRunner.findByPk(1);
+    const runner = await ActionRunner.findByPk(1);
     if (runner) {
       runner.lastOnline = new Date();
     }

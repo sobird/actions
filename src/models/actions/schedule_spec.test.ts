@@ -1,4 +1,4 @@
-import { ActionsSchedule, ActionsScheduleSpec } from '@/models/actions';
+import { ActionSchedule, ActionScheduleSpec } from '@/models/actions';
 
 // needs mock
 vi.mock('./schedule');
@@ -6,8 +6,8 @@ vi.mock('./schedule_spec');
 
 it('ddd', async () => {
   // console.log('sequelize', sequelize);
-  console.log('ActionsScheduleSpec', await ActionsSchedule.findAll());
+  console.log('ActionScheduleSpec', await ActionSchedule.findAll());
 
-  const rows = await ActionsScheduleSpec.findAll();
+  const rows = await ActionScheduleSpec.findAll();
   console.log('rows', rows);
 });

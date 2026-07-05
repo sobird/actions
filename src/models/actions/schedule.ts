@@ -25,21 +25,21 @@ import {
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import type { Models, ActionsScheduleSpec } from '.';
+import type { Models, ActionScheduleSpec } from '.';
 
-export type ActionsScheduleSpecPrimaryKey = ActionsScheduleSpec['id'];
+export type ActionScheduleSpecPrimaryKey = ActionScheduleSpec['id'];
 
 /**
- * These are all the attributes in the ActionsSchedule model
+ * These are all the attributes in the ActionSchedule model
  *
  * `ScheduleSpecs` is excluded as it's not an attribute, it's an association.
  */
-export type ActionsScheduleAttributes = InferAttributes<ActionsSchedule, { omit: 'ScheduleSpecs' }>;
+export type ActionScheduleAttributes = InferAttributes<ActionSchedule, { omit: 'ScheduleSpecs' }>;
 
-/** Some attributes are optional in `ActionsSchedule.build` and `ActionsSchedule.create` calls */
-export type ActionsScheduleCreationAttributes = InferCreationAttributes<ActionsSchedule, { omit: 'ScheduleSpecs' }>;
+/** Some attributes are optional in `ActionSchedule.build` and `ActionSchedule.create` calls */
+export type ActionScheduleCreationAttributes = InferCreationAttributes<ActionSchedule, { omit: 'ScheduleSpecs' }>;
 
-class ActionsSchedule extends BaseModel<ActionsScheduleAttributes, ActionsScheduleCreationAttributes> {
+class ActionSchedule extends BaseModel<ActionScheduleAttributes, ActionScheduleCreationAttributes> {
   declare title: string;
 
   declare specs?: string[];
@@ -66,46 +66,46 @@ class ActionsSchedule extends BaseModel<ActionsScheduleAttributes, ActionsSchedu
     return this.findAll({ where: { id: ids } });
   }
 
-  static associate({ ActionsScheduleSpec }: Models) {
-    this.hasMany(ActionsScheduleSpec, { foreignKey: 'scheduleId' });
+  static associate({ ActionScheduleSpec }: Models) {
+    this.hasMany(ActionScheduleSpec, { foreignKey: 'scheduleId' });
   }
 
-  // hasMany ActionsScheduleSpec associate method
+  // hasMany ActionScheduleSpec associate method
 
   // Since TS cannot determine model association at compile time
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
-  declare getActionsScheduleSpecs: HasManyGetAssociationsMixin<ActionsScheduleSpec>;
+  declare getActionScheduleSpecs: HasManyGetAssociationsMixin<ActionScheduleSpec>;
 
   /** Remove all previous associations and set the new ones */
-  declare setActionsScheduleSpecs: HasManySetAssociationsMixin<ActionsScheduleSpec, ActionsScheduleSpecPrimaryKey>;
+  declare setActionScheduleSpecs: HasManySetAssociationsMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
 
-  declare addActionsScheduleSpec: HasManyAddAssociationMixin<ActionsScheduleSpec, ActionsScheduleSpecPrimaryKey>;
+  declare addActionScheduleSpec: HasManyAddAssociationMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
 
-  declare addActionsScheduleSpecs: HasManyAddAssociationsMixin<ActionsScheduleSpec, ActionsScheduleSpecPrimaryKey>;
+  declare addActionScheduleSpecs: HasManyAddAssociationsMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
 
-  declare removeActionsScheduleSpec: HasManyRemoveAssociationMixin<ActionsScheduleSpec, ActionsScheduleSpecPrimaryKey>;
+  declare removeActionScheduleSpec: HasManyRemoveAssociationMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
 
-  declare removeActionsScheduleSpecs: HasManyRemoveAssociationsMixin<ActionsScheduleSpec, ActionsScheduleSpecPrimaryKey>;
+  declare removeActionScheduleSpecs: HasManyRemoveAssociationsMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
 
-  declare hasActionsScheduleSpec: HasManyHasAssociationMixin<ActionsScheduleSpec, ActionsScheduleSpecPrimaryKey>;
+  declare hasActionScheduleSpec: HasManyHasAssociationMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
 
-  declare hasActionsScheduleSpecs: HasManyHasAssociationsMixin<ActionsScheduleSpec, ActionsScheduleSpecPrimaryKey>;
+  declare hasActionScheduleSpecs: HasManyHasAssociationsMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
 
-  declare createActionsScheduleSpec: HasManyCreateAssociationMixin<ActionsScheduleSpec, 'scheduleId'>;
+  declare createActionScheduleSpec: HasManyCreateAssociationMixin<ActionScheduleSpec, 'scheduleId'>;
 
-  declare countActionsScheduleSpecs: HasManyCountAssociationsMixin;
+  declare countActionScheduleSpecs: HasManyCountAssociationsMixin;
 
   // You can also pre-declare possible inclusions, these will only be populated if you
   // actively include a relation.
-  declare ScheduleSpecs?: NonAttribute<ActionsScheduleSpec[]>; // Note this is optional since it's only populated when explicitly requested in code
+  declare ScheduleSpecs?: NonAttribute<ActionScheduleSpec[]>; // Note this is optional since it's only populated when explicitly requested in code
 
   declare static associations: {
-    projects: Association<ActionsSchedule, ActionsScheduleSpec>;
+    projects: Association<ActionSchedule, ActionScheduleSpec>;
   };
 }
 
-ActionsSchedule.init(
+ActionSchedule.init(
   {
     title: {
       type: DataTypes.STRING,
@@ -142,16 +142,15 @@ ActionsSchedule.init(
     content: {
       type: DataTypes.TEXT,
     },
-
   },
   {
     sequelize,
-    modelName: 'ActionsSchedule',
+    modelName: 'ActionSchedule',
   },
 );
 
-// ActionsSchedule.beforeCreate((model) => {
+// ActionSchedule.beforeCreate((model) => {
 
 // });
 
-export default ActionsSchedule;
+export default ActionSchedule;

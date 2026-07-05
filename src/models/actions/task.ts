@@ -28,21 +28,19 @@ import {
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import type {
-  Models, ActionsJob, ActionsRunner, ActionsStep,
-} from '.';
+import type { Models, ActionRunJob, ActionRunner, ActionStep } from '.';
 
-/** These are all the attributes in the ActionsTask model */
-export type ActionsTaskAttributes = InferAttributes<ActionsTask>;
+/** These are all the attributes in the ActionTask model */
+export type ActionTaskAttributes = InferAttributes<ActionTask>;
 
-/** Some attributes are optional in `ActionsTask.build` and `ActionsTask.create` calls */
-export type ActionsTaskCreationAttributes = InferCreationAttributes<ActionsTask>;
+/** Some attributes are optional in `ActionTask.build` and `ActionTask.create` calls */
+export type ActionTaskCreationAttributes = InferCreationAttributes<ActionTask>;
 
-export type ActionsStepPrimaryKey = ActionsStep['id'];
-export type ActionsJobPrimaryKey = ActionsJob['id'];
-export type ActionsRunnerPrimaryKey = ActionsRunner['id'];
+export type ActionStepPrimaryKey = ActionStep['id'];
+export type ActionRunJobPrimaryKey = ActionRunJob['id'];
+export type ActionRunnerPrimaryKey = ActionRunner['id'];
 
-class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAttributes> {
+class ActionTask extends BaseModel<ActionTaskAttributes, ActionTaskCreationAttributes> {
   declare jobId: number;
 
   declare runnerId: number;
@@ -63,13 +61,11 @@ class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAt
 
   declare isForkPullRequest: boolean;
 
-  declare token?: string;
-
   declare tokenHash: CreationOptional<string>;
 
   declare tokenSalt: CreationOptional<string>;
 
-  // declare tokenLastEight: CreationOptional<string>;
+  declare tokenLastEight: CreationOptional<string>;
 
   declare logFilename: string;
 
@@ -81,64 +77,64 @@ class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAt
 
   // declare logIndexes: number;
 
-  declare logExpired: Boolean;
+  declare logExpired: boolean;
 
-  declare Job?: NonAttribute<ActionsJob>;
+  declare Job?: NonAttribute<ActionRunJob>;
 
-  declare Steps?: NonAttribute<ActionsStep[]>;
+  declare Steps?: NonAttribute<ActionStep[]>;
 
-  static associate({ ActionsJob, ActionsRunner, ActionsStep }: Models) {
-    this.belongsTo(ActionsJob, { foreignKey: 'jobId' });
-    this.belongsTo(ActionsRunner, { foreignKey: 'runnerId' });
-    this.hasMany(ActionsStep, { foreignKey: 'taskId' });
+  static associate({ ActionRunJob, ActionRunner, ActionStep }: Models) {
+    this.belongsTo(ActionRunJob, { foreignKey: 'jobId' });
+    this.belongsTo(ActionRunner, { foreignKey: 'runnerId' });
+    this.hasMany(ActionStep, { foreignKey: 'taskId' });
   }
 
   declare static associations: {
-    Job: Association<ActionsTask, ActionsJob>;
+    Job: Association<ActionTask, ActionRunJob>;
   };
 
   // associates method
   // Since TS cannot determine model association at compile time
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
-  declare getActionsSteps: HasManyGetAssociationsMixin<ActionsStep>;
+  declare getActionSteps: HasManyGetAssociationsMixin<ActionStep>;
 
   /** Remove all previous associations and set the new ones */
-  declare setActionsSteps: HasManySetAssociationsMixin<ActionsStep, ActionsStepPrimaryKey>;
+  declare setActionSteps: HasManySetAssociationsMixin<ActionStep, ActionStepPrimaryKey>;
 
-  declare addActionsStep: HasManyAddAssociationMixin<ActionsStep, ActionsStepPrimaryKey>;
+  declare addActionStep: HasManyAddAssociationMixin<ActionStep, ActionStepPrimaryKey>;
 
-  declare addActionsSteps: HasManyAddAssociationsMixin<ActionsStep, ActionsStepPrimaryKey>;
+  declare addActionSteps: HasManyAddAssociationsMixin<ActionStep, ActionStepPrimaryKey>;
 
-  declare removeActionsStep: HasManyRemoveAssociationMixin<ActionsStep, ActionsStepPrimaryKey>;
+  declare removeActionStep: HasManyRemoveAssociationMixin<ActionStep, ActionStepPrimaryKey>;
 
-  declare removeActionsSteps: HasManyRemoveAssociationsMixin<ActionsStep, ActionsStepPrimaryKey>;
+  declare removeActionSteps: HasManyRemoveAssociationsMixin<ActionStep, ActionStepPrimaryKey>;
 
-  declare hasActionsStep: HasManyHasAssociationMixin<ActionsStep, ActionsStepPrimaryKey>;
+  declare hasActionStep: HasManyHasAssociationMixin<ActionStep, ActionStepPrimaryKey>;
 
-  declare hasActionsSteps: HasManyHasAssociationsMixin<ActionsStep, ActionsStepPrimaryKey>;
+  declare hasActionSteps: HasManyHasAssociationsMixin<ActionStep, ActionStepPrimaryKey>;
 
-  declare createActionsStep: HasManyCreateAssociationMixin<ActionsStep>;
+  declare createActionStep: HasManyCreateAssociationMixin<ActionStep>;
 
-  declare countActionsSteps: HasManyCountAssociationsMixin;
+  declare countActionSteps: HasManyCountAssociationsMixin;
 
-  // ActionsJob
-  declare getActionsJob: BelongsToGetAssociationMixin<ActionsJob>;
+  // ActionRunJob
+  declare getActionRunJob: BelongsToGetAssociationMixin<ActionRunJob>;
 
-  declare setActionsJob: BelongsToSetAssociationMixin<ActionsJob, ActionsJobPrimaryKey>;
+  declare setActionRunJob: BelongsToSetAssociationMixin<ActionRunJob, ActionRunJobPrimaryKey>;
 
-  declare createActionsJob: BelongsToCreateAssociationMixin<ActionsJob>;
+  declare createActionRunJob: BelongsToCreateAssociationMixin<ActionRunJob>;
 
-  // ActionsRunner
-  declare getActionsRunner: BelongsToGetAssociationMixin<ActionsRunner>;
+  // ActionRunner
+  declare getActionRunner: BelongsToGetAssociationMixin<ActionRunner>;
 
-  declare setActionsRunner: BelongsToSetAssociationMixin<ActionsRunner, ActionsRunnerPrimaryKey>;
+  declare setActionRunner: BelongsToSetAssociationMixin<ActionRunner, ActionRunnerPrimaryKey>;
 
-  declare createActionsRunner: BelongsToCreateAssociationMixin<ActionsRunner>;
+  declare createActionRunner: BelongsToCreateAssociationMixin<ActionRunner>;
 
-  public static async createForRunner(runner: ActionsRunner) {
+  public static async createForRunner(_runner: ActionRunner) {
     const t = await sequelize.transaction();
-    const { ownerId, repositoryId } = runner;
+    // const { ownerId, repositoryId } = runner;
 
     // const jobs = this
 
@@ -146,22 +142,30 @@ class ActionsTask extends BaseModel<ActionsTaskAttributes, ActionsTaskCreationAt
   }
 }
 
-ActionsTask.init(
+ActionTask.init(
   {
+    id: {
+      type: DataTypes.BIGINT,
+      primaryKey: true,
+      autoIncrement: true,
+    },
     jobId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
+      allowNull: false,
     },
     runnerId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
     },
     attempt: {
       type: DataTypes.INTEGER,
+      defaultValue: 1,
     },
     status: {
       type: DataTypes.TINYINT,
     },
     started: DataTypes.DATE,
     stopped: DataTypes.DATE,
+
     ownerId: {
       type: DataTypes.BIGINT,
       allowNull: false,
@@ -175,10 +179,7 @@ ActionsTask.init(
     },
     isForkPullRequest: {
       type: DataTypes.BOOLEAN,
-      defaultValue: 0,
-    },
-    token: {
-      type: DataTypes.STRING,
+      defaultValue: false,
     },
     tokenHash: {
       type: DataTypes.STRING,
@@ -186,7 +187,9 @@ ActionsTask.init(
     tokenSalt: {
       type: DataTypes.STRING,
     },
-    // tokenLastEight: DataTypes.STRING,
+    tokenLastEight: {
+      type: DataTypes.STRING,
+    },
     logFilename: DataTypes.STRING,
     logInStorage: {
       type: DataTypes.BOOLEAN,
@@ -203,12 +206,23 @@ ActionsTask.init(
   },
   {
     sequelize,
-    modelName: 'ActionsTask',
+    modelName: 'ActionTask',
+    indexes: [
+      { name: 'idx_action_task_runner_id', fields: ['runnerId'] },
+      { name: 'idx_action_task_status', fields: ['status'] },
+      { name: 'idx_action_task_started', fields: ['started'] },
+      { name: 'idx_action_task_repo_id', fields: ['repoId'] },
+      { name: 'idx_action_task_owner_id', fields: ['ownerId'] },
+      { name: 'idx_action_task_commit_sha', fields: ['commitSha'] },
+      { name: 'idx_action_task_updated', fields: ['updated'] },
+
+      // 复合索引：对应原 Go 中的 `xorm:"index token_last_eight"` 和状态查询
+      { name: 'idx_token_last_eight_status', fields: ['tokenLastEight', 'status'] },
+
+      // 复合索引：对应原 Go 中的 `xorm:"index(stopped_log_expired)"`
+      { name: 'stopped_log_expired', fields: ['stopped', 'logExpired'] },
+    ],
   },
 );
 
-// ActionsTask.beforeCreate((model) => {
-
-// });
-
-export default ActionsTask;
+export default ActionTask;

@@ -1,6 +1,6 @@
 import { CreationAttributes } from 'sequelize';
 
-import ActionsStep from '../step';
+import ActionStep from '../step';
 
 const seeds = [
   {
@@ -27,9 +27,9 @@ const seeds = [
     started: new Date(1683636528000),
     stopped: new Date(1683636626000),
   },
-] as CreationAttributes<ActionsStep>[];
+] as CreationAttributes<ActionStep>[];
 
-await ActionsStep.sync({ force: true });
-await ActionsStep.bulkCreate(seeds, { individualHooks: true, validate: true });
+await ActionStep.sync({ force: true });
+await ActionStep.bulkCreate(seeds, { individualHooks: true, validate: true });
 
-export default ActionsStep;
+export default ActionStep;

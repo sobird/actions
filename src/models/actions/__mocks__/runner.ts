@@ -1,6 +1,6 @@
 import { CreationAttributes } from 'sequelize';
 
-import ActionsRunner from '../runner';
+import ActionRunner from '../runner';
 
 const seeds = [
   {
@@ -18,9 +18,9 @@ const seeds = [
     version: '0.0.1',
     labels: ['ubuntu-latest'],
   },
-] as CreationAttributes<ActionsRunner>[];
+] as CreationAttributes<ActionRunner>[];
 
-await ActionsRunner.sync({ force: true });
-await ActionsRunner.bulkCreate(seeds, { individualHooks: true, validate: true });
+await ActionRunner.sync({ force: true });
+await ActionRunner.bulkCreate(seeds, { individualHooks: true, validate: true });
 
-export default ActionsRunner;
+export default ActionRunner;
