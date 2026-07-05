@@ -17,104 +17,101 @@ export enum EStatus {
   Blocked, // 7, isn't a runnerv1.Result
 }
 
-export default class Status {
-  constructor(public status: EStatus) {}
+export class Status {
+  static readonly Unknown = new Status('unknown');
+  static readonly Waiting = new Status('waiting');
+  static readonly Running = new Status('running');
+  static readonly Success = new Status('success');
+  static readonly Failure = new Status('failure');
+  static readonly Cancelled = new Status('cancelled');
+  static readonly Cancelling = new Status('cancelling');
+  static readonly Skipped = new Status('skipped');
+  static readonly Blocked = new Status('blocked');
 
-  static get Unknown() {
-    return new this(EStatus.Unknown);
+  private constructor(public readonly value: string) {}
+
+  // String returns the string name of the Status
+  toString() {
+    return this.value;
   }
 
-  static get Success() {
-    return new this(EStatus.Success);
-  }
-
-  static get Failure() {
-    return new this(EStatus.Failure);
-  }
-
-  static get Cancelled() {
-    return new this(EStatus.Cancelled);
-  }
-
-  static get Skipped() {
-    return new this(EStatus.Skipped);
-  }
-
-  static get Waiting() {
-    return new this(EStatus.Waiting);
-  }
-
-  static get Running() {
-    return new this(EStatus.Running);
-  }
-
-  static get Blocked() {
-    return new this(EStatus.Blocked);
+  // LocaleString returns the locale string name of the Status
+  toLocaleString(translate: (key: string) => string): string {
+    return translate(`actions.status.${this.value}`);
   }
 
   isUnknown() {
-    return this.status === EStatus.Unknown;
+    return this === Status.Unknown;
   }
 
   isSuccess() {
-    return this.status === EStatus.Success;
+    return this === Status.Success;
   }
 
   isFailure() {
-    return this.status === EStatus.Failure;
+    return this === Status.Failure;
   }
 
   isCancelled() {
-    return this.status === EStatus.Cancelled;
+    return this === Status.Cancelled;
   }
 
   isSkipped() {
-    return this.status === EStatus.Skipped;
+    return this === Status.Skipped;
   }
 
   isWaiting() {
-    return this.status === EStatus.Waiting;
+    return this === Status.Waiting;
   }
 
   isRunning() {
-    return this.status === EStatus.Running;
+    return this === Status.Running;
   }
 
   isBlocked() {
-    return this.status === EStatus.Blocked;
+    return this === Status.Blocked;
   }
 
-  toString() {
-    return EStatus[this.status].toLowerCase();
+  isCancelling() {
+    return this === Status.Cancelling;
   }
 
-  valueOf() {
-    return this.status;
-  }
-
-  in(...statuses: EStatus[]) {
-    return statuses.includes(this.status);
+  in(...statuses: Status[]) {
+    return statuses.includes(this);
   }
 
   // isDone returns whether the Status is final
   isDone() {
-    return this.in(EStatus.Success, EStatus.Failure, EStatus.Cancelled, EStatus.Skipped);
+    return this.in(Status.Success, Status.Failure, Status.Cancelled, Status.Skipped);
+  }
+
+  // HasRun returns whether the Status is a result of running
+  hasRun(): boolean {
+    return this.in(Status.Success, Status.Failure);
   }
 
   asResult() {
-    if (this.isDone()) {
-      return Result[this.status];
+    if (this === Status.Success) return Result.SUCCESS;
+    if (this === Status.Failure) return Result.FAILURE;
+    if (this === Status.Cancelled || this === Status.Cancelling) {
+      return Result.CANCELLED;
     }
-    return Result[Result.UNSPECIFIED];
+    if (this === Status.Skipped) return Result.SKIPPED;
+    return Result.UNSPECIFIED;
   }
 
-  static Values() {
-    return Object.keys(EStatus)
-      .filter((key) => {
-        return Number.isNaN(Number(key));
-      })
-      .map((key) => {
-        return key.toLowerCase();
-      });
+  static fromResult(result: Result) {
+    switch (result) {
+      case Result.SUCCESS:
+        return Status.Success;
+      case Result.FAILURE:
+        return Status.Failure;
+      case Result.CANCELLED:
+        return Status.Cancelled;
+      case Result.SKIPPED:
+        return Status.Skipped;
+      default:
+        return Status.Unknown;
+    }
   }
 }
