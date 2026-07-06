@@ -1,5 +1,5 @@
 /**
- * Actions Runner Token
+ * ActionRunnerToken represents runner tokens
  *
  * sobird<i@sobird.me> at 2024/11/16 20:02:24 created.
  */
@@ -10,40 +10,51 @@ import { DataTypes, type InferAttributes, type InferCreationAttributes, type Cre
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-/** These are all the attributes in the ActionRunnerToken model */
 export type ActionRunnerTokenAttributes = InferAttributes<ActionRunnerToken>;
-
-/** Some attributes are optional in `ActionRunnerToken.build` and `ActionRunnerToken.create` calls */
 export type ActionRunnerTokenCreationAttributes = InferCreationAttributes<ActionRunnerToken>;
 
 class ActionRunnerToken extends BaseModel<ActionRunnerTokenAttributes, ActionRunnerTokenCreationAttributes> {
   declare token: CreationOptional<string>;
-
   declare ownerId: number;
-
   declare repositoryId: number;
-
+  /**
+   * true means it can be used
+   */
   declare enabled: CreationOptional<boolean>;
 
   // creates a new active runner token and invalidate all old tokens
-  public static async createForScope(ownerId: number, repositoryId: number) {
-    const runnerToken = this.build({
-      ownerId,
-      repositoryId,
-    });
+  public static async createRunnerTokenWithValue(ownerId: number, repositoryId: number, token: string) {
+    if (ownerId !== 0 && repositoryId !== 0) {
+      ownerId = 0;
+    }
 
-    await sequelize.transaction(async () => {
-      await this.update({ enabled: false }, { where: { ownerId, repositoryId } });
-      await runnerToken.save();
+    return await sequelize.transaction(async (transaction) => {
+      await this.update({ enabled: false }, { where: { ownerId, repositoryId }, transaction });
+      const runnerToken = await this.create(
+        {
+          ownerId,
+          repositoryId,
+          token,
+        },
+        { transaction },
+      );
+      return runnerToken;
     });
+  }
 
-    return runnerToken;
+  public static async createRunnerToken(ownerId: number, repoId: number) {
+    const token = randomBytes(20).toString('hex');
+    return await this.createRunnerTokenWithValue(ownerId, repoId, token);
   }
 
   /**
-   * returns the latest runner registration token
+   * returns the latest runner token
    */
-  public static async findLatestByScope(ownerId: number, repositoryId: number) {
+  public static async findLatestOne(ownerId: number, repositoryId: number) {
+    if (ownerId !== 0 && repositoryId !== 0) {
+      ownerId = 0;
+    }
+
     const runnerToken = await this.findOne({
       where: {
         ownerId,
@@ -53,7 +64,7 @@ class ActionRunnerToken extends BaseModel<ActionRunnerTokenAttributes, ActionRun
     });
 
     if (!runnerToken) {
-      throw Error('runner registration token does not exist');
+      throw Error('runner token does not exist');
     }
 
     return runnerToken;
@@ -63,13 +74,13 @@ class ActionRunnerToken extends BaseModel<ActionRunnerTokenAttributes, ActionRun
 ActionRunnerToken.init(
   {
     token: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(40),
       defaultValue: () => {
-        return randomBytes(40).toString('hex');
+        return randomBytes(20).toString('hex');
       },
       allowNull: false,
       unique: true,
-      comment: 'actions runner registration token',
+      comment: 'runner token',
     },
     ownerId: {
       type: DataTypes.INTEGER,
@@ -82,11 +93,11 @@ ActionRunnerToken.init(
     enabled: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
-      comment: 'true means it can be used',
     },
   },
   {
     sequelize,
+    indexes: [{ fields: ['owner_id'] }, { fields: ['repo_id'] }],
   },
 );
 

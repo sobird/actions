@@ -1,107 +1,56 @@
 /**
- * Actions Runner Model
+ * ActionRunner represents runner machines
  *
  * sobird<i@sobird.me> at 2024/11/16 23:31:19 created.
  */
 
 import { randomBytes, pbkdf2Sync, timingSafeEqual } from 'node:crypto';
 
-import {
-  DataTypes,
-  type InferAttributes,
-  type InferCreationAttributes,
-  type CreationOptional,
-  type HasManyGetAssociationsMixin,
-  type HasManySetAssociationsMixin,
-  type HasManyAddAssociationMixin,
-  type HasManyAddAssociationsMixin,
-  type HasManyRemoveAssociationMixin,
-  type HasManyRemoveAssociationsMixin,
-  type HasManyHasAssociationMixin,
-  type HasManyHasAssociationsMixin,
-  type HasManyCreateAssociationMixin,
-  type HasManyCountAssociationsMixin,
-} from 'sequelize';
+import { DataTypes, type InferAttributes, type InferCreationAttributes, type CreationOptional } from 'sequelize';
 
 import { RunnerStatus } from '@/gen/runner/v1/messages_pb';
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import type { Models, ActionTask } from '.';
-
-/** These are all the attributes in the ActionRunner model */
 export type ActionRunnerAttributes = InferAttributes<ActionRunner>;
-
-/** Some attributes are optional in `ActionRunner.build` and `ActionRunner.create` calls */
 export type ActionRunnerCreationAttributes = InferCreationAttributes<ActionRunner>;
 
-export type ActionTaskPrimaryKey = ActionTask['id'];
+const RUNNER_OFFLINE_TIME = 60 * 1000;
+const RUNNER_IDLE_TIME = 10 * 1000;
 
-const RunnerOfflineTime = 60 * 1000;
-const RunnerIdleTime = 10 * 1000;
-
+/**
+ *  ActionRunner represents runner machines
+ *
+ * It can be:
+ *  1. global runner, OwnerID is 0 and RepoID is 0
+ *  2. org/user level runner, OwnerID is org/user ID and RepoID is 0
+ *  3. repo level runner, OwnerID is 0 and RepoID is repo ID
+ *
+ * Please note that it's not acceptable to have both OwnerID and RepoID to be non-zero,
+ * or it will be complicated to find runners belonging to a specific owner.
+ * For example, conditions like `OwnerID = 1` will also return runner {OwnerID: 1, RepoID: 1},
+ * but it's a repo level runner, not an org/user level runner.
+ * To avoid this, make it clear with {OwnerID: 0, RepoID: 1} for repo level runners.
+ */
 class ActionRunner extends BaseModel<ActionRunnerAttributes, ActionRunnerCreationAttributes> {
-  declare id?: bigint;
-
   declare uuid: CreationOptional<string>;
-
   declare name: string;
-
   declare version: string;
-
   declare ownerId: number;
-
   declare repositoryId: number;
-
   declare description: CreationOptional<string>;
-
   declare base: CreationOptional<number>;
-
   declare repoRange: CreationOptional<string>;
-
   declare token: CreationOptional<string>;
-
   declare tokenHash: CreationOptional<string>;
-
   declare tokenSalt: CreationOptional<string>;
-
   declare lastOnline: CreationOptional<Date>;
-
   declare lastActive: CreationOptional<Date>;
-
+  declare ephemeral: boolean;
+  declare isDisabled: CreationOptional<boolean>;
   declare isOnline: CreationOptional<boolean>;
-
   declare labels: string[];
-
   declare status: CreationOptional<RunnerStatus>;
-
-  // associates method
-  // Since TS cannot determine model association at compile time
-  // we have to declare them here purely virtually
-  // these will not exist until `Model.init` was called.
-  declare getActionTasks: HasManyGetAssociationsMixin<ActionTask>;
-
-  /** Remove all previous associations and set the new ones */
-  declare setActionTasks: HasManySetAssociationsMixin<ActionTask, ActionTaskPrimaryKey>;
-
-  declare addActionTask: HasManyAddAssociationMixin<ActionTask, ActionTaskPrimaryKey>;
-
-  declare addActionTasks: HasManyAddAssociationsMixin<ActionTask, ActionTaskPrimaryKey>;
-
-  declare removeActionTask: HasManyRemoveAssociationMixin<ActionTask, ActionTaskPrimaryKey>;
-
-  declare removeActionTasks: HasManyRemoveAssociationsMixin<ActionTask, ActionTaskPrimaryKey>;
-
-  declare hasActionTask: HasManyHasAssociationMixin<ActionTask, ActionTaskPrimaryKey>;
-
-  declare hasActionTasks: HasManyHasAssociationsMixin<ActionTask, ActionTaskPrimaryKey>;
-
-  declare createActionTask: HasManyCreateAssociationMixin<ActionTask>;
-
-  declare countActionTasks: HasManyCountAssociationsMixin;
-
-  static associate({ ActionTask }: Models) {
-    this.hasMany(ActionTask, { foreignKey: 'runnerId' });
-  }
+  declare hasCancellingSupport: boolean;
 
   public verifyToken(token: string) {
     if (!token) {
@@ -112,7 +61,16 @@ class ActionRunner extends BaseModel<ActionRunnerAttributes, ActionRunnerCreatio
   }
 
   public static hashToken(token: string, salt: string) {
-    return pbkdf2Sync(token, salt, 100000, 64, 'sha512').toString('hex');
+    return pbkdf2Sync(Buffer.from(token), Buffer.from(salt), 10000, 50, 'sha256').toString('hex');
+  }
+
+  /**
+   * checks whether the runner's labels can match a job's "runs-on"
+   */
+  public canMatchLabels(jobRunsOn: string[]): boolean {
+    if (!this.labels || !Array.isArray(this.labels)) return false;
+    const runnerLabelSet = new Set(this.labels);
+    return jobRunsOn.every((label) => runnerLabelSet.has(label));
   }
 }
 
@@ -152,21 +110,20 @@ ActionRunner.init(
       defaultValue: () => {
         return randomBytes(20).toString('hex');
       },
-      unique: true,
       allowNull: false,
       comment: 'runner token',
     },
     tokenSalt: {
       type: DataTypes.STRING,
-      unique: true,
       allowNull: false,
       defaultValue: () => {
-        return randomBytes(16).toString('hex');
+        return randomBytes(5).toString('hex');
       },
       comment: 'token salt',
     },
     tokenHash: {
       type: DataTypes.STRING,
+      unique: true,
       comment: 'token hash',
     },
     lastOnline: {
@@ -177,44 +134,56 @@ ActionRunner.init(
       type: DataTypes.DATE,
       defaultValue: DataTypes.DATE(),
     },
-    isOnline: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        const { status } = this;
-        if (status === RunnerStatus.IDLE || status === RunnerStatus.ACTIVE) {
-          return true;
-        }
-        return false;
-      },
-    },
     labels: {
       type: DataTypes.JSON,
+      defaultValue: [],
       comment: 'Store labels defined in state file (default: .runner file) of `runner`',
     },
+
+    ephemeral: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    isDisabled: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    hasCancellingSupport: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+
     status: {
       type: DataTypes.VIRTUAL,
       get() {
         const now = Date.now();
         const lastOnline = this.getDataValue('lastOnline');
         const lastActive = this.getDataValue('lastActive');
-        if (now - lastOnline.getTime() > RunnerOfflineTime) {
+        if (now - lastOnline.getTime() > RUNNER_OFFLINE_TIME) {
           return RunnerStatus.OFFLINE;
         }
-        if (now - lastActive.getTime() > RunnerIdleTime) {
+        if (now - lastActive.getTime() > RUNNER_IDLE_TIME) {
           return RunnerStatus.IDLE;
         }
         return RunnerStatus.ACTIVE;
       },
     },
+    isOnline: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.status === RunnerStatus.IDLE || this.status === RunnerStatus.ACTIVE;
+      },
+    },
   },
   {
     sequelize,
-    modelName: 'ActionRunner',
   },
 );
 
 ActionRunner.beforeCreate((model) => {
-  // eslint-disable-next-line no-param-reassign
   model.tokenHash = ActionRunner.hashToken(model.token, model.tokenSalt);
 });
 

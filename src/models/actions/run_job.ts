@@ -168,7 +168,6 @@ ActionRunJob.init(
     runsOn: {
       type: DataTypes.STRING,
     },
-
     status: {
       type: DataTypes.TINYINT,
     },

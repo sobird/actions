@@ -24,7 +24,7 @@ import {
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
 import type { Models, ActionRunJob } from '.';
-import Status from './status';
+import { Status } from './status';
 
 export type ActionRunAttributes = InferAttributes<ActionRun>;
 export type ActionRunCreationAttributes = InferCreationAttributes<ActionRun>;
