@@ -6,17 +6,6 @@
 
 import { Result } from '@/gen/runner/v1/messages_pb';
 
-export enum EStatus {
-  Unknown, // 0, consistent with runnerv1.Result_RESULT_UNSPECIFIED
-  Success, // 1, consistent with runnerv1.Result_RESULT_SUCCESS
-  Failure, // 2, consistent with runnerv1.Result_RESULT_FAILURE
-  Cancelled, // 3, consistent with runnerv1.Result_RESULT_CANCELLED
-  Skipped, // 4, consistent with runnerv1.Result_RESULT_SKIPPED
-  Waiting, // 5, isn't a runnerv1.Result
-  Running, // 6, isn't a runnerv1.Result
-  Blocked, // 7, isn't a runnerv1.Result
-}
-
 export class Status {
   static readonly Unknown = new Status('unknown');
   static readonly Waiting = new Status('waiting');
@@ -113,5 +102,19 @@ export class Status {
       default:
         return Status.Unknown;
     }
+  }
+
+  static values() {
+    return [
+      this.Unknown,
+      this.Waiting,
+      this.Running,
+      this.Success,
+      this.Failure,
+      this.Cancelled,
+      this.Cancelling,
+      this.Skipped,
+      this.Blocked,
+    ].map((item) => item.toString());
   }
 }

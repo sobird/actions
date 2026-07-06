@@ -1,6 +1,5 @@
-import { ActionRun } from '@/models/actions';
-
-import Status from './status';
+import { ActionRun } from './run';
+import { Status } from './status';
 
 vi.mock('@/lib/sequelize');
 vi.mock('./run');

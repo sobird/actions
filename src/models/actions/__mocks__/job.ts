@@ -1,7 +1,6 @@
 import { CreationAttributes } from 'sequelize';
 
-// import { ActionsJob } from '@/models/actions';
-import ActionsJob from '../run_job';
+import { ActionRunJob } from '../run_job';
 
 vi.mock('@/lib/sequelize');
 vi.mock('../run');
@@ -38,11 +37,9 @@ const seeds = [
     started: new Date(1683636528000),
     stopped: new Date(1683636626000),
   },
-] as CreationAttributes<ActionsJob>[];
+] as CreationAttributes<ActionRunJob>[];
 
-beforeAll(async () => {});
+await ActionRunJob.sync({ force: true });
+await ActionRunJob.bulkCreate(seeds, { individualHooks: true, validate: true });
 
-await ActionsJob.sync({ force: true });
-await ActionsJob.bulkCreate(seeds, { individualHooks: true, validate: true });
-
-export default ActionsJob;
+export default ActionRunJob;

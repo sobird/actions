@@ -36,11 +36,7 @@ export type ActionTaskAttributes = InferAttributes<ActionTask>;
 /** Some attributes are optional in `ActionTask.build` and `ActionTask.create` calls */
 export type ActionTaskCreationAttributes = InferCreationAttributes<ActionTask>;
 
-export type ActionStepPrimaryKey = ActionStep['id'];
-export type ActionRunJobPrimaryKey = ActionRunJob['id'];
-export type ActionRunnerPrimaryKey = ActionRunner['id'];
-
-class ActionTask extends BaseModel<ActionTaskAttributes, ActionTaskCreationAttributes> {
+export class ActionTask extends BaseModel<ActionTaskAttributes, ActionTaskCreationAttributes> {
   declare jobId: number;
 
   declare runnerId: number;
@@ -100,19 +96,19 @@ class ActionTask extends BaseModel<ActionTaskAttributes, ActionTaskCreationAttri
   declare getActionSteps: HasManyGetAssociationsMixin<ActionStep>;
 
   /** Remove all previous associations and set the new ones */
-  declare setActionSteps: HasManySetAssociationsMixin<ActionStep, ActionStepPrimaryKey>;
+  declare setActionSteps: HasManySetAssociationsMixin<ActionStep, bigint>;
 
-  declare addActionStep: HasManyAddAssociationMixin<ActionStep, ActionStepPrimaryKey>;
+  declare addActionStep: HasManyAddAssociationMixin<ActionStep, bigint>;
 
-  declare addActionSteps: HasManyAddAssociationsMixin<ActionStep, ActionStepPrimaryKey>;
+  declare addActionSteps: HasManyAddAssociationsMixin<ActionStep, bigint>;
 
-  declare removeActionStep: HasManyRemoveAssociationMixin<ActionStep, ActionStepPrimaryKey>;
+  declare removeActionStep: HasManyRemoveAssociationMixin<ActionStep, bigint>;
 
-  declare removeActionSteps: HasManyRemoveAssociationsMixin<ActionStep, ActionStepPrimaryKey>;
+  declare removeActionSteps: HasManyRemoveAssociationsMixin<ActionStep, bigint>;
 
-  declare hasActionStep: HasManyHasAssociationMixin<ActionStep, ActionStepPrimaryKey>;
+  declare hasActionStep: HasManyHasAssociationMixin<ActionStep, bigint>;
 
-  declare hasActionSteps: HasManyHasAssociationsMixin<ActionStep, ActionStepPrimaryKey>;
+  declare hasActionSteps: HasManyHasAssociationsMixin<ActionStep, bigint>;
 
   declare createActionStep: HasManyCreateAssociationMixin<ActionStep>;
 
@@ -121,14 +117,14 @@ class ActionTask extends BaseModel<ActionTaskAttributes, ActionTaskCreationAttri
   // ActionRunJob
   declare getActionRunJob: BelongsToGetAssociationMixin<ActionRunJob>;
 
-  declare setActionRunJob: BelongsToSetAssociationMixin<ActionRunJob, ActionRunJobPrimaryKey>;
+  declare setActionRunJob: BelongsToSetAssociationMixin<ActionRunJob, bigint>;
 
   declare createActionRunJob: BelongsToCreateAssociationMixin<ActionRunJob>;
 
   // ActionRunner
   declare getActionRunner: BelongsToGetAssociationMixin<ActionRunner>;
 
-  declare setActionRunner: BelongsToSetAssociationMixin<ActionRunner, ActionRunnerPrimaryKey>;
+  declare setActionRunner: BelongsToSetAssociationMixin<ActionRunner, bigint>;
 
   declare createActionRunner: BelongsToCreateAssociationMixin<ActionRunner>;
 
@@ -224,5 +220,3 @@ ActionTask.init(
     ],
   },
 );
-
-export default ActionTask;

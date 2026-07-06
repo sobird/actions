@@ -30,7 +30,7 @@ export type ActionScheduleSpecAttributes = InferAttributes<ActionScheduleSpec>;
 /** Some attributes are optional in `ActionScheduleSpec.build` and `ActionScheduleSpec.create` calls */
 export type ActionScheduleSpecCreationAttributes = InferCreationAttributes<ActionScheduleSpec>;
 
-class ActionScheduleSpec extends BaseModel<ActionScheduleSpecAttributes, ActionScheduleSpecCreationAttributes> {
+export class ActionScheduleSpec extends BaseModel<ActionScheduleSpecAttributes, ActionScheduleSpecCreationAttributes> {
   declare repositoryId: bigint;
 
   // foreign keys are automatically added by associations methods (like ActionScheduleSpec.belongsTo)
@@ -92,5 +92,3 @@ ActionScheduleSpec.init(
     modelName: 'ActionScheduleSpec',
   },
 );
-
-export default ActionScheduleSpec;

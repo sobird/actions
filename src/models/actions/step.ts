@@ -23,9 +23,7 @@ export type ActionStepAttributes = InferAttributes<ActionStep>;
 /** Some attributes are optional in `ActionStep.build` and `ActionStep.create` calls */
 export type ActionStepCreationAttributes = InferCreationAttributes<ActionStep>;
 
-export type ActionTaskPrimaryKey = ActionTask['id'];
-
-class ActionStep extends BaseModel<ActionStepAttributes, ActionStepCreationAttributes> {
+export class ActionStep extends BaseModel<ActionStepAttributes, ActionStepCreationAttributes> {
   declare name: string;
 
   declare taskId: number;
@@ -54,7 +52,7 @@ class ActionStep extends BaseModel<ActionStepAttributes, ActionStepCreationAttri
   // these will not exist until `Model.init` was called.
   declare getActionTask: BelongsToGetAssociationMixin<ActionTask>;
 
-  declare setActionTask: BelongsToSetAssociationMixin<ActionTask, ActionTaskPrimaryKey>;
+  declare setActionTask: BelongsToSetAssociationMixin<ActionTask, bigint>;
 
   declare createActionTask: BelongsToCreateAssociationMixin<ActionTask>;
 }
@@ -97,5 +95,3 @@ ActionStep.init(
     modelName: 'ActionStep',
   },
 );
-
-export default ActionStep;

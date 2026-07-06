@@ -13,7 +13,7 @@ import { sequelize, BaseModel } from '@/lib/sequelize';
 export type ActionRunnerTokenAttributes = InferAttributes<ActionRunnerToken>;
 export type ActionRunnerTokenCreationAttributes = InferCreationAttributes<ActionRunnerToken>;
 
-class ActionRunnerToken extends BaseModel<ActionRunnerTokenAttributes, ActionRunnerTokenCreationAttributes> {
+export class ActionRunnerToken extends BaseModel<ActionRunnerTokenAttributes, ActionRunnerTokenCreationAttributes> {
   declare token: CreationOptional<string>;
   declare ownerId: number;
   declare repositoryId: number;
@@ -100,5 +100,3 @@ ActionRunnerToken.init(
     indexes: [{ fields: ['owner_id'] }, { fields: ['repo_id'] }],
   },
 );
-
-export default ActionRunnerToken;

@@ -31,7 +31,7 @@ const RUNNER_IDLE_TIME = 10 * 1000;
  * but it's a repo level runner, not an org/user level runner.
  * To avoid this, make it clear with {OwnerID: 0, RepoID: 1} for repo level runners.
  */
-class ActionRunner extends BaseModel<ActionRunnerAttributes, ActionRunnerCreationAttributes> {
+export class ActionRunner extends BaseModel<ActionRunnerAttributes, ActionRunnerCreationAttributes> {
   declare uuid: CreationOptional<string>;
   declare name: string;
   declare version: string;
@@ -186,5 +186,3 @@ ActionRunner.init(
 ActionRunner.beforeCreate((model) => {
   model.tokenHash = ActionRunner.hashToken(model.token, model.tokenSalt);
 });
-
-export default ActionRunner;

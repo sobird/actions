@@ -31,7 +31,7 @@ export type ActionRunCreationAttributes = InferCreationAttributes<ActionRun>;
 
 export type ActionRunJobPrimaryKey = ActionRunJob['id'];
 
-class ActionRun extends BaseModel<ActionRunAttributes, ActionRunCreationAttributes> {
+export class ActionRun extends BaseModel<ActionRunAttributes, ActionRunCreationAttributes> {
   declare title: string;
 
   declare ownerId: number;
@@ -170,15 +170,15 @@ ActionRun.init(
     status: {
       // https://github.com/sequelize/sequelize/issues/5765
       type: DataTypes.ENUM,
-      values: Status.Values(),
+      values: Status.values(),
       defaultValue: Status.Unknown.toString(),
       set(value: Status) {
         this.setDataValue('status', value.toString() as unknown as Status);
       },
       validate: {
         isIn: {
-          args: [Status.Values()],
-          msg: `Must be in ${Status.Values()}`,
+          args: [Status.values()],
+          msg: `Must be in ${Status.values()}`,
         },
       },
     },
@@ -195,5 +195,3 @@ ActionRun.init(
     modelName: 'ActionRun',
   },
 );
-
-export default ActionRun;

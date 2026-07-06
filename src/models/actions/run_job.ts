@@ -29,7 +29,6 @@ import {
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
 import type { Models, ActionTask, ActionRun } from '.';
-import type Run from './run';
 
 /** These are all the attributes in the ActionRunJob model */
 export type ActionRunJobAttributes = InferAttributes<ActionRunJob>;
@@ -43,7 +42,7 @@ export type ActionRunPrimaryKey = ActionRun['id'];
 /**
  * ActionRunJob represents a job of a run
  */
-class ActionRunJob extends BaseModel<ActionRunJobAttributes, ActionRunJobCreationAttributes> {
+export class ActionRunJob extends BaseModel<ActionRunJobAttributes, ActionRunJobCreationAttributes> {
   declare runId: number;
 
   declare name: string;
@@ -76,7 +75,7 @@ class ActionRunJob extends BaseModel<ActionRunJobAttributes, ActionRunJobCreatio
 
   declare stopped: Date;
 
-  declare Run?: NonAttribute<Run>;
+  declare Run?: NonAttribute<ActionRun>;
 
   static associate({ ActionRun, ActionTask }: Models) {
     this.belongsTo(ActionRun, { foreignKey: 'runId' });
@@ -84,7 +83,7 @@ class ActionRunJob extends BaseModel<ActionRunJobAttributes, ActionRunJobCreatio
   }
 
   declare static associations: {
-    Run: Association<ActionRunJob, Run>;
+    Run: Association<ActionRunJob, ActionRun>;
   };
 
   // associates method
@@ -178,5 +177,3 @@ ActionRunJob.init(
     sequelize,
   },
 );
-
-export default ActionRunJob;

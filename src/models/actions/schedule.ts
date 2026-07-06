@@ -39,7 +39,7 @@ export type ActionScheduleAttributes = InferAttributes<ActionSchedule, { omit: '
 /** Some attributes are optional in `ActionSchedule.build` and `ActionSchedule.create` calls */
 export type ActionScheduleCreationAttributes = InferCreationAttributes<ActionSchedule, { omit: 'ScheduleSpecs' }>;
 
-class ActionSchedule extends BaseModel<ActionScheduleAttributes, ActionScheduleCreationAttributes> {
+export class ActionSchedule extends BaseModel<ActionScheduleAttributes, ActionScheduleCreationAttributes> {
   declare title: string;
 
   declare specs?: string[];
@@ -148,9 +148,3 @@ ActionSchedule.init(
     modelName: 'ActionSchedule',
   },
 );
-
-// ActionSchedule.beforeCreate((model) => {
-
-// });
-
-export default ActionSchedule;
