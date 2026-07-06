@@ -66,11 +66,18 @@ export class ActionRun extends BaseModel<ActionRunAttributes, ActionRunCreationA
 
   declare version: CreationOptional<string>;
 
-  declare started: Date;
+  declare rawConcurrency: string;
+  declare workflowRepoId: bigint;
+  declare workflowCommitSha: string;
+  declare isScopedRun: boolean;
 
+  declare started: Date;
   declare stopped: Date;
 
+  declare previousDuration: CreationOptional<bigint>;
   declare duration: CreationOptional<number>;
+
+  declare latestAttemptId: bigint;
 
   static async add() {
     const t = await sequelize.transaction();
@@ -138,29 +145,39 @@ ActionRun.init(
     },
     index: {
       type: DataTypes.BIGINT,
+      allowNull: false,
     },
     triggerUserId: {
       type: DataTypes.BIGINT,
     },
     scheduleId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
     },
     ref: {
       type: DataTypes.STRING,
+      allowNull: false,
     },
     commitSha: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(64),
+      allowNull: false,
     },
     isForkPullRequest: {
       type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
     needApproval: {
       type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
     approvedBy: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
     },
-    eventName: DataTypes.STRING,
+    eventName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     eventPayload: {
       type: DataTypes.TEXT,
     },
@@ -170,28 +187,103 @@ ActionRun.init(
     status: {
       // https://github.com/sequelize/sequelize/issues/5765
       type: DataTypes.ENUM,
-      values: Status.values(),
+      values: Status.names(),
       defaultValue: Status.Unknown.toString(),
+      get() {
+        return Status.from(this.getDataValue('status') as unknown as string);
+      },
       set(value: Status) {
         this.setDataValue('status', value.toString() as unknown as Status);
       },
       validate: {
         isIn: {
-          args: [Status.values()],
-          msg: `Must be in ${Status.values()}`,
+          args: [Status.names()],
+          msg: `Must be in ${Status.names()}`,
         },
       },
     },
     version: {
-      type: DataTypes.STRING(64),
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
+
+    rawConcurrency: {
+      type: DataTypes.STRING,
+    },
+    workflowRepoId: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    workflowCommitSha: {
+      type: DataTypes.STRING(64),
+      allowNull: false,
+      defaultValue: '',
+    },
+    isScopedRun: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+
     started: DataTypes.DATE,
     stopped: DataTypes.DATE,
 
+    previousDuration: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+
     duration: DataTypes.BIGINT,
+
+    latestAttemptId: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
+      defaultValue: 0,
+    },
   },
   {
     sequelize,
-    modelName: 'ActionRun',
+    indexes: [
+      {
+        name: 'repo_index_unique',
+        unique: true,
+        fields: ['repository_id', 'index'],
+      },
+      {
+        name: 'action_run_repo_id_index',
+        fields: ['repository_id'],
+      },
+      {
+        name: 'action_run_owner_id_index',
+        fields: ['owner_id'],
+      },
+      {
+        name: 'action_run_workflow_id_index',
+        fields: ['workflow_id'],
+      },
+      {
+        name: 'action_run_trigger_user_id_index',
+        fields: ['trigger_user_id'],
+      },
+      {
+        name: 'action_run_ref_index',
+        fields: ['ref'],
+      },
+      {
+        name: 'action_run_approved_by_index',
+        fields: ['approved_by'],
+      },
+      {
+        name: 'action_run_status_index',
+        fields: ['status'],
+      },
+      {
+        name: 'action_run_latest_attempt_id_index',
+        fields: ['latest_attempt_id'],
+      },
+    ],
   },
 );

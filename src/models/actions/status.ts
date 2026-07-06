@@ -115,6 +115,18 @@ export class Status {
       this.Cancelling,
       this.Skipped,
       this.Blocked,
-    ].map((item) => item.toString());
+    ];
+  }
+
+  static names() {
+    return this.values().map((item) => item.toString());
+  }
+
+  static from(status: string) {
+    if (!status) {
+      return Status.Unknown;
+    }
+    const values = this.values();
+    return values.find((s) => s.toString() === status) || this.Unknown;
   }
 }
