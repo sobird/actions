@@ -8,7 +8,8 @@ import {
   DataTypes,
   type InferAttributes,
   type InferCreationAttributes,
-  // type CreationOptional,
+  type CreationAttributes,
+  type CreationOptional,
   type NonAttribute,
   type Association,
   type HasManyGetAssociationsMixin,
@@ -29,17 +30,12 @@ import type { Models, ActionScheduleSpec } from '.';
 
 export type ActionScheduleSpecPrimaryKey = ActionScheduleSpec['id'];
 
-/**
- * These are all the attributes in the ActionSchedule model
- *
- * `ScheduleSpecs` is excluded as it's not an attribute, it's an association.
- */
-export type ActionScheduleAttributes = InferAttributes<ActionSchedule, { omit: 'ScheduleSpecs' }>;
+export type ActionScheduleCreationAttributes = CreationAttributes<ActionSchedule>;
 
-/** Some attributes are optional in `ActionSchedule.build` and `ActionSchedule.create` calls */
-export type ActionScheduleCreationAttributes = InferCreationAttributes<ActionSchedule, { omit: 'ScheduleSpecs' }>;
-
-export class ActionSchedule extends BaseModel<ActionScheduleAttributes, ActionScheduleCreationAttributes> {
+export class ActionSchedule extends BaseModel<
+  InferAttributes<ActionSchedule>,
+  InferCreationAttributes<ActionSchedule>
+> {
   declare title: string;
 
   declare specs?: string[];
@@ -54,13 +50,13 @@ export class ActionSchedule extends BaseModel<ActionScheduleAttributes, ActionSc
 
   declare eventName: string;
 
-  declare eventPayload: Blob;
+  declare eventPayload: CreationOptional<Blob>;
 
   declare ref: string;
 
   declare commitSha: string;
 
-  declare content: string;
+  declare content: Blob;
 
   static async findByIds(ids: number[]) {
     return this.findAll({ where: { id: ids } });
@@ -140,7 +136,7 @@ ActionSchedule.init(
       type: DataTypes.CHAR(255),
     },
     content: {
-      type: DataTypes.TEXT,
+      type: DataTypes.BLOB,
     },
   },
   {

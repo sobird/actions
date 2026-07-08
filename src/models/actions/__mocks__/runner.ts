@@ -1,10 +1,8 @@
-import { CreationAttributes } from 'sequelize';
+import { ActionRunner, type ActionRunnerCreationAttributes } from '../runner';
 
-import ActionRunner from '../runner';
-
-const seeds = [
+const seeds: ActionRunnerCreationAttributes[] = [
   {
-    id: 1,
+    id: 1n,
     name: 'test runner name',
     ownerId: 1,
     repositoryId: 4,
@@ -18,7 +16,7 @@ const seeds = [
     version: '0.0.1',
     labels: ['ubuntu-latest'],
   },
-] as CreationAttributes<ActionRunner>[];
+];
 
 await ActionRunner.sync({ force: true });
 await ActionRunner.bulkCreate(seeds, { individualHooks: true, validate: true });

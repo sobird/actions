@@ -11,9 +11,7 @@
  */
 
 import log4js from 'log4js';
-import {
-  Sequelize, Model, ModelStatic, InferAttributes, FindAndCountOptions,
-} from 'sequelize';
+import { Sequelize, Model, type ModelStatic, type InferAttributes, type FindAndCountOptions } from 'sequelize';
 import sqlite3 from 'sqlite3';
 
 interface FindManyByPageOptions extends Omit<FindAndCountOptions, 'offset' | 'limit'> {
@@ -152,11 +150,11 @@ export class BaseModel<T extends {} = any, P extends {} = T> extends Model<T, P>
     this: ModelStatic<M>,
     options: FindManyByPageOptions,
   ): Promise<{
-      page: number;
-      limit: number;
-      count: number;
-      rows: InferAttributes<M>[]
-    }> {
+    page: number;
+    limit: number;
+    count: number;
+    rows: InferAttributes<M>[];
+  }> {
     const { page = 1, limit = 20, ...restOptions } = options;
     const offset = (page - 1) * limit;
 
@@ -167,14 +165,22 @@ export class BaseModel<T extends {} = any, P extends {} = T> extends Model<T, P>
         ...restOptions,
       });
       return {
-        page, limit, count, rows: rows.map((el) => { return el.toJSON(); }),
+        page,
+        limit,
+        count,
+        rows: rows.map((el) => {
+          return el.toJSON();
+        }),
       };
-    } catch (err) {
+    } catch {
       // console.log('err', err);
     }
 
     return {
-      page, limit, count: 0, rows: [],
+      page,
+      limit,
+      count: 0,
+      rows: [],
     };
   }
 }

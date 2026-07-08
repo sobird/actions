@@ -6,13 +6,18 @@
 
 import { randomBytes, pbkdf2Sync, timingSafeEqual } from 'node:crypto';
 
-import { DataTypes, type InferAttributes, type InferCreationAttributes, type CreationOptional } from 'sequelize';
+import {
+  DataTypes,
+  type InferAttributes,
+  type InferCreationAttributes,
+  type CreationAttributes,
+  type CreationOptional,
+} from 'sequelize';
 
 import { RunnerStatus } from '@/gen/runner/v1/messages_pb';
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-export type ActionRunnerAttributes = InferAttributes<ActionRunner>;
-export type ActionRunnerCreationAttributes = InferCreationAttributes<ActionRunner>;
+export type ActionRunnerCreationAttributes = CreationAttributes<ActionRunner>;
 
 const RUNNER_OFFLINE_TIME = 60 * 1000;
 const RUNNER_IDLE_TIME = 10 * 1000;
@@ -31,7 +36,7 @@ const RUNNER_IDLE_TIME = 10 * 1000;
  * but it's a repo level runner, not an org/user level runner.
  * To avoid this, make it clear with {OwnerID: 0, RepoID: 1} for repo level runners.
  */
-export class ActionRunner extends BaseModel<ActionRunnerAttributes, ActionRunnerCreationAttributes> {
+export class ActionRunner extends BaseModel<InferAttributes<ActionRunner>, InferCreationAttributes<ActionRunner>> {
   declare uuid: CreationOptional<string>;
   declare name: string;
   declare version: string;
@@ -45,12 +50,12 @@ export class ActionRunner extends BaseModel<ActionRunnerAttributes, ActionRunner
   declare tokenSalt: CreationOptional<string>;
   declare lastOnline: CreationOptional<Date>;
   declare lastActive: CreationOptional<Date>;
-  declare ephemeral: boolean;
+  declare ephemeral: CreationOptional<boolean>;
   declare isDisabled: CreationOptional<boolean>;
   declare isOnline: CreationOptional<boolean>;
   declare labels: string[];
   declare status: CreationOptional<RunnerStatus>;
-  declare hasCancellingSupport: boolean;
+  declare hasCancellingSupport: CreationOptional<boolean>;
 
   public verifyToken(token: string) {
     if (!token) {

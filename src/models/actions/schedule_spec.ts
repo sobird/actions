@@ -8,6 +8,7 @@ import {
   DataTypes,
   type InferAttributes,
   type InferCreationAttributes,
+  type CreationAttributes,
   // type CreationOptional,
   type ForeignKey,
   type NonAttribute,
@@ -20,17 +21,12 @@ import { sequelize, BaseModel } from '@/lib/sequelize';
 
 import type { Models, ActionSchedule } from '.';
 
-export type ActionSchedulePrimaryKey = ActionSchedule['id'];
+export type ActionScheduleSpecCreationAttributes = CreationAttributes<ActionScheduleSpec>;
 
-/**
- * These are all the attributes in the ActionScheduleSpec model
- */
-export type ActionScheduleSpecAttributes = InferAttributes<ActionScheduleSpec>;
-
-/** Some attributes are optional in `ActionScheduleSpec.build` and `ActionScheduleSpec.create` calls */
-export type ActionScheduleSpecCreationAttributes = InferCreationAttributes<ActionScheduleSpec>;
-
-export class ActionScheduleSpec extends BaseModel<ActionScheduleSpecAttributes, ActionScheduleSpecCreationAttributes> {
+export class ActionScheduleSpec extends BaseModel<
+  InferAttributes<ActionScheduleSpec>,
+  InferCreationAttributes<ActionScheduleSpec>
+> {
   declare repositoryId: bigint;
 
   // foreign keys are automatically added by associations methods (like ActionScheduleSpec.belongsTo)
@@ -63,7 +59,7 @@ export class ActionScheduleSpec extends BaseModel<ActionScheduleSpecAttributes, 
 
   declare getActionSchedule: BelongsToGetAssociationMixin<ActionSchedule>;
 
-  declare setActionSchedule: BelongsToSetAssociationMixin<ActionSchedule, ActionSchedulePrimaryKey>;
+  declare setActionSchedule: BelongsToSetAssociationMixin<ActionSchedule, bigint>;
 
   declare createActionSchedule: BelongsToCreateAssociationMixin<ActionSchedule>;
 }
@@ -89,6 +85,6 @@ ActionScheduleSpec.init(
   },
   {
     sequelize,
-    modelName: 'ActionScheduleSpec',
+    indexes: [{ fields: ['repository_id'] }, { fields: ['schedule_id'] }, { fields: ['next'] }],
   },
 );

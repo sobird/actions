@@ -8,6 +8,7 @@ import {
   DataTypes,
   type InferAttributes,
   type InferCreationAttributes,
+  type CreationAttributes,
   type BelongsToGetAssociationMixin,
   type BelongsToSetAssociationMixin,
   type BelongsToCreateAssociationMixin,
@@ -17,13 +18,9 @@ import { sequelize, BaseModel } from '@/lib/sequelize';
 
 import type { Models, ActionTask } from '.';
 
-/** These are all the attributes in the ActionStep model */
-export type ActionStepAttributes = InferAttributes<ActionStep>;
+export type ActionStepCreationAttributes = CreationAttributes<ActionStep>;
 
-/** Some attributes are optional in `ActionStep.build` and `ActionStep.create` calls */
-export type ActionStepCreationAttributes = InferCreationAttributes<ActionStep>;
-
-export class ActionStep extends BaseModel<ActionStepAttributes, ActionStepCreationAttributes> {
+export class ActionStep extends BaseModel<InferAttributes<ActionStep>, InferCreationAttributes<ActionStep>> {
   declare name: string;
 
   declare taskId: number;

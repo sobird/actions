@@ -8,6 +8,7 @@ import {
   DataTypes,
   type InferAttributes,
   type InferCreationAttributes,
+  type CreationAttributes,
   type CreationOptional,
   type HasManyGetAssociationsMixin,
   type HasManySetAssociationsMixin,
@@ -26,12 +27,9 @@ import { sequelize, BaseModel } from '@/lib/sequelize';
 import type { Models, ActionRunJob } from '.';
 import { Status } from './status';
 
-export type ActionRunAttributes = InferAttributes<ActionRun>;
-export type ActionRunCreationAttributes = InferCreationAttributes<ActionRun>;
+export type ActionRunCreationAttributes = CreationAttributes<ActionRun>;
 
-export type ActionRunJobPrimaryKey = ActionRunJob['id'];
-
-export class ActionRun extends BaseModel<ActionRunAttributes, ActionRunCreationAttributes> {
+export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreationAttributes<ActionRun>> {
   declare title: string;
 
   declare ownerId: number;
@@ -66,10 +64,10 @@ export class ActionRun extends BaseModel<ActionRunAttributes, ActionRunCreationA
 
   declare version: CreationOptional<string>;
 
-  declare rawConcurrency: string;
-  declare workflowRepoId: bigint;
-  declare workflowCommitSha: string;
-  declare isScopedRun: boolean;
+  declare rawConcurrency: CreationOptional<string>;
+  declare workflowRepoId: CreationOptional<bigint>;
+  declare workflowCommitSha: CreationOptional<string>;
+  declare isScopedRun: CreationOptional<boolean>;
 
   declare started: Date;
   declare stopped: Date;
@@ -77,7 +75,7 @@ export class ActionRun extends BaseModel<ActionRunAttributes, ActionRunCreationA
   declare previousDuration: CreationOptional<bigint>;
   declare duration: CreationOptional<number>;
 
-  declare latestAttemptId: bigint;
+  declare latestAttemptId: CreationOptional<bigint>;
 
   static async add() {
     const t = await sequelize.transaction();
@@ -98,19 +96,19 @@ export class ActionRun extends BaseModel<ActionRunAttributes, ActionRunCreationA
   declare getActionRunJobs: HasManyGetAssociationsMixin<ActionRunJob>;
 
   /** Remove all previous associations and set the new ones */
-  declare setActionRunJobs: HasManySetAssociationsMixin<ActionRunJob, ActionRunJobPrimaryKey>;
+  declare setActionRunJobs: HasManySetAssociationsMixin<ActionRunJob, bigint>;
 
-  declare addActionRunJob: HasManyAddAssociationMixin<ActionRunJob, ActionRunJobPrimaryKey>;
+  declare addActionRunJob: HasManyAddAssociationMixin<ActionRunJob, bigint>;
 
-  declare addActionRunJobs: HasManyAddAssociationsMixin<ActionRunJob, ActionRunJobPrimaryKey>;
+  declare addActionRunJobs: HasManyAddAssociationsMixin<ActionRunJob, bigint>;
 
-  declare removeActionRunJob: HasManyRemoveAssociationMixin<ActionRunJob, ActionRunJobPrimaryKey>;
+  declare removeActionRunJob: HasManyRemoveAssociationMixin<ActionRunJob, bigint>;
 
-  declare removeActionRunJobs: HasManyRemoveAssociationsMixin<ActionRunJob, ActionRunJobPrimaryKey>;
+  declare removeActionRunJobs: HasManyRemoveAssociationsMixin<ActionRunJob, bigint>;
 
-  declare hasActionRunJob: HasManyHasAssociationMixin<ActionRunJob, ActionRunJobPrimaryKey>;
+  declare hasActionRunJob: HasManyHasAssociationMixin<ActionRunJob, bigint>;
 
-  declare hasActionRunJobs: HasManyHasAssociationsMixin<ActionRunJob, ActionRunJobPrimaryKey>;
+  declare hasActionRunJobs: HasManyHasAssociationsMixin<ActionRunJob, bigint>;
 
   declare createActionRunJob: HasManyCreateAssociationMixin<ActionRunJob>;
 
@@ -207,7 +205,6 @@ ActionRun.init(
       allowNull: false,
       defaultValue: 0,
     },
-
     rawConcurrency: {
       type: DataTypes.STRING,
     },
@@ -226,23 +223,19 @@ ActionRun.init(
       allowNull: false,
       defaultValue: false,
     },
-
-    started: DataTypes.DATE,
-    stopped: DataTypes.DATE,
-
     previousDuration: {
       type: DataTypes.BIGINT,
       allowNull: false,
       defaultValue: 0,
     },
-
     duration: DataTypes.BIGINT,
-
     latestAttemptId: {
       type: DataTypes.BIGINT,
       allowNull: false,
       defaultValue: 0,
     },
+    started: DataTypes.DATE,
+    stopped: DataTypes.DATE,
   },
   {
     sequelize,

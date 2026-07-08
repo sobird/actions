@@ -1,6 +1,6 @@
 import { ActionRunJob } from '@/models/actions';
 
-vi.mock('./job');
+vi.mock('./run_job');
 // vi.mock('./run');
 
 it('ddd', async () => {

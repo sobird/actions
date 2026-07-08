@@ -1,11 +1,9 @@
-import { CreationAttributes } from 'sequelize';
-
-import ActionSchedule from '../schedule';
+import { ActionSchedule, type ActionScheduleCreationAttributes } from '../schedule';
 
 // needs
 vi.mock('@/lib/sequelize');
 
-const seeds = [
+const seeds: ActionScheduleCreationAttributes[] = [
   {
     title: 'schedule title 1111',
     ownerId: 1,
@@ -15,7 +13,7 @@ const seeds = [
     ref: 'refs/heads/master',
     commitSha: 'c2d72f548424103f01ee1dc02889c1e2bff816b0',
     eventName: 'push',
-    content: 'content 1',
+    content: new Blob(['content 1']),
   },
   {
     title: 'schedule title 2',
@@ -25,11 +23,10 @@ const seeds = [
     triggerUserId: 1,
     ref: 'refs/heads/master',
     commitSha: 'c2d72f548424103f01ee1dc02889c1e2bff816b0',
-    isForkPullRequest: false,
     eventName: 'push',
-    content: 'content 2',
+    content: new Blob(['content 2']),
   },
-] as CreationAttributes<ActionSchedule>[];
+];
 
 // ActionSchedule Setup
 await ActionSchedule.sync({ force: true });

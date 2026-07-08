@@ -9,6 +9,7 @@ import {
   Association,
   type InferAttributes,
   type InferCreationAttributes,
+  type CreationAttributes,
   type CreationOptional,
   type NonAttribute,
   type HasManyGetAssociationsMixin,
@@ -30,19 +31,12 @@ import { sequelize, BaseModel } from '@/lib/sequelize';
 
 import type { Models, ActionTask, ActionRun } from '.';
 
-/** These are all the attributes in the ActionRunJob model */
-export type ActionRunJobAttributes = InferAttributes<ActionRunJob>;
-
-/** Some attributes are optional in `ActionRunJob.build` and `ActionRunJob.create` calls */
-export type ActionRunJobCreationAttributes = InferCreationAttributes<ActionRunJob>;
-
-export type ActionTaskPrimaryKey = ActionTask['id'];
-export type ActionRunPrimaryKey = ActionRun['id'];
+export type ActionRunJobCreationAttributes = CreationAttributes<ActionRunJob>;
 
 /**
  * ActionRunJob represents a job of a run
  */
-export class ActionRunJob extends BaseModel<ActionRunJobAttributes, ActionRunJobCreationAttributes> {
+export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, InferCreationAttributes<ActionRunJob>> {
   declare runId: number;
 
   declare name: string;
@@ -93,19 +87,19 @@ export class ActionRunJob extends BaseModel<ActionRunJobAttributes, ActionRunJob
   declare getActionTasks: HasManyGetAssociationsMixin<ActionTask>;
 
   /** Remove all previous associations and set the new ones */
-  declare setActionTasks: HasManySetAssociationsMixin<ActionTask, ActionTaskPrimaryKey>;
+  declare setActionTasks: HasManySetAssociationsMixin<ActionTask, bigint>;
 
-  declare addActionTask: HasManyAddAssociationMixin<ActionTask, ActionTaskPrimaryKey>;
+  declare addActionTask: HasManyAddAssociationMixin<ActionTask, bigint>;
 
-  declare addActionTasks: HasManyAddAssociationsMixin<ActionTask, ActionTaskPrimaryKey>;
+  declare addActionTasks: HasManyAddAssociationsMixin<ActionTask, bigint>;
 
-  declare removeActionTask: HasManyRemoveAssociationMixin<ActionTask, ActionTaskPrimaryKey>;
+  declare removeActionTask: HasManyRemoveAssociationMixin<ActionTask, bigint>;
 
-  declare removeActionTasks: HasManyRemoveAssociationsMixin<ActionTask, ActionTaskPrimaryKey>;
+  declare removeActionTasks: HasManyRemoveAssociationsMixin<ActionTask, bigint>;
 
-  declare hasActionTask: HasManyHasAssociationMixin<ActionTask, ActionTaskPrimaryKey>;
+  declare hasActionTask: HasManyHasAssociationMixin<ActionTask, bigint>;
 
-  declare hasActionTasks: HasManyHasAssociationsMixin<ActionTask, ActionTaskPrimaryKey>;
+  declare hasActionTasks: HasManyHasAssociationsMixin<ActionTask, bigint>;
 
   declare createActionTask: HasManyCreateAssociationMixin<ActionTask>;
 
@@ -115,7 +109,7 @@ export class ActionRunJob extends BaseModel<ActionRunJobAttributes, ActionRunJob
 
   declare getActionRun: BelongsToGetAssociationMixin<ActionRun>;
 
-  declare setActionRun: BelongsToSetAssociationMixin<ActionRun, ActionRunPrimaryKey>;
+  declare setActionRun: BelongsToSetAssociationMixin<ActionRun, bigint>;
 
   declare createActionRun: BelongsToCreateAssociationMixin<ActionRun>;
 }

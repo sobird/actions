@@ -1,9 +1,7 @@
-import { CreationAttributes } from 'sequelize';
-
-import { ActionRun } from '../run';
+import { ActionRun, type ActionRunCreationAttributes } from '../run';
 import { Status } from '../status';
 
-const seeds = [
+const seeds: ActionRunCreationAttributes[] = [
   {
     id: 791n,
     ownerId: 1,
@@ -42,7 +40,7 @@ const seeds = [
     started: new Date(1683636528000),
     stopped: new Date(1683636626000),
   },
-] as CreationAttributes<ActionRun>[];
+];
 
 await ActionRun.sync({ force: true });
 await ActionRun.bulkCreate(seeds, { individualHooks: true, validate: true });

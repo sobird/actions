@@ -9,6 +9,7 @@ import {
   Association,
   type InferAttributes,
   type InferCreationAttributes,
+  type CreationAttributes,
   type CreationOptional,
   type NonAttribute,
   type HasManyGetAssociationsMixin,
@@ -30,13 +31,9 @@ import { sequelize, BaseModel } from '@/lib/sequelize';
 
 import type { Models, ActionRunJob, ActionRunner, ActionStep } from '.';
 
-/** These are all the attributes in the ActionTask model */
-export type ActionTaskAttributes = InferAttributes<ActionTask>;
+export type ActionTaskCreationAttributes = CreationAttributes<ActionTask>;
 
-/** Some attributes are optional in `ActionTask.build` and `ActionTask.create` calls */
-export type ActionTaskCreationAttributes = InferCreationAttributes<ActionTask>;
-
-export class ActionTask extends BaseModel<ActionTaskAttributes, ActionTaskCreationAttributes> {
+export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCreationAttributes<ActionTask>> {
   declare jobId: number;
 
   declare runnerId: number;

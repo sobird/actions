@@ -1,9 +1,5 @@
-import { sequelize } from '../sequelize';
-
-export { BaseModel } from '../sequelize';
+import { sequelize, BaseModel } from '../sequelize';
 
 (sequelize as any).options.storage = ':memory:';
-// (sequelize as any).options.storage = 'database.sqlite';
-export {
-  sequelize,
-};
+
+export { sequelize, BaseModel };

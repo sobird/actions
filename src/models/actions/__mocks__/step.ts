@@ -1,10 +1,8 @@
-import { CreationAttributes } from 'sequelize';
+import { ActionStep, type ActionStepCreationAttributes } from '../step';
 
-import ActionStep from '../step';
-
-const seeds = [
+const seeds: ActionStepCreationAttributes[] = [
   {
-    id: 1,
+    id: 1n,
     name: 'run some',
     taskId: 47,
     index: 2,
@@ -16,7 +14,7 @@ const seeds = [
     stopped: new Date(1683636626000),
   },
   {
-    id: 2,
+    id: 2n,
     name: 'echo some',
     taskId: 48,
     index: 3,
@@ -27,7 +25,7 @@ const seeds = [
     started: new Date(1683636528000),
     stopped: new Date(1683636626000),
   },
-] as CreationAttributes<ActionStep>[];
+];
 
 await ActionStep.sync({ force: true });
 await ActionStep.bulkCreate(seeds, { individualHooks: true, validate: true });

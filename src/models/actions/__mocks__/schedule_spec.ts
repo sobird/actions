@@ -1,11 +1,9 @@
-import { CreationAttributes } from 'sequelize';
-
-import ActionScheduleSpec from '../schedule_spec';
+import { ActionScheduleSpec, type ActionScheduleSpecCreationAttributes } from '../schedule_spec';
 
 // needs
 vi.mock('@/lib/sequelize');
 
-const seeds = [
+const seeds: ActionScheduleSpecCreationAttributes[] = [
   {
     scheduleId: BigInt(1),
     repositoryId: BigInt(4),
@@ -20,7 +18,7 @@ const seeds = [
     next: new Date(),
     prev: new Date(),
   },
-] as CreationAttributes<ActionScheduleSpec>[];
+];
 
 // ActionScheduleSpec Setup
 await ActionScheduleSpec.sync({ force: true });
