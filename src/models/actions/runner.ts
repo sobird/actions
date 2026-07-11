@@ -12,10 +12,24 @@ import {
   type InferCreationAttributes,
   type CreationAttributes,
   type CreationOptional,
+  type Association,
+  type NonAttribute,
+  type HasManyGetAssociationsMixin,
+  type HasManySetAssociationsMixin,
+  type HasManyAddAssociationMixin,
+  type HasManyAddAssociationsMixin,
+  type HasManyRemoveAssociationMixin,
+  type HasManyRemoveAssociationsMixin,
+  type HasManyHasAssociationMixin,
+  type HasManyHasAssociationsMixin,
+  type HasManyCreateAssociationMixin,
+  type HasManyCountAssociationsMixin,
 } from 'sequelize';
 
 import { RunnerStatus } from '@/gen/runner/v1/messages_pb';
 import { sequelize, BaseModel } from '@/lib/sequelize';
+
+import type { Models, ActionTask } from '.';
 
 export type ActionRunnerCreationAttributes = CreationAttributes<ActionRunner>;
 
@@ -77,6 +91,27 @@ export class ActionRunner extends BaseModel<InferAttributes<ActionRunner>, Infer
     const runnerLabelSet = new Set(this.labels);
     return jobRunsOn.every((label) => runnerLabelSet.has(label));
   }
+
+  static associate({ ActionTask }: Models) {
+    this.hasMany(ActionTask, { foreignKey: 'runnerId' });
+  }
+
+  declare static associations: {
+    ActionTasks: Association<ActionRunner, ActionTask>;
+  };
+
+  declare Tasks?: NonAttribute<ActionTask[]>;
+
+  declare getActionTasks: HasManyGetAssociationsMixin<ActionTask>;
+  declare countActionTasks: HasManyCountAssociationsMixin;
+  declare hasActionTask: HasManyHasAssociationMixin<ActionTask, bigint>;
+  declare hasActionTasks: HasManyHasAssociationsMixin<ActionTask, bigint>;
+  declare setActionTasks: HasManySetAssociationsMixin<ActionTask, bigint>;
+  declare addActionTask: HasManyAddAssociationMixin<ActionTask, bigint>;
+  declare addActionTasks: HasManyAddAssociationsMixin<ActionTask, bigint>;
+  declare removeActionTask: HasManyRemoveAssociationMixin<ActionTask, bigint>;
+  declare removeActionTasks: HasManyRemoveAssociationsMixin<ActionTask, bigint>;
+  declare createActionTask: HasManyCreateAssociationMixin<ActionTask>;
 }
 
 ActionRunner.init(

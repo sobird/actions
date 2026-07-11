@@ -21,4 +21,4 @@ const seeds: ActionRunnerCreationAttributes[] = [
 await ActionRunner.sync({ force: true });
 await ActionRunner.bulkCreate(seeds, { individualHooks: true, validate: true });
 
-export default ActionRunner;
+export * from '../runner';

@@ -33,7 +33,7 @@ export class ActionTaskVersion extends BaseModel<ActionTaskVersionAttributes, Ac
       },
     });
 
-    return taskVersion ? taskVersion.version : 0;
+    return taskVersion ? taskVersion.version : 0n;
   }
 
   public static async increaseVersionByScope(ownerId: number, repositoryId: number, transaction?: Transaction) {

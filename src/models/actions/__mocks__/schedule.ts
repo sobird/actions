@@ -1,8 +1,5 @@
 import { ActionSchedule, type ActionScheduleCreationAttributes } from '../schedule';
 
-// needs
-vi.mock('@/lib/sequelize');
-
 const seeds: ActionScheduleCreationAttributes[] = [
   {
     title: 'schedule title 1111',

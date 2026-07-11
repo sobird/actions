@@ -1,7 +1,5 @@
 import { ActionRunnerToken, type ActionRunnerTokenCreationAttributes } from '../runner_token';
 
-vi.mock('@/lib/sequelize');
-
 const seed: ActionRunnerTokenCreationAttributes[] = [
   {
     ownerId: 1,

@@ -1,14 +1,14 @@
-import { ActionStep } from '@/models/actions';
+import { ActionTaskStep } from '@/models/actions';
 
 vi.mock('@/lib/sequelize');
-vi.mock('./step');
 vi.mock('./task');
+vi.mock('./task_step');
 
-it('ActionStep Test', async () => {
+it('ActionTaskStep Test', async () => {
   // const actionsRunner = await ActionRunner.findAll();
   // console.log('actionsRunner', actionsRunner);
 
-  const rows = await ActionStep.findOne();
+  const rows = await ActionTaskStep.findOne();
   console.log('rows', await rows?.getActionTask());
 
   // const runner = await rows.getActionRunner();

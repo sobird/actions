@@ -6,7 +6,7 @@
 
 import {
   DataTypes,
-  Association,
+  type Association,
   type InferAttributes,
   type InferCreationAttributes,
   type CreationAttributes,
@@ -29,57 +29,37 @@ import {
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import type { Models, ActionRunJob, ActionRunner, ActionStep } from '.';
+import type { Models, ActionRunJob, ActionRunner, ActionTaskStep } from '.';
 
 export type ActionTaskCreationAttributes = CreationAttributes<ActionTask>;
 
 export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCreationAttributes<ActionTask>> {
   declare jobId: number;
-
   declare runnerId: number;
-
   declare attempt: number;
-
   declare status: number;
-
   declare started: Date;
-
   declare stopped: Date;
-
   declare repositoryId: number;
-
   declare ownerId: number;
-
   declare commitSha: string;
-
   declare isForkPullRequest: boolean;
-
   declare tokenHash: CreationOptional<string>;
-
   declare tokenSalt: CreationOptional<string>;
-
   declare tokenLastEight: CreationOptional<string>;
-
   declare logFilename: string;
-
   declare logInStorage: boolean;
-
   declare logLength: number;
-
   declare logSize: number;
-
   // declare logIndexes: number;
-
   declare logExpired: boolean;
-
   declare Job?: NonAttribute<ActionRunJob>;
+  declare Steps?: NonAttribute<ActionTaskStep[]>;
 
-  declare Steps?: NonAttribute<ActionStep[]>;
-
-  static associate({ ActionRunJob, ActionRunner, ActionStep }: Models) {
+  static associate({ ActionRunJob, ActionRunner, ActionTaskStep }: Models) {
     this.belongsTo(ActionRunJob, { foreignKey: 'jobId' });
     this.belongsTo(ActionRunner, { foreignKey: 'runnerId' });
-    this.hasMany(ActionStep, { foreignKey: 'taskId' });
+    this.hasMany(ActionTaskStep, { foreignKey: 'taskId' });
   }
 
   declare static associations: {
@@ -90,39 +70,26 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
   // Since TS cannot determine model association at compile time
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
-  declare getActionSteps: HasManyGetAssociationsMixin<ActionStep>;
-
+  declare getActionTaskSteps: HasManyGetAssociationsMixin<ActionTaskStep>;
   /** Remove all previous associations and set the new ones */
-  declare setActionSteps: HasManySetAssociationsMixin<ActionStep, bigint>;
-
-  declare addActionStep: HasManyAddAssociationMixin<ActionStep, bigint>;
-
-  declare addActionSteps: HasManyAddAssociationsMixin<ActionStep, bigint>;
-
-  declare removeActionStep: HasManyRemoveAssociationMixin<ActionStep, bigint>;
-
-  declare removeActionSteps: HasManyRemoveAssociationsMixin<ActionStep, bigint>;
-
-  declare hasActionStep: HasManyHasAssociationMixin<ActionStep, bigint>;
-
-  declare hasActionSteps: HasManyHasAssociationsMixin<ActionStep, bigint>;
-
-  declare createActionStep: HasManyCreateAssociationMixin<ActionStep>;
-
-  declare countActionSteps: HasManyCountAssociationsMixin;
+  declare setActionTaskSteps: HasManySetAssociationsMixin<ActionTaskStep, bigint>;
+  declare addActionTaskStep: HasManyAddAssociationMixin<ActionTaskStep, bigint>;
+  declare addActionTaskSteps: HasManyAddAssociationsMixin<ActionTaskStep, bigint>;
+  declare removeActionTaskStep: HasManyRemoveAssociationMixin<ActionTaskStep, bigint>;
+  declare removeActionTaskSteps: HasManyRemoveAssociationsMixin<ActionTaskStep, bigint>;
+  declare hasActionTaskStep: HasManyHasAssociationMixin<ActionTaskStep, bigint>;
+  declare hasActionTaskSteps: HasManyHasAssociationsMixin<ActionTaskStep, bigint>;
+  declare createActionTaskStep: HasManyCreateAssociationMixin<ActionTaskStep>;
+  declare countActionTaskSteps: HasManyCountAssociationsMixin;
 
   // ActionRunJob
   declare getActionRunJob: BelongsToGetAssociationMixin<ActionRunJob>;
-
   declare setActionRunJob: BelongsToSetAssociationMixin<ActionRunJob, bigint>;
-
   declare createActionRunJob: BelongsToCreateAssociationMixin<ActionRunJob>;
 
   // ActionRunner
   declare getActionRunner: BelongsToGetAssociationMixin<ActionRunner>;
-
   declare setActionRunner: BelongsToSetAssociationMixin<ActionRunner, bigint>;
-
   declare createActionRunner: BelongsToCreateAssociationMixin<ActionRunner>;
 
   public static async createForRunner(_runner: ActionRunner) {
@@ -199,21 +166,15 @@ ActionTask.init(
   },
   {
     sequelize,
-    modelName: 'ActionTask',
     indexes: [
-      { name: 'idx_action_task_runner_id', fields: ['runnerId'] },
+      { name: 'idx_action_task_runner_id', fields: ['runner_id'] },
       { name: 'idx_action_task_status', fields: ['status'] },
       { name: 'idx_action_task_started', fields: ['started'] },
-      { name: 'idx_action_task_repo_id', fields: ['repoId'] },
-      { name: 'idx_action_task_owner_id', fields: ['ownerId'] },
-      { name: 'idx_action_task_commit_sha', fields: ['commitSha'] },
-      { name: 'idx_action_task_updated', fields: ['updated'] },
-
-      // 复合索引：对应原 Go 中的 `xorm:"index token_last_eight"` 和状态查询
-      { name: 'idx_token_last_eight_status', fields: ['tokenLastEight', 'status'] },
-
-      // 复合索引：对应原 Go 中的 `xorm:"index(stopped_log_expired)"`
-      { name: 'stopped_log_expired', fields: ['stopped', 'logExpired'] },
+      { name: 'idx_action_task_repo_id', fields: ['repository_id'] },
+      { name: 'idx_action_task_owner_id', fields: ['owner_id'] },
+      { name: 'idx_action_task_commit_sha', fields: ['commit_sha'] },
+      { name: 'idx_token_last_eight_status', fields: ['token_last_eight', 'status'] },
+      { name: 'stopped_log_expired', fields: ['stopped', 'log_expired'] },
     ],
   },
 );

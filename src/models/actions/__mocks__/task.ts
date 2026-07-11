@@ -42,4 +42,4 @@ const seeds: ActionTaskCreationAttributes[] = [
 await ActionTask.sync({ force: true });
 await ActionTask.bulkCreate(seeds, { individualHooks: true, validate: true });
 
-export default ActionTask;
+export * from '../task';

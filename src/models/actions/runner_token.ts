@@ -105,6 +105,6 @@ ActionRunnerToken.init(
   },
   {
     sequelize,
-    indexes: [{ fields: ['owner_id'] }, { fields: ['repo_id'] }],
+    indexes: [{ fields: ['owner_id'] }, { fields: ['repository_id'] }],
   },
 );

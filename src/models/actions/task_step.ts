@@ -9,6 +9,8 @@ import {
   type InferAttributes,
   type InferCreationAttributes,
   type CreationAttributes,
+  type NonAttribute,
+  type Association,
   type BelongsToGetAssociationMixin,
   type BelongsToSetAssociationMixin,
   type BelongsToCreateAssociationMixin,
@@ -18,43 +20,42 @@ import { sequelize, BaseModel } from '@/lib/sequelize';
 
 import type { Models, ActionTask } from '.';
 
-export type ActionStepCreationAttributes = CreationAttributes<ActionStep>;
+export type ActionTaskStepCreationAttributes = CreationAttributes<ActionTaskStep>;
 
-export class ActionStep extends BaseModel<InferAttributes<ActionStep>, InferCreationAttributes<ActionStep>> {
+export class ActionTaskStep extends BaseModel<
+  InferAttributes<ActionTaskStep>,
+  InferCreationAttributes<ActionTaskStep>
+> {
   declare name: string;
-
   declare taskId: number;
-
   declare index: number;
-
   declare repositoryId: number;
-
   declare logIndex: number;
-
   declare logLength: number;
-
   declare status: string;
-
-  declare started: Date;
-
-  declare stopped: Date;
+  declare startedAt: Date;
+  declare stoppedAt: Date;
 
   static associate({ ActionTask }: Models) {
     this.belongsTo(ActionTask, { foreignKey: 'taskId' });
   }
+
+  declare static associations: {
+    ActionTask: Association<ActionTaskStep, ActionTask>;
+  };
+
+  declare Task?: NonAttribute<ActionTask[]>;
 
   // associates method
   // Since TS cannot determine model association at compile time
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
   declare getActionTask: BelongsToGetAssociationMixin<ActionTask>;
-
   declare setActionTask: BelongsToSetAssociationMixin<ActionTask, bigint>;
-
   declare createActionTask: BelongsToCreateAssociationMixin<ActionTask>;
 }
 
-ActionStep.init(
+ActionTaskStep.init(
   {
     name: {
       type: DataTypes.STRING,
@@ -84,11 +85,23 @@ ActionStep.init(
     status: {
       type: DataTypes.STRING(64),
     },
-    started: DataTypes.DATE,
-    stopped: DataTypes.DATE,
+    startedAt: DataTypes.DATE,
+    stoppedAt: DataTypes.DATE,
   },
   {
     sequelize,
-    modelName: 'ActionStep',
+    indexes: [
+      {
+        fields: ['repository_id'],
+      },
+      {
+        fields: ['status'],
+      },
+      {
+        unique: true,
+        name: 'task_index',
+        fields: ['task_id', 'index'],
+      },
+    ],
   },
 );

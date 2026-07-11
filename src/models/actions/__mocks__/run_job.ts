@@ -1,9 +1,5 @@
 import { ActionRunJob, type ActionRunJobCreationAttributes } from '../run_job';
 
-vi.mock('@/lib/sequelize');
-vi.mock('../run');
-vi.mock('../task');
-
 const seeds: ActionRunJobCreationAttributes[] = [
   {
     id: BigInt(192),
