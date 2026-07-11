@@ -1,4 +1,4 @@
-import { ConnectError } from '@connectrpc/connect';
+import { ConnectError, Code } from '@connectrpc/connect';
 
 import { ActionRunnerToken, ActionRunner } from '@/models';
 import lodash from '@/utils/lodash';
@@ -10,23 +10,26 @@ const RUNNER_CAPABILITY_CANCELLING = 'cancelling';
 // Register register a new runner in server.
 export const register: ServiceMethodImpl['register'] = async (req) => {
   if (req.token === '' || req.name === '') {
-    throw new ConnectError('missing runner token, name', 3);
+    throw new ConnectError('missing runner token, name', Code.InvalidArgument);
   }
 
   const runnerToken = await ActionRunnerToken.findOne({
     where: {
       token: req.token,
     },
+  }).catch(() => {
+    return null;
   });
 
-  console.log('runnerToken', runnerToken);
-
   if (!runnerToken) {
-    throw new ConnectError('runner registration token not found', 5);
+    throw new ConnectError('runner registration token not found', Code.NotFound);
   }
 
   if (!runnerToken.enabled) {
-    throw new ConnectError('runner registration token has been invalidated, please use the latest one', 4);
+    throw new ConnectError(
+      'runner registration token has been invalidated, please use the latest one',
+      Code.InvalidArgument,
+    );
   }
 
   if (runnerToken.ownerId > 0) {
@@ -49,6 +52,8 @@ export const register: ServiceMethodImpl['register'] = async (req) => {
     labels: req.labels,
     ephemeral: req.ephemeral,
     hasCancellingSupport,
+  }).catch(() => {
+    throw new ConnectError("can't create new runner", Code.Aborted);
   });
 
   return {

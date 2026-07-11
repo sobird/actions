@@ -25,7 +25,11 @@ export function saveRegistration(registration: Registration) {
   const config = getConfig();
   const configPath = config.runner.file ?? '.runner';
 
-  fs.writeFileSync(configPath, JSON.stringify(registration, null, 2), 'utf8');
+  fs.writeFileSync(
+    configPath,
+    JSON.stringify(registration, (key, value) => (typeof value === 'bigint' ? value.toString() : value), 2),
+    'utf8',
+  );
 }
 
 export function getRegistration(): Registration {

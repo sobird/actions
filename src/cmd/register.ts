@@ -56,8 +56,12 @@ async function doRegister(options: RegisterOptions) {
 
     if (runner) {
       saveRegistration({
-        ...runner,
+        id: runner.id,
+        uuid: runner.uuid,
+        name: runner.name,
+        token: runner.token,
         address: instance,
+        labels: runner.labels,
       });
 
       logger.info('Runner registered successfully.');
