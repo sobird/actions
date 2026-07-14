@@ -1,6 +1,6 @@
 import os from 'node:os';
 
-import { intro, text, password, group, multiselect } from '@clack/prompts';
+import { intro, text, password, group, multiselect, cancel } from '@clack/prompts';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import log4js from 'log4js';
@@ -11,15 +11,15 @@ import { Labels, Client } from '@/index';
 const logger = log4js.getLogger();
 logger.level = 'debug';
 
-type RegisterArgs = ReturnType<typeof registerCommand.opts>;
-type RegisterOptions = Required<RegisterArgs> & {
+type Register = ReturnType<typeof registerCommand.opts>;
+type RegisterOptions = Required<Register> & {
   config?: string;
-  version?: string;
+  version: string;
 };
 
-async function doRegister(options: RegisterOptions) {
-  const { instance, token, name, version } = options;
-  const labels = new Labels(options.labels);
+async function register(options: RegisterOptions) {
+  const { instance, token, name, version, ephemeral } = options;
+  const labels = new Labels(options.labels).names();
 
   const config = getConfig();
 
@@ -43,15 +43,16 @@ async function doRegister(options: RegisterOptions) {
     };
     ping();
   });
+
   logger.debug(pingResponse);
 
   try {
     const { runner } = await RunnerServiceClient.register({
       name,
       token,
-      labels: labels.names(),
-      agentLabels: labels.names(),
+      labels,
       version,
+      ephemeral,
     });
 
     if (runner) {
@@ -62,6 +63,7 @@ async function doRegister(options: RegisterOptions) {
         token: runner.token,
         address: instance,
         labels: runner.labels,
+        ephemeral: runner.ephemeral,
       });
 
       logger.info('Runner registered successfully.');
@@ -79,45 +81,59 @@ export const registerCommand = new Command<[], {}, { config?: string }>('registe
   .option('-l, --labels <labels>', 'Runner labels, comma separated', (value) => {
     return value.split(',');
   })
+  .option(
+    '--ephemeral',
+    'Configure the runner to be ephemeral and only ever be able to pick a single job (stricter than --once)',
+    false,
+  )
   .action(async (options, program) => {
     const opts = program.optsWithGlobals();
     const version = program.parent?.version();
 
     intro(`${chalk.green('Actions Runner Registration Wizard')} ${chalk.dim(`v${version}`)}`);
 
-    const result = await group({
-      instance: () =>
-        opts.instance
-          ? Promise.resolve(opts.instance)
-          : text({
-              message: 'Enter the runner instance URL',
-              defaultValue: 'http://localhost:3000',
-              placeholder: 'http://localhost:3000',
-            }),
-      token: () =>
-        opts.token
-          ? Promise.resolve(opts.token)
-          : password({
-              message: 'Enter the registration token',
-              validate: (v) => (!v ? 'The Token cannot be empty.' : undefined),
-            }),
-      name: () =>
-        opts.name
-          ? Promise.resolve(opts.name)
-          : text({
-              message: 'Please enter the Runner name',
-              defaultValue: os.hostname(),
-              placeholder: os.hostname(),
-            }),
-      labels: () =>
-        opts.labels
-          ? Promise.resolve(opts.labels)
-          : multiselect({
-              message: 'Select the runner labels',
-              initialValues: DEFAULT_LABELS,
-              options: new Labels(DEFAULT_LABELS).options(),
-            }),
-    });
+    const inputs = await group(
+      {
+        instance: () =>
+          opts.instance
+            ? Promise.resolve(opts.instance)
+            : text({
+                message: 'Enter the runner instance URL',
+                defaultValue: 'http://localhost:3000',
+                placeholder: 'http://localhost:3000',
+              }),
+        token: () =>
+          opts.token
+            ? Promise.resolve(opts.token)
+            : password({
+                message: 'Enter the registration token',
+                validate: (v) => (!v ? 'The Token cannot be empty.' : undefined),
+              }),
+        name: () =>
+          opts.name
+            ? Promise.resolve(opts.name)
+            : text({
+                message: 'Please enter the Runner name',
+                defaultValue: os.hostname(),
+                placeholder: os.hostname(),
+              }),
+        labels: () =>
+          opts.labels
+            ? Promise.resolve(opts.labels)
+            : multiselect({
+                message: 'Select the runner labels',
+                initialValues: DEFAULT_LABELS,
+                options: new Labels(DEFAULT_LABELS).options(),
+              }),
+        version: () => Promise.resolve(version),
+      },
+      {
+        onCancel() {
+          cancel('Register canceled');
+          process.exit(0);
+        },
+      },
+    );
 
-    await doRegister(result as RegisterOptions);
+    await register(inputs as RegisterOptions);
   });

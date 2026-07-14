@@ -1,10 +1,9 @@
 import { z } from 'zod';
 
 export const DEFAULT_LABELS = [
-  'ubuntu-latest=catthehacker/ubuntu:act-latest',
+  'ubuntu-latest=gitea/runner-images:ubuntu-latest',
+  'ubuntu-24.04=gitea/runner-images:ubuntu-24.04',
   'ubuntu-22.04=gitea/runner-images:ubuntu-22.04',
-  'ubuntu-20.04=gitea/runner-images:ubuntu-20.04',
-  'self-hosted=-self-hosted',
 ];
 
 export const LabelsSchema = z
@@ -266,6 +265,7 @@ export const RegistrationSchema = z.object({
   token: z.string(),
   address: z.string(),
   labels: LabelsSchema,
+  ephemeral: z.boolean(),
 });
 
 export type Registration = z.infer<typeof RegistrationSchema>;
