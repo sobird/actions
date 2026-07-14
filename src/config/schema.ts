@@ -1,5 +1,19 @@
 import { z } from 'zod';
 
+export const DEFAULT_LABELS = [
+  'ubuntu-latest=catthehacker/ubuntu:act-latest',
+  'ubuntu-22.04=gitea/runner-images:ubuntu-22.04',
+  'ubuntu-20.04=gitea/runner-images:ubuntu-20.04',
+  'self-hosted=-self-hosted',
+];
+
+export const LabelsSchema = z
+  .array(z.string())
+  .default(DEFAULT_LABELS)
+  .describe(
+    'The labels of a runner are used to determine which jobs the runner can run, and how to run them.\n Like: "macos-arm64=host" or "ubuntu-latest=gitea/runner-images:ubuntu-latest"\n Find more images provided by Server at https://gitea.com/gitea/runner-images .\n If it\'s empty when registering, it will ask for inputting labels.\n If it\'s empty when execute `daemon`, will use labels in `.runner` file.',
+  );
+
 export const LogSchema = z
   .object({
     level: z
@@ -161,17 +175,7 @@ export const RunnerSchema = z
       .describe(
         'When enabled, the Runner will only use Actions already present in actionsPath and will not attempt to fetch or update them from the network.',
       ),
-    labels: z
-      .array(z.string())
-      .default([
-        'ubuntu-latest=catthehacker/ubuntu:act-latest',
-        'ubuntu-22.04=gitea/runner-images:ubuntu-22.04',
-        'ubuntu-20.04=gitea/runner-images:ubuntu-20.04',
-        'self-hosted=-self-hosted',
-      ])
-      .describe(
-        'The labels of a runner are used to determine which jobs the runner can run, and how to run them.\n Like: "macos-arm64=host" or "ubuntu-latest=gitea/runner-images:ubuntu-latest"\n Find more images provided by Server at https://gitea.com/gitea/runner-images .\n If it\'s empty when registering, it will ask for inputting labels.\n If it\'s empty when execute `daemon`, will use labels in `.runner` file.',
-      ),
+    labels: LabelsSchema,
     matrix: z.record(z.string(), z.array(z.unknown())).optional(),
     pull: z.boolean().default(false).describe('Pull docker image(s) even if already present'),
     reuse: z
@@ -261,7 +265,7 @@ export const RegistrationSchema = z.object({
   name: z.string(),
   token: z.string(),
   address: z.string(),
-  labels: z.array(z.string()),
+  labels: LabelsSchema,
 });
 
 export type Registration = z.infer<typeof RegistrationSchema>;

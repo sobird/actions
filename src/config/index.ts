@@ -38,3 +38,5 @@ export function getRegistration(): Registration {
 
   return readJsonSync(configPath);
 }
+
+export * from './schema';

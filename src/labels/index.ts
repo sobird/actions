@@ -25,7 +25,9 @@ class Labels {
   }
 
   requireDocker() {
-    return [...this.platforms.values()].some((image) => { return image !== SELF_HOSTED; });
+    return [...this.platforms.values()].some((image) => {
+      return image !== SELF_HOSTED;
+    });
   }
 
   pickPlatform(runsOn: string[]) {
@@ -52,6 +54,16 @@ class Labels {
 
   names() {
     return [...this.platforms.keys()];
+  }
+
+  options() {
+    return [...this.platforms.entries()].map((platform) => {
+      return {
+        value: platform.join('='),
+        label: platform[0],
+        hint: platform[1],
+      };
+    });
   }
 
   toStrings() {

@@ -1,11 +1,11 @@
 import os from 'node:os';
 
-import { intro, text, password, group, groupMultiselect } from '@clack/prompts';
+import { intro, text, password, group, multiselect } from '@clack/prompts';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import log4js from 'log4js';
 
-import { getConfig, saveRegistration } from '@/config';
+import { getConfig, saveRegistration, DEFAULT_LABELS } from '@/config';
 import { Labels, Client } from '@/index';
 
 const logger = log4js.getLogger();
@@ -112,18 +112,10 @@ export const registerCommand = new Command<[], {}, { config?: string }>('registe
       labels: () =>
         opts.labels
           ? Promise.resolve(opts.labels)
-          : groupMultiselect({
+          : multiselect({
               message: 'Select the runner labels',
-              options: {
-                OS: [
-                  { value: 'ubuntu', label: 'Ubuntu' },
-                  { value: 'windows', label: 'Windows' },
-                ],
-                Runtime: [
-                  { value: 'node', label: 'Node.js' },
-                  { value: 'go', label: 'Go' },
-                ],
-              },
+              initialValues: DEFAULT_LABELS,
+              options: new Labels(DEFAULT_LABELS).options(),
             }),
     });
 
