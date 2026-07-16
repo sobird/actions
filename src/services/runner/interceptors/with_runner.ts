@@ -1,4 +1,4 @@
-import { Interceptor, ConnectError, createContextKey, HandlerContext } from '@connectrpc/connect';
+import { Interceptor, ConnectError, createContextKey, HandlerContext, Code } from '@connectrpc/connect';
 
 import Constants from '@/common/constants';
 import { ActionRunner } from '@/models/actions';
@@ -8,31 +8,34 @@ const runnerModelContextKey = createContextKey<ActionRunner | null>(null, {
 });
 
 const { XRunnerUUID, XRunnerToken } = Constants.Protocol;
-const withRunner: Interceptor = (next) => {
+export const withRunner: Interceptor = (next) => {
   return async (req) => {
     const methodName = req.method.name;
     if (methodName === 'Register') {
       return next(req);
     }
+
     const uuid = req.header.get(XRunnerUUID)!;
     const token = req.header.get(XRunnerToken)!;
-    console.log('token', token);
 
     const runner = await ActionRunner.findOne({ where: { uuid } });
 
     if (!runner) {
-      throw new ConnectError('unregistered runner', 16);
+      throw new ConnectError('unregistered runner', Code.Unauthenticated);
     }
 
-    // auth token
+    if (!runner.verifyToken(token)) {
+      throw new ConnectError('unregistered runner', Code.Unauthenticated);
+    }
 
     runner.lastOnline = new Date();
     if (methodName === 'UpdateTask' || methodName === 'UpdateLog') {
       runner.lastActive = new Date();
     }
 
-    req.contextValues.set(runnerModelContextKey, runner);
     await runner.save();
+
+    req.contextValues.set(runnerModelContextKey, runner);
 
     return next(req);
   };
@@ -41,5 +44,3 @@ const withRunner: Interceptor = (next) => {
 export function RunnerModelFrom(values: HandlerContext['values']) {
   return values.get(runnerModelContextKey);
 }
-
-export default withRunner;

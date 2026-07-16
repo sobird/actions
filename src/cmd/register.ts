@@ -62,7 +62,7 @@ async function register(options: RegisterOptions) {
         name: runner.name,
         token: runner.token,
         address: instance,
-        labels: runner.labels,
+        labels: options.labels,
         ephemeral: runner.ephemeral,
       });
 

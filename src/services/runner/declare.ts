@@ -1,4 +1,4 @@
-import { ConnectError } from '@connectrpc/connect';
+import { ConnectError, Code } from '@connectrpc/connect';
 
 import type { ServiceMethodImpl } from '.';
 import { RunnerModelFrom } from './interceptors/with_runner';
@@ -11,7 +11,7 @@ export const declare: ServiceMethodImpl['declare'] = async (req, { values }) => 
   try {
     await runner.save();
   } catch (error) {
-    throw new ConnectError(`update runner: ${(error as Error).message}`, 13);
+    throw new ConnectError(`update runner: ${(error as Error).message}`, Code.Internal);
   }
 
   return {
