@@ -25,19 +25,16 @@ export class ActionRunnerToken extends BaseModel<
   declare token: CreationOptional<string>;
   declare ownerId: number;
   declare repositoryId: number;
-  /**
-   * true means it can be used
-   */
   declare enabled: CreationOptional<boolean>;
 
   // creates a new active runner token and invalidate all old tokens
-  public static async createRunnerTokenWithValue(ownerId: number, repositoryId: number, token: string) {
+  public static async rotate(ownerId: number, repositoryId: number, token?: string) {
     if (ownerId !== 0 && repositoryId !== 0) {
       ownerId = 0;
     }
 
     return await sequelize.transaction(async (transaction) => {
-      await this.update({ enabled: false }, { where: { ownerId, repositoryId }, transaction });
+      await this.update({ enabled: false }, { where: { ownerId, repositoryId, enabled: true }, transaction });
       const runnerToken = await this.create(
         {
           ownerId,
@@ -48,11 +45,6 @@ export class ActionRunnerToken extends BaseModel<
       );
       return runnerToken;
     });
-  }
-
-  public static async createRunnerToken(ownerId: number, repoId: number) {
-    const token = randomBytes(20).toString('hex');
-    return await this.createRunnerTokenWithValue(ownerId, repoId, token);
   }
 
   /**
@@ -67,6 +59,7 @@ export class ActionRunnerToken extends BaseModel<
       where: {
         ownerId,
         repositoryId,
+        enabled: true,
       },
       order: [['id', 'DESC']],
     });
@@ -83,9 +76,7 @@ ActionRunnerToken.init(
   {
     token: {
       type: DataTypes.STRING(40),
-      defaultValue: () => {
-        return randomBytes(20).toString('hex');
-      },
+      defaultValue: () => randomBytes(30).toString('base64url'),
       allowNull: false,
       unique: true,
       comment: 'runner token',

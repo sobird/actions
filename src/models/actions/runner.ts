@@ -156,9 +156,7 @@ ActionRunner.init(
     tokenSalt: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: () => {
-        return randomBytes(5).toString('hex');
-      },
+      defaultValue: () => randomBytes(6).toString('base64url'),
       comment: 'token salt',
     },
     tokenHash: {
@@ -168,18 +166,15 @@ ActionRunner.init(
     },
     lastOnline: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.DATE(),
     },
     lastActive: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.DATE(),
     },
     labels: {
       type: DataTypes.JSON,
       defaultValue: [],
       comment: 'Store labels defined in state file (default: .runner file) of `runner`',
     },
-
     ephemeral: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
@@ -195,15 +190,24 @@ ActionRunner.init(
       allowNull: false,
       defaultValue: false,
     },
-
     status: {
       type: DataTypes.VIRTUAL,
       get() {
-        const now = Date.now();
         const lastOnline = this.getDataValue('lastOnline');
         const lastActive = this.getDataValue('lastActive');
+
+        if (!lastOnline) {
+          return RunnerStatus.OFFLINE;
+        }
+
+        const now = Date.now();
+
         if (now - lastOnline.getTime() > RUNNER_OFFLINE_TIME) {
           return RunnerStatus.OFFLINE;
+        }
+
+        if (!lastActive) {
+          return RunnerStatus.IDLE;
         }
         if (now - lastActive.getTime() > RUNNER_IDLE_TIME) {
           return RunnerStatus.IDLE;
