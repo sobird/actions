@@ -8,37 +8,35 @@ import { Command } from '@commander-js/extra-typings';
 import { ConnectError, Code } from '@connectrpc/connect';
 import log4js from 'log4js';
 
+import { getConfig, getRegistration, saveRegistration, Registration } from '@/config';
 import docker from '@/docker';
-import { Config, Labels, Client } from '@/index';
+import { Labels, Client } from '@/index';
 import Poller from '@/poller';
 
 const logger = log4js.getLogger();
 
 export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
   .description('run as a runner daemon')
-  .option('--capacity <number>', 'Execute how many tasks concurrently at the same time')
+  .option('--capacity <number>', 'Execute how many tasks concurrently at the same time', parseInt)
   .option('--insecure', 'Whether skip verifying the TLS certificate of the Server instance')
-  .option('--timeout <number>', 'The timeout for a job to be finished')
-  .option('--fetch-timeout <number>', 'The timeout for fetching the job from the server instance')
-  .option('--fetch-interval <number>', 'The interval for fetching the job from the server instance')
+  .option('--timeout <number>', 'The timeout for a job to be finished', parseInt)
+  .option('--fetch-timeout <number>', 'The timeout for fetching the job from the server instance', parseInt)
+  .option('--fetch-interval <number>', 'The interval for fetching the job from the server instance', parseInt)
   .action(async (opts, program) => {
     const options = program.optsWithGlobals();
     const version = program.parent?.version();
     const appname = program.parent!.name();
 
-    console.log('appname', appname, version, options);
+    const config = getConfig(appname, {
+      daemon: options,
+    });
 
-    const appconf = await Config.Load(options.config, appname);
-
-    console.log('appconf', appconf);
-
-    logger.level = appconf.log.level;
+    logger.level = config.log.level;
     logger.info('Starting runner daemon');
 
-    let registration = null;
-
+    let registration: Registration;
     try {
-      registration = appconf.registration;
+      registration = getRegistration();
       if (!registration) {
         logger.error('Registration file not found, please register the runner first');
         return;
@@ -49,14 +47,14 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
     }
 
     // 优先配置中的labels
-    const labels = new Labels(appconf.runner.labels.length > 0 ? appconf.runner.labels : registration.labels);
+    const labels = new Labels(config.runner.labels.length > 0 ? config.runner.labels : registration.labels);
 
     if (labels.names().length === 0) {
       logger.warn('No labels configured, runner may not be able to pick up jobs');
     }
 
     if (labels.requireDocker()) {
-      const dockerHost = appconf.runner.containerDaemonSocket;
+      const dockerHost = config.runner.containerDaemonSocket;
 
       if (dockerHost && dockerHost !== '-') {
         process.env.DOCKER_HOST = dockerHost;
@@ -72,7 +70,8 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
 
     if (JSON.stringify(registration.labels.toSorted()) !== JSON.stringify(labels.toStrings().toSorted())) {
       try {
-        registration.save();
+        registration.labels = labels.toStrings();
+        saveRegistration(registration);
       } catch (err) {
         return logger.error('Failed to save runner config:', (err as Error).message);
       }
@@ -83,7 +82,7 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
       const { RunnerServiceClient } = new Client(
         registration.address,
         registration.token,
-        appconf.runner.insecure,
+        config.daemon.insecure,
         registration.uuid,
         version,
       );
@@ -98,7 +97,7 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
         );
       }
 
-      const poller = new Poller(RunnerServiceClient, appconf, version);
+      const poller = new Poller(RunnerServiceClient, config, version);
       poller.poll();
     } catch (err) {
       const connectError = err as ConnectError;

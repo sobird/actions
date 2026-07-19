@@ -1,17 +1,18 @@
 import fs from 'node:fs';
 
 import { cosmiconfigSync } from 'cosmiconfig';
+import { merge } from 'lodash-es';
 
 import { readJsonSync } from '@/utils';
 
 import { ConfigSchema, Registration } from './schema';
 
-export function getConfig() {
-  const explorer = cosmiconfigSync('actions');
+export function getConfig(appname = 'actions', config = {}) {
+  const explorer = cosmiconfigSync(appname);
   const result = explorer.search();
   const fileConfig = result?.config || {};
 
-  const parseResult = ConfigSchema.safeParse(fileConfig);
+  const parseResult = ConfigSchema.safeParse(merge(fileConfig, config));
 
   if (!parseResult.success) {
     console.error('❌ Configuration error:', parseResult.error);

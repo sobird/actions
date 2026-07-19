@@ -65,7 +65,12 @@ export const RunnerSchema = z
       .describe('A token to authenticate on behalf of the GitHub App installed on your repository.'),
     eventFile: z.string().default('event.json').describe('Path to event JSON file.'),
     env: z.record(z.string(), z.string()).optional().describe('Extra environment variables to run jobs.'),
-    envFile: z.string().optional().describe('Extra environment variables to run jobs from a file.'),
+    envFile: z
+      .string()
+      .optional()
+      .describe(
+        "Extra environment variables to run jobs from a file.\n It will be ignored if it's empty or the file doesn't exist.",
+      ),
     vars: z.record(z.string(), z.string()).optional().describe('Extra variables to run jobs'),
     varsFile: z.string().optional().describe('Extra variables to run jobs from a file.'),
     inputs: z.record(z.string(), z.string()).optional().describe('Extra inputs to run jobs.'),
@@ -181,7 +186,7 @@ export const RunnerSchema = z
       .boolean()
       .default(false)
       .describe("Don't remove container(s) on successfully completed workflow(s) to maintain state between runs"),
-    rebuild: z.boolean().default(true).describe('Rebuild docker image(s) even if already present'),
+    rebuild: z.boolean().default(true).describe('Rebuild local action docker image(s) even if already present'),
     containerNamePrefix: z
       .string()
       .optional()
@@ -200,7 +205,10 @@ export const RunnerSchema = z
       .describe(
         `Platform which should be used to run containers, e.g.: linux/amd64. if not specified, will use host default architecture. Requires Docker server API Version 1.41+. Ignored on earlier Docker server platforms.`,
       ),
-    containerDaemonSocket: z.string().optional(),
+    containerDaemonSocket: z
+      .string()
+      .optional()
+      .describe('Path to Docker daemon socket which will be mounted to containers.'),
     containerPrivileged: z
       .boolean()
       .default(false)
