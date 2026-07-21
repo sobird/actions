@@ -1,4 +1,3 @@
-/* eslint-disable no-underscore-dangle */
 /**
  * Workflow is the structure of the files in .github/workflows
  *
@@ -7,29 +6,33 @@
  * sobird<i@sobird.me> at 2024/05/02 21:27:38 created.
  */
 
-import prompts, { PromptObject, Choice } from "prompts";
+import prompts, { PromptObject, Choice } from 'prompts';
 
-import Yaml from "@/common/yaml";
-import Expression from "@/expression";
+import Yaml from '@/common/yaml';
+import Expression from '@/expression';
 
-import Job, { JobProps } from "./job";
-import Defaults from "./job/defaults";
-import Plan, { Stage, Run } from "./plan";
+import Job, { JobProps } from './job';
+import Defaults from './job/defaults';
+import Plan, { Stage, Run } from './plan';
 import {
   Concurrency,
   On,
   OnEvents,
   Permissions, // todo
-} from "./types";
-import WorkflowCall from "./workflow_call";
+} from './types';
+import WorkflowCall from './workflow_call';
 
-interface WorkflowProps extends Pick<Workflow, "name" | "on" | "permissions" | "defaults"> {
+interface WorkflowProps extends Pick<Workflow, 'name' | 'on' | 'permissions' | 'defaults'> {
   file?: string;
   sha?: string;
-  "run-name": string;
+  'run-name': string;
   concurrency: Concurrency;
   env: Record<string, string>;
   jobs: Record<string, JobProps>;
+}
+
+function areDependenciesSatisfied(needs: string[], completedJobs: Set<string>): boolean {
+  return needs.every((needId) => completedJobs.has(needId));
 }
 
 class Workflow extends Yaml {
@@ -57,7 +60,7 @@ class Workflow extends Yaml {
    * run-name: Deploy to ${{ inputs.deploy_target }} by @${{ github.actor }}
    * ```
    */
-  public "run-name": Expression<string>;
+  public 'run-name': Expression<string>;
 
   /**
    * To automatically trigger a workflow, use on to define which events can cause the workflow to run.
@@ -150,16 +153,16 @@ class Workflow extends Yaml {
     this.#sha = workflow.sha;
 
     this.name = workflow.name;
-    this["run-name"] = new Expression(workflow["run-name"], ["github", "inputs", "vars"]);
+    this['run-name'] = new Expression(workflow['run-name'], ['github', 'inputs', 'vars']);
     this.on = workflow.on;
     this.permissions = workflow.permissions;
-    this.env = new Expression(workflow.env, ["github", "secrets", "inputs", "vars"]);
+    this.env = new Expression(workflow.env, ['github', 'secrets', 'inputs', 'vars']);
     this.defaults = workflow.defaults;
-    this.concurrency = new Expression(workflow.concurrency, ["github", "inputs", "vars"]);
+    this.concurrency = new Expression(workflow.concurrency, ['github', 'inputs', 'vars']);
     this.jobs = this.setupJobs(workflow.jobs);
   }
 
-  private setupJobs(jobs: WorkflowProps["jobs"]) {
+  private setupJobs(jobs: WorkflowProps['jobs']) {
     if (!jobs) {
       return {};
     }
@@ -202,7 +205,7 @@ class Workflow extends Yaml {
    */
   get events() {
     const { on } = this;
-    if (typeof on === "string") {
+    if (typeof on === 'string') {
       return [on];
     }
     if (Array.isArray(on)) {
@@ -213,7 +216,7 @@ class Workflow extends Yaml {
 
   onEvent<K extends keyof OnEvents>(eventName: K) {
     const { on } = this;
-    if (typeof on === "string") {
+    if (typeof on === 'string') {
       if (on === eventName) {
         return {};
       }
@@ -331,40 +334,24 @@ class Workflow extends Yaml {
     }
 
     const stages: Stage[] = [];
+    const completedJobIds = new Set<string>();
     // return true if all strings in jobIds exist in at least one of the stages
-    // eslint-disable-next-line @typescript-eslint/no-shadow
-    const jobIdsInStages = (jobIds: string[], ...stages: Stage[]) => {
-      for (const jobId of jobIds) {
-        let found = false;
-        for (const stage of stages) {
-          if (
-            stage.runs
-              .map((run) => {
-                return run.jobId;
-              })
-              .includes(jobId)
-          ) {
-            found = true;
-          }
-        }
-        if (!found) return false;
-      }
-      return true;
-    };
+
     while (Object.keys(jobNeeds).length > 0) {
       const runs: Run[] = [];
 
       Object.entries(jobNeeds).forEach(([jobId, needs]) => {
-        if (jobIdsInStages(needs, ...stages)) {
+        if (areDependenciesSatisfied(needs, completedJobIds)) {
           runs.push(new Run(jobId, this));
           delete jobNeeds[jobId];
         }
       });
 
       if (runs.length === 0) {
-        console.log("unable to build dependency graph for");
+        console.log('unable to build dependency graph for');
         break;
       }
+      runs.forEach((run) => completedJobIds.add(run.jobId));
       stages.push(new Stage(runs));
     }
 
@@ -380,46 +367,46 @@ class Workflow extends Yaml {
   }
 
   workflowDispatch():
-    | Record<string, OnEvents["workflow_dispatch"]["inputs"]>
+    | Record<string, OnEvents['workflow_dispatch']['inputs']>
     | undefined
-    | OnEvents["workflow_dispatch"] {
+    | OnEvents['workflow_dispatch'] {
     const { on } = this;
-    if (typeof on === "string") {
-      if (on === "workflow_dispatch") {
+    if (typeof on === 'string') {
+      if (on === 'workflow_dispatch') {
         return {};
       }
       return;
     }
 
     if (Array.isArray(on)) {
-      if (on.includes("workflow_dispatch")) {
+      if (on.includes('workflow_dispatch')) {
         return {};
       }
       return;
     }
 
-    if (typeof on === "object") {
+    if (typeof on === 'object') {
       return on.workflow_dispatch;
     }
   }
 
   workflowCall(): WorkflowCall | undefined {
     const { on } = this;
-    if (typeof on === "string") {
-      if (on === "workflow_call") {
+    if (typeof on === 'string') {
+      if (on === 'workflow_call') {
         return new WorkflowCall();
       }
       return;
     }
 
     if (Array.isArray(on)) {
-      if (on.includes("workflow_call")) {
+      if (on.includes('workflow_call')) {
         return new WorkflowCall();
       }
       return;
     }
 
-    if (typeof on === "object") {
+    if (typeof on === 'object') {
       return new WorkflowCall(on.workflow_call);
     }
   }
@@ -428,33 +415,33 @@ class Workflow extends Yaml {
     return this.#inputs;
   }
 
-  async WorkflowDispatchPrompts(eventName = "workflow_dispatch") {
-    if (eventName === "workflow_dispatch") {
+  async WorkflowDispatchPrompts(eventName = 'workflow_dispatch') {
+    if (eventName === 'workflow_dispatch') {
       const workflowDispatchInputs = this.workflowDispatch()?.inputs || {};
 
       const questions = Object.entries(workflowDispatchInputs)
         .map(([inputId, input]) => {
           const option: PromptObject = {
-            type: "text",
+            type: 'text',
             name: inputId,
             message: input.description,
             initial: input.default,
           };
 
           switch (input.type) {
-            case "string":
-              option.type = "text";
+            case 'string':
+              option.type = 'text';
               break;
-            case "boolean":
-              option.type = "toggle";
-              option.active = "true";
-              option.inactive = "false";
+            case 'boolean':
+              option.type = 'toggle';
+              option.active = 'true';
+              option.inactive = 'false';
               break;
-            case "number":
-              option.type = "number";
+            case 'number':
+              option.type = 'number';
               break;
-            case "choice":
-              option.type = "select";
+            case 'choice':
+              option.type = 'select';
               option.choices =
                 input.options?.map((value) => {
                   return {
@@ -468,8 +455,8 @@ class Workflow extends Yaml {
               });
 
               break;
-            case "environment":
-              option.type = "select";
+            case 'environment':
+              option.type = 'select';
               break;
             default:
           }

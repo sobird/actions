@@ -1,29 +1,27 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
+
+import { createTestFile } from '@/test/__helpers__';
 
 import Workflow from '.';
 import Runner from '../runner';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 const workflowFile = resolve(__dirname, './__mocks__/workflow.yaml');
 
-it.skip('test workflow Read，dump and Load', () => {
+it('test workflow Read，dump and Load', () => {
   const workflow = Workflow.Read(workflowFile);
   const yaml = workflow.dump();
   const workflow2 = Workflow.Load(yaml);
 
-  expect(workflow).toEqual(workflow2);
+  expect(workflow.dump()).toEqual(workflow2.dump());
 });
 
-it.skip('test workflow Read and Save', () => {
-  // const workflow = Workflow.Read(workflowFile);
+it('test workflow Read and Save', () => {
+  const workflow = Workflow.Read(workflowFile);
+  const testFile = createTestFile('sobird_test.yaml');
+  workflow.save(testFile);
+  const workflow2 = Workflow.Read(testFile);
 
-  // workflow.save('./sobird_test.yaml');
-
-  // expect(workflow).toEqual(workflow2);
+  expect(workflow.dump()).toEqual(workflow2.dump());
 });
 
 describe('test workfow on event', () => {
@@ -241,7 +239,11 @@ describe('test workflow job', () => {
     expect(workflow.jobs.test.container.env?.evaluate({} as Runner)?.HOME).toBe('/home/user');
     expect(workflow.jobs.test.container.credentials?.evaluate({} as Runner)?.username).toBe('registry-username');
     expect(workflow.jobs.test.container.credentials?.evaluate({} as Runner)?.password).toBe('registry-password');
-    expect(workflow.jobs.test.container?.volumes).toEqual(['my_docker_volume:/volume_mount', '/data/my_data', '/source/directory:/destination/directory']);
+    expect(workflow.jobs.test.container?.volumes).toEqual([
+      'my_docker_volume:/volume_mount',
+      '/data/my_data',
+      '/source/directory:/destination/directory',
+    ]);
   });
 
   it.skip('job type normal test case', () => {
@@ -377,10 +379,8 @@ describe('test workflow job', () => {
     //         - shell: pwsh -v '. {0}'
     //         - shell: pwsh
     //         - shell: powershell
-
     // `;
     // const workflow = Workflow.Load(yaml);
-
     // expect(workflow.jobs.test1.steps.toJSON()).toBe("pwsh -v '. {0}'");
     // expect(workflow.jobs.test1.steps?.[1].getShellCommand()).toBe("pwsh -command . '{0}'");
     // expect(workflow.jobs.test1.steps?.[2].getShellCommand()).toBe("powershell -command . '{0}'");
@@ -418,16 +418,28 @@ describe('job strategy test', () => {
 
     expect(job.strategy?.Matrices).toEqual([
       {
-        datacenter: 'site-c', 'node-version': '14.x', site: 'staging', 'php-version': 5.4,
+        datacenter: 'site-c',
+        'node-version': '14.x',
+        site: 'staging',
+        'php-version': 5.4,
       },
       {
-        datacenter: 'site-c', 'node-version': '16.x', site: 'staging', 'php-version': 5.4,
+        datacenter: 'site-c',
+        'node-version': '16.x',
+        site: 'staging',
+        'php-version': 5.4,
       },
       {
-        datacenter: 'site-d', 'node-version': '14.x', site: 'staging', 'php-version': 5.4,
+        datacenter: 'site-d',
+        'node-version': '14.x',
+        site: 'staging',
+        'php-version': 5.4,
       },
       {
-        datacenter: 'site-d', 'node-version': '16.x', site: 'staging', 'php-version': 5.4,
+        datacenter: 'site-d',
+        'node-version': '16.x',
+        site: 'staging',
+        'php-version': 5.4,
       },
       { datacenter: 'site-a', 'node-version': '10.x', site: 'prod' },
       { datacenter: 'site-b', 'node-version': '12.x', site: 'dev' },
@@ -546,13 +558,22 @@ describe('workflow dispatch config', () => {
 });
 
 describe('workflow plan jobs', () => {
+  const workflow = Workflow.Read(resolve(__dirname, './__mocks__/stages.yaml'));
   it('plan jobs by jobIds', () => {
-    const workflow = Workflow.Read(resolve(__dirname, './__mocks__/stages.yaml'));
     const plan = workflow.plan('Test-Docker');
     const jobIds = plan.stages.map((stage) => {
       return stage.jobIds;
     });
 
     expect(jobIds).toEqual([['Test-Node'], ['Explore-Gitea-Actions'], ['Test-Docker']]);
+  });
+
+  it('plan circular dependency jobs', () => {
+    const plan = workflow.plan('A', 'B');
+    const jobIds = plan.stages.map((stage) => {
+      return stage.jobIds;
+    });
+
+    expect(jobIds).toEqual([]);
   });
 });

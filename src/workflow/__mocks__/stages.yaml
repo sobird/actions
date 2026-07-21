@@ -53,3 +53,24 @@ jobs:
         if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: |
           npm i
+
+  A:
+    needs: [B, C, X]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo A
+  B:
+    needs: [D]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo B
+  C:
+    needs: [D]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo B
+  D:
+    needs: [A]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo B
