@@ -15,15 +15,16 @@ function jsonSchemaToYamlNode(schema: z.core.JSONSchema._JSONSchema, doc: Docume
 
       const keyNode = doc.createNode(key);
 
-      if ((subSchema as any).description && childNode) {
+      if ((subSchema as any).description) {
         keyNode.commentBefore = ` ${(subSchema as any).description}`;
       }
-      (mapNode as YAMLMap).set(keyNode, childNode);
+
+      if (childNode) (mapNode as YAMLMap).set(keyNode, childNode);
     }
     return mapNode;
   }
 
-  if (schema.default) {
+  if (schema.default !== undefined) {
     return doc.createNode(schema.default);
   }
 

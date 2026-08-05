@@ -4,11 +4,11 @@
  * sobird<i@sobird.me> at 2024/04/25 17:44:32 created.
  */
 
-import { Command } from '@commander-js/extra-typings';
 import { ConnectError, Code } from '@connectrpc/connect';
+import { Command } from 'commander';
 import log4js from 'log4js';
 
-import { getConfig, getRegistration, saveRegistration, Registration } from '@/config';
+import { getConfig, loadRegistration, saveRegistration, Registration } from '@/config';
 import docker from '@/docker';
 import { Labels, Client } from '@/index';
 import Poller from '@/poller';
@@ -36,7 +36,7 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
 
     let registration: Registration;
     try {
-      registration = getRegistration();
+      registration = loadRegistration(config.runner.file);
       if (!registration) {
         logger.error('Registration file not found, please register the runner first');
         return;

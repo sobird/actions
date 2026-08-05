@@ -33,11 +33,8 @@ export function saveRegistration(registration: Registration) {
   );
 }
 
-export function getRegistration(): Registration {
-  const config = getConfig();
-  const configPath = config.runner.file ?? '.runner';
-
-  return readJsonSync(configPath);
+export function loadRegistration(file: string = '.runner'): Registration {
+  return readJsonSync(file);
 }
 
 export * from './schema';

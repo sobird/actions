@@ -38,6 +38,9 @@ import { Storage } from './storage';
 
 const DEFAULT_CACHE_DIR = path.join(os.homedir(), '.cache', 'actions');
 
+/**
+ * 这是 GitHub Actions Cache 服务的本地实现，用于支持 actions/cache。
+ */
 class ArtifactCache {
   db: Database;
   storage: Storage;

@@ -162,6 +162,9 @@ function validateRunID(rawRunID: string) {
   return runId;
 }
 
+/**
+ * 这是 GitHub Actions Artifacts V4 + V3 服务实现。
+ */
 class Artifact {
   constructor(
     public dir: string = DEFAULT_ARTIFACT_DIR,

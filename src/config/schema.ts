@@ -53,30 +53,42 @@ export const RunnerSchema = z
   .object({
     file: z.string().default('.runner').describe('Where to store the registration result.'),
     context: z
-      .record(z.string(), z.unknown())
+      .record(z.string(), z.record(z.string(), z.string()))
       .optional()
+      .default({})
       .describe(
-        ` https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/accessing-contextual-information-about-workflow-runs\n NOT RECOMMENDED! You can configure the context yourself based on the link provided above.`,
+        `https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/accessing-contextual-information-about-workflow-runs\n NOT RECOMMENDED! You can configure the context yourself based on the link provided above.`,
       ),
     actor: z.string().optional().describe('The username of the user that triggered the initial workflow run'),
     token: z
       .string()
       .optional()
       .describe('A token to authenticate on behalf of the GitHub App installed on your repository.'),
-    eventFile: z.string().default('event.json').describe('Path to event JSON file.'),
-    env: z.record(z.string(), z.string()).optional().describe('Extra environment variables to run jobs.'),
+    eventFile: z.string().optional().describe('Path to event JSON file.'),
+    env: z
+      .record(z.string(), z.string())
+      .optional()
+      .default({ A_TEST_ENV_NAME_1: 'a_test_env_value_1' })
+      .describe('Extra environment variables to run jobs.'),
     envFile: z
       .string()
       .optional()
+      .default('.env')
       .describe(
         "Extra environment variables to run jobs from a file.\n It will be ignored if it's empty or the file doesn't exist.",
       ),
-    vars: z.record(z.string(), z.string()).optional().describe('Extra variables to run jobs'),
-    varsFile: z.string().optional().describe('Extra variables to run jobs from a file.'),
-    inputs: z.record(z.string(), z.string()).optional().describe('Extra inputs to run jobs.'),
-    inputsFile: z.string().optional().describe('Extra inputs to run jobs from a file.'),
-    secrets: z.record(z.string(), z.string()).optional().describe('Extra secrets to run jobs.'),
-    secretsFile: z.string().optional().describe('Extra secrets to run jobs from a file.'),
+    vars: z.record(z.string(), z.string()).optional().default({}).describe('Extra variables to run jobs'),
+    varsFile: z.string().optional().default('.vars').describe('Extra variables to run jobs from a file.'),
+    inputs: z.record(z.string(), z.string()).optional().default({}).describe('Extra inputs to run jobs.'),
+    inputsFile: z.string().optional().default('.inputs').describe('Extra inputs to run jobs from a file.'),
+    secrets: z
+      .record(z.string(), z.string())
+      .optional()
+      .default({
+        TEST_TOKEN_NAME: 'test_token_value',
+      })
+      .describe('Extra secrets to run jobs.'),
+    secretsFile: z.string().optional().default('.secrets').describe('Extra secrets to run jobs from a file.'),
     workspace: z
       .string()
       .default('/home/runner')
@@ -138,7 +150,7 @@ export const RunnerSchema = z
       .number()
       .int()
       .nonnegative()
-      .default(0)
+      .optional()
       .describe(`The port of the cache server.\n 0 means to use a random available port.`),
     actionsCacheExternal: z
       .string()
@@ -157,7 +169,7 @@ export const RunnerSchema = z
       .number()
       .int()
       .nonnegative()
-      .default(0)
+      .optional()
       .describe('Defines the port where the artifact server listens (will only bind to localhost)'),
     cacheActions: z
       .boolean()
@@ -176,38 +188,43 @@ export const RunnerSchema = z
     actionsOffline: z
       .boolean()
       .optional()
+      .default(false)
       .describe(
         'When enabled, the Runner will only use Actions already present in actionsPath and will not attempt to fetch or update them from the network.',
       ),
     labels: LabelsSchema,
-    matrix: z.record(z.string(), z.array(z.unknown())).optional(),
+    // matrix: z.record(z.string(), z.array(z.unknown())).optional(),
     pull: z.boolean().default(false).describe('Pull docker image(s) even if already present'),
     reuse: z
       .boolean()
       .default(false)
       .describe("Don't remove container(s) on successfully completed workflow(s) to maintain state between runs"),
     rebuild: z.boolean().default(true).describe('Rebuild local action docker image(s) even if already present'),
-    containerNamePrefix: z
-      .string()
-      .optional()
-      .describe(
-        'A prefix string added to the beginning of all container names for easier identification and filtering on the host machine.',
-      ),
+    // containerNamePrefix: z
+    //   .string()
+    //   .optional()
+    //   .default('')
+    //   .describe(
+    //     'A prefix string added to the beginning of all container names for easier identification and filtering on the host machine.',
+    //   ),
     containerNetwork: z
       .string()
       .optional()
+      .default('')
       .describe(
         `Specifies the network to which the container will connect.\n Could be host, bridge or the name of a custom network.\n If it's empty, runner will create a network automatically.`,
       ),
     containerPlatform: z
       .string()
       .optional()
+      .default('')
       .describe(
         `Platform which should be used to run containers, e.g.: linux/amd64. if not specified, will use host default architecture. Requires Docker server API Version 1.41+. Ignored on earlier Docker server platforms.`,
       ),
     containerDaemonSocket: z
       .string()
       .optional()
+      .default('')
       .describe('Path to Docker daemon socket which will be mounted to containers.'),
     containerPrivileged: z
       .boolean()
@@ -224,16 +241,19 @@ export const RunnerSchema = z
     containerUsernsMode: z
       .string()
       .optional()
+      .default('')
       .describe(
         'Sets the user namespace mode for the container. Enabling this isolates the container root user from the host root user.',
       ),
     containerCapAdd: z
       .array(z.string())
       .optional()
+      .default([])
       .describe('Kernel capabilities to add to the workflow containers (e.g. SYS_ADMIN).'),
     containerCapDrop: z
       .array(z.string())
       .optional()
+      .default([])
       .describe('Kernel capabilities to drop from the workflow containers (e.g. SYS_ADMIN).'),
     containerMaxLifetime: z
       .number()
@@ -246,6 +266,7 @@ export const RunnerSchema = z
     containerOptions: z
       .string()
       .optional()
+      .default('')
       .describe(
         'And other options to be used when the container is started (eg, --add-host=my.sobird.url:host-gateway).',
       ),
@@ -266,6 +287,9 @@ export const ConfigSchema = z
 export type Config = z.infer<typeof ConfigSchema>;
 export type ConfigInput = z.input<typeof ConfigSchema>;
 
+/**
+ * 如果某项不设置默认值，则运行 actions config > actions.config.yaml 不会生成该项的配置到配置文件中
+ */
 export const RegistrationSchema = z.object({
   id: z.bigint(),
   uuid: z.string(),

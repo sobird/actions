@@ -1,4 +1,3 @@
-/* eslint-disable no-multi-assign */
 /**
  * 一个Runner实例仅支持运行一个job
  * represents a job from a workflow that needs to be run
@@ -755,7 +754,8 @@ class Runner {
         this.matchers = newMatchers;
 
         // Fire events
-        for (const _matcher of config.problemMatcher) {
+        for (const matcher of config.problemMatcher) {
+          console.log(matcher);
           // this._onMatcherChanged(null, new MatcherChangedEventArgs(matcher));
         }
 
