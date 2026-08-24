@@ -11,7 +11,7 @@ import log4js from 'log4js';
 import { getConfig, loadRegistration, saveRegistration, Registration } from '@/config';
 import docker from '@/docker';
 import { Labels, Client } from '@/index';
-import Poller from '@/poller';
+import Poller, { Runner } from '@/poller';
 
 const logger = log4js.getLogger();
 
@@ -97,7 +97,7 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
         );
       }
 
-      const poller = new Poller(RunnerServiceClient, config, version);
+      const poller = new Poller(RunnerServiceClient, config, new Runner(RunnerServiceClient, config, labels), version);
       poller.poll();
     } catch (err) {
       const connectError = err as ConnectError;

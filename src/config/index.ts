@@ -12,11 +12,12 @@ export function getConfig(appname = 'actions', config = {}) {
   const result = explorer.search();
   const fileConfig = result?.config || {};
 
-  const parseResult = ConfigSchema.safeParse(merge(fileConfig, config));
+  const mergedConfig = merge({}, fileConfig, config);
+
+  const parseResult = ConfigSchema.safeParse(mergedConfig);
 
   if (!parseResult.success) {
-    console.error('❌ Configuration error:', parseResult.error);
-    process.exit(1);
+    throw parseResult.error;
   }
 
   return parseResult.data;

@@ -1,3 +1,4 @@
+import os from 'node:os';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
@@ -9,7 +10,7 @@ class ActionCacheRepository extends ActionCache {
   cacheDirCache: Record<string, string> = {};
 
   constructor(
-    dir: string,
+    dir: string = path.join(os.tmpdir(), 'actions'),
     public repositories: Record<string, string> = {},
   ) {
     super(dir);

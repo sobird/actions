@@ -1,16 +1,15 @@
-/* eslint-disable no-console */
-import Plan from "@/workflow/plan";
-import { Pen } from "@/utils";
+import { Pen } from '@/utils';
+import Plan from '@/workflow/plan';
 
 export async function listOption(filterPlan: Plan) {
   const header = {
-    stage: "Stage",
-    matrix: "Matrix",
-    jobId: "Job ID",
-    jobName: "Job name",
-    wfName: "Workflow name",
-    wfFile: "Workflow file",
-    events: "Events",
+    stage: 'Stage',
+    matrix: 'Matrix',
+    jobId: 'Job ID',
+    jobName: 'Job name',
+    wfName: 'Workflow name',
+    wfFile: 'Workflow file',
+    events: 'Events',
   };
   const data: Record<string, unknown>[] = [];
 
@@ -29,7 +28,7 @@ export async function listOption(filterPlan: Plan) {
     });
   });
 
-  const pen = new Pen("dashedLine");
+  const pen = new Pen('dashedLine');
   const table = pen.drawTable(data, header);
   console.log(table.toString());
 }

@@ -1,11 +1,10 @@
-/* eslint-disable no-console */
-import chalk from "chalk";
+import chalk from 'chalk';
 
-import Plan from "@/workflow/plan";
-import { Pen } from "@/utils";
+import { Pen } from '@/utils';
+import Plan from '@/workflow/plan';
 
 export function graphOption(filterPlan: Plan) {
-  const pen = new Pen("dashedLine");
+  const pen = new Pen('dashedLine');
   const pads: any[] = [];
   let maxWidth = 0;
   filterPlan.stages.forEach((stage, index) => {

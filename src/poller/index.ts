@@ -9,29 +9,26 @@ import { ConnectError } from '@connectrpc/connect';
 import { Semaphore } from 'async-mutex';
 import log4js from 'log4js';
 
-import type { Client, Config } from '@/index';
-import { Needs } from '@/runner/context/needs';
+import type { Config } from '@/config';
+import type { Client } from '@/index';
 import { withTimeout } from '@/utils';
 import { sleep } from '@/utils';
 
-import { WithLoggerHook } from '../common/logger';
 import { Task } from '../gen/runner/v1/messages_pb';
-import Reporter from '../reporter';
-import Workflow from '../workflow';
+import { type Runner } from './runner';
 
 const logger = log4js.getLogger();
 
 class Poller {
-  tasksVersion = BigInt(0);
-
-  runningTasks = new Map();
-
+  private tasksVersion = BigInt(0);
+  private runningTasks = new Map();
   private semaphore: Semaphore;
 
   constructor(
     public client: typeof Client.prototype.RunnerServiceClient,
-    public config: InstanceType<typeof Config>,
-    public runnerVersion?: string,
+    public config: Config,
+    public runner: Runner,
+    public version?: string,
   ) {
     this.semaphore = new Semaphore(this.config.daemon.capacity);
   }
@@ -69,35 +66,7 @@ class Poller {
   }
 
   async assign(task: Task) {
-    const { workflowPayload, secrets, vars } = task;
-
-    const reporter = new Reporter(this.client, task);
-    await reporter.runDaemon();
-    reporter.log(
-      `Current runner version: ${this.runnerVersion} Received task ${task.id} of job ${task.context?.job}, triggered by event: ${task.context?.event_name}`,
-    );
-
-    // SingleWorkflow is a workflow with single job and single matrix
-    const singleWorkflow = Workflow.Load(workflowPayload?.toString() ?? '');
-    const plan = singleWorkflow.plan();
-
-    const loggerWithReporter = WithLoggerHook(reporter, 'Reporter');
-    loggerWithReporter.info('task:', task.id);
-
-    const needs = Object.fromEntries(
-      Object.entries(task.needs).map(([job, need]) => {
-        return [job, need];
-      }),
-    ) as unknown as Needs;
-    const github = task.context;
-
-    Object.assign(this.config.runner.context.github, github);
-    Object.assign(this.config.runner.context.secrets, secrets);
-    Object.assign(this.config.runner.context.vars, vars);
-    Object.assign(this.config.runner.context.needs, needs);
-
-    const runnerConfig = await this.config.runner.configure();
-    await withTimeout(plan.executor(runnerConfig).execute(), this.config.daemon.timeout);
+    await this.runner.run(task);
   }
 
   async fetchTask() {
@@ -128,5 +97,7 @@ class Poller {
     }
   }
 }
+
+export * from './runner';
 
 export default Poller;

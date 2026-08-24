@@ -35,7 +35,7 @@ export type ActionTaskCreationAttributes = CreationAttributes<ActionTask>;
 
 export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCreationAttributes<ActionTask>> {
   declare jobId: number;
-  declare runnerId: number;
+  declare runnerId: bigint;
   declare attempt: number;
   declare status: number;
   declare started: Date;

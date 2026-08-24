@@ -4,11 +4,11 @@
  * sobird<i@sobird.me> at 2024/05/07 16:01:08 created.
  */
 
-import { HostConfig } from "dockerode";
-import { Level } from "log4js";
+import { HostConfig } from 'dockerode';
+import { Level } from 'log4js';
 
-import ActionCache from "@/runner/action/cache";
-import Context from "@/runner/context";
+import ActionCache from '@/runner/action/cache';
+import Context from '@/runner/context';
 // import Container from './container';
 
 /**
@@ -44,7 +44,7 @@ interface Config {
   /**
    * Remote name in local git repo config.
    */
-  readonly remoteName: string;
+  // readonly remoteName: string;
 
   /**
    * Controls if paths in .gitignore should not be copied into container, default true.
@@ -59,7 +59,7 @@ interface Config {
   /**
    * GitHub instance to use, default "github.com".
    */
-  readonly serverInstance: string;
+  readonly serverInstance?: string;
 
   /**
    * The default actions web site.
@@ -69,12 +69,12 @@ interface Config {
   /**
    * Use actions from GitHub Enterprise instance to GitHub.
    */
-  readonly replaceGheActionWithGithubCom: string[];
+  readonly replaceGheActionWithGithubCom?: string[];
 
   /**
    * Token of private action repo on GitHub.
    */
-  readonly replaceGheActionTokenWithGithubCom: string;
+  readonly replaceGheActionTokenWithGithubCom?: string;
 
   // logger
   /**
@@ -85,7 +85,7 @@ interface Config {
   /**
    * Log the output from docker run.
    */
-  readonly logOutput: boolean;
+  readonly logOutput?: boolean;
 
   /**
    * Switches from the full job name to the job id.
@@ -123,18 +123,18 @@ interface Config {
    * The path where the artifact server stores uploads and retrieves downloads from.
    * If not specified the artifact server will not start
    */
-  readonly artifactPath: string;
+  readonly artifactPath?: string;
 
   /**
    * The address where the artifact server listens
    */
-  readonly artifactAddr: string;
+  readonly artifactAddr?: string;
 
   /**
    * The port where the artifact server listens
    * 0 means to use a random available port.
    */
-  readonly artifactPort: number;
+  readonly artifactPort?: number;
 
   /**
    * Enable cache server to use actions/cache.
@@ -145,7 +145,7 @@ interface Config {
    * The directory to store the cache data.
    * If it's empty, the cache data will be stored in `$ACTIONS_HOME/cache`.
    */
-  readonly actionsCachePath: string;
+  readonly actionsCachePath?: string;
 
   /**
    * The host of the cache server.
@@ -153,14 +153,14 @@ interface Config {
    * It's not for the address to listen, but the address to connect from job containers.
    * So 0.0.0.0 is a bad choice, leave it empty to detect automatically.
    */
-  readonly actionsCacheAddr: string;
+  readonly actionsCacheAddr?: string;
 
   /**
    * The port of the cache server.
    *
    * 0 means to use a random available port.
    */
-  readonly actionsCachePort: number;
+  readonly actionsCachePort?: number;
 
   /**
    * The external cache server URL. Valid only when actions cache enable is true.
@@ -168,19 +168,19 @@ interface Config {
    * If it's specified, actions runner will use this URL as the ACTIONS_CACHE_URL rather than start a server by itself.
    * The URL should generally end with "/".
    */
-  readonly actionsCacheExternal: string;
+  readonly actionsCacheExternal?: string;
 
   // container
   /**
    * Platform picker, it will take precedence over Platforms if isn't nil.
    * @returns {string} The selected platform.
    */
-  readonly platformPicker: (labels: string[]) => string | undefined;
+  readonly platformPicker?: (labels: string[]) => string | undefined;
 
   /**
    * Matrix config to run.
    */
-  readonly matrix: Record<string, unknown[]>;
+  readonly matrix?: Record<string, unknown[]>;
   /**
    * Force pulling of the image, even if already present.
    */
@@ -224,7 +224,7 @@ interface Config {
   /**
    * The network mode of job containers (the value of --network).
    */
-  readonly containerNetworkMode: HostConfig["NetworkMode"];
+  readonly containerNetworkMode: HostConfig['NetworkMode'];
   /**
    * Controls if the container is automatically removed upon workflow completion.
    */

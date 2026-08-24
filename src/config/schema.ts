@@ -59,7 +59,7 @@ export const RunnerSchema = z
       .describe(
         `https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/accessing-contextual-information-about-workflow-runs\n NOT RECOMMENDED! You can configure the context yourself based on the link provided above.`,
       ),
-    actor: z.string().optional().describe('The username of the user that triggered the initial workflow run'),
+    // actor: z.string().optional().describe('The username of the user that triggered the initial workflow run'),
     token: z
       .string()
       .optional()
@@ -93,7 +93,7 @@ export const RunnerSchema = z
       .string()
       .default('/home/runner')
       .describe(`The parent directory of a job's working directory.\n If it's empty, /home/runner will be used.`),
-    workdir: z.string().optional().describe('Working directory.'),
+    // workdir: z.string().optional().describe('Working directory.'),
     bindWorkdir: z
       .boolean()
       .default(false)
@@ -106,6 +106,7 @@ export const RunnerSchema = z
     skipCheckout: z
       .boolean()
       .optional()
+      .default(false)
       .describe(
         'If set to true, the Runner will skip the "actions/checkout" step. Useful when source code is already provided via bind mounting.',
       ),
@@ -120,16 +121,19 @@ export const RunnerSchema = z
     actionInstance: z
       .string()
       .optional()
+      .default('https://github.com')
       .describe('The specific URL for the Actions service. Defaults to serverInstance if not provided.'),
     replaceGheActionWithGithubCom: z
       .array(z.string())
       .optional()
+      .default([])
       .describe(
         'Automatically redirect Action requests from a local GHE instance to github.com to access the public Marketplace.',
       ),
     replaceGheActionTokenWithGithubCom: z
       .string()
       .optional()
+      .default('')
       .describe(
         'A personal access token (PAT) used to authenticate against github.com when fetching public Actions from a GHE environment.',
       ),
@@ -219,7 +223,7 @@ export const RunnerSchema = z
       .optional()
       .default('')
       .describe(
-        `Platform which should be used to run containers, e.g.: linux/amd64. if not specified, will use host default architecture. Requires Docker server API Version 1.41+. Ignored on earlier Docker server platforms.`,
+        `Platform which should be used to run containers, e.g.: linux/amd64.\n if not specified, will use host default architecture. Requires Docker server API Version 1.41+. Ignored on earlier Docker server platforms.`,
       ),
     containerDaemonSocket: z
       .string()

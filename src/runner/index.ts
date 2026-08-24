@@ -1,4 +1,10 @@
 /**
+ * @todo Architecture Optimization Notice
+ * 当前 Runner 类实际上扮演的是单 Job 执行上下文的角色（JobRunner / JobContext）。
+ * 待核心功能（Services, Steps, Artifacts 等）完全稳定后：
+ * 1. 将此类重命名为 JobRunner (或 JobExecution)
+ * 2. 将外层调度器统一收拢为顶层 Runner 类
+ *
  * 一个Runner实例仅支持运行一个job
  * represents a job from a workflow that needs to be run
  *
@@ -11,6 +17,8 @@ import path from 'node:path';
 import { MountConfig, MountConsistency } from 'dockerode';
 import log4js, { Logger } from 'log4js';
 
+import Artifact from '@/artifact';
+import ArtifactCache from '@/artifact/cache';
 import Constants from '@/common/constants';
 import { Docker } from '@/docker';
 import Config from '@/runner/config';
@@ -19,6 +27,7 @@ import { createSafeName, assignIgnoreCase, createFnv1aHash } from '@/utils';
 import StepAction from '@/workflow/job/step/action';
 import Strategy from '@/workflow/job/strategy';
 
+import { createAuthorizationToken } from '../common/auth';
 import Executor from '../common/executor';
 import Expression from '../expression';
 import Run from '../workflow/plan/run';
@@ -27,8 +36,9 @@ import Container from './container/container';
 import DockerContainer from './container/docker';
 import HostedContainer from './container/hosted';
 import { Job } from './context/jobs';
-
 const SetEnvBlockList = new Set(['NODE_OPTIONS']);
+
+const logger = log4js.getLogger();
 
 /**
  * 每个runner为一个job实例
@@ -795,6 +805,60 @@ class Runner {
       current = current.caller;
     }
     return false;
+  }
+
+  static async serve(config: Config) {
+    const {
+      artifactPath,
+      artifactAddr,
+      artifactPort,
+
+      actionsCache,
+      actionsCachePath,
+      actionsCacheAddr,
+      actionsCachePort,
+      actionsCacheExternal,
+    } = config;
+
+    // Start Artifact Server
+    const ACTIONS_RUNTIME_URL = Constants.Actions.RuntimeUrl;
+    const ACTIONS_RUNTIME_TOKEN = Constants.Actions.RuntimeToken;
+    if (artifactPath && !config.context.env[ACTIONS_RUNTIME_URL]) {
+      const artifact = new Artifact(artifactPath);
+      const actionsRuntimeUrl = await artifact.serve(artifactPort, artifactAddr);
+      logger.info('Artifact Server address:', actionsRuntimeUrl);
+      config.context.env[ACTIONS_RUNTIME_URL] = actionsRuntimeUrl;
+
+      let actionsRuntimeToken = process.env[ACTIONS_RUNTIME_TOKEN];
+      if (!actionsRuntimeToken) {
+        let runID = 1;
+
+        if (config.context.env.GITHUB_RUN_ID) {
+          runID = parseInt(config.context.env.GITHUB_RUN_ID, 10);
+
+          if (Number.isNaN(runID)) {
+            logger.warn('GITHUB_RUN_ID is not a valid number, using default value 1');
+            runID = 1; // 如果转换失败，回退到默认值
+          }
+        }
+
+        actionsRuntimeToken = createAuthorizationToken(runID, runID, runID);
+      }
+      config.context.env[ACTIONS_RUNTIME_TOKEN] = actionsRuntimeToken;
+    }
+
+    // Start Actions Cache Server
+    const ACTIONS_CACHE_URL = Constants.Actions.CacheUrl;
+    if (actionsCache && !config.context.env[ACTIONS_CACHE_URL]) {
+      if (actionsCacheExternal) {
+        config.context.env[ACTIONS_CACHE_URL] = actionsCacheExternal;
+      } else {
+        const artifactCache = new ArtifactCache(actionsCachePath);
+        const actionsCacheURL = await artifactCache.serve(actionsCachePort, actionsCacheAddr);
+        logger.info('Actions Cache Server address:', actionsCacheURL);
+        config.context.env[ACTIONS_CACHE_URL] = actionsCacheURL;
+      }
+    }
   }
 }
 
