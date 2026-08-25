@@ -38,19 +38,13 @@ export type ActionRunJobCreationAttributes = CreationAttributes<ActionRunJob>;
  */
 export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, InferCreationAttributes<ActionRunJob>> {
   declare runId: number;
-
-  declare name: string;
-
+  declare repositoryId: number;
   declare ownerId: number;
 
-  declare repositoryId: number;
-
+  declare name: string;
   declare commitSha: string;
-
   declare isForkPullRequest: boolean;
-
   declare attempt: number;
-
   declare workflowPayload: CreationOptional<Blob>;
 
   /** job id in workflow, not job's id */
@@ -69,10 +63,10 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
 
   declare stopped: Date;
 
-  declare Run?: NonAttribute<ActionRun>;
+  declare run?: NonAttribute<ActionRun>;
 
   static associate({ ActionRun, ActionTask }: Models) {
-    this.belongsTo(ActionRun, { foreignKey: 'runId' });
+    this.belongsTo(ActionRun, { as: 'run', foreignKey: 'runId' });
     this.hasMany(ActionTask, { foreignKey: 'jobId' });
   }
 

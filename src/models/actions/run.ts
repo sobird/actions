@@ -31,37 +31,21 @@ export type ActionRunCreationAttributes = CreationAttributes<ActionRun>;
 
 export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreationAttributes<ActionRun>> {
   declare title: string;
-
-  declare ownerId: number;
-
-  declare repositoryId: number;
-
+  declare repositoryId: bigint;
+  declare ownerId: bigint;
   declare workflowId: string;
-
-  declare index: number;
-
-  declare triggerUserId: number;
-
-  declare scheduleId: CreationOptional<number>;
-
+  declare index: bigint;
+  declare triggerUserId: bigint;
+  declare scheduleId: CreationOptional<bigint>;
   declare ref: string;
-
   declare commitSha: string;
-
   declare isForkPullRequest: boolean;
-
   declare needApproval: boolean;
-
-  declare approvedBy: number;
-
+  declare approvedBy: bigint;
   declare eventName: string;
-
   declare eventPayload: CreationOptional<string>;
-
   declare triggerEvent: CreationOptional<string>;
-
   declare status: Status;
-
   declare version: CreationOptional<string>;
 
   declare rawConcurrency: CreationOptional<string>;
