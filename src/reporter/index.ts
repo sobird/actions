@@ -12,6 +12,7 @@ import { ConnectError } from '@connectrpc/connect';
 import log4js, { LoggingEvent } from 'log4js';
 import retry from 'retry';
 
+import type { RunnerServiceClient } from '@/gen';
 import {
   LogRow,
   LogRowSchema,
@@ -23,7 +24,6 @@ import {
   StepStateSchema,
   Result,
 } from '@/gen/runner/v1/messages_pb';
-import type { Client } from '@/index';
 import { Replacer } from '@/utils';
 
 import { LoggerHook, LogEntry } from '../common/logger';
@@ -45,23 +45,22 @@ class Reporter implements LoggerHook {
 
   private outputs = new Map<string, string>();
 
-  public debugOutputEnabled = false;
-
-  private stopCommandEndToken = '';
-
   private logOffset = BigInt(0);
 
   private logRows = <LogRow[]>[];
 
   private closed = false;
 
+  private debugOutputEnabled = false;
+  private stopCommandEndToken = '';
+
   constructor(
-    public client: typeof Client.prototype.RunnerServiceClient,
+    public client: RunnerServiceClient,
     public task: Task = create(TaskSchema),
     public cancel = () => {},
   ) {
     ['token', 'gitea_runtime_token'].forEach((key) => {
-      const value = task.context?.[key];
+      const value = task.context?.[key]?.toString();
       if (value) {
         this.logReplacer.add(value, '***');
       }
@@ -81,22 +80,22 @@ class Reporter implements LoggerHook {
   }
 
   /**
-   * 重置步骤
+   * 重置步骤状态
    * @todo
    * 实现 mutex
    * @param l
    */
-  resetSteps(l: number): void {
+  resetSteps(count: number): void {
     try {
       // 清除现有的步骤状态
       this.state.steps = [];
-
       // 创建新的 StepState 对象并添加到 steps 数组中
-      for (let i = 0; i < l; i++) {
-        const step = create(StepStateSchema, {
-          id: BigInt(i),
-        });
-        this.state.steps.push(step);
+      for (let i = 0; i < count; i++) {
+        this.state.steps.push(
+          create(StepStateSchema, {
+            id: BigInt(i),
+          }),
+        );
       }
     } finally {
       // 解锁
@@ -331,29 +330,25 @@ class Reporter implements LoggerHook {
    * @param noMore
    */
   async reportLog(noMore: boolean): Promise<Error | void> {
-    try {
-      const rows = this.logRows;
-      const updateLogResponse = await this.client.updateLog({
-        taskId: this.state.id,
-        index: this.logOffset,
-        rows,
-        noMore,
-      });
+    const rows = this.logRows;
+    const updateLogResponse = await this.client.updateLog({
+      taskId: this.state.id,
+      index: this.logOffset,
+      rows,
+      noMore,
+    });
 
-      // 获取服务端确认的日志索引
-      const { ackIndex } = updateLogResponse;
-      if (ackIndex < this.logOffset) {
-        logger.info('Submitted logs are lost');
-      }
+    // 获取服务端确认的日志索引
+    const { ackIndex } = updateLogResponse;
+    if (ackIndex < this.logOffset) {
+      throw new Error('Submitted logs are lost');
+    }
 
-      this.logRows = this.logRows.slice(Number(ackIndex - this.logOffset));
-      this.logOffset = ackIndex;
+    this.logRows = this.logRows.slice(Number(ackIndex - this.logOffset));
+    this.logOffset = ackIndex;
 
-      if (noMore && ackIndex < this.logOffset + BigInt(rows.length)) {
-        logger.info('Not all logs are submitted');
-      }
-    } catch (error) {
-      logger.error('Update log fail:', (error as ConnectError).message);
+    if (noMore && ackIndex < this.logOffset + BigInt(rows.length)) {
+      throw new Error('Not all logs are submitted');
     }
   }
 

@@ -2,7 +2,8 @@ import Runner from '.';
 
 vi.mock('.');
 
-const runner: Runner = new (Runner as any)();
+// @ts-expect-error
+const runner: Runner = new Runner();
 
 describe('Runner Test', () => {
   it('runner executor', async () => {

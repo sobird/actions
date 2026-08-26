@@ -1,20 +1,19 @@
 /**
- * reporter.test.ts
+ * Reporter unit test
  *
  * sobird<i@sobird.me> at 2024/04/26 18:18:27 created.
  */
-import log4js from 'log4js';
+import log4js, { LoggingEvent } from 'log4js';
 
 import Client from '../gen';
 import Reporter from './index';
 
 vi.mock('log4js');
-vi.mock('../client');
+vi.mock('../gen');
 
 const { RunnerServiceClient } = new Client('', '', false);
 
 describe('Reporter', () => {
-  const reporter = new Reporter(RunnerServiceClient);
   describe('parseLogRow', () => {
     const tests = [
       {
@@ -99,13 +98,27 @@ describe('Reporter', () => {
       },
       // ... 根据实际测试需求，可以在这里添加更多的测试用例 ...
     ];
-    const logger = log4js.getLogger();
+
     tests.forEach((test) => {
+      const reporter = new Reporter(RunnerServiceClient);
       it(test.name, () => {
+        // @ts-expect-error 快速设置类的私有属性
         reporter.debugOutputEnabled = test.debugOutputEnabled;
 
         test.args.forEach((arg, index) => {
-          const result = reporter.parseLogRow(logger.info(arg) as any);
+          const logEntry: LoggingEvent = {
+            startTime: new Date(),
+            categoryName: '',
+            data: [arg],
+            level: log4js.levels.INFO,
+            context: {},
+            pid: 123,
+            serialise: () => {
+              return '';
+            },
+          };
+
+          const result = reporter.parseLogRow(logEntry);
           let got = null;
           if (result?.content) {
             got = result?.content;
@@ -118,6 +131,7 @@ describe('Reporter', () => {
 
   // fire
   describe('fire', () => {
+    const reporter = new Reporter(RunnerServiceClient);
     it('test fire', () => {
       const context = {
         stage: 'Main',
@@ -167,11 +181,13 @@ describe('Reporter', () => {
         // expect(RunnerServiceClient.updateTask).toHaveBeenCalled();
       });
 
-      expect((reporter as any).state.steps[stepNumber].logLength).toBe(BigInt(3));
+      // @ts-expect-error
+      expect(reporter.state.steps[stepNumber].logLength).toBe(BigInt(3));
     });
   });
 
   describe('setOutputs', () => {
+    const reporter = new Reporter(RunnerServiceClient);
     it('outputs: key > 255', () => {
       const outputs = new Map();
       const key = Array(64).fill('test').join('');
@@ -199,8 +215,22 @@ describe('Reporter', () => {
     });
   });
 
+  const reporter = new Reporter(RunnerServiceClient);
+  const logEntry: LoggingEvent = {
+    startTime: new Date(),
+    categoryName: '',
+    data: ['test'],
+    level: log4js.levels.INFO,
+    context: {},
+    pid: 123,
+    serialise: () => {
+      return '';
+    },
+  };
+  reporter.fire(logEntry);
+
   it('test reportLog', async () => {
-    await expect(reporter.reportLog(true)).rejects.toThrow('not all logs are submitted');
+    await expect(reporter.reportLog(true)).rejects.toThrow('Not all logs are submitted');
     await expect(reporter.reportLog(false)).resolves.not.toThrow();
     expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
   });

@@ -24,7 +24,7 @@ log4js.configure({
   },
 });
 
-log4js.getLogger = ((category?: string) => {
+log4js.getLogger = (category?: string) => {
   const result = getLogger.bind(log4js)(category);
   const { info } = result;
   result.info = (message, ...args: string[]) => {
@@ -33,6 +33,6 @@ log4js.getLogger = ((category?: string) => {
   };
 
   return result;
-}) as any;
+};
 
 export default log4js;

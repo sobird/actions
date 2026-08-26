@@ -48,7 +48,7 @@ export const fetchTaskResponse = create(FetchTaskResponseSchema, {
   }),
 });
 
-const mock = vi.fn().mockImplementation(() => {
+const mock = vi.fn(function () {
   return {
     PingServiceClient: {
       ping: vi.fn((req) => {
