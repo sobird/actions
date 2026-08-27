@@ -12,6 +12,9 @@ vi.mock('log4js');
 vi.mock('../gen');
 
 const { RunnerServiceClient } = new Client('', '', false);
+const { task } = await RunnerServiceClient.fetchTask({
+  tasksVersion: 123n,
+});
 
 describe('Reporter', () => {
   describe('parseLogRow', () => {
@@ -100,7 +103,7 @@ describe('Reporter', () => {
     ];
 
     tests.forEach((test) => {
-      const reporter = new Reporter(RunnerServiceClient);
+      const reporter = new Reporter(RunnerServiceClient, task);
       it(test.name, () => {
         // @ts-expect-error 快速设置类的私有属性
         reporter.debugOutputEnabled = test.debugOutputEnabled;
@@ -131,7 +134,7 @@ describe('Reporter', () => {
 
   // fire
   describe('fire', () => {
-    const reporter = new Reporter(RunnerServiceClient);
+    const reporter = new Reporter(RunnerServiceClient, task);
     it('test fire', () => {
       const context = {
         stage: 'Main',
@@ -187,7 +190,7 @@ describe('Reporter', () => {
   });
 
   describe('setOutputs', () => {
-    const reporter = new Reporter(RunnerServiceClient);
+    const reporter = new Reporter(RunnerServiceClient, task);
     it('outputs: key > 255', () => {
       const outputs = new Map();
       const key = Array(64).fill('test').join('');
@@ -215,7 +218,7 @@ describe('Reporter', () => {
     });
   });
 
-  const reporter = new Reporter(RunnerServiceClient);
+  const reporter = new Reporter(RunnerServiceClient, task);
   const logEntry: LoggingEvent = {
     startTime: new Date(),
     categoryName: '',

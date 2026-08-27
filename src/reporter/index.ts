@@ -8,9 +8,9 @@ import util from 'node:util';
 
 import { create, clone } from '@bufbuild/protobuf';
 import { timestampFromDate } from '@bufbuild/protobuf/wkt';
-import { ConnectError } from '@connectrpc/connect';
+import { Mutex } from 'async-mutex';
+import retry from 'async-retry';
 import log4js, { LoggingEvent } from 'log4js';
-import retry from 'retry';
 
 import type { RunnerServiceClient } from '@/gen';
 import {
@@ -39,25 +39,22 @@ const stringToResult: any = {
 
 class Reporter implements LoggerHook {
   private logReplacer = new Replacer();
-
-  /** 任务状态 */
   private state: TaskState;
-
   private outputs = new Map<string, string>();
-
   private logOffset = BigInt(0);
-
   private logRows = <LogRow[]>[];
-
   private closed = false;
 
   private debugOutputEnabled = false;
   private stopCommandEndToken = '';
 
+  private clientMutex = new Mutex();
+  private daemonTimer?: NodeJS.Timeout;
+  private abortController = new AbortController();
+
   constructor(
     public client: RunnerServiceClient,
     public task: Task = create(TaskSchema),
-    public cancel = () => {},
   ) {
     ['token', 'gitea_runtime_token'].forEach((key) => {
       const value = task.context?.[key]?.toString();
@@ -86,20 +83,13 @@ class Reporter implements LoggerHook {
    * @param l
    */
   resetSteps(count: number): void {
-    try {
-      // 清除现有的步骤状态
-      this.state.steps = [];
-      // 创建新的 StepState 对象并添加到 steps 数组中
-      for (let i = 0; i < count; i++) {
-        this.state.steps.push(
-          create(StepStateSchema, {
-            id: BigInt(i),
-          }),
-        );
-      }
-    } finally {
-      // 解锁
-      // stateMu.unlock();
+    this.state.steps = [];
+    for (let i = 0; i < count; i++) {
+      this.state.steps.push(
+        create(StepStateSchema, {
+          id: BigInt(i),
+        }),
+      );
     }
   }
 
@@ -109,96 +99,92 @@ class Reporter implements LoggerHook {
    * @param entry
    */
   fire(entry: LogEntry) {
-    try {
-      // 使用提供的日志条目
-      logger.trace(entry.data);
+    // 使用提供的日志条目
+    logger.trace(entry.data);
 
-      const timestamp = timestampFromDate(entry.startTime);
-      if (!this.state.startedAt) {
-        this.state.startedAt = timestamp;
-      }
+    const timestamp = timestampFromDate(entry.startTime);
+    if (!this.state.startedAt) {
+      this.state.startedAt = timestamp;
+    }
 
-      // 更新任务状态
-      const { stage } = entry.context;
-      if (stage !== 'Main') {
-        // 处理作业结果
-        const jobResult = Reporter.parseResult(entry.context.jobResult);
-        if (jobResult !== undefined) {
-          this.state.result = jobResult;
-          this.state.stoppedAt = timestamp;
-          this.state.steps.map((item) => {
-            const step = item;
-            if (step.result === Result.UNSPECIFIED) {
-              step.result = Result.UNSPECIFIED;
-              if (jobResult === Result.SKIPPED) {
-                step.result = Result.SKIPPED;
-              }
+    // 更新任务状态
+    const { stage } = entry.context;
+    if (stage !== 'Main') {
+      // 处理作业结果
+      const jobResult = Reporter.parseResult(entry.context.jobResult);
+      if (jobResult !== undefined) {
+        this.state.result = jobResult;
+        this.state.stoppedAt = timestamp;
+        this.state.steps.map((item) => {
+          const step = item;
+          if (step.result === Result.UNSPECIFIED) {
+            step.result = Result.UNSPECIFIED;
+            if (jobResult === Result.SKIPPED) {
+              step.result = Result.SKIPPED;
             }
-            return step;
-          });
-        }
-
-        // 检查是否在步骤执行期间
-        if (!this.duringSteps()) {
-          // 如果不是，将日志行添加到日志行列表中
-          const logRow = this.parseLogRow(entry);
-          if (logRow) {
-            this.logRows.push(logRow);
           }
-        }
-        return;
+          return step;
+        });
       }
 
-      // 处理步骤信息
-      let step: StepState | undefined;
-      const stepNumber = parseInt(entry.context.stepNumber, 10);
-      if (Number.isInteger(stepNumber) && this.state.steps.length > stepNumber) {
-        step = this.state.steps[stepNumber];
-      }
-
-      if (!step) {
-        if (!this.duringSteps()) {
-          // 如果不是，将日志行添加到日志行列表中
-          const logRow = this.parseLogRow(entry);
-          if (logRow) {
-            this.logRows.push(logRow);
-          }
-        }
-        return;
-      }
-
-      if (!step.startedAt) {
-        step.startedAt = timestamp;
-      }
-
-      const rawOutput = entry.context.raw_output;
-      if (rawOutput) {
-        const logRow = this.parseLogRow(entry);
-        if (logRow) {
-          if (step.logLength === BigInt(0)) {
-            step.logIndex = this.logOffset + BigInt(this.logRows.length);
-          }
-          step.logLength += BigInt(1);
-          this.logRows.push(logRow);
-        }
-      } else if (!this.duringSteps()) {
+      // 检查是否在步骤执行期间
+      if (!this.duringSteps()) {
+        // 如果不是，将日志行添加到日志行列表中
         const logRow = this.parseLogRow(entry);
         if (logRow) {
           this.logRows.push(logRow);
         }
       }
+      return;
+    }
 
-      // 检查步骤结果
-      const stepResult = Reporter.parseResult(entry.context.stepResult);
-      if (stepResult !== undefined && step) {
+    // 处理步骤信息
+    let step: StepState | undefined;
+    const stepNumber = parseInt(entry.context.stepNumber, 10);
+    if (Number.isInteger(stepNumber) && this.state.steps.length > stepNumber) {
+      step = this.state.steps[stepNumber];
+    }
+
+    if (!step) {
+      if (!this.duringSteps()) {
+        // 如果不是，将日志行添加到日志行列表中
+        const logRow = this.parseLogRow(entry);
+        if (logRow) {
+          this.logRows.push(logRow);
+        }
+      }
+      return;
+    }
+
+    if (!step.startedAt) {
+      step.startedAt = timestamp;
+    }
+
+    const rawOutput = entry.context.raw_output;
+    if (rawOutput) {
+      const logRow = this.parseLogRow(entry);
+      if (logRow) {
         if (step.logLength === BigInt(0)) {
           step.logIndex = this.logOffset + BigInt(this.logRows.length);
         }
-        step.result = stepResult;
-        step.stoppedAt = timestamp;
+        step.logLength += BigInt(1);
+        this.logRows.push(logRow);
       }
-    } finally {
-      // 解锁
+    } else if (!this.duringSteps()) {
+      const logRow = this.parseLogRow(entry);
+      if (logRow) {
+        this.logRows.push(logRow);
+      }
+    }
+
+    // 检查步骤结果
+    const stepResult = Reporter.parseResult(entry.context.stepResult);
+    if (stepResult !== undefined && step) {
+      if (step.logLength === BigInt(0)) {
+        step.logIndex = this.logOffset + BigInt(this.logRows.length);
+      }
+      step.result = stepResult;
+      step.stoppedAt = timestamp;
     }
   }
 
@@ -207,22 +193,19 @@ class Reporter implements LoggerHook {
       return;
     }
 
+    if (this.abortController.signal.aborted) {
+      return;
+    }
+
     // 检查上下文是否已取消
     // if (this.context.isCancelled()) {
     //   return;
     // }
 
-    logger.debug('Reporting task:', this.task.id);
-
-    // 报告任务日志
     await this.reportLog(false);
-    // 报告任务状态
     await this.reportState();
 
-    // 每隔一秒报告任务日志和状态
-    setTimeout(() => {
-      return this.runDaemon();
-    }, 1000);
+    this.daemonTimer = setTimeout(() => this.runDaemon(), 1000);
   }
 
   /**
@@ -262,66 +245,43 @@ class Reporter implements LoggerHook {
    * 关闭报告器并报告最终状态
    * @param lastWords
    */
-  async close(flag?: string) {
-    let lastWords = flag;
-    try {
-      this.closed = true;
+  async close(lastWords: string = 'Early termination') {
+    this.closed = true;
+    if (this.daemonTimer) {
+      clearTimeout(this.daemonTimer);
+    }
 
-      if (this.state.result === Result.UNSPECIFIED) {
-        if (!lastWords) {
-          // 提前终止
-          lastWords = 'Early termination';
+    if (this.state.result === Result.UNSPECIFIED) {
+      // 更新所有未指定结果的步骤为已取消
+      this.state.steps.map((step) => {
+        if (step.result === Result.UNSPECIFIED) {
+          step.result = Result.CANCELLED;
         }
-        // 更新所有未指定结果的步骤为已取消
-        this.state.steps.map((item) => {
-          const step = item;
-          if (step.result === Result.UNSPECIFIED) {
-            step.result = Result.CANCELLED;
-          }
-          return step;
-        });
-        this.state.result = Result.FAILURE;
+        return step;
+      });
+      this.state.result = Result.FAILURE;
 
-        // 添加最终日志行
-        this.logRows.push(
-          create(LogRowSchema, {
-            time: timestampFromDate(new Date()),
-            content: lastWords,
-          }),
-        );
-        this.state.startedAt = timestampFromDate(new Date());
-      } else if (lastWords) {
-        // 添加额外的日志行
-        this.logRows.push(
-          create(LogRowSchema, {
-            time: timestampFromDate(new Date()),
-            content: lastWords,
-          }),
-        );
-      }
-    } finally {
-      // todo
+      // 添加最终日志行
+      this.logRows.push(
+        create(LogRowSchema, {
+          time: timestampFromDate(new Date()),
+          content: lastWords,
+        }),
+      );
+      this.state.startedAt = timestampFromDate(new Date());
+    } else if (lastWords !== '') {
+      this.logRows.push(
+        create(LogRowSchema, {
+          time: timestampFromDate(new Date()),
+          content: lastWords,
+        }),
+      );
     }
 
     // 尝试报告任务日志
-    try {
-      await this.retryReportLog();
-    } catch (error) {
-      logger.error('Failed to report logs:', error);
-    }
-  }
-
-  async retryReportLog() {
-    const operation = retry.operation();
-
-    operation.attempt(async () => {
-      const logError = await this.reportLog(true);
-
-      if (operation.retry(logError as any)) {
-        return;
-      }
-
-      operation.mainError();
+    return retry(async () => {
+      await this.reportLog(true);
+      await this.reportState();
     });
   }
 
@@ -329,58 +289,61 @@ class Reporter implements LoggerHook {
    * 上报任务日志
    * @param noMore
    */
-  async reportLog(noMore: boolean): Promise<Error | void> {
-    const rows = this.logRows;
-    const updateLogResponse = await this.client.updateLog({
-      taskId: this.state.id,
-      index: this.logOffset,
-      rows,
-      noMore,
+  async reportLog(noMore: boolean) {
+    return this.clientMutex.runExclusive(async () => {
+      const updateLogResponse = await this.client.updateLog(
+        {
+          taskId: this.state.id,
+          index: this.logOffset,
+          rows: this.logRows,
+          noMore,
+        },
+        { signal: this.abortController.signal },
+      );
+
+      const { ackIndex } = updateLogResponse;
+      if (ackIndex < this.logOffset) {
+        throw new Error('Submitted logs are lost');
+      }
+
+      this.logRows = this.logRows.slice(Number(ackIndex - this.logOffset));
+      this.logOffset = ackIndex;
+
+      if (noMore && ackIndex < this.logOffset + BigInt(this.logRows.length)) {
+        throw new Error('Not all logs are submitted');
+      }
     });
-
-    // 获取服务端确认的日志索引
-    const { ackIndex } = updateLogResponse;
-    if (ackIndex < this.logOffset) {
-      throw new Error('Submitted logs are lost');
-    }
-
-    this.logRows = this.logRows.slice(Number(ackIndex - this.logOffset));
-    this.logOffset = ackIndex;
-
-    if (noMore && ackIndex < this.logOffset + BigInt(rows.length)) {
-      throw new Error('Not all logs are submitted');
-    }
   }
 
   /**
    * 上报任务状态
    */
   async reportState() {
-    const state = clone(TaskStateSchema, this.state);
-    const outputs = Object.fromEntries(this.outputs);
+    return this.clientMutex.runExclusive(async () => {
+      const state = clone(TaskStateSchema, this.state);
+      const outputs = Object.fromEntries(this.outputs);
 
-    try {
-      // console.log('state, outputs ', state, outputs);
-      const updateTaskResponse = await this.client.updateTask({ state, outputs });
+      const updateTaskResponse = await this.client.updateTask(
+        { state, outputs },
+        { signal: this.abortController.signal },
+      );
       if (!updateTaskResponse) {
         return;
       }
 
-      updateTaskResponse.sentOutputs.forEach((outputKey) => {
-        this.outputs.set(outputKey, '');
+      updateTaskResponse.sentOutputs.forEach((key) => {
+        this.outputs.set(key, '');
       });
 
       // 如果任务被取消
       if (updateTaskResponse.state && updateTaskResponse.state.result === Result.CANCELLED) {
-        logger.debug('Task canceled!');
-        // @todo 清除reported定时器
-        this.close('Task canceled!');
+        // this.close('Task canceled!');
         this.cancel();
       }
 
       const notSent: string[] = [];
       this.outputs.forEach((value, key) => {
-        if (!updateTaskResponse.sentOutputs.includes(key)) {
+        if (typeof value === 'string') {
           notSent.push(key);
         }
       });
@@ -388,23 +351,22 @@ class Reporter implements LoggerHook {
       if (notSent.length > 0) {
         logger.info(`There are still outputs that have not been sent: ${notSent}`);
       }
-    } catch (error) {
-      logger.error('Update task fail:', (error as ConnectError).message);
-    }
+    });
   }
 
   /**
    * 检查是否在步骤执行期间的逻辑
    */
   duringSteps(): boolean {
+    const steps = this.state.steps;
     // 如果没有步骤，那么肯定不是在步骤处理阶段
-    if (this.state.steps.length === 0) {
+    if (steps.length === 0) {
       return false;
     }
 
     // 获取第一个和最后一个步骤的状态
-    const firstStep = this.state.steps[0];
-    const lastStep = this.state.steps[this.state.steps.length - 1];
+    const firstStep = steps[0];
+    const lastStep = steps[steps.length - 1];
 
     if (firstStep.result === Result.UNSPECIFIED && firstStep.logLength === BigInt(0)) {
       return false;
@@ -414,8 +376,12 @@ class Reporter implements LoggerHook {
       return false;
     }
 
-    // 如果上述条件都不满足，那么当前是在步骤处理阶段
     return true;
+  }
+
+  public cancel(reason?: string): void {
+    if (this.abortController.signal.aborted) return;
+    this.abortController.abort(reason ?? 'Reporter cancelled');
   }
 
   static parseResult(result: any): Result {
@@ -518,13 +484,3 @@ class Reporter implements LoggerHook {
 }
 
 export default Reporter;
-
-// 使用示例
-// const reporter = new Reporter({} as any);
-// const result = reporter.parseLogRow({
-//   data: ["::notice file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
-//   startTime: new Date(),
-// } as LoggingEvent);
-
-// console.log('parseLogRow', result);
-// reporter.runDaemon();
