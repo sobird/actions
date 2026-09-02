@@ -7,8 +7,8 @@
 
 import { ConnectError } from '@connectrpc/connect';
 import { Semaphore } from 'async-mutex';
-import log4js from 'log4js';
 
+import logger from '@/common/logger';
 import type { Config } from '@/config';
 import type { Client } from '@/index';
 import { withTimeout } from '@/utils';
@@ -16,8 +16,6 @@ import { sleep } from '@/utils';
 
 import { Task } from '../gen/runner/v1/messages_pb';
 import { type Runner } from './runner';
-
-const logger = log4js.getLogger();
 
 class Poller {
   private tasksVersion = BigInt(0);

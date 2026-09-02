@@ -29,8 +29,9 @@ import bodyParser from 'body-parser';
 import express, { Request, Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import ip from 'ip';
-import log4js, { Logger } from 'log4js';
 import sqlite3, { Database } from 'sqlite3';
+
+import logger from '@/common/logger';
 
 import { ReserveStatus, ReserveCacheRequest } from './contracts';
 import { ArtifactCacheService } from './service.ts';
@@ -49,7 +50,6 @@ class ArtifactCache {
   constructor(
     public dir: string = DEFAULT_CACHE_DIR,
     public app = express(),
-    public logger: Logger = log4js.getLogger('[artifact cache]'),
   ) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
@@ -57,12 +57,12 @@ class ArtifactCache {
     this.storage = new Storage(path.join(dir, 'artifact'));
     this.db = new sqlite3.Database(path.join(dir, 'artifact.db'), (err) => {
       if (err) {
-        this.logger.error('Failed to open database:', err.message);
+        logger.error('Failed to open database:', err.message);
       } else {
         this.database();
       }
     });
-    this.service = new ArtifactCacheService(this.db, this.storage, this.logger);
+    this.service = new ArtifactCacheService(this.db, this.storage);
 
     app.set('query parser', 'simple');
     // app.use(bodyParser.json());
@@ -103,7 +103,7 @@ class ArtifactCache {
         const cacheFileURL = `${baseURL}/_apis/artifactcache/artifacts/${result.id}`;
         res.status(200).json({ result: 'hit', archiveLocation: cacheFileURL, cacheKey: result.key });
       } catch (error) {
-        this.logger.error('Reserve failed:', error);
+        logger.error('Reserve failed:', error);
         res.status(500).json({ error: 'Internal Server Error' });
       }
     });
@@ -128,7 +128,7 @@ class ArtifactCache {
             });
         }
       } catch (error) {
-        this.logger.error('Reserve failed:', error);
+        logger.error('Reserve failed:', error);
         res.status(500).json({ error: 'Internal Server Error' });
       }
     });
@@ -146,7 +146,7 @@ class ArtifactCache {
 
         return res.status(200).json({ message: 'Chunk uploaded' });
       } catch (error) {
-        this.logger.error('Upload failed:', error);
+        logger.error('Upload failed:', error);
         res.status(500).json({ error: 'Internal Server Error' });
       }
     });
@@ -159,7 +159,7 @@ class ArtifactCache {
         await this.service.commitCache(cacheId, size);
         res.status(200).json({});
       } catch (error) {
-        this.logger.error('Commit failed:', error);
+        logger.error('Commit failed:', error);
         console.log('error', error);
         res.status(500).json({ error: 'Internal Server Error' });
       }
@@ -171,7 +171,7 @@ class ArtifactCache {
         const rs = await this.service.downloadCache(cacheId);
         rs.pipe(res);
       } catch (error) {
-        this.logger.error('Download failed:', error);
+        logger.error('Download failed:', error);
         res.status(500).json({ error: 'Internal Server Error' });
       }
     });
@@ -181,7 +181,7 @@ class ArtifactCache {
         const count = await this.service.purge(false);
         res.status(200).json({ count });
       } catch (error) {
-        this.logger.error('Purge failed:', error);
+        logger.error('Purge failed:', error);
         res.status(500).json({ error: 'Internal Server Error' });
       }
     });
@@ -203,16 +203,16 @@ class ArtifactCache {
       createdAt INTEGER DEFAULT (0) NOT NULL
     )`,
         (err) => {
-          if (err) this.logger.debug(err.message);
+          if (err) logger.debug(err.message);
         },
       );
 
       this.db.run('CREATE INDEX IF NOT EXISTS idx_key ON caches (key)', (err) => {
-        if (err) this.logger.debug(err.message);
+        if (err) logger.debug(err.message);
       });
 
       this.db.run('CREATE UNIQUE INDEX IF NOT EXISTS idx_key_version ON caches (key, version)', (err) => {
-        if (err) this.logger.debug(err.message);
+        if (err) logger.debug(err.message);
       });
     });
   }
@@ -220,7 +220,7 @@ class ArtifactCache {
   async serve(port: number = 0, address: string = ip.address() || 'localhost') {
     return new Promise<string>((resolve) => {
       const server = this.app.listen(port, () => {
-        // this.logger.info('Server running at:', (server.address() as AddressInfo).port);
+        // logger.info('Server running at:', (server.address() as AddressInfo).port);
         const addressInfo = server.address() as AddressInfo;
         resolve(`http://${address}:${addressInfo.port}/`);
       });

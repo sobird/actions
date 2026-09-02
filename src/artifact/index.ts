@@ -108,8 +108,8 @@ import bodyParser from 'body-parser';
 import express, { Express, Handler, Request } from 'express';
 import rateLimit from 'express-rate-limit';
 import ip from 'ip';
-import log4js, { Logger } from 'log4js';
 
+import logger from '@/common/logger';
 import { trimSuffix, createFnv1aHash } from '@/utils';
 
 const ZIP_EXT = '.zip';
@@ -168,7 +168,6 @@ function validateRunID(rawRunID: string) {
 class Artifact {
   constructor(
     public dir: string = DEFAULT_ARTIFACT_DIR,
-    public logger: Logger = log4js.getLogger('[artifact server]'),
     public app: Express = express(),
   ) {
     if (!this.dir) {
@@ -527,7 +526,7 @@ class Artifact {
     // if (req.get('Authorization') !== `Bearer ${process.env.AUTH_KEY}`) {
     //   res.status(401).json({ message: 'You are not authorized' });
     // }
-    this.logger.debug(`Request method: ${req.method}, Request url: ${req.originalUrl}`);
+    logger.debug(`Request method: ${req.method}, Request url: ${req.originalUrl}`);
     next();
   };
 

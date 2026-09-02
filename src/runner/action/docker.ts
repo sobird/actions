@@ -1,18 +1,16 @@
 import path from 'node:path';
 
-import log4js from 'log4js';
 import shellQuote, { ControlOperator } from 'shell-quote';
 import * as tar from 'tar';
 
 import Executor, { Conditional } from '@/common/executor';
+import logger from '@/common/logger';
 import docker from '@/docker';
 import Runner from '@/runner';
 import DockerContainer from '@/runner/container/docker';
 import { createSafeName } from '@/utils';
 
 import Action from '.';
-
-const logger = log4js.getLogger();
 
 type EntrypointStage = 'pre-entrypoint' | 'entrypoint' | 'post-entrypoint';
 
@@ -113,8 +111,8 @@ class DockerAction extends Action {
           return `\${${name}}`;
         })
         .map((part) => {
-          if (typeof part === 'object' && (part as { op: ControlOperator }).op) {
-            return (part as { op: ControlOperator }).op;
+          if (typeof part === 'object' && (part as ControlOperator).op) {
+            return (part as ControlOperator).op;
           }
           return part;
         }) as string[];
@@ -137,8 +135,8 @@ class DockerAction extends Action {
             return `\${${name}}`;
           })
           .map((part) => {
-            if (typeof part === 'object' && (part as { op: ControlOperator }).op) {
-              return (part as { op: ControlOperator }).op;
+            if (typeof part === 'object' && (part as ControlOperator).op) {
+              return (part as ControlOperator).op;
             }
             return part;
           }) as string[];

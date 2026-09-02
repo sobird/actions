@@ -11,11 +11,9 @@ import os from 'node:os';
 import path from 'node:path';
 
 import Dockerode, { ContainerCreateOptions, AuthConfig } from 'dockerode';
-import log4js from 'log4js';
 
 import Executor from '@/common/executor';
-
-const logger = log4js.getLogger();
+import logger from '@/common/logger';
 
 export interface PullImageInputs {
   force?: boolean;

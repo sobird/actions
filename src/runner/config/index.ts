@@ -5,7 +5,7 @@
  */
 
 import { HostConfig } from 'dockerode';
-import { Level } from 'log4js';
+import winston from 'winston';
 
 import ActionCache from '@/runner/action/cache';
 import Context from '@/runner/context';
@@ -90,7 +90,7 @@ interface Config {
   /**
    * Switches from the full job name to the job id.
    */
-  readonly logPrefixJobID?: boolean;
+  readonly logPrefixJobId?: boolean;
 
   /**
    * Switch hiding output when printing to terminal. Doesn't hide secrets while printing logs
@@ -101,7 +101,7 @@ interface Config {
    * The level of job logger.
    * @type {LogLevel}
    */
-  readonly loggerLevel?: Level;
+  readonly jobLoggerLevel?: winston.LoggerOptions['level'];
 
   /**
    * Only volumes (and bind mounts) in this slice can be mounted on the job container or service containers.

@@ -10,8 +10,8 @@ import { create, clone } from '@bufbuild/protobuf';
 import { timestampFromDate } from '@bufbuild/protobuf/wkt';
 import { Mutex } from 'async-mutex';
 import retry from 'async-retry';
-import log4js, { LoggingEvent } from 'log4js';
 
+import logger, { LoggerHook, LogEntry } from '@/common/logger';
 import type { RunnerServiceClient } from '@/gen';
 import {
   LogRow,
@@ -25,10 +25,6 @@ import {
   Result,
 } from '@/gen/runner/v1/messages_pb';
 import { Replacer } from '@/utils';
-
-import { LoggerHook, LogEntry } from '../common/logger';
-
-const logger = log4js.getLogger();
 
 const stringToResult: any = {
   success: Result.SUCCESS,
@@ -100,18 +96,18 @@ class Reporter implements LoggerHook {
    */
   fire(entry: LogEntry) {
     // 使用提供的日志条目
-    logger.trace(entry.data);
+    logger.verbose(entry);
 
-    const timestamp = timestampFromDate(entry.startTime);
+    const timestamp = timestampFromDate(new Date(entry.timestamp));
     if (!this.state.startedAt) {
       this.state.startedAt = timestamp;
     }
 
     // 更新任务状态
-    const { stage } = entry.context;
+    const { stage } = entry;
     if (stage !== 'Main') {
       // 处理作业结果
-      const jobResult = Reporter.parseResult(entry.context.jobResult);
+      const jobResult = Reporter.parseResult(entry.jobResult);
       if (jobResult !== undefined) {
         this.state.result = jobResult;
         this.state.stoppedAt = timestamp;
@@ -140,7 +136,7 @@ class Reporter implements LoggerHook {
 
     // 处理步骤信息
     let step: StepState | undefined;
-    const stepNumber = parseInt(entry.context.stepNumber, 10);
+    const stepNumber = parseInt(entry.stepNumber ?? '0', 10);
     if (Number.isInteger(stepNumber) && this.state.steps.length > stepNumber) {
       step = this.state.steps[stepNumber];
     }
@@ -160,7 +156,7 @@ class Reporter implements LoggerHook {
       step.startedAt = timestamp;
     }
 
-    const rawOutput = entry.context.raw_output;
+    const rawOutput = entry.rawOutput;
     if (rawOutput) {
       const logRow = this.parseLogRow(entry);
       if (logRow) {
@@ -178,7 +174,7 @@ class Reporter implements LoggerHook {
     }
 
     // 检查步骤结果
-    const stepResult = Reporter.parseResult(entry.context.stepResult);
+    const stepResult = Reporter.parseResult(entry.stepResult);
     if (stepResult !== undefined && step) {
       if (step.logLength === BigInt(0)) {
         step.logIndex = this.logOffset + BigInt(this.logRows.length);
@@ -451,9 +447,9 @@ class Reporter implements LoggerHook {
    * log.Entry
    * @param entry
    */
-  parseLogRow(entry: LoggingEvent) {
+  parseLogRow(entry: LogEntry) {
     const cmdRegex = /^::([^ :]+)( .*)?::(.*)$/;
-    let content = entry.data.join().replace(/\r|\n$/g, '');
+    let content = (entry.message as string).replace(/\r|\n$/g, '');
 
     const matches = cmdRegex.exec(content);
     if (matches) {
@@ -469,7 +465,7 @@ class Reporter implements LoggerHook {
     content = this.logReplacer.replace(content);
 
     return create(LogRowSchema, {
-      time: timestampFromDate(entry.startTime),
+      time: timestampFromDate(new Date(entry.timestamp)),
       content,
     });
   }

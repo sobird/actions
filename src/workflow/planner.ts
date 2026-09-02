@@ -8,14 +8,11 @@
 import fs from 'node:fs';
 import { resolve, parse, join, basename } from 'node:path';
 
-import log4js from 'log4js';
-
 import Git from '@/common/git';
+import logger from '@/common/logger';
 import Workflow from '@/workflow';
 
 import Plan from './plan';
-
-const logger = log4js.getLogger();
 
 const git = new Git('.');
 

@@ -3,13 +3,10 @@ import os from 'node:os';
 import { intro, text, password, group, multiselect, cancel } from '@clack/prompts';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import log4js from 'log4js';
 
+import logger from '@/common/logger';
 import { getConfig, saveRegistration, DEFAULT_LABELS } from '@/config';
 import { Labels, Client } from '@/index';
-
-const logger = log4js.getLogger();
-logger.level = 'debug';
 
 type Register = ReturnType<typeof registerCommand.opts>;
 type RegisterOptions = Required<Register> & {
@@ -37,7 +34,7 @@ async function register(options: RegisterOptions) {
         clearTimeout(timer);
         resolve(response.data);
       } catch (err) {
-        logger.fatal('Cannot ping the instance server:', (err as Error).message);
+        logger.error('Cannot ping the instance server:', (err as Error).message);
         timer = setTimeout(ping, 1000);
       }
     };
@@ -69,7 +66,7 @@ async function register(options: RegisterOptions) {
       logger.info('Runner registered successfully.');
     }
   } catch (err) {
-    logger.fatal('Failed to register runner:', (err as Error).message);
+    logger.error('Failed to register runner:', (err as Error).message);
   }
 }
 

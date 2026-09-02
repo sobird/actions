@@ -1,21 +1,17 @@
-import log4js from "log4js";
+import Constants from '@/common/constants';
+import logger from '@/common/logger';
+import type Runner from '@/runner';
 
-import Constants from "@/common/constants";
-import type Runner from "@/runner";
-
-import ActionCommand from ".";
-import extensions from "./extensions";
-
-const logger = log4js.getLogger();
-
+import ActionCommand from '.';
+import extensions from './extensions';
 class ActionCommandManager {
   private registeredCommands: Set<string>;
 
   private stopProcessCommand: boolean = false;
 
-  private stopCommand = "stop-commands";
+  private stopCommand = 'stop-commands';
 
-  private stopToken = "";
+  private stopToken = '';
 
   constructor(public runner: Runner) {
     this.registeredCommands = new Set(Object.keys(extensions));
@@ -34,24 +30,20 @@ class ActionCommandManager {
       return;
     }
 
-    if (!runner.EnhancedAnnotationsEnabled && actionCommand.command === "notice") {
-      logger.debug(
-        "Enhanced Annotations not enabled on the server: 'notice' command will not be processed.",
-      );
+    if (!runner.EnhancedAnnotationsEnabled && actionCommand.command === 'notice') {
+      logger.debug("Enhanced Annotations not enabled on the server: 'notice' command will not be processed.");
       return false;
     }
 
     if (this.stopProcessCommand) {
       if (this.stopToken && actionCommand.command === this.stopToken) {
-        console.debug("Resume processing commands");
+        console.debug('Resume processing commands');
         this.registeredCommands.delete(this.stopToken);
         this.stopProcessCommand = false;
-        this.stopToken = "";
+        this.stopToken = '';
         return true;
       }
-      console.debug(
-        `Process commands has been stopped and waiting for '##[${this.stopToken}]' to resume.`,
-      );
+      console.debug(`Process commands has been stopped and waiting for '##[${this.stopToken}]' to resume.`);
       return false;
     }
     if (actionCommand.command === this.stopCommand) {
@@ -64,9 +56,7 @@ class ActionCommandManager {
         runner.addMask(this.stopToken);
       }
 
-      console.debug(
-        "Paused processing commands until the token you called ::stopCommands:: with is received",
-      );
+      console.debug('Paused processing commands until the token you called ::stopCommands:: with is received');
       return true;
     }
     if (extensions[actionCommand.command]) {
@@ -77,7 +67,7 @@ class ActionCommandManager {
       }
       try {
         await extension.process(this.runner, actionCommand);
-      } catch (err) {
+      } catch {
         const commandInformation = extension.echo ? line : extension.command;
         const message = `Unable to process command '${commandInformation}' successfully.`;
         runner.error(message);
@@ -96,14 +86,12 @@ class ActionCommandManager {
   validateStopToken(stopToken: string) {
     const { AllowUnsupportedStopCommandTokens } = Constants.Actions;
     const allowUnsecureStopCommandTokens =
-      process.env[AllowUnsupportedStopCommandTokens]?.toLowerCase() === "true" ||
-      this.runner.context.env[AllowUnsupportedStopCommandTokens]?.toLowerCase() === "true" ||
+      process.env[AllowUnsupportedStopCommandTokens]?.toLowerCase() === 'true' ||
+      this.runner.context.env[AllowUnsupportedStopCommandTokens]?.toLowerCase() === 'true' ||
       false;
 
     const isTokenInvalid =
-      this.registeredCommands.has(stopToken) ||
-      !stopToken ||
-      stopToken.toLowerCase() === "pause-logging";
+      this.registeredCommands.has(stopToken) || !stopToken || stopToken.toLowerCase() === 'pause-logging';
 
     if (isTokenInvalid) {
       const message = `Invoked ::stopCommand:: with token: [${stopToken}]`;

@@ -15,11 +15,11 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { MountConfig, MountConsistency } from 'dockerode';
-import log4js, { Logger } from 'log4js';
 
 import Artifact from '@/artifact';
 import ArtifactCache from '@/artifact/cache';
 import Constants from '@/common/constants';
+import logger from '@/common/logger';
 import { Docker } from '@/docker';
 import Config from '@/runner/config';
 import Context from '@/runner/context';
@@ -37,8 +37,6 @@ import DockerContainer from './container/docker';
 import HostedContainer from './container/hosted';
 import { Job } from './context/jobs';
 const SetEnvBlockList = new Set(['NODE_OPTIONS']);
-
-const logger = log4js.getLogger();
 
 /**
  * 每个runner为一个job实例
@@ -72,8 +70,6 @@ class Runner {
   IntraActionState: Record<string, Record<string, string>> = {};
 
   masks: string[] = [];
-
-  logger: Logger = log4js.getLogger();
 
   cleanContainerExecutor: Executor = new Executor();
 

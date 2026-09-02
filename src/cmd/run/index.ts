@@ -9,9 +9,9 @@ import path from 'node:path';
 
 import { Command, Option } from 'commander';
 import ip from 'ip';
-import log4js from 'log4js';
 
 import Git from '@/common/git';
+import logger from '@/common/logger';
 import { getConfig } from '@/config';
 import { Docker } from '@/docker';
 import Labels from '@/labels';
@@ -27,9 +27,6 @@ import WorkflowPlanner from '@/workflow/planner';
 import { bugReportOption } from './bugReportOption';
 import { graphOption } from './graphOption';
 import { listOption } from './listOption';
-
-const logger = log4js.getLogger();
-logger.level = log4js.levels.INFO;
 
 const ACTIONS_HOME = path.join(os.homedir(), '.actions');
 
@@ -56,7 +53,7 @@ function collectMatrix(value: string, previous: Record<string, unknown[]> = {}) 
   const pairs = value.split(':');
 
   if (pairs.length < 2) {
-    logger.fatal('Invalid matrix format. Failed to parse %s', value);
+    logger.error('Invalid matrix format. Failed to parse %s', value);
   }
 
   previous[pairs[0]] = [...new Set(previous[pairs[0]] || []).add(pairs[1])];
@@ -94,10 +91,9 @@ export const runCommand = new Command('run')
   .option('-w, --workdir <path>', 'the default working directory on the runner for steps', '.')
   .option('--bind-workdir', 'bind working directory to container, rather than copy')
   .addOption(new Option('--no-skip-checkout', 'do not skip actions/checkout').conflicts('bindWorkdir'))
-
   // log
-  // .option('--log-json', 'output logs in json format')
-  // .option('--log-prefix-job-id', 'output the job id within non-json logs instead of the entire name')
+  .option('--log-json', 'output logs in json format')
+  .option('--log-prefix-job-id', 'output the job id within non-json logs instead of the entire name')
   // .option('--no-log-output', 'disable logging of output from steps')
 
   .option('--token <string>', 'if you want to use private actions on GitHub, you have to set personal access token')
@@ -220,7 +216,7 @@ export const runCommand = new Command('run')
   .option('-n, --dryrun', 'dryrun mode')
   .hook('preAction', (thisCommand) => {
     if (thisCommand.opts().verbose) {
-      logger.level = log4js.levels.DEBUG;
+      logger.level = 'verbose';
       // logger.trace()
     }
   })

@@ -10,18 +10,16 @@
  * sobird<i@sobird.me> at 2021/11/16 20:33:20 created.
  */
 
-import log4js from 'log4js';
 import { Sequelize, Model, type ModelStatic, type InferAttributes, type FindAndCountOptions } from 'sequelize';
 import sqlite3 from 'sqlite3';
+
+import logger from '@/common/logger';
 
 interface FindManyByPageOptions extends Omit<FindAndCountOptions, 'offset' | 'limit'> {
   page?: number;
   /** 每页条数 */
   limit?: number;
 }
-
-const logger = log4js.getLogger('sequelize');
-logger.level = log4js.levels.DEBUG;
 
 /** 数据库链接实例 */
 export const sequelize = new Sequelize({

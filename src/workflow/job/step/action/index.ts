@@ -1,17 +1,15 @@
 /* eslint-disable class-methods-use-this */
 import path from 'node:path';
 
-import log4js from 'log4js';
 import { parse } from 'yaml';
 
 import Executor, { Conditional } from '@/common/executor';
+import logger from '@/common/logger';
 import Action, { ActionProps } from '@/runner/action';
 import ActionCommandFile from '@/runner/action/command/file';
 import ActionFactory from '@/runner/action/factory';
 import { withTimeout } from '@/utils';
 import Step from '@/workflow/job/step';
-
-const logger = log4js.getLogger();
 
 type StepStage = 'Pre' | 'Main' | 'Post';
 

@@ -1,12 +1,9 @@
 import type { Readable } from 'node:stream';
 
-import log4js from 'log4js';
 import sqlite3, { Database, Statement } from 'sqlite3';
 
 import { ArtifactCacheService } from './service.ts';
 import { Storage } from './storage.ts';
-
-const logger = log4js.getLogger('ArtifactCacheService');
 
 let db: Database;
 let service: ArtifactCacheService;
@@ -47,7 +44,7 @@ beforeEach(() => {
   });
 
   storage = new Storage();
-  service = new ArtifactCacheService(db, storage, logger);
+  service = new ArtifactCacheService(db, storage);
 });
 
 afterEach(() => {

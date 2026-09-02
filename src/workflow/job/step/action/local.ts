@@ -4,15 +4,12 @@
  * sobird<i@sobird.me> at 2024/10/15 22:13:49 created.
  */
 
-import path from "node:path";
+import path from 'node:path';
 
-import log4js from "log4js";
+import Executor from '@/common/executor';
+import logger from '@/common/logger';
 
-import Executor from "@/common/executor";
-
-import StepAction from ".";
-
-const logger = log4js.getLogger();
+import StepAction from '.';
 
 class StepActionLocal extends StepAction {
   public pre() {

@@ -5,6 +5,7 @@
  */
 import path from 'node:path';
 
+import { withLoggerHook } from '@/common/logger';
 import type { Config } from '@/config';
 import { RunnerServiceClient } from '@/gen/index.ts';
 import { Task } from '@/gen/runner/v1/messages_pb';
@@ -13,7 +14,6 @@ import type RunnerConfig from '@/runner/config';
 import Context from '@/runner/context';
 import { withTimeout } from '@/utils';
 
-import { WithLoggerHook } from '../common/logger';
 import Reporter from '../reporter';
 import Workflow from '../workflow';
 
@@ -27,7 +27,7 @@ export class Runner {
   async run(task: Task) {
     const reporter = new Reporter(this.client, task);
     await reporter.runDaemon(); // 启动 1s 定时上报
-    const logger = WithLoggerHook(reporter, 'Reporter');
+    const logger = withLoggerHook(reporter, 'Reporter');
 
     try {
       logger.info(

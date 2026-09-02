@@ -5,13 +5,11 @@
  * sobird<i@sobird.me> at 2024/05/04 21:32:57 created.
  */
 import { Mutex } from 'async-mutex';
-import log4js from 'log4js';
 
+import logger from '@/common/logger';
 import Runner from '@/runner';
 
 const mutex = new Mutex();
-
-const logger = log4js.getLogger();
 
 export class Conditional {
   constructor(public fn: (ctx?: Runner) => Promise<boolean> | boolean) {}

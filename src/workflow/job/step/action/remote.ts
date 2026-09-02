@@ -8,16 +8,13 @@
 
 import path from 'node:path';
 
-import log4js from 'log4js';
-
 import Constants from '@/common/constants';
 import Executor, { Conditional } from '@/common/executor';
 import Git from '@/common/git';
+import logger from '@/common/logger';
 import Reusable from '@/workflow/reusable';
 
 import StepAction from '.';
-
-const logger = log4js.getLogger();
 
 class StepActionRemote extends StepAction {
   protected get PrepareAction() {

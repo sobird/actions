@@ -1,7 +1,8 @@
 import type { Readable } from 'node:stream';
 
-import type { Logger } from 'log4js';
 import type { Database } from 'sqlite3';
+
+import logger from '@/common/logger';
 
 import { CacheEntry, ReserveResult, ReserveStatus } from './contracts';
 import type { Storage } from './storage.ts';
@@ -10,7 +11,6 @@ export class ArtifactCacheService {
   constructor(
     private db: Database,
     private storage: Storage,
-    private logger: Logger,
   ) {}
 
   private getCacheById(id: string): Promise<CacheEntry | undefined> {
@@ -96,14 +96,14 @@ export class ArtifactCacheService {
     const idAndKey = await this.findCacheEntry(primaryKey, version, restorePaths, true);
 
     if (!idAndKey) {
-      this.logger.debug(`Missing key ${primaryKey}`);
+      logger.debug(`Missing key ${primaryKey}`);
       return null;
     }
 
     const cacheId = idAndKey.id;
     const cacheFile = this.storage.getFinalPath(cacheId);
     if (!this.storage.exist(cacheId)) {
-      this.logger.debug(`Missing cache file ${cacheFile}`);
+      logger.debug(`Missing cache file ${cacheFile}`);
       return null;
     } else {
       return idAndKey;
@@ -111,7 +111,7 @@ export class ArtifactCacheService {
   }
 
   async reserveCache(key: string, version?: string, cacheSize = 0): Promise<ReserveResult> {
-    this.logger.debug(`Request to reserve cache ${key} for uploading`);
+    logger.debug(`Request to reserve cache ${key} for uploading`);
 
     // 查找是否已存在该缓存
     const row = await new Promise<CacheEntry | null>((resolve, reject) => {
@@ -144,12 +144,12 @@ export class ArtifactCacheService {
     } else if (row.complete) {
       // 如果缓存已经完成上传，返回错误
       const error = `Cache id ${row.id} was already uploaded`;
-      this.logger.debug(error);
+      logger.debug(error);
       return { status: ReserveStatus.Completed, cacheId: row.id, error };
     } else {
       const error = `Cache id ${row.id} already reserved, but did not start uploading`;
       // 如果缓存已经被保留，返回缓存的ID
-      this.logger.debug(error);
+      logger.debug(error);
       return { status: ReserveStatus.Exists, cacheId: row.id, error };
     }
   }
@@ -189,13 +189,13 @@ export class ArtifactCacheService {
 
     if (!cacheEntry) {
       const error = `Cache with id ${cacheId} has not been reserved`;
-      this.logger.debug(error);
+      logger.debug(error);
       throw new Error(error);
     }
 
     if (cacheEntry.complete) {
       const error = `Upload cache with ${cacheEntry.id} has already been committed and completed`;
-      this.logger.debug(error);
+      logger.debug(error);
       throw new Error(error);
     }
 

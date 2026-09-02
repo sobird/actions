@@ -3,13 +3,13 @@
  *
  * sobird<i@sobird.me> at 2024/04/26 18:18:27 created.
  */
-import log4js, { LoggingEvent } from 'log4js';
 
 import Client from '../gen';
 import Reporter from './index';
 
-vi.mock('log4js');
 vi.mock('../gen');
+
+import { type LogEntry } from '@/common/logger';
 
 const { RunnerServiceClient } = new Client('', '', false);
 const { task } = await RunnerServiceClient.fetchTask({
@@ -109,16 +109,10 @@ describe('Reporter', () => {
         reporter.debugOutputEnabled = test.debugOutputEnabled;
 
         test.args.forEach((arg, index) => {
-          const logEntry: LoggingEvent = {
-            startTime: new Date(),
-            categoryName: '',
-            data: [arg],
-            level: log4js.levels.INFO,
-            context: {},
-            pid: 123,
-            serialise: () => {
-              return '';
-            },
+          const logEntry: LogEntry = {
+            timestamp: new Date().toDateString(),
+            level: 'debug',
+            message: arg,
           };
 
           const result = reporter.parseLogRow(logEntry);
@@ -138,10 +132,10 @@ describe('Reporter', () => {
     it('test fire', () => {
       const context = {
         stage: 'Main',
-        stepNumber: 0,
-        raw_output: true,
+        stepNumber: '0',
+        rawOutput: true,
       };
-      const tests: any[] = [
+      const tests = [
         {
           message: 'regular log line',
         },
@@ -163,21 +157,16 @@ describe('Reporter', () => {
       ];
       const stepNumber = 2;
 
-      const logger = log4js.getLogger();
-      logger.addContext('jobResult', 0);
-      logger.addContext('stepResult', 'success');
-
-      Object.entries(context).forEach(([key, value]) => {
-        logger.addContext(key, value);
-      });
-
-      logger.addContext('stepNumber', stepNumber);
-
       reporter.resetSteps(5);
 
       tests.forEach((item) => {
         expect(() => {
-          reporter.fire(logger.info(item.message) as any);
+          reporter.fire({
+            timestamp: new Date().toDateString(),
+            level: 'debug',
+            message: item.message,
+            ...context,
+          });
         }).not.toThrow();
         // 断言模拟方法被调用
         // expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
@@ -219,16 +208,10 @@ describe('Reporter', () => {
   });
 
   const reporter = new Reporter(RunnerServiceClient, task);
-  const logEntry: LoggingEvent = {
-    startTime: new Date(),
-    categoryName: '',
-    data: ['test'],
-    level: log4js.levels.INFO,
-    context: {},
-    pid: 123,
-    serialise: () => {
-      return '';
-    },
+  const logEntry: LogEntry = {
+    timestamp: new Date().toDateString(),
+    level: 'debug',
+    message: 'test',
   };
   reporter.fire(logEntry);
 

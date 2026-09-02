@@ -1,28 +1,27 @@
-/* eslint-disable max-classes-per-file */
-
 import { IncomingMessage } from 'node:http';
 
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
-import logger from './logger';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'dd';
+const JWT_SECRET = process.env.JWT_SECRET || 'JWT_SECRET';
 
 // 定义 actionsClaims 结构
-class ActionsClaims {
-  constructor(registeredClaims, scp, taskID, runID, jobID, ac) {
-    this.registeredClaims = registeredClaims;
-    this.scp = scp;
-    this.taskID = taskID;
-    this.runID = runID;
-    this.jobID = jobID;
-    this.ac = ac;
-  }
-}
+// class ActionsClaims {
+//   constructor(registeredClaims, scp, taskID, runID, jobID, ac) {
+//     this.registeredClaims = registeredClaims;
+//     this.scp = scp;
+//     this.taskID = taskID;
+//     this.runID = runID;
+//     this.jobID = jobID;
+//     this.ac = ac;
+//   }
+// }
 
 // 定义 actionsCacheScope 结构
 export class ActionsCacheScope {
-  constructor(public scope: string, public permission: number) {}
+  constructor(
+    public scope: string,
+    public permission: number,
+  ) {}
 }
 
 // 定义权限常量
@@ -36,9 +35,7 @@ export function createAuthorizationToken(taskID: number, runID: number, jobID: n
   const now = Math.floor(Date.now() / 1000); // 当前时间（秒）
 
   // 生成 ac 字段
-  const ac = JSON.stringify([
-    new ActionsCacheScope('', ActionsCachePermission.Write),
-  ]);
+  const ac = JSON.stringify([new ActionsCacheScope('', ActionsCachePermission.Write)]);
 
   // 定义 claims
   const claims = {
@@ -56,30 +53,37 @@ export function createAuthorizationToken(taskID: number, runID: number, jobID: n
   return token;
 }
 
-// 解析授权令牌
-export function parseAuthorizationToken(req: IncomingMessage) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return 0; // 无 Authorization 头
+export function parseAuthorizationRequest(req: IncomingMessage) {
+  const h = req.headers.authorization;
+  if (!h) {
+    return null; // 认证方法不适用
   }
 
-  const parts = authHeader.split(' ');
+  const parts = h.split(' ', 2);
   if (parts.length !== 2) {
-    logger.error(`split token failed: ${authHeader}`);
+    console.error(`split token failed: ${h}`);
     throw new Error('split token failed');
   }
 
+  return parseAuthorizationToken(parts[1]);
+}
+
+// 解析授权令牌
+export function parseAuthorizationToken(token: string) {
   try {
     // 验证并解析 JWT
-    const token = jwt.verify(parts[1], JWT_SECRET, { algorithms: ['HS256'] });
-    if (!token || !token.taskID) {
+    const payload = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as JwtPayload;
+    if (!payload || !payload.taskID) {
       throw new Error('invalid token claim');
     }
 
-    return token.taskID;
+    return {
+      userId: payload.userId,
+      scope: payload.scope,
+      actionsUserTaskId: payload.actionsUserTaskId,
+    };
   } catch (err) {
-    logger.error(`JWT verification failed: ${err.message}`);
-    throw new Error('invalid token');
+    throw new Error(`invalid token claim: ${(err as Error).message}`, { cause: err });
   }
 }
 

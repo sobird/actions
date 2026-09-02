@@ -9,14 +9,14 @@ import path from 'node:path';
 // import tty from 'node:tty';
 
 import GitUrlParse from 'git-url-parse';
-import log4js from 'log4js';
 import simpleGit, { SimpleGitOptions } from 'simple-git';
+
+import logger from '@/common/logger';
 
 import Executor from './executor';
 
 export { GitError } from 'simple-git';
 
-const logger = log4js.getLogger();
 // const isatty = tty.isatty(process.stdout.fd);
 
 class Git {

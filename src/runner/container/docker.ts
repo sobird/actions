@@ -14,11 +14,11 @@ import tty from 'node:tty';
 import Dockerode, { NetworkInspectInfo, AuthConfig, MountConfig } from 'dockerode';
 import dotenv from 'dotenv';
 import ignore from 'ignore';
-import log4js from 'log4js';
 // import shellQuote from 'shell-quote';
 import * as tar from 'tar';
 
 import Executor, { Conditional } from '@/common/executor';
+import logger from '@/common/logger';
 import docker from '@/docker';
 import DockerDemuxer from '@/docker/demuxer';
 import Options from '@/docker/options';
@@ -26,8 +26,6 @@ import Runner from '@/runner';
 
 import OutputManager from '../outputManager';
 import Container, { FileEntry, ContainerExecOptions } from './container';
-
-const logger = log4js.getLogger();
 
 export interface DockerContainerOptions {
   /** container name */

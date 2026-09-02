@@ -21,3 +21,9 @@ export { trimSuffix } from './trimSuffix';
 export { trimPrefix } from './trimPrefix';
 export { isExecutable } from './isExecutable';
 export { createSha1Hash, createFnv1aHash } from './hash';
+
+export function* cycle<T>(items: T[]): Generator<T, never, unknown> {
+  while (true) {
+    yield* items;
+  }
+}

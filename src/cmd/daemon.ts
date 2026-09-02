@@ -6,14 +6,12 @@
 
 import { ConnectError, Code } from '@connectrpc/connect';
 import { Command } from 'commander';
-import log4js from 'log4js';
 
+import logger from '@/common/logger';
 import { getConfig, loadRegistration, saveRegistration, Registration } from '@/config';
 import docker from '@/docker';
 import { Labels, Client } from '@/index';
 import Poller, { Runner } from '@/poller';
-
-const logger = log4js.getLogger();
 
 export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
   .description('run as a runner daemon')
@@ -42,7 +40,7 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
         return;
       }
     } catch (err) {
-      logger.fatal('Failed to load registration file: %w', (err as Error).message);
+      logger.error('Failed to load registration file: %w', (err as Error).message);
       return;
     }
 
@@ -63,7 +61,7 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
       try {
         await docker.ping();
       } catch (err) {
-        logger.fatal('Cannot ping the docker daemon, is it running?', (err as Error).message);
+        logger.error('Cannot ping the docker daemon, is it running?', (err as Error).message);
         return;
       }
     }
@@ -73,7 +71,8 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
         registration.labels = labels.toStrings();
         saveRegistration(registration);
       } catch (err) {
-        return logger.error('Failed to save runner config:', (err as Error).message);
+        logger.error('Failed to save runner config:', (err as Error).message);
+        return;
       }
       logger.info('Labels updated to:', registration.labels);
     }
