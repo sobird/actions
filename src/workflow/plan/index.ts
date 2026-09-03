@@ -71,10 +71,7 @@ export default class Plan {
             // 跳出 workflow_call 递归调用
             if (caller?.containsCaller(runner)) {
               logger.error(
-                'Workflow is not valid: detected cyclic reference',
-                caller.run.jobId,
-                '<=>',
-                runner.run.jobId,
+                `Workflow is not valid: detected cyclic reference ${caller.run.jobId} <=> ${runner.run.jobId}`,
               );
               return new Executor();
             }

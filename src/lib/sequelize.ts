@@ -116,7 +116,7 @@ export const sequelize = new Sequelize({
   // isolationLevel: Transaction.ISOLATION_LEVELS.REPEATABLE_READ
   logging: (sql, queryObject: any) => {
     const { type, bind } = queryObject;
-    logger.debug(type, sql);
+    logger.debug(`${type}: ${sql}`);
     if (['INSERT', 'UPDATE', 'BULKUPDATE'].includes(type)) {
       logger.debug(bind);
     }

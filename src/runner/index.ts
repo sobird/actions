@@ -822,7 +822,7 @@ class Runner {
     if (artifactPath && !config.context.env[ACTIONS_RUNTIME_URL]) {
       const artifact = new Artifact(artifactPath);
       const actionsRuntimeUrl = await artifact.serve(artifactPort, artifactAddr);
-      logger.info('Artifact Server address:', actionsRuntimeUrl);
+      logger.info(`Artifact Server address: ${actionsRuntimeUrl}`);
       config.context.env[ACTIONS_RUNTIME_URL] = actionsRuntimeUrl;
 
       let actionsRuntimeToken = process.env[ACTIONS_RUNTIME_TOKEN];
@@ -851,7 +851,7 @@ class Runner {
       } else {
         const artifactCache = new ArtifactCache(actionsCachePath);
         const actionsCacheURL = await artifactCache.serve(actionsCachePort, actionsCacheAddr);
-        logger.info('Actions Cache Server address:', actionsCacheURL);
+        logger.info(`Actions Cache Server address: ${actionsCacheURL}`);
         config.context.env[ACTIONS_CACHE_URL] = actionsCacheURL;
       }
     }

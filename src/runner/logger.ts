@@ -1,7 +1,7 @@
 import chalk, { ChalkInstance } from 'chalk';
 import winston from 'winston';
 
-import { storage, getMasks, withMasks, getLogger, withLogger, type LoggerCallback } from '@/common/logger.ts';
+import { storage, getMasks, withMasks, getLogger, withLogger, type LoggerCallback } from '@/common/logger';
 import Config from '@/runner/config';
 import { cycle } from '@/utils/index.ts';
 

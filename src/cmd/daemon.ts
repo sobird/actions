@@ -40,7 +40,7 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
         return;
       }
     } catch (err) {
-      logger.error('Failed to load registration file: %w', (err as Error).message);
+      logger.error('Failed to load registration file: %s', (err as Error).message);
       return;
     }
 
@@ -60,8 +60,8 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
 
       try {
         await docker.ping();
-      } catch (err) {
-        logger.error('Cannot ping the docker daemon, is it running?', (err as Error).message);
+      } catch {
+        logger.error('Cannot ping the docker daemon, is it running?');
         return;
       }
     }
@@ -71,10 +71,11 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
         registration.labels = labels.toStrings();
         saveRegistration(registration);
       } catch (err) {
-        logger.error('Failed to save runner config:', (err as Error).message);
+        logger.error('Failed to save runner config:');
+        logger.debug((err as Error).message);
         return;
       }
-      logger.info('Labels updated to:', registration.labels);
+      logger.info(`Labels updated to: ${registration.labels}`);
     }
 
     try {
@@ -104,6 +105,6 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
         logger.error('Your Gitea version is too old to support runner declare, please upgrade to v1.21 or later');
         return;
       }
-      logger.error('Fail to invoke declare', connectError.message);
+      logger.error(`Fail to invoke declare: ${connectError.message}`);
     }
   });

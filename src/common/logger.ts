@@ -23,7 +23,7 @@ export interface JobLoggerFactory {
 }
 export interface LoggerContext {
   logger?: winston.Logger;
-  hook?: winston.Logform.Format | winston.transport;
+  hook?: LoggerHook;
   masks?: string[];
   jobLoggerFactory?: JobLoggerFactory;
   dryrun?: boolean;
@@ -35,6 +35,7 @@ const colorizer = winston.format.colorize();
 const defaultLogger = winston.createLogger({
   level: 'debug',
   format: winston.format.combine(
+    winston.format.splat(),
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
     winston.format.printf(({ timestamp, level, message, ...metadata }) => {
       const paddedLevel = level.toUpperCase().padEnd(5);
@@ -64,12 +65,12 @@ export function withLogger<T>(logger: winston.Logger, callback: LoggerCallback<T
   );
 }
 
-export function getLoggerHook(): winston.Logform.Format | winston.transport | undefined {
+export function getLoggerHook() {
   const store = storage.getStore() || {};
   return store?.hook;
 }
 
-export function withLoggerHook<T>(hook: winston.Logform.Format | winston.transport, callback: () => T): T {
+export function withLoggerHook<T>(hook: LoggerHook, callback: () => T): T {
   const store = storage.getStore() || {};
 
   return storage.run(

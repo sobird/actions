@@ -51,13 +51,13 @@ class Poller {
             this.runningTasks.set(task.id, task);
             await this.assign(task);
           } catch (taskError) {
-            logger.error(`Failed to run task ${task.id}:`, taskError);
+            logger.error(`Failed to run task ${task.id}: ${taskError}`);
           } finally {
             this.runningTasks.delete(task.id);
           }
         });
       } catch (error) {
-        logger.error('Unexpected error in poll loop:', error);
+        logger.error(`Unexpected error in poll loop: ${error}`);
         await sleep(1000);
       }
     }
@@ -91,7 +91,7 @@ class Poller {
 
       return fetchTaskResponse.task;
     } catch (error) {
-      logger.error('Failed to fetch task', (error as ConnectError).message);
+      logger.error(`Failed to fetch task ${(error as ConnectError).message}`);
     }
   }
 }

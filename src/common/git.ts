@@ -66,7 +66,7 @@ class Git {
       try {
         await git.clone(url, dir);
       } catch (error) {
-        logger.error('🍭', `Unable to clone ${url}@${ref}: ${(error as Error).message}`);
+        logger.error(`🍭 Unable to clone ${url}@${ref}: ${(error as Error).message}`);
       }
     }
 
@@ -94,7 +94,7 @@ class Git {
       return '';
     }
 
-    logger.debug('🍭', `HEAD points to '${rev}'`);
+    logger.debug(`🍭 HEAD points to '${rev}'`);
 
     const { git } = this;
     let refTag = '';
@@ -185,8 +185,8 @@ class Git {
   static CloneExecutor(dir: string, url: string, ref: string = 'HEAD', offlineMode: boolean = false) {
     return Executor.Mutex(
       new Executor(async () => {
-        logger.info('🍭', `Git clone '${url}' # ref=${ref}`);
-        logger.debug('🍭', `Cloning ${url} to ${dir}`);
+        logger.info(`🍭 Git clone '${url}' # ref=${ref}`);
+        logger.debug(`🍭 Cloning ${url} to ${dir}`);
 
         const git = await this.Clone(dir, url, ref);
 
@@ -198,7 +198,7 @@ class Git {
           await git.pull(['--force']);
         }
 
-        logger.debug('🍭', `Cloned ${url} to ${dir}`);
+        logger.debug(`🍭 Cloned ${url} to ${dir}`);
       }),
     );
   }

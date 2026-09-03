@@ -57,7 +57,7 @@ class ArtifactCache {
     this.storage = new Storage(path.join(dir, 'artifact'));
     this.db = new sqlite3.Database(path.join(dir, 'artifact.db'), (err) => {
       if (err) {
-        logger.error('Failed to open database:', err.message);
+        logger.error(`Failed to open database: ${err.message}`);
       } else {
         this.database();
       }
@@ -103,7 +103,7 @@ class ArtifactCache {
         const cacheFileURL = `${baseURL}/_apis/artifactcache/artifacts/${result.id}`;
         res.status(200).json({ result: 'hit', archiveLocation: cacheFileURL, cacheKey: result.key });
       } catch (error) {
-        logger.error('Reserve failed:', error);
+        logger.error(`Reserve failed: ${error}`);
         res.status(500).json({ error: 'Internal Server Error' });
       }
     });
@@ -128,7 +128,7 @@ class ArtifactCache {
             });
         }
       } catch (error) {
-        logger.error('Reserve failed:', error);
+        logger.error(`Reserve failed: ${error}`);
         res.status(500).json({ error: 'Internal Server Error' });
       }
     });
@@ -146,7 +146,7 @@ class ArtifactCache {
 
         return res.status(200).json({ message: 'Chunk uploaded' });
       } catch (error) {
-        logger.error('Upload failed:', error);
+        logger.error(`Upload failed: ${error}`);
         res.status(500).json({ error: 'Internal Server Error' });
       }
     });
@@ -159,8 +159,7 @@ class ArtifactCache {
         await this.service.commitCache(cacheId, size);
         res.status(200).json({});
       } catch (error) {
-        logger.error('Commit failed:', error);
-        console.log('error', error);
+        logger.error(`Commit failed: ${error}`);
         res.status(500).json({ error: 'Internal Server Error' });
       }
     });
@@ -171,7 +170,7 @@ class ArtifactCache {
         const rs = await this.service.downloadCache(cacheId);
         rs.pipe(res);
       } catch (error) {
-        logger.error('Download failed:', error);
+        logger.error(`Download failed: ${error}`);
         res.status(500).json({ error: 'Internal Server Error' });
       }
     });
@@ -181,7 +180,7 @@ class ArtifactCache {
         const count = await this.service.purge(false);
         res.status(200).json({ count });
       } catch (error) {
-        logger.error('Purge failed:', error);
+        logger.error(`Purge failed: ${error}`);
         res.status(500).json({ error: 'Internal Server Error' });
       }
     });
@@ -220,7 +219,7 @@ class ArtifactCache {
   async serve(port: number = 0, address: string = ip.address() || 'localhost') {
     return new Promise<string>((resolve) => {
       const server = this.app.listen(port, () => {
-        // logger.info('Server running at:', (server.address() as AddressInfo).port);
+        logger.info('Server running at: %s', (server.address() as AddressInfo).port);
         const addressInfo = server.address() as AddressInfo;
         resolve(`http://${address}:${addressInfo.port}/`);
       });

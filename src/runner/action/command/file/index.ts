@@ -1,16 +1,16 @@
-import path from "node:path";
+import path from 'node:path';
 
-import Constants from "@/common/constants";
-import Runner from "@/runner";
+import Constants from '@/common/constants';
+import Runner from '@/runner';
 
-import extensions, { FileCommandExtension } from "./extensions";
+import extensions, { FileCommandExtension } from './extensions';
 
 class ActionCommandFile {
-  private folderName = "_runner_file_commands";
+  private folderName = '_runner_file_commands';
 
-  private fileSuffix = "";
+  private fileSuffix = '';
 
-  private fileCommandDirectory = "";
+  private fileCommandDirectory = '';
 
   private commandExtensions: FileCommandExtension[] = extensions;
 
@@ -29,7 +29,7 @@ class ActionCommandFile {
       const executor = runner.container!.putContent(this.fileCommandDirectory, {
         name: basename,
         mode: 0o666,
-        body: "", // todo test it
+        body: '', // todo test it
       });
       await executor.fn();
 
@@ -45,7 +45,7 @@ class ActionCommandFile {
           this.runner,
           path.join(this.fileCommandDirectory, fileCommand.filePrefix + this.fileSuffix),
         );
-      } catch (err) {
+      } catch {
         // todo logger.error
         console.error(`Unable to process file command '${fileCommand.contextKey}' successfully.`);
         // context.CommandResult = TaskResult.Failed;

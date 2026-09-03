@@ -100,7 +100,7 @@ abstract class StepAction extends Step {
         // this.applyEnv(runner, this.environment);
         await withTimeout(executor.execute(runner), timeoutMinutes * 60 * 1000);
         await actionCommandFile.process();
-        logger.info('🍏', `Finishing: ${stage} ${name}`);
+        logger.info(`🎉 Finishing: ${stage} ${name}`);
       } catch (error) {
         // steps 按照循序执行，如果有一个步骤失败，则后续步骤会跳过，且该步骤所在的job状态变为 failure
         logger.error((error as Error).message);

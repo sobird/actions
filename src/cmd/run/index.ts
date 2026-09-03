@@ -228,8 +228,6 @@ export const runCommand = new Command('run')
     const { runner } = getConfig(appname, {
       runner: options,
     });
-    console.log('options', options);
-    console.log('runner', runner);
 
     if (options.bugReport) {
       return bugReportOption(version);

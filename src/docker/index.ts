@@ -23,7 +23,7 @@ export interface PullImageInputs {
 
 export class Docker extends Dockerode {
   async pullImage(repoTag: string, inputs: PullImageInputs = {}) {
-    logger.debug('\u{1F433} Docker pull %s', repoTag, inputs.platform ? `(${inputs.platform})` : '');
+    logger.debug(`\u{1F433} Docker pull '${repoTag}'${inputs.platform ? `(${inputs.platform})` : ''}`);
 
     const { force, ...options } = inputs;
 
@@ -44,7 +44,7 @@ export class Docker extends Dockerode {
       );
     }
 
-    logger.debug(`Pulling image '${repoTag}'${inputs.platform ? `(${inputs.platform})` : ''}`);
+    logger.debug(`\u{1F433} Pulling image '${repoTag}'${inputs.platform ? `(${inputs.platform})` : ''}`);
     return super.pull(repoTag, options);
   }
 
@@ -53,13 +53,9 @@ export class Docker extends Dockerode {
       const container = await this.createContainer(options);
 
       logger.debug(
-        'Created container name=%s id=%s from image %s (platform: %s)',
-        options.name,
-        container.id,
-        options.Image,
-        options.platform,
+        `\u{1F433} Created container name=${options.name} id=${container.id} from image ${options.Image} (platform: ${options.platform})`,
       );
-      logger.debug('ENV ==>', options.Env);
+      logger.debug(`\u{1F433} ENV ==>${options.Env}`);
     });
   }
 
@@ -115,7 +111,7 @@ export class Docker extends Dockerode {
   }
 
   static SocketAndHost(containerSocket: string = '') {
-    logger.debug('Handling container host and socket');
+    logger.debug('\u{1F433} Handling container host and socket');
 
     let dockerHost = Docker.Host();
 
@@ -154,7 +150,7 @@ export class Docker extends Dockerode {
     // Default to DOCKER_HOST if set
     if (!socketHost.socket && dockerHost) {
       // Cases: 4A
-      logger.debug('Defaulting container socket to DOCKER_HOST');
+      logger.debug('\u{1F433} Defaulting container socket to DOCKER_HOST');
       socketHost.socket = socketHost.host;
     }
 
@@ -162,7 +158,7 @@ export class Docker extends Dockerode {
     if (!socketHost.socket) {
       const defaultSocket = Docker.Host();
       // socket is empty if it isn't found, so assignment here is at worst a no-op
-      logger.debug("Defaulting container socket to default '%s'", defaultSocket);
+      logger.debug(`\u{1F433} Defaulting container socket to default '${defaultSocket}'`);
       socketHost.socket = defaultSocket;
     }
 
@@ -171,7 +167,7 @@ export class Docker extends Dockerode {
       // Cases: 1A, 2A, 3A, 4A
       if (!Docker.isHostURI(socketHost.socket)) {
         // Cases: 1A, 2A
-        logger.debug("DOCKER_HOST is set, but socket is invalid '%s'", socketHost.socket);
+        logger.debug(`\u{1F433} DOCKER_HOST is set, but socket is invalid '${socketHost.socket}'`);
       }
       return socketHost;
     }
@@ -179,7 +175,7 @@ export class Docker extends Dockerode {
     // Set a sane DOCKER_HOST default if we can
     if (Docker.isHostURI(socketHost.socket)) {
       // Cases: 3B
-      logger.debug("Setting DOCKER_HOST to container socket '%s'", socketHost.socket);
+      logger.debug("\u{1F433} Setting DOCKER_HOST to container socket '%s'", socketHost.socket);
       socketHost.host = socketHost.socket;
       // Both DOCKER_HOST and container socket are valid; short-circuit exit
       return socketHost;
@@ -188,7 +184,7 @@ export class Docker extends Dockerode {
     // Here there is no DOCKER_HOST _and_ the supplied container socket is not a valid URI (either invalid or a file path)
     // Cases: 2B <- but is already handled at the top
     // I.e. this path should never be taken
-    logger.error(`No DOCKER_HOST and an invalid container socket '${socketHost.socket}'`);
+    logger.error(`\u{1F433} No DOCKER_HOST and an invalid container socket '${socketHost.socket}'`);
     socketHost.socket = '';
     return socketHost;
   }

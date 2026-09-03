@@ -222,11 +222,10 @@ class Reporter implements LoggerHook {
   setOutputs(outputs: Map<string, string>): void {
     outputs.forEach((value, key) => {
       if (key.length > 255) {
-        logger.warn('Ignore output because the key is too long', key);
+        logger.warn(`Ignore output because the key is too long: ${key}`);
         return;
       }
       if (value.length > 1024 * 1024) {
-        console.log(`Ignore output because the value is too long: ${key}`, value.length);
         logger.warn(`Ignore output because the value ${key} is too long: ${value.length}`);
         return;
       }

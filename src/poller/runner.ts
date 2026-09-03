@@ -27,24 +27,27 @@ export class Runner {
   async run(task: Task) {
     const reporter = new Reporter(this.client, task);
     await reporter.runDaemon(); // 启动 1s 定时上报
-    const logger = withLoggerHook(reporter, 'Reporter');
+    reporter.log(
+      `Received task ${task.id} of job ${task.context?.['job']}, triggered by event: ${task.context?.['event_name']}`,
+    );
 
-    try {
-      logger.info(
-        `Received task ${task.id} of job ${task.context?.['job']}, triggered by event: ${task.context?.['event_name']}`,
-      );
+    withLoggerHook(reporter, async () => {
+      try {
+        const plan = Workflow.Load(task.workflowPayload?.toString() ?? '').plan();
+        const runnerConfig = this.configure(task);
 
-      const plan = Workflow.Load(task.workflowPayload?.toString() ?? '').plan();
-      const runnerConfig = this.configure(task);
-
-      await withTimeout(plan.executor(runnerConfig).execute(), this.config.daemon.timeout, `Task ${task.id} timed out`);
-      await reporter.close(); // 成功：终结状态 + noMore 日志
-    } catch (error) {
-      logger.error('Task failed:', error);
-      reporter.log('Task failed:', error instanceof Error ? error.message : String(error));
-      await reporter.close('Task failed'); // 失败：标记 FAILURE
-      throw error; // 交还 Poller 记录 + 从 runningTasks 移除
-    }
+        await withTimeout(
+          plan.executor(runnerConfig).execute(),
+          this.config.daemon.timeout,
+          `Task ${task.id} timed out`,
+        );
+        await reporter.close(); // 成功：终结状态 + noMore 日志
+      } catch (error) {
+        reporter.log('Task failed:', error instanceof Error ? error.message : String(error));
+        await reporter.close('Task failed'); // 失败：标记 FAILURE
+        throw error; // 交还 Poller 记录 + 从 runningTasks 移除
+      }
+    });
   }
 
   configure(task: Task) {
