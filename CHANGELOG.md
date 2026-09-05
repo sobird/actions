@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.1.0](https://github.com/sobird/actions/compare/v1.0.2...v1.1.0) (2026-09-05)
+
+
+### Features
+
+* add artifact cache service ([60329b1](https://github.com/sobird/actions/commit/60329b181796510881e381917e8f6f4ca5183e95))
+* add ephemeral runner support and update default label images ([33c5ccb](https://github.com/sobird/actions/commit/33c5ccb10069e3331ad2d83e9f7d915ae4b2dc88))
+* add task picking service for runners and refine action models ([7be2118](https://github.com/sobird/actions/commit/7be21188bd1695a7175da4a81d98c294d91e727f))
+* **gen:** add TLS bypass for insecure client connections ([cfd3fcb](https://github.com/sobird/actions/commit/cfd3fcb77aed9bf0195a3c497a4a6109a7f8f5cb))
+* generate example config YAML and add schema defaults ([fce15a0](https://github.com/sobird/actions/commit/fce15a096210c0a3b4a1be64fb28169baf645542))
+* **workflow:** add stages mock, tests and implementation ([fd4de6b](https://github.com/sobird/actions/commit/fd4de6b7a2ec08b020fe536d7a4ab8ab8c425f17))
+* **workflow:** add workflow mock and refine planner ([233ad92](https://github.com/sobird/actions/commit/233ad92e90fef7c9e3b2b50d418ce6ecef9c4d6c))
+
+
+### Bug Fixes
+
+* bun not support dockerode container.putArchive ([a7fbf43](https://github.com/sobird/actions/commit/a7fbf43911417031db334de1d676c8c2b324b7bc))
+* bun not support dockerode exec.start hijack: true and stdin: true ([305b0fd](https://github.com/sobird/actions/commit/305b0fd6b17e7090c8b9b0b5893a0a52f5464bf7))
+* correct crypto import and enable lint-staged ([2a1cf7a](https://github.com/sobird/actions/commit/2a1cf7a6a2558641e107723ad22ac2b6f83e3037))
+* improve artifact route typing and path handling ([76aeb5c](https://github.com/sobird/actions/commit/76aeb5cd9c0355c755c15440cd330d2055ddfa33))
+* polynomial regular expression used on uncontrolled data ([e6cd728](https://github.com/sobird/actions/commit/e6cd72826b84e8dc55307f2a3ec189531438c868))
+* polynomial regular expression used on uncontrolled data ([79fc3d3](https://github.com/sobird/actions/commit/79fc3d303cbf27104039134f22286da8169afdf4))
+* Potential fix for code scanning alert no. 26: JWT missing secret or public key verification ([933947b](https://github.com/sobird/actions/commit/933947bc82f87db9ec856c6e75353c1d39fbf15f))
+* remove rate limiting from artifact cache endpoints ([49ec7df](https://github.com/sobird/actions/commit/49ec7df32013040cbdc55fe9bfa64bae00f71ca8))
+* resolve Bun compatibility with dockerode streams ([e7de1b9](https://github.com/sobird/actions/commit/e7de1b9a10342b445fd0269436e907ebc7a8903b))
+* restore proper error handling and test cleanup ([d4abeb2](https://github.com/sobird/actions/commit/d4abeb225c15f37792c5bdb91a515e1852822e36))
+* update imports and modernize code patterns ([ffd5ce3](https://github.com/sobird/actions/commit/ffd5ce330e76a2e5b7d66f4b56c358ca12dc5e68))
+* verify runner token in interceptor and use typed error codes ([cc71dbf](https://github.com/sobird/actions/commit/cc71dbf1195a6be4709b363c835250f375572c74))
+* withTimeout ([e02d470](https://github.com/sobird/actions/commit/e02d47044d675fb7dd20befd5fe20e4c3576b42d))
+
 ## [1.0.2](https://github.com/sobird/actions/compare/v1.0.1...v1.0.2) (2025-03-07)
 
 
