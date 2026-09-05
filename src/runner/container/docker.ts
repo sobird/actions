@@ -493,7 +493,7 @@ class DockerContainer extends Container {
       const container = await docker.createContainer(dockerodeOptions);
 
       logger.debug(
-        `\u{1F433} Created container name=${options.name} id=${container.id} from image ${options.image} (platform: ${options.platform || ''})`,
+        `\u{1F433} Created container name=${options.name} id=${container.id} image=${options.image} ${options.platform ? `(${options.platform})` : ''}`,
       );
 
       this.container = container;

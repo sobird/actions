@@ -216,8 +216,7 @@ export const runCommand = new Command('run')
   .option('-n, --dryrun', 'dryrun mode')
   .hook('preAction', (thisCommand) => {
     if (thisCommand.opts().verbose) {
-      logger.level = 'verbose';
-      // logger.trace()
+      logger.level = 'debug';
     }
   })
   .action(async (eventName, opts, program) => {
@@ -430,6 +429,7 @@ export const runCommand = new Command('run')
       replaceGheActionTokenWithGithubCom: runner.replaceGheActionTokenWithGithubCom,
 
       // logger
+      jobLoggerLevel: options.verbose ? 'debug' : 'info',
       // logJson: runner.logJson,
       // logOutput: runner.logOutput,
       // logPrefixJobID: runner.logPrefixJobId,

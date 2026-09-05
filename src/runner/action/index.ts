@@ -10,15 +10,15 @@
  * sobird<i@sobird.me> at 2024/06/13 10:55:22 created.
  */
 
-import Executor, { Conditional } from "@/common/executor";
-import Yaml from "@/common/yaml";
-import Runner from "@/runner";
+import Executor, { Conditional } from '@/common/executor';
+import Yaml from '@/common/yaml';
+import Runner from '@/runner';
 
-import Input, { InputProps } from "./input";
-import Output, { OutputProps } from "./output";
-import Runs, { RunsProps } from "./runs";
+import Input, { InputProps } from './input';
+import Output, { OutputProps } from './output';
+import Runs, { RunsProps } from './runs';
 
-export interface ActionProps extends Pick<Action, "Dir" | "name" | "author" | "description"> {
+export interface ActionProps extends Pick<Action, 'Dir' | 'name' | 'author' | 'description'> {
   inputs: Record<string, InputProps>;
   runs: RunsProps;
   outputs: Record<string, OutputProps>;
@@ -47,7 +47,7 @@ export interface ActionProps extends Pick<Action, "Dir" | "name" | "author" | "d
  *
  */
 abstract class Action extends Yaml {
-  #dir: string = "";
+  #dir: string = '';
 
   /**
    * **Required** The name of your action.
@@ -79,7 +79,7 @@ abstract class Action extends Yaml {
 
   branding?: {
     icon: string;
-    color: "white" | "yello" | "blue" | "green" | "orange" | "red" | "purple" | "gray-dark";
+    color: 'white' | 'yello' | 'blue' | 'green' | 'orange' | 'red' | 'purple' | 'gray-dark';
   };
 
   constructor(action: ActionProps) {
@@ -141,13 +141,13 @@ abstract class Action extends Yaml {
 
   public get HasPre() {
     return new Conditional((runner) => {
-      return !!this.runs["pre-if"].evaluate(runner!) && !!this.runs.pre;
+      return !!this.runs['pre-if'].evaluate(runner!) && !!this.runs.pre;
     });
   }
 
   public get HasPost() {
     return new Conditional((runner) => {
-      return !!this.runs["post-if"].evaluate(runner!) && !!this.runs.post;
+      return !!this.runs['post-if'].evaluate(runner!) && !!this.runs.post;
     });
   }
 
@@ -167,7 +167,7 @@ abstract class Action extends Yaml {
     const inputs: Record<string, string> = {};
     Object.entries(this.inputs || {}).forEach(([inputId, input]) => {
       const value = (stepWith && stepWith[inputId]) || input.default.evaluate(runner);
-      const key = `INPUT_${inputId.toUpperCase().replace(/[^A-Z0-9-]/g, "_")}`;
+      const key = `INPUT_${inputId.toUpperCase().replace(/[^A-Z0-9-]/g, '_')}`;
       if (!out[key]) {
         // eslint-disable-next-line no-param-reassign
         out[key] = value;
@@ -203,24 +203,24 @@ abstract class Action extends Yaml {
       runner.output(`##[group]${groupName}`);
 
       if (inputs.length > 0) {
-        console.log("with:");
+        runner.output('with:');
         inputs.forEach(([key, value]) => {
-          if (value !== null && value !== "") {
-            console.log(`  ${key}: ${value}`);
+          if (value !== null && value !== '') {
+            runner.output(`  ${key}: ${value}`);
           }
         });
       }
 
       if (env.length > 0) {
-        console.log("env:");
+        runner.output('env:');
         env.forEach(([key, value]) => {
-          if (value !== null && value !== "") {
-            console.log(`  ${key}: ${value}`);
+          if (value !== null && value !== '') {
+            runner.output(`  ${key}: ${value}`);
           }
         });
       }
 
-      console.log("##[endgroup]");
+      runner.output('##[endgroup]');
     });
   }
 

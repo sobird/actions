@@ -1,5 +1,4 @@
 /**
- *
  * envs
  * DOCKER_HOST,SSH_AUTH_SOCK,DOCKER_PATH_PREFIX,DOCKER_CERT_PATH,DOCKER_CLIENT_TIMEOUT
  *
@@ -10,9 +9,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import Dockerode, { ContainerCreateOptions, AuthConfig } from 'dockerode';
+import Dockerode, { AuthConfig } from 'dockerode';
 
-import Executor from '@/common/executor';
 import logger from '@/common/logger';
 
 export interface PullImageInputs {
@@ -45,18 +43,7 @@ export class Docker extends Dockerode {
     }
 
     logger.debug(`\u{1F433} Pulling image '${repoTag}'${inputs.platform ? `(${inputs.platform})` : ''}`);
-    return super.pull(repoTag, options);
-  }
-
-  createContainerExecutor(options: ContainerCreateOptions) {
-    return new Executor(async () => {
-      const container = await this.createContainer(options);
-
-      logger.debug(
-        `\u{1F433} Created container name=${options.name} id=${container.id} from image ${options.Image} (platform: ${options.platform})`,
-      );
-      logger.debug(`\u{1F433} ENV ==>${options.Env}`);
-    });
+    return this.pull(repoTag, options);
   }
 
   static SocketLocations = [

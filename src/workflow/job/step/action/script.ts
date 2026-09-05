@@ -57,7 +57,7 @@ class StepActionScript extends StepAction {
 
       runner.output('##[endgroup]');
 
-      console.log(this.command);
+      runner.debug(this.command);
     });
   }
 

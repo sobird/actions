@@ -5,11 +5,11 @@
  */
 
 import { HostConfig } from 'dockerode';
-import winston from 'winston';
 
+import { type LogLevel } from '@/common/logger';
 import ActionCache from '@/runner/action/cache';
-import Context from '@/runner/context';
 // import Container from './container';
+import Context from '@/runner/context';
 
 /**
  * The configuration interface for the runner.
@@ -101,7 +101,7 @@ interface Config {
    * The level of job logger.
    * @type {LogLevel}
    */
-  readonly jobLoggerLevel?: winston.LoggerOptions['level'];
+  readonly jobLoggerLevel?: LogLevel;
 
   /**
    * Only volumes (and bind mounts) in this slice can be mounted on the job container or service containers.

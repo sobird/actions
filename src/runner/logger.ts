@@ -1,7 +1,15 @@
 import chalk, { ChalkInstance } from 'chalk';
 import winston from 'winston';
 
-import { storage, getMasks, withMasks, getLogger, withLogger, type LoggerCallback } from '@/common/logger';
+import {
+  storage,
+  getMasks,
+  withMasks,
+  getLogger,
+  withLogger,
+  getLoggerHook,
+  type LoggerCallback,
+} from '@/common/logger';
 import Config from '@/runner/config';
 import { cycle } from '@/utils/index.ts';
 
@@ -68,10 +76,10 @@ export function withJobLogger<T>(
   callback: LoggerCallback<T>,
 ): T {
   const store = storage.getStore() || {};
-  let baseLogger: winston.Logger;
+  let logger: winston.Logger;
 
   if (store.jobLoggerFactory) {
-    baseLogger = store.jobLoggerFactory.withJobLogger();
+    logger = store.jobLoggerFactory.withJobLogger();
   } else {
     let formatter: winston.Logform.Format;
 
@@ -81,29 +89,31 @@ export function withJobLogger<T>(
       formatter = jobLogFormat(colorIterator.next().value, config.logPrefixJobId);
     }
 
-    baseLogger = winston.createLogger({
+    logger = winston.createLogger({
       level: config.jobLoggerLevel,
       transports: [new winston.transports.Console()],
       format: winston.format.combine(maskedFormat(config), formatter),
     });
   }
 
-  // 绑定字段
-  const childLogger = baseLogger.child({
-    job: jobName,
-    jobID: jobID,
-    dryrun: store.dryrun ?? false,
-    matrix: matrix,
-  });
+  const hook = getLoggerHook();
+  if (hook) {
+    logger.on('data', (info) => {
+      hook?.fire(info);
+    });
+  }
 
-  return storage.run(
-    {
-      ...store,
-      masks,
-      logger: childLogger,
-    },
-    () => callback(childLogger),
-  );
+  return withMasks(masks, () => {
+    return withLogger(
+      logger.child({
+        job: jobName,
+        jobID: jobID,
+        dryrun: store.dryrun ?? false,
+        matrix: matrix,
+      }),
+      callback,
+    );
+  });
 }
 
 export function withCompositeLogger<T>(masks: string[], callback: LoggerCallback<T>): T {

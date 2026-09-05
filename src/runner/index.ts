@@ -19,7 +19,7 @@ import { MountConfig, MountConsistency } from 'dockerode';
 import Artifact from '@/artifact';
 import ArtifactCache from '@/artifact/cache';
 import Constants from '@/common/constants';
-import logger from '@/common/logger';
+import logger, { getLogger } from '@/common/logger';
 import { Docker } from '@/docker';
 import Config from '@/runner/config';
 import Context from '@/runner/context';
@@ -36,6 +36,8 @@ import Container from './container/container';
 import DockerContainer from './container/docker';
 import HostedContainer from './container/hosted';
 import { Job } from './context/jobs';
+import { withJobLogger } from './logger';
+
 const SetEnvBlockList = new Set(['NODE_OPTIONS']);
 
 /**
@@ -140,25 +142,14 @@ class Runner {
     // @todo resolve needs forward
     job.resolveNeeds(this);
 
-    return new Executor(async () => {
-      if (!this.Enabled) {
-        return;
-      }
-
-      // console.log('runner name:', this.name);
-
-      // console.log('job name:', job.name.evaluate(this));
-      // // todo
-      // console.log('workflow run-name', workflow['run-name'].evaluate(this));
-      // console.log('workflow concurrency', workflow.concurrency.evaluate(this));
-      // console.log('job runs-on', job['runs-on'].evaluate(this), job.runsOn(this));
-      // console.log('workflow file:', this.run.workflow.file);
-      // console.log('workflow sha:', this.run.workflow.sha);
-      // console.log('job container image:', job.container.image.evaluate(this));
-
-      // execute job unit
-      await job.executor(this).execute(this);
-    });
+    return new Executor(() =>
+      withJobLogger(this.run.jobId, this.name, this.config, this.masks, {}, async () => {
+        if (!this.enabled) {
+          return;
+        }
+        await job.executor(this).execute(this);
+      }),
+    );
   }
 
   public startContainer() {
@@ -616,7 +607,7 @@ class Runner {
     return [`${this.ContainerName(id)}-Network`, true];
   }
 
-  get Enabled() {
+  get enabled() {
     const { job } = this.run;
     const jobIf = job.if.evaluate(this);
 
@@ -778,13 +769,13 @@ class Runner {
 
   // logger
   output(message: string) {
+    getLogger().info(message);
     // todo something
-    process.stdout.write(message + os.EOL);
+    // process.stdout.write(message + os.EOL);
   }
 
   debug(message: string) {
-    // todo something
-    process.stderr.write(message + os.EOL);
+    getLogger().debug(message);
   }
 
   error(message: string) {

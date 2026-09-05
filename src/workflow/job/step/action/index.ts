@@ -126,12 +126,11 @@ abstract class StepAction extends Step {
           };
 
           logger.error(
-            '🍎',
-            `Error in continue-on-error-expression: "continue-on-error: ${this['continue-on-error'].source}" (${(err as Error).message})`,
+            `🍎 Error in continue-on-error-expression: "continue-on-error: ${this['continue-on-error'].source}" (${(err as Error).message})`,
           );
         }
 
-        logger.error('🍎', `Failure: ${stage} ${name}`);
+        logger.error(`🍎 Failure: ${stage} ${name}`);
       }
     });
   }

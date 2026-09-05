@@ -36,6 +36,5 @@ function hashFiles(...patterns: string[]) {
 
 it('Test hashFiles', () => {
   const hash = hashFiles('**/package.json');
-  console.log('hash', hash);
   expect(hash.length).toBe(64);
 });

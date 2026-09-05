@@ -2,6 +2,12 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 
 import winston from 'winston';
 
+type RemoveIndexSignature<T> = {
+  [K in keyof T as string extends K ? never : number extends K ? never : K]: T[K];
+};
+
+export type LogLevel = keyof RemoveIndexSignature<winston.config.CliConfigSetLevels>;
+
 export interface LogEntry extends winston.Logform.TransformableInfo {
   timestamp: string;
 
@@ -33,7 +39,7 @@ export const storage = new AsyncLocalStorage<LoggerContext>();
 
 const colorizer = winston.format.colorize();
 const defaultLogger = winston.createLogger({
-  level: 'debug',
+  level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
     winston.format.splat(),
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
