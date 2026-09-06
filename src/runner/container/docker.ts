@@ -9,7 +9,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
 import { finished } from 'node:stream/promises';
-import tty from 'node:tty';
 
 import Dockerode, { NetworkInspectInfo, AuthConfig, MountConfig } from 'dockerode';
 import dotenv from 'dotenv';
@@ -63,9 +62,6 @@ export interface DockerContainerOptions {
   stdout?: OutputManager;
   stderr?: OutputManager;
 }
-
-const isatty = tty.isatty(process.stdout.fd);
-// const isTerminal = process.stdout.isTTY;
 
 class DockerContainer extends Container {
   static docker = docker;
@@ -475,7 +471,7 @@ class DockerContainer extends Container {
         workdir: this.resolve(options.workdir),
         entrypoint: options.entrypoint,
         platform: options.platform,
-        tty: isatty,
+        tty: false,
         cmd: options.cmd,
         env: Env,
         publish: options.ports,
@@ -566,9 +562,10 @@ class DockerContainer extends Container {
 
       try {
         const output = await container.attach({ stream: true, stdout: true, stderr: true });
-        // todo stdCopy
-
-        output.pipe(process.stdout);
+        // 容器未分配 TTY，attach 流为 Docker 多路复用帧，需按 stdout/stderr 拆分
+        const child = output.pipe(new DockerDemuxer());
+        child.stdout.pipe(process.stdout);
+        child.stderr.pipe(process.stderr);
       } catch (error) {
         logger.error(`\u{1F433} Failed to attach to container: ${(error as Error).message}`);
       }
@@ -628,46 +625,29 @@ class DockerContainer extends Container {
         WorkingDir,
         Cmd: command,
         Env,
-        Tty: isatty,
         User: user,
         AttachStdout: true,
         AttachStderr: true,
       });
 
-      const stream = await exec.start({
-        // hijack: true,
-        // stdin: true,
-        // Detach: true,
-        // https://github.com/apocas/dockerode/issues/736
-        Tty: isatty,
-      });
+      const stream = await exec.start({});
 
-      if (isatty) {
-        readline
-          .createInterface({
-            input: stream,
-          })
-          .on('line', async (line) => {
-            this.options.stdout?.onDataReceived(line);
-          });
-      } else {
-        const child = stream.pipe(new DockerDemuxer());
-        readline
-          .createInterface({
-            input: child.stdout,
-          })
-          .on('line', async (line) => {
-            this.options.stdout?.onDataReceived(line);
-          });
+      const child = stream.pipe(new DockerDemuxer());
+      readline
+        .createInterface({
+          input: child.stdout,
+        })
+        .on('line', async (line) => {
+          this.options.stdout?.onDataReceived(line);
+        });
 
-        readline
-          .createInterface({
-            input: child.stderr,
-          })
-          .on('line', async (line) => {
-            this.options.stderr?.onDataReceived(line);
-          });
-      }
+      readline
+        .createInterface({
+          input: child.stderr,
+        })
+        .on('line', async (line) => {
+          this.options.stderr?.onDataReceived(line);
+        });
 
       await new Promise((resolve, reject) => {
         stream.on('end', async () => {

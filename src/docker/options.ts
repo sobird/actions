@@ -109,6 +109,7 @@ export default class Options {
       Image: options.image,
       Env: options.env,
       Tty: options.tty,
+      Cmd: options.cmd && options.cmd.length > 0 ? options.cmd : undefined,
       Entrypoint: options.entrypoint,
       WorkingDir: options.workdir,
       User: options.user,
