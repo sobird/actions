@@ -1,4 +1,5 @@
 import Executor from '@/common/executor';
+import { withCompositeStepLogger, withStepLogger } from '@/runner/logger';
 import { createSafeName } from '@/utils';
 
 import { StepProps } from './step';
@@ -12,7 +13,7 @@ class Steps {
 
   public PostPipeline: Executor[] = [];
 
-  constructor(private steps: StepProps[] = []) {
+  constructor(private steps: StepProps[] = [], private composite: boolean = false) {
     if (!steps || steps.length === 0) {
       // 实例化时无需打印此信息，真正要执行时再打印
       // logger.debug('No steps found in composite action');
@@ -21,7 +22,7 @@ class Steps {
 
     const map = new Map<string, number>();
 
-    steps.forEach((step) => {
+    steps.forEach((step, number) => {
       const id = step.run ? step.id || '__run' : step.id || createSafeName(step.uses || '');
       let oN = map.get(id) || 0;
       if (map.has(id)) {
@@ -34,10 +35,23 @@ class Steps {
       const stepId = oN === 0 ? id : `${id}_${oN}`;
       Object.assign(step, { id: stepId });
       const stepAction = StepActionFactory.create(step);
+      stepAction.number = number;
 
-      this.PrePipeline.push(stepAction.Pre);
-      this.PostPipeline.unshift(stepAction.Post);
-      this.MainPipeline.push(stepAction.Main);
+      const scope =
+        (executor: Executor, stage: string) =>
+        new Executor((ctx) => {
+          if (this.composite) {
+            // 对齐 act WithCompositeStepLogger：在 job step 的 stepID 栈上 append
+            return withCompositeStepLogger(stepId, () => executor.execute(ctx));
+          }
+          const stepName = ctx ? stepAction.Name(ctx) : stepId;
+          // 对齐 act withStepLogger：job 级 step 按 pre/main/post stage 建立日志作用域
+          return withStepLogger(number, stepId, stepName, stage, () => executor.execute(ctx));
+        });
+
+      this.PrePipeline.push(scope(stepAction.Pre, 'Pre'));
+      this.PostPipeline.unshift(scope(stepAction.Post, 'Post'));
+      this.MainPipeline.push(scope(stepAction.Main, 'Main'));
     });
   }
 

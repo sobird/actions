@@ -71,14 +71,22 @@ export function withJobLogger<T>(
     });
   }
 
-  return withLogger(
-    logger.child({
-      job: jobName,
-      jobID: jobID,
-      dryrun: store.dryrun ?? false,
-      matrix: matrix,
-    }),
-    callback,
+  // 每个 job 拥有独立的 step 作用域：stepId 栈在 job 内按 step 重置/按 composite 累积
+  const childLogger = logger.child({
+    job: jobName,
+    jobID: jobID,
+    dryrun: store.dryrun ?? false,
+    matrix: matrix,
+  });
+
+  return storage.run(
+    {
+      ...store,
+      logger: childLogger,
+      stepNumber: undefined,
+      stepIds: [],
+    },
+    () => callback(childLogger),
   );
 }
 
@@ -87,22 +95,19 @@ export function withCompositeLogger<T>(callback: LoggerCallback<T>): T {
 }
 
 export function withCompositeStepLogger<T>(stepId: string, callback: LoggerCallback<T>): T {
-  const logger = getLogger();
-
-  let stepIds: string[] = [];
-  // 继承旧的 stepIds 数组
-  if (logger && logger.defaultMeta.stepId) {
-    stepIds = [...logger.defaultMeta.stepId];
-  }
-
+  const store = storage.getStore() || {};
+  // 对齐 act：在已有 stepID 栈上 append，支持 composite 嵌套层级
+  const stepIds = [...(store.stepIds ?? [])];
   stepIds.push(stepId);
 
-  const childLogger = logger.child({});
-  childLogger.defaultMeta = {
-    stepId: [stepId],
-  };
-
-  return withLogger(childLogger, callback);
+  return storage.run(
+    {
+      ...store,
+      logger: getLogger().child({ stepID: stepIds }),
+      stepIds,
+    },
+    () => callback(getLogger()),
+  );
 }
 
 export function withStepLogger<T>(
@@ -112,15 +117,23 @@ export function withStepLogger<T>(
   stageName: string,
   callback: LoggerCallback<T>,
 ): T {
-  const childLogger = getLogger().child({
-    stepNumber: String(stepNumber),
-    step: stepName,
-    stage: stageName,
-  });
+  const store = storage.getStore() || {};
+  // 对齐 act withStepLogger：job 级 step 重置 stepID 栈为当前 step，并携带 stepNumber/step/stage
+  return storage.run(
+    {
+      ...store,
+      logger: getLogger().child({
+        stepNumber: String(stepNumber),
+        step: stepName,
+        stage: stageName,
+      }),
+      stepNumber: String(stepNumber),
+      stepIds: [stepId],
+    },
+    () => callback(getLogger()),
+  );
+}
 
-  childLogger.defaultMeta = {
-    stepId: [stepId],
-  };
-
-  return withLogger(childLogger, callback);
+export function getStepNumber(): string | undefined {
+  return storage.getStore()?.stepNumber;
 }

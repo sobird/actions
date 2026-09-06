@@ -38,7 +38,7 @@ import Container from './container/container';
 import DockerContainer from './container/docker';
 import HostedContainer from './container/hosted';
 import { Job } from './context/jobs';
-import { withJobLogger } from './logger';
+import { withJobLogger, getStepNumber } from './logger';
 
 export const WellKnownTags = {
   Section: '##[section]',
@@ -906,9 +906,9 @@ class Runner {
 
     issue.message = this.maskSecrets(issue.message).slice(0, Runner.MaxIssueMessageLength);
 
-    const stepNumber = getLogger().defaultMeta?.stepNumber;
+    const stepNumber = getStepNumber();
     if (stepNumber != null) {
-      issue.data.stepNumber = String(stepNumber);
+      issue.data.stepNumber = stepNumber;
     }
     // @todo logFileLineNumber：官方返回日志总行号用于 UI 定位，需等 Reporter 的行号
     //      统计接入后再填，避免写入错误的假行号。

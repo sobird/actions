@@ -144,7 +144,7 @@ class Runs {
     this.entrypoint = runs.entrypoint;
     this["post-entrypoint"] = runs["post-entrypoint"];
     this.args = new Expression(runs.args, ["inputs"], [], []);
-    this.steps = new Steps(runs.steps);
+    this.steps = new Steps(runs.steps, true);
   }
 }
 

@@ -32,6 +32,8 @@ export interface LoggerContext {
   hook?: LoggerHook;
   jobLoggerFactory?: JobLoggerFactory;
   dryrun?: boolean;
+  stepNumber?: string;
+  stepIds?: string[];
 }
 
 export const storage = new AsyncLocalStorage<LoggerContext>();
