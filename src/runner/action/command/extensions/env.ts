@@ -26,7 +26,7 @@ const SetEnvCommandExtension: CommandExtension = {
       throw new Error("Required field 'name' is missing in ##[set-env] command.");
     }
 
-    runner.context.env[envKey] = actionCommand.data;
+    // runner.context.env[envKey] = actionCommand.data;
     runner.setEnv(envKey, actionCommand.data);
     runner.debug(`${envKey}='${actionCommand.data}'`);
   },

@@ -3,7 +3,6 @@ import winston from 'winston';
 
 import {
   storage,
-  getMasks,
   withMasks,
   getLogger,
   withLogger,
@@ -38,40 +37,11 @@ const jobLogFormat = (color: ChalkInstance, logPrefixJobID?: boolean) =>
     }
   });
 
-const maskedFormat = (config: Config) =>
-  winston.format((info) => {
-    if (config.insecureSecrets) {
-      return info;
-    }
-
-    let message = String(info.message);
-
-    // 静态 Secrets 脱敏
-    if (config.context.secrets) {
-      for (const v of Object.values(config.context.secrets)) {
-        if (v) {
-          message = message.replaceAll(v, '***');
-        }
-      }
-    }
-
-    // 来自 Context 的动态 Masks 脱敏
-    const currentMasks = getMasks();
-    for (const v of currentMasks) {
-      if (v) {
-        message = message.replaceAll(v, '***');
-      }
-    }
-
-    info.message = message;
-    return info;
-  })();
-
 export function withJobLogger<T>(
   jobID: string,
   jobName: string,
   config: Config,
-  masks: string[],
+  masks: Iterable<string>,
   matrix: Record<string, any>,
   callback: LoggerCallback<T>,
 ): T {
@@ -92,7 +62,7 @@ export function withJobLogger<T>(
     logger = winston.createLogger({
       level: config.jobLoggerLevel,
       transports: [new winston.transports.Console()],
-      format: winston.format.combine(maskedFormat(config), formatter),
+      format: winston.format.combine(formatter),
     });
   }
 
@@ -116,7 +86,7 @@ export function withJobLogger<T>(
   });
 }
 
-export function withCompositeLogger<T>(masks: string[], callback: LoggerCallback<T>): T {
+export function withCompositeLogger<T>(masks: Iterable<string>, callback: LoggerCallback<T>): T {
   return withMasks(masks, () => {
     return withLogger(getLogger().child({}), callback);
   });

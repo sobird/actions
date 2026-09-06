@@ -101,7 +101,7 @@ class Runner {
 
   IntraActionState: Record<string, Record<string, string>> = {};
 
-  masks: string[] = [];
+  masks = new Set<string>();
 
   cleanContainerExecutor: Executor = new Executor();
 
@@ -753,8 +753,14 @@ class Runner {
 
   setEnv(key: string, value: string) {
     if (SetEnvBlockList.has(key.toUpperCase())) {
-      console.log(`Can't update ${key} environment variable using set-env command.`);
-      // AddIssue
+      const issue = create(IssueSchema, {
+        type: IssueType.ERROR,
+        message: `Can't update ${key} environment variable using set-env command.`,
+        data: {
+          [Constants.Runner.InternalTelemetryIssueDataKey]: `${Constants.Runner.UnsupportedCommand}_${key}`,
+        },
+      });
+      this.addIssue(issue);
       return;
     }
 
@@ -773,7 +779,7 @@ class Runner {
   }
 
   addMask(value: string) {
-    if (!value) {
+    if (!value.trim()) {
       this.warning("Can't add secret mask for empty string in ##[add-mask] command.");
       return;
     }
@@ -782,13 +788,14 @@ class Runner {
       this.output('::add-mask::***');
     }
 
-    this.masks.push(value);
+    this.masks.add(value);
 
-    const masks = value.split(/[\r\n]/).filter((item) => {
-      return Boolean(item.trim());
-    });
-
-    this.masks.push(...masks);
+    for (const line of value.split(/[\r\n]+/)) {
+      const mask = line.trim();
+      if (mask) {
+        this.masks.add(mask);
+      }
+    }
   }
 
   async addMatchers(config: IssueMatchersConfig) {
@@ -845,7 +852,7 @@ class Runner {
     if (this.config.insecureSecrets) {
       return message;
     }
-    const secrets = [...Object.values(this.config.context.secrets), ...getMasks()];
+    const secrets = [...Object.values(this.context.secrets), ...getMasks()];
     for (const secret of secrets) {
       if (secret) {
         message = message.replaceAll(secret, '***');
@@ -854,14 +861,22 @@ class Runner {
     return message;
   }
   // logger
+
+  /**
+   * 官方 ExecutionContext.Write 的等价物：所有用户可见日志行的统一出口。
+   * 组合 tag+message 后统一经 maskSecrets 脱敏，再写入 job logger。
+   */
+  write(tag: string, message: string) {
+    const line = tag ? `${tag}${message}` : message;
+    getLogger().info(this.maskSecrets(line));
+  }
+
   output(message: string) {
-    getLogger().info(message);
-    // todo something
-    // process.stdout.write(message + os.EOL);
+    this.write('', message);
   }
 
   debug(message: string) {
-    getLogger().debug(message);
+    getLogger().debug(this.maskSecrets(message));
   }
 
   error(message: string) {
@@ -900,8 +915,8 @@ class Runner {
     if (logOptions.writeToLog ?? true) {
       const logMessage = logOptions.logMessage || issue.message;
       if (logMessage) {
-        // winston job logger 的 maskedFormat 会再次脱敏，幂等无害
-        getLogger().info(`${tag}${logMessage}`);
+        // write() 内部会经 maskSecrets 对整行再次脱敏，幂等无害
+        this.write(tag, logMessage);
       }
     }
 

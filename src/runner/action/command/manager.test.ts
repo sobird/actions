@@ -5,17 +5,13 @@ import ActionCommandManager from './manager';
 
 vi.mock('@/runner');
 
-const runner: Runner = new (Runner as any)(
-  {},
-  {
-    reuse: true,
-  },
-);
+// @ts-expect-error
+const runner: Runner = new Runner();
 const commandManager = new ActionCommandManager(runner);
 
 beforeEach(() => {
   runner.context.env = {};
-  runner.masks = [];
+  runner.masks = new Set();
   runner.echoOnActionCommand = false;
 });
 
@@ -90,30 +86,31 @@ describe('::stop-commands:: Action Command Manager Test', () => {
     });
   });
 
-  it('stop Process command fail on invalid stopTokens', () => {
+  it('stop Process command fail on invalid stopTokens', async () => {
     const invalidStopTokens = ['', 'pause-logging'];
 
-    invalidStopTokens.forEach((stopToken) => {
-      expect(commandManager.process(`::stop-commands::${stopToken}`)).rejects.toThrowError();
-    });
+    for await (const stopToken of invalidStopTokens) {
+      await expect(commandManager.process(`::stop-commands::${stopToken}`)).rejects.toThrow();
+    }
   });
 
-  it('stop process command allows invalid stopTokens if Env.Var.IsSet', () => {
+  it('stop process command allows invalid stopTokens if Env.Var.IsSet', async () => {
     const commandManager2 = new ActionCommandManager(
       new Runner(
-        undefined as any,
+        // @ts-expect-error
+        {},
         {
           context: {
             env: {
               [Constants.Variables.Actions.AllowUnsupportedStopCommandTokens]: 'true',
             },
           },
-        } as any,
+        },
       ),
     );
 
-    expect(commandManager2.process('::stop-commands::')).resolves.toBe(true);
-    expect(commandManager2.process('::stop-commands::pause-logging')).resolves.toBe(false);
+    await expect(commandManager2.process('::stop-commands::')).resolves.toBe(true);
+    await expect(commandManager2.process('::stop-commands::pause-logging')).resolves.toBe(false);
   });
 
   it('stop-commands with invalid token', () => {
@@ -154,17 +151,18 @@ describe('::add-mask:: Action Command Manager Test', () => {
   it('add-mask', () => {
     commandManager.process('::stopToken::');
     commandManager.process('::add-mask::mask1');
+    commandManager.process('::add-mask::mask1');
     commandManager.process('::add-mask::mask2');
     commandManager.process('::add-mask::mask3');
 
-    expect(runner.masks).toEqual(['mask1', 'mask2', 'mask3']);
+    expect(Array.from(runner.masks)).toEqual(['mask1', 'mask2', 'mask3']);
   });
 
   it('add-mask with multiline value', () => {
     commandManager.process('::add-mask::abc%0Ddef%0Aghi%0D%0Ajkl');
     commandManager.process('::add-mask:: %0D  %0A   %0D%0A    %0D');
 
-    expect(runner.masks).toEqual(['abc', 'def', 'ghi', 'jkl']);
+    expect(Array.from(runner.masks)).toEqual(['abc\rdef\nghi\r\njkl', 'abc', 'def', 'ghi', 'jkl']);
   });
 });
 
