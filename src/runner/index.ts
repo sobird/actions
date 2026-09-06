@@ -20,7 +20,7 @@ import { MountConfig, MountConsistency } from 'dockerode';
 import Artifact from '@/artifact';
 import ArtifactCache from '@/artifact/cache';
 import { Constants, WellKnownDirectory } from '@/common/constants';
-import logger, { getLogger, getMasks } from '@/common/logger';
+import logger, { getLogger } from '@/common/logger';
 import { Docker } from '@/docker';
 import { Issue, IssueType, IssueSchema } from '@/gen/runner/v1/messages_pb';
 import Config from '@/runner/config';
@@ -190,7 +190,7 @@ class Runner {
     job.resolveNeeds(this);
 
     return new Executor(() =>
-      withJobLogger(this.run.jobId, this.name, this.config, this.masks, {}, async () => {
+      withJobLogger(this.run.jobId, this.name, this.config, {}, async () => {
         if (!this.enabled) {
           return;
         }
@@ -602,6 +602,8 @@ class Runner {
     runner.context = this.context.clone();
     runner.container = this.container;
     runner.prependPath = this.prependPath;
+    // composite clone 与父共享同一 job 级 masks，::add-mask:: 全 job 生效（对齐官方 SecretMasker）
+    runner.masks = this.masks;
 
     return runner;
   }
@@ -852,7 +854,7 @@ class Runner {
     if (this.config.insecureSecrets) {
       return message;
     }
-    const secrets = [...Object.values(this.context.secrets), ...getMasks()];
+    const secrets = [...Object.values(this.context.secrets), ...this.masks];
     for (const secret of secrets) {
       if (secret) {
         message = message.replaceAll(secret, '***');

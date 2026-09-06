@@ -3,7 +3,6 @@ import winston from 'winston';
 
 import {
   storage,
-  withMasks,
   getLogger,
   withLogger,
   getLoggerHook,
@@ -41,7 +40,6 @@ export function withJobLogger<T>(
   jobID: string,
   jobName: string,
   config: Config,
-  masks: Iterable<string>,
   matrix: Record<string, any>,
   callback: LoggerCallback<T>,
 ): T {
@@ -73,23 +71,19 @@ export function withJobLogger<T>(
     });
   }
 
-  return withMasks(masks, () => {
-    return withLogger(
-      logger.child({
-        job: jobName,
-        jobID: jobID,
-        dryrun: store.dryrun ?? false,
-        matrix: matrix,
-      }),
-      callback,
-    );
-  });
+  return withLogger(
+    logger.child({
+      job: jobName,
+      jobID: jobID,
+      dryrun: store.dryrun ?? false,
+      matrix: matrix,
+    }),
+    callback,
+  );
 }
 
-export function withCompositeLogger<T>(masks: Iterable<string>, callback: LoggerCallback<T>): T {
-  return withMasks(masks, () => {
-    return withLogger(getLogger().child({}), callback);
-  });
+export function withCompositeLogger<T>(callback: LoggerCallback<T>): T {
+  return withLogger(getLogger().child({}), callback);
 }
 
 export function withCompositeStepLogger<T>(stepId: string, callback: LoggerCallback<T>): T {

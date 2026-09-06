@@ -30,7 +30,6 @@ export interface JobLoggerFactory {
 export interface LoggerContext {
   logger?: winston.Logger;
   hook?: LoggerHook;
-  masks?: Iterable<string>;
   jobLoggerFactory?: JobLoggerFactory;
   dryrun?: boolean;
 }
@@ -86,16 +85,6 @@ export function withLoggerHook<T>(hook: LoggerHook, callback: () => T): T {
     },
     callback,
   );
-}
-
-export function getMasks(): Iterable<string> {
-  const store = storage.getStore();
-  return store?.masks ?? [];
-}
-
-export function withMasks<T>(masks: Iterable<string>, callback: () => T): T {
-  const store = storage.getStore() || {};
-  return storage.run({ ...store, masks }, callback);
 }
 
 export default defaultLogger;
