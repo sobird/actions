@@ -1,5 +1,4 @@
 /**
- * envs
  * DOCKER_HOST,SSH_AUTH_SOCK,DOCKER_PATH_PREFIX,DOCKER_CERT_PATH,DOCKER_CLIENT_TIMEOUT
  *
  * sobird<i@sobird.me> at 2024/04/25 19:09:50 created.
@@ -9,6 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import chalk from 'chalk';
 import Dockerode, { AuthConfig } from 'dockerode';
 
 import logger from '@/common/logger';
@@ -44,6 +44,22 @@ export class Docker extends Dockerode {
 
     logger.debug(`\u{1F433} Pulling image '${repoTag}'${inputs.platform ? `(${inputs.platform})` : ''}`);
     return this.pull(repoTag, options);
+  }
+
+  async assert() {
+    return this.ping().catch((err) => {
+      const host = Docker.Host();
+      throw new Error(
+        chalk.red(`Cannot connect to the Docker daemon at '${host}'. Is Docker running?\n`) +
+          chalk.dim(
+            'Please start your Docker daemon (e.g. Docker Desktop, dockerd, colima or podman) and make sure DOCKER_HOST points to it, then run the job again.\n',
+          ) +
+          chalk.dim(`Caused by: ${(err as Error)?.message}`),
+        {
+          cause: err,
+        },
+      );
+    });
   }
 
   static SocketLocations = [

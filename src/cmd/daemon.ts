@@ -59,9 +59,9 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
       }
 
       try {
-        await docker.ping();
-      } catch {
-        logger.error('Cannot ping the docker daemon, is it running?');
+        await docker.assert();
+      } catch (err) {
+        logger.error((err as Error).message);
         return;
       }
     }

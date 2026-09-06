@@ -471,8 +471,12 @@ export const runCommand = new Command('run')
       containerDaemonSocket: runner.containerDaemonSocket,
     };
 
-    Runner.serve(config);
+    await Runner.serve(config);
 
-    await plan.executor(config).execute();
+    try {
+      await plan.executor(config).execute();
+    } catch (err) {
+      logger.error((err as Error).message);
+    }
     process.exit();
   });

@@ -882,6 +882,7 @@ class DockerContainer extends Container {
       );
 
       return Executor.Pipeline(
+        new Executor(() => docker.assert()),
         // runner.pullServicesImage(),
         dockerContainer.createNetwork(networkName).if(
           new Conditional(() => {
