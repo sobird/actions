@@ -88,6 +88,7 @@ export class Runner {
       // logOutput: runner.logOutput,
       // logPrefixJobID: runner.logPrefixJobId,
       // insecureSecrets: this.config.runner.insecureSecrets,
+      jobLoggerLevel: 'debug',
 
       // cache actions
       // actionCache,
