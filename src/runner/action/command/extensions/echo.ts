@@ -7,14 +7,16 @@ const EchoCommandExtension: CommandExtension = {
     switch (command.data.trim().toUpperCase()) {
       case 'ON':
         runner.echoOnActionCommand = true;
-        // runner.debug("Setting echo command value to 'on'");
+        runner.debug("Setting echo command value to 'on'");
         break;
       case 'OFF':
         runner.echoOnActionCommand = false;
-        // runner.debug("Setting echo command value to 'off'");
+        runner.debug("Setting echo command value to 'off'");
         break;
       default:
-        throw new Error(`Invalid echo command value. Possible values can be: 'on', 'off'. Current value is: '${command.data}'.`);
+        throw new Error(
+          `Invalid echo command value. Possible values can be: 'on', 'off'. Current value is: '${command.data}'.`,
+        );
     }
   },
 };

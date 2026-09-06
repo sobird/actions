@@ -1,21 +1,29 @@
-import util from "util";
+import util from 'node:util';
 
-import Constants from "@/common/constants";
+import { create } from '@bufbuild/protobuf';
 
-import type { CommandExtension } from ".";
+import { Constants } from '@/common/constants';
+import { IssueSchema, IssueType } from '@/gen/runner/v1/messages_pb';
+
+import type { CommandExtension } from '.';
 
 const Properties = {
-  Name: "name",
+  Name: 'name',
 };
 
 const SetOutputCommandExtension: CommandExtension = {
-  command: "set-output",
+  command: 'set-output',
   echo: true,
   process(runner, actionCommand) {
-    if (runner.context.vars["DistributedTask.DeprecateStepOutputCommands"]) {
-      const message = util.format(Constants.Runner.UnsupportedCommandMessage, this.command);
-      console.error(message);
-      // todo AddIssue
+    if (runner.context.vars['DistributedTask.DeprecateStepOutputCommands']) {
+      const issue = create(IssueSchema, {
+        type: IssueType.WARNING,
+        message: util.format(Constants.Runner.UnsupportedCommandMessage, this.command),
+        data: {
+          [Constants.Runner.InternalTelemetryIssueDataKey]: Constants.Runner.UnsupportedCommand,
+        },
+      });
+      runner.addIssue(issue);
     }
 
     const key = actionCommand.properties[Properties.Name];
@@ -24,7 +32,10 @@ const SetOutputCommandExtension: CommandExtension = {
       throw new Error("Required field 'name' is missing in ##[set-output] command.");
     }
 
-    runner.setOutput(key, actionCommand.data);
+    const result = runner.setOutput(key, actionCommand.data);
+    if (result) {
+      runner.debug(`${result}='${actionCommand.data}'`);
+    }
   },
 };
 

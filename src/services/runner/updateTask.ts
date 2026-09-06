@@ -1,13 +1,13 @@
-import Constants from "@/common/constants";
+import { Constants } from '@/common/constants';
 
-import type { ServiceMethodImpl } from ".";
+import type { ServiceMethodImpl } from '.';
 
 const { XRunnerUUID } = Constants.Protocol;
 
-export const updateTask: ServiceMethodImpl["updateTask"] = async (req, { requestHeader }) => {
-  console.log("requestHeader", requestHeader);
+export const updateTask: ServiceMethodImpl['updateTask'] = async (req, { requestHeader }) => {
+  console.log('requestHeader', requestHeader);
   const runnerUUID = requestHeader.get(XRunnerUUID);
-  console.log("runnerUUID", runnerUUID);
+  console.log('runnerUUID', runnerUUID);
 
   return {};
 };

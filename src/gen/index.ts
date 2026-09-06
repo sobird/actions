@@ -3,12 +3,12 @@ import { URL } from 'node:url';
 import { createClient, Client } from '@connectrpc/connect';
 import { createConnectTransport, ConnectTransportOptions } from '@connectrpc/connect-node';
 
-import { Protocol } from '@/common/constants';
+import { Constants } from '@/common/constants';
 
 import { PingService } from './ping/v1/services_pb';
 import { RunnerService } from './runner/v1/services_pb';
 
-const { XRunnerUUID, XRunnerToken, XRunnerVersion } = Protocol;
+const { XRunnerUUID, XRunnerToken, XRunnerVersion } = Constants.Protocol;
 
 export type PingServiceClient = Client<typeof PingService>;
 export type RunnerServiceClient = Client<typeof RunnerService>;

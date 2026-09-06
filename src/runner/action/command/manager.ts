@@ -1,5 +1,4 @@
-import Constants from '@/common/constants';
-import logger from '@/common/logger';
+import { Constants } from '@/common/constants';
 import type Runner from '@/runner';
 
 import ActionCommand from '.';
@@ -31,19 +30,20 @@ class ActionCommandManager {
     }
 
     if (!runner.EnhancedAnnotationsEnabled && actionCommand.command === 'notice') {
-      logger.debug("Enhanced Annotations not enabled on the server: 'notice' command will not be processed.");
+      runner.debug("Enhanced Annotations not enabled on the server: 'notice' command will not be processed.");
       return false;
     }
 
     if (this.stopProcessCommand) {
       if (this.stopToken && actionCommand.command === this.stopToken) {
-        console.debug('Resume processing commands');
+        runner.output(line);
+        runner.debug('Resume processing commands');
         this.registeredCommands.delete(this.stopToken);
         this.stopProcessCommand = false;
         this.stopToken = '';
         return true;
       }
-      console.debug(`Process commands has been stopped and waiting for '##[${this.stopToken}]' to resume.`);
+      runner.debug(`Process commands has been stopped and waiting for '##[${this.stopToken}]' to resume.`);
       return false;
     }
     if (actionCommand.command === this.stopCommand) {
@@ -56,14 +56,14 @@ class ActionCommandManager {
         runner.addMask(this.stopToken);
       }
 
-      console.debug('Paused processing commands until the token you called ::stopCommands:: with is received');
+      runner.output(line);
+      runner.debug('Paused processing commands until the token you called ::stopCommands:: with is received');
       return true;
     }
     if (extensions[actionCommand.command]) {
       const extension = extensions[actionCommand.command];
       if (runner.echoOnActionCommand && extension.echo) {
-        // context.Output(input);
-        console.log(line);
+        runner.output(line);
       }
       try {
         await extension.process(this.runner, actionCommand);
@@ -84,7 +84,7 @@ class ActionCommandManager {
   }
 
   validateStopToken(stopToken: string) {
-    const { AllowUnsupportedStopCommandTokens } = Constants.Actions;
+    const { AllowUnsupportedStopCommandTokens } = Constants.Variables.Actions;
     const allowUnsecureStopCommandTokens =
       process.env[AllowUnsupportedStopCommandTokens]?.toLowerCase() === 'true' ||
       this.runner.context.env[AllowUnsupportedStopCommandTokens]?.toLowerCase() === 'true' ||

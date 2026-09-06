@@ -1,5 +1,7 @@
 /**
- * Action Command
+ * Action Command (workflow-commands)
+ *
+ * 这个是 action command 的入站协议（解析 action 发来的 ::xxx::）
  *
  * @see https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions
  * @see https://github.com/actions/runner/blob/main/src/Runner.Common/ActionCommand.cs
@@ -43,11 +45,12 @@ class ActionCommand {
 
   static CommandKey = '::';
 
-  static ToCommandValue(input: any): string {
+  static ToCommandValue(input: string): string {
     if (input === null || input === undefined) {
       return '';
-    } if (typeof input === 'string' || input instanceof String) {
-      return input as string;
+    }
+    if (typeof input === 'string') {
+      return input;
     }
     return JSON.stringify(input);
   }
@@ -62,10 +65,7 @@ class ActionCommand {
   }
 
   static EscapeData(s: string): string {
-    return this.ToCommandValue(s)
-      .replace(/%/g, '%25')
-      .replace(/\r/g, '%0D')
-      .replace(/\n/g, '%0A');
+    return this.ToCommandValue(s).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
   }
 
   static UnescapeProperty(s: string): string {
@@ -78,10 +78,7 @@ class ActionCommand {
   }
 
   static UnescapeData(s: string): string {
-    return s
-      .replaceAll('%0D', '\r')
-      .replaceAll('%0A', '\n')
-      .replaceAll('%25', '%');
+    return s.replaceAll('%0D', '\r').replaceAll('%0A', '\n').replaceAll('%25', '%');
   }
 
   static Parse(message?: string, registeredCommands: Set<string> = new Set()) {
@@ -116,11 +113,15 @@ class ActionCommand {
       const propertiesStr = cmdInfo.substring(spaceIndex + 1).trim();
 
       // RemoveEmptyEntries
-      const splitProperties = propertiesStr.split(',').filter((item) => { return item; });
+      const splitProperties = propertiesStr.split(',').filter((item) => {
+        return item;
+      });
 
       for (const propertyStr of splitProperties) {
         // RemoveEmptyEntries
-        const pair = propertyStr.split('=').filter((item) => { return item; });
+        const pair = propertyStr.split('=').filter((item) => {
+          return item;
+        });
 
         if (pair.length >= 2) {
           const [key, ...value] = pair;

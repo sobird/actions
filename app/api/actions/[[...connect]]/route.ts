@@ -1,9 +1,9 @@
-import { Protocol } from "@/common/constants";
+import { Constants } from '@/common/constants';
 
-import { routes } from "./connect";
-import { createConnectHandler } from "./handler";
+import { routes } from './connect';
+import { createConnectHandler } from './handler';
 
 export const { GET, POST } = createConnectHandler({
-  prefix: Protocol.PathPrefix,
+  prefix: Constants.Protocol.PathPrefix,
   routes,
 });

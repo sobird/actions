@@ -4,7 +4,7 @@ const DebugCommandExtension: CommandExtension = {
   command: 'debug',
   echo: false,
   process(runner, actionCommand) {
-    // runner.debug(actionCommand.data);
+    runner.debug(actionCommand.data);
   },
 };
 

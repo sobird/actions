@@ -1,11 +1,7 @@
-import type { CommandExtension } from '.';
+import { IssueType } from '@/gen/runner/v1/messages_pb.ts';
 
-const ErrorCommandExtension: CommandExtension = {
-  command: 'error',
-  echo: false,
-  process(runner, actionCommand) {
-    // runner.error(actionCommand.data);
-  },
-};
+import { IssueCommandExtension } from './issue';
+
+const ErrorCommandExtension = IssueCommandExtension('error', IssueType.ERROR);
 
 export default ErrorCommandExtension;

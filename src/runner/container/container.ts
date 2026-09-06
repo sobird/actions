@@ -8,7 +8,7 @@ import readline from 'node:readline';
 import { hashfiles } from '@actions/hashfiles';
 import * as tar from 'tar';
 
-import Constants from '@/common/constants';
+import { WellKnownDirectory } from '@/common/constants';
 import Executor from '@/common/executor';
 import { trimPrefix } from '@/utils/trimPrefix';
 
@@ -34,7 +34,7 @@ export interface ContainerOptions {
   stderr: string;
 }
 
-const hashFilesDir = path.join(Constants.Directory.Bin, 'hashFiles');
+const hashFilesDir = path.join(WellKnownDirectory.Bin, 'hashFiles');
 
 export default abstract class Container {
   rootdir: string = '';
@@ -60,11 +60,11 @@ export default abstract class Container {
   ) {}
 
   get ToolDir() {
-    return this.resolve(Constants.Directory.Tool);
+    return this.resolve(WellKnownDirectory.Tool);
   }
 
   get TempDir() {
-    return this.resolve(Constants.Directory.Temp);
+    return this.resolve(WellKnownDirectory.Temp);
   }
 
   /** 容器操作相关 */
@@ -352,16 +352,16 @@ export default abstract class Container {
     return this.OS !== 'Windows';
   }
 
-  directory(directory: keyof typeof Constants.Directory) {
-    return this.resolve(Constants.Directory[directory]);
+  directory(directory: keyof typeof WellKnownDirectory) {
+    return this.resolve(WellKnownDirectory[directory]);
   }
 
   get Env() {
     const env: Record<string, unknown> = {};
     env.RUNNER_ARCH = this.Arch;
     env.RUNNER_OS = this.OS;
-    env.RUNNER_TOOL_CACHE = this.resolve(Constants.Directory.Tool);
-    env.RUNNER_TEMP = this.resolve(Constants.Directory.Temp);
+    env.RUNNER_TOOL_CACHE = this.resolve(WellKnownDirectory.Tool);
+    env.RUNNER_TEMP = this.resolve(WellKnownDirectory.Temp);
     env.RUNNER_DEBUG = 1;
     env.RUNNER_ENVIRONMENT = '';
     env.RUNNER_NAME = '';

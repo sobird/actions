@@ -1,7 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
-import Constants from '@/common/constants';
+import { WellKnownDirectory } from '@/common/constants';
 import Runner from '@/runner';
 
 import SetEnvFileCommand from './env';
@@ -10,7 +10,7 @@ vi.mock('@/runner');
 
 const runner: Runner = new (Runner as any)();
 
-const rootDirectory = path.join(Constants.Directory.Work, 'SetEnvFileCommand');
+const rootDirectory = path.join(WellKnownDirectory.Work, 'SetEnvFileCommand');
 
 beforeEach(() => {
   runner.context.env = {};

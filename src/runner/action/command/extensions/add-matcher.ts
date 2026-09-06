@@ -15,12 +15,12 @@ const AddMatcherCommandExtension: CommandExtension = {
     const file = actionCommand.data;
     // File is required
     if (!file) {
-      console.warn('File path must be specified.');
+      runner.warning('File path must be specified.');
       return;
     }
 
-    const res = await runner.container.readJSON(file);
-    const config = new IssueMatchersConfig(res);
+    const json = await runner.container.readJSON(file);
+    const config = new IssueMatchersConfig(json);
 
     // add
     if (config.problemMatcher.length > 0) {

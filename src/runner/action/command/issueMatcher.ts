@@ -55,7 +55,12 @@ export class IssueMatch {
 
   fromPath?: string;
 
-  constructor(runningMatch: IssueMatch | null, pattern: IssuePattern, groups: RegExpMatchArray, defaultSeverity: string | null = null) {
+  constructor(
+    runningMatch: IssueMatch | null,
+    pattern: IssuePattern,
+    groups: RegExpMatchArray,
+    defaultSeverity: string | null = null,
+  ) {
     this.file = runningMatch?.file || IssueMatch.GetValue(groups, pattern.file);
     this.line = runningMatch?.line || IssueMatch.GetValue(groups, pattern.line);
     this.column = runningMatch?.column || IssueMatch.GetValue(groups, pattern.column);
@@ -88,7 +93,9 @@ export class IssueMatcher {
   constructor(config: IssueMatcherConfig) {
     this.owner = config.owner;
     this.defaultSeverity = config.severity;
-    this.pattern = config.pattern.map((x) => { return new IssuePattern(x); });
+    this.pattern = config.pattern.map((x) => {
+      return new IssuePattern(x);
+    });
     this.reset();
   }
 
@@ -130,10 +137,12 @@ export class IssueMatcher {
           // Not the last pattern
           // Store the match
           this.state[i] = new IssueMatch(runningMatch, pattern, regexMatch);
-        } else if (isLast) { // Last pattern
+        } else if (isLast) {
+          // Last pattern
           // Break the running match
           this.state[i - 1] = null;
-        } else { // Not the last pattern
+        } else {
+          // Not the last pattern
           // Record not matched
           this.state[i] = null;
         }
@@ -142,7 +151,7 @@ export class IssueMatcher {
   }
 
   reset() {
-    this.state = new Array(this.pattern.length - 1).fill(null);
+    this.state = Array.from({ length: this.pattern.length - 1 }, () => null);
   }
 }
 
@@ -204,18 +213,14 @@ export class IssuePatternConfig {
     this.loop = config.loop;
   }
 
-  validate(
-    isFirst: boolean,
-    isLast: boolean,
-    validateProps: ValidateProps,
-  ): void {
+  validate(isFirst: boolean, isLast: boolean, validateProps: ValidateProps): void {
     // Only the last pattern in a multiline matcher may set 'loop'
     if (this.loop && (isFirst || !isLast)) {
-      throw new Error('Only the last pattern in a multiline matcher may set \'loop\'');
+      throw new Error("Only the last pattern in a multiline matcher may set 'loop'");
     }
 
     if (this.loop && this.message == null) {
-      throw new Error('The loop pattern must set \'message\'');
+      throw new Error("The loop pattern must set 'message'");
     }
 
     const regex = new RegExp(this.regexp || '', 'g');
@@ -230,7 +235,12 @@ export class IssuePatternConfig {
     IssuePatternConfig.Validate('fromPath', groupCount, this.fromPath, validateProps);
   }
 
-  static Validate(propertyName: keyof ValidateProps, groupCount: number, newValue?: number, validateProps?: ValidateProps): void {
+  static Validate(
+    propertyName: keyof ValidateProps,
+    groupCount: number,
+    newValue?: number,
+    validateProps?: ValidateProps,
+  ): void {
     if (!newValue) {
       return;
     }
@@ -273,7 +283,9 @@ export class IssueMatcherConfig {
   constructor(config: IssueMatcherConfig) {
     this.owner = config.owner;
     this.severity = config.severity;
-    this.pattern = config.pattern.map((item) => { return new IssuePatternConfig(item); });
+    this.pattern = config.pattern.map((item) => {
+      return new IssuePatternConfig(item);
+    });
   }
 
   validate(): void {
@@ -309,7 +321,7 @@ export class IssueMatcherConfig {
     }
 
     if (validateProps.message == null) {
-      throw new Error('At least one pattern must set \'message\'');
+      throw new Error("At least one pattern must set 'message'");
     }
   }
 }
@@ -320,7 +332,9 @@ export class IssueMatchersConfig {
   constructor(config: IssueMatchersConfig) {
     // eslint-disable-next-line no-param-reassign
     config.problemMatcher = config.problemMatcher || [];
-    this.problemMatcher = config.problemMatcher.map((item) => { return new IssueMatcherConfig(item); });
+    this.problemMatcher = config.problemMatcher.map((item) => {
+      return new IssueMatcherConfig(item);
+    });
   }
 
   // get matchers(): IssueMatcherConfig[] {

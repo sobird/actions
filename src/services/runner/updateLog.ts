@@ -1,10 +1,10 @@
 import { create } from '@bufbuild/protobuf';
 import { ConnectError } from '@connectrpc/connect';
 
-import Constants from '@/common/constants';
+import { Constants } from '@/common/constants';
 import { UpdateLogResponseSchema } from '@/gen/runner/v1/messages_pb';
 import Log from '@/log';
-import models from '@/models';
+import { models } from '@/models';
 
 import type { ServiceMethodImpl } from '.';
 
@@ -16,7 +16,7 @@ export const updateLog: ServiceMethodImpl['updateLog'] = async (req, { requestHe
 
   const response = create(UpdateLogResponseSchema);
 
-  const task = await models.Actions.Task.findByPk(req.taskId);
+  const task = await models.ActionTask.findByPk(req.taskId);
 
   const ack = task?.logLength || 0;
 

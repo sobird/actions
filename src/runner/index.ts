@@ -14,13 +14,15 @@
 import os from 'node:os';
 import path from 'node:path';
 
+import { create } from '@bufbuild/protobuf';
 import { MountConfig, MountConsistency } from 'dockerode';
 
 import Artifact from '@/artifact';
 import ArtifactCache from '@/artifact/cache';
-import Constants from '@/common/constants';
-import logger, { getLogger } from '@/common/logger';
+import { Constants, WellKnownDirectory } from '@/common/constants';
+import logger, { getLogger, getMasks } from '@/common/logger';
 import { Docker } from '@/docker';
+import { Issue, IssueType, IssueSchema } from '@/gen/runner/v1/messages_pb';
 import Config from '@/runner/config';
 import Context from '@/runner/context';
 import { createSafeName, assignIgnoreCase, createFnv1aHash } from '@/utils';
@@ -38,12 +40,40 @@ import HostedContainer from './container/hosted';
 import { Job } from './context/jobs';
 import { withJobLogger } from './logger';
 
+export const WellKnownTags = {
+  Section: '##[section]',
+  Command: '##[command]',
+  Error: '##[error]',
+  Warning: '##[warning]',
+  Notice: '##[notice]',
+  Debug: '##[debug]',
+  Group: '##[group]',
+  EndGroup: '##[endgroup]',
+} as const;
+export type WellKnownTag = (typeof WellKnownTags)[keyof typeof WellKnownTags];
+
+const IssueLogTags: Record<IssueType, WellKnownTag | ''> = {
+  [IssueType.ERROR]: WellKnownTags.Error,
+  [IssueType.WARNING]: WellKnownTags.Warning,
+  [IssueType.NOTICE]: WellKnownTags.Notice,
+  [IssueType.UNSPECIFIED]: '',
+};
+
+export interface AddIssueLogOptions {
+  /** 是否输出日志行，默认 true */
+  writeToLog?: boolean;
+  /** LogMessageOverride：覆盖日志原文（如问题匹配到的原始行），缺省回退 issue.message */
+  logMessage?: string;
+}
+
 const SetEnvBlockList = new Set(['NODE_OPTIONS']);
 
 /**
  * 每个runner为一个job实例
  */
 class Runner {
+  static MaxCountPerIssueType = 10;
+  static MaxIssueMessageLength = 4096;
   // job name
   get name() {
     return this.run.job.name.evaluate(this) || this.run.jobId;
@@ -81,6 +111,23 @@ class Runner {
   stepAction?: StepAction;
 
   matchers: IssueMatcherConfig[] = [];
+
+  issues: Issue[] = [];
+
+  private issueCounts: Record<IssueType, number> = {
+    [IssueType.UNSPECIFIED]: 0,
+    [IssueType.ERROR]: 0,
+    [IssueType.WARNING]: 0,
+    [IssueType.NOTICE]: 0,
+  };
+
+  get isEmbedded() {
+    return Boolean(this.parent);
+  }
+
+  get root(): Runner {
+    return this.parent ? this.parent.root : this;
+  }
 
   constructor(
     public run: Run,
@@ -125,8 +172,8 @@ class Runner {
 
     // Initialize 'echo on action command success' property, default to false, unless Step_Debug is set
     this.echoOnActionCommand =
-      context.secrets[Constants.Actions.StepDebug]?.toLowerCase() === 'true' ||
-      context.vars[Constants.Actions.StepDebug]?.toLowerCase() === 'true' ||
+      context.secrets[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' ||
+      context.vars[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' ||
       false;
 
     if (config.serverInstance) {
@@ -158,7 +205,7 @@ class Runner {
     const JobContainer = IsHosted ? HostedContainer : DockerContainer;
     const executor = JobContainer.Setup(this);
 
-    const workflowDirectory = path.join(Constants.Directory.Temp, '_github_workflow');
+    const workflowDirectory = path.join(WellKnownDirectory.Temp, '_github_workflow');
     return executor.next(
       new Executor(async () => {
         const { event } = context.github;
@@ -173,18 +220,18 @@ class Runner {
           context.github.workspace = container.resolve(this.config.workdir);
         }
 
-        if (!IsHosted && !this.config.actionsCacheExternal && context.env[Constants.Actions.CacheUrl]) {
-          const url = new URL(context.env[Constants.Actions.CacheUrl]);
+        if (!IsHosted && !this.config.actionsCacheExternal && context.env[Constants.Variables.Actions.CacheUrl]) {
+          const url = new URL(context.env[Constants.Variables.Actions.CacheUrl]);
           url.hostname = 'host.docker.internal';
-          context.env[Constants.Actions.CacheUrl] = url.toString();
+          context.env[Constants.Variables.Actions.CacheUrl] = url.toString();
         }
 
-        if (!IsHosted && context.env[Constants.Actions.RuntimeUrl]) {
-          const url = new URL(context.env[Constants.Actions.RuntimeUrl]);
+        if (!IsHosted && context.env[Constants.Variables.Actions.RuntimeUrl]) {
+          const url = new URL(context.env[Constants.Variables.Actions.RuntimeUrl]);
           url.hostname = 'host.docker.internal';
-          context.env[Constants.Actions.RuntimeUrl] = url.toString();
+          context.env[Constants.Variables.Actions.RuntimeUrl] = url.toString();
         }
-        context.env.ACTIONS_RESULTS_URL = context.env[Constants.Actions.RuntimeUrl];
+        context.env.ACTIONS_RESULTS_URL = context.env[Constants.Variables.Actions.RuntimeUrl];
 
         // set runner context
         context.runner.name = this.config.name;
@@ -294,8 +341,8 @@ class Runner {
     let hostedTempDir = '';
 
     const containerWorkdir = (hostedWorkDir = this.container.resolve(this.config.workdir));
-    const containerToolDir = (hostedToolDir = this.container.resolve(this.config.workspace, Constants.Directory.Tool));
-    const containerTempDir = (hostedTempDir = this.container.resolve(this.config.workspace, Constants.Directory.Temp));
+    const containerToolDir = (hostedToolDir = this.container.resolve(this.config.workspace, WellKnownDirectory.Tool));
+    const containerTempDir = (hostedTempDir = this.container.resolve(this.config.workspace, WellKnownDirectory.Temp));
 
     let mounts: Record<string, string> = {
       [ToolMount]: containerToolDir,
@@ -372,8 +419,8 @@ class Runner {
     let hostedTempDir = '';
 
     const containerWorkdir = (hostedWorkDir = this.container.resolve(this.config.workdir));
-    const containerToolDir = (hostedToolDir = this.container.resolve(this.config.workspace, Constants.Directory.Tool));
-    const containerTempDir = (hostedTempDir = this.container.resolve(this.config.workspace, Constants.Directory.Temp));
+    const containerToolDir = (hostedToolDir = this.container.resolve(this.config.workspace, WellKnownDirectory.Tool));
+    const containerTempDir = (hostedTempDir = this.container.resolve(this.config.workspace, WellKnownDirectory.Temp));
 
     let mounts: MountConfig = [
       {
@@ -668,28 +715,39 @@ class Runner {
   }
 
   get ActionStates() {
-    return this.IntraActionState[this.context.github.action] || {};
+    return this.root.IntraActionState[this.context.github.action] || {};
   }
 
   // action command
   saveState(key: string, value: string) {
     const { action } = this.context.github;
-    if (this.caller) {
-      // todo
-    } else if (action) {
-      if (!this.IntraActionState[action]) {
-        this.IntraActionState[action] = {};
-      }
-      this.IntraActionState[action][key] = value;
+    if (!action) {
+      return;
     }
-    console.debug(`Save intra-action state ${key} = ${value}`);
+
+    const root = this.root;
+
+    if (!root.IntraActionState[action]) {
+      root.IntraActionState[action] = {};
+    }
+    root.IntraActionState[action][key] = value;
+
+    this.debug(`Save intra-action state ${key} = ${value}`);
   }
 
   // set step outputs
   setOutput(key: string, value: string) {
     const { action } = this.context.github;
-    if (action) {
-      this.context.steps[action].outputs[key] = value;
+    if (!action) {
+      return '';
+    }
+
+    this.context.steps[action].outputs[key] = value;
+
+    if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.exec(key)) {
+      return `steps.${action}.outputs.${key}`;
+    } else {
+      return `steps['${action}']['outputs']['${key}']`;
     }
   }
 
@@ -716,13 +774,15 @@ class Runner {
 
   addMask(value: string) {
     if (!value) {
-      console.warn("Can't add secret mask for empty string in ##[add-mask] command.");
+      this.warning("Can't add secret mask for empty string in ##[add-mask] command.");
       return;
     }
 
     if (this.echoOnActionCommand) {
-      console.log('::add-mask::***');
+      this.output('::add-mask::***');
     }
+
+    this.masks.push(value);
 
     const masks = value.split(/[\r\n]/).filter((item) => {
       return Boolean(item.trim());
@@ -767,6 +827,32 @@ class Runner {
     ).execute();
   }
 
+  removeMatchers(owners: string[]) {
+    const ownersSet = new Set(
+      owners.map((x) => {
+        return x.toLowerCase();
+      }),
+    );
+    this.matchers = (this.matchers || []).filter((matcher) => {
+      return !ownersSet.has(matcher.owner.toLowerCase());
+    });
+
+    const joinedOwners = owners.map((x) => `'${x}'`).join(', ');
+    this.debug(`Removed matchers: ${joinedOwners}.`);
+  }
+
+  maskSecrets(message: string) {
+    if (this.config.insecureSecrets) {
+      return message;
+    }
+    const secrets = [...Object.values(this.config.context.secrets), ...getMasks()];
+    for (const secret of secrets) {
+      if (secret) {
+        message = message.replaceAll(secret, '***');
+      }
+    }
+    return message;
+  }
   // logger
   output(message: string) {
     getLogger().info(message);
@@ -779,8 +865,54 @@ class Runner {
   }
 
   error(message: string) {
-    //
-    process.stderr.write(message + os.EOL);
+    const issue = create(IssueSchema, {
+      type: IssueType.ERROR,
+      message,
+    });
+    this.addIssue(issue);
+  }
+
+  warning(message: string) {
+    const issue = create(IssueSchema, {
+      type: IssueType.WARNING,
+      message,
+    });
+    this.addIssue(issue);
+  }
+
+  addIssue(issue: Issue, logOptions: AddIssueLogOptions = { writeToLog: true }) {
+    const tag = IssueLogTags[issue.type];
+    if (!tag) {
+      // UNSPECIFIED / 未知类型：无对应 `##[tag]`，不落日志也不入库
+      return;
+    }
+
+    issue.message = this.maskSecrets(issue.message).slice(0, Runner.MaxIssueMessageLength);
+
+    const stepNumber = getLogger().defaultMeta?.stepNumber;
+    if (stepNumber != null) {
+      issue.data.stepNumber = String(stepNumber);
+    }
+    // @todo logFileLineNumber：官方返回日志总行号用于 UI 定位，需等 Reporter 的行号
+    //      统计接入后再填，避免写入错误的假行号。
+
+    // 3. 写日志行：wellKnownTag + (LogMessageOverride ?? issue.Message)
+    if (logOptions.writeToLog ?? true) {
+      const logMessage = logOptions.logMessage || issue.message;
+      if (logMessage) {
+        // winston job logger 的 maskedFormat 会再次脱敏，幂等无害
+        getLogger().info(`${tag}${logMessage}`);
+      }
+    }
+
+    // 4. 收拢进记录：composite 子 context 归属到最近根；同类型上限 10
+    const record = this.isEmbedded ? this.root : this;
+    if (record.issueCounts[issue.type] < Runner.MaxCountPerIssueType) {
+      record.issueCounts[issue.type]++;
+      record.issues.push(issue);
+    }
+    // @todo 非嵌入式时官方会 QueueTimelineRecordUpdate(record) 上报服务端注解，
+    //       待 daemon/Reporter 的注解通道就绪后在此追加。
   }
 
   containsCaller(target: Runner) {
@@ -808,8 +940,8 @@ class Runner {
     } = config;
 
     // Start Artifact Server
-    const ACTIONS_RUNTIME_URL = Constants.Actions.RuntimeUrl;
-    const ACTIONS_RUNTIME_TOKEN = Constants.Actions.RuntimeToken;
+    const ACTIONS_RUNTIME_URL = Constants.Variables.Actions.RuntimeUrl;
+    const ACTIONS_RUNTIME_TOKEN = Constants.Variables.Actions.RuntimeToken;
     if (artifactPath && !config.context.env[ACTIONS_RUNTIME_URL]) {
       const artifact = new Artifact(artifactPath);
       const actionsRuntimeUrl = await artifact.serve(artifactPort, artifactAddr);
@@ -835,7 +967,7 @@ class Runner {
     }
 
     // Start Actions Cache Server
-    const ACTIONS_CACHE_URL = Constants.Actions.CacheUrl;
+    const ACTIONS_CACHE_URL = Constants.Variables.Actions.CacheUrl;
     if (actionsCache && !config.context.env[ACTIONS_CACHE_URL]) {
       if (actionsCacheExternal) {
         config.context.env[ACTIONS_CACHE_URL] = actionsCacheExternal;

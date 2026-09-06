@@ -4,7 +4,7 @@ import { format } from 'node:util';
 
 import shellQuote from 'shell-quote';
 
-import Constants from '@/common/constants';
+import { WellKnownDirectory } from '@/common/constants';
 import Executor from '@/common/executor';
 import Runner from '@/runner';
 
@@ -68,7 +68,7 @@ class StepActionScript extends StepAction {
     this.cmd = cmd;
     this.script = script;
 
-    const scriptFilePath = path.join(Constants.Directory.Temp, `${this.uuid}${ext}`);
+    const scriptFilePath = path.join(WellKnownDirectory.Temp, `${this.uuid}${ext}`);
     const resolvedScriptPath = runner.container?.resolve(scriptFilePath);
 
     this.command = format(cmd, resolvedScriptPath);

@@ -1,6 +1,6 @@
 import { Interceptor, ConnectError, createContextKey, HandlerContext, Code } from '@connectrpc/connect';
 
-import Constants from '@/common/constants';
+import { Constants } from '@/common/constants';
 import { ActionRunner } from '@/models/actions';
 
 const runnerModelContextKey = createContextKey<ActionRunner | null>(null, {

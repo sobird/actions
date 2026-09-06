@@ -1,4 +1,4 @@
-import Constants from '@/common/constants';
+import { Constants } from '@/common/constants';
 import Runner from '@/runner';
 
 import ActionCommandManager from './manager';
@@ -105,7 +105,7 @@ describe('::stop-commands:: Action Command Manager Test', () => {
         {
           context: {
             env: {
-              [Constants.Actions.AllowUnsupportedStopCommandTokens]: 'true',
+              [Constants.Variables.Actions.AllowUnsupportedStopCommandTokens]: 'true',
             },
           },
         } as any,
@@ -191,7 +191,7 @@ describe('::echo:: Action Command Manager Test', () => {
       {
         context: {
           vars: {
-            [Constants.Actions.StepDebug]: 'true',
+            [Constants.Variables.Actions.StepDebug]: 'true',
           },
         },
       } as any,

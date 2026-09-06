@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import Constants from '@/common/constants';
+import { WellKnownDirectory } from '@/common/constants';
 import Executor from '@/common/executor';
 import Runner from '@/runner';
 import HostedContainer from '@/runner/container/hosted';
@@ -26,8 +26,10 @@ const nodejsAction = new NodeJSAction({
   outputs: {
     time: {
       description: 'The time we greeted you',
+      value: '',
     },
   },
+  // @ts-expect-error
   runs: {
     using: 'node20',
     pre: 'dist/pre.js',
@@ -38,7 +40,7 @@ const nodejsAction = new NodeJSAction({
 
 beforeAll(async () => {
   const actionName = 'hello-world-javascript-action';
-  const actionDir = path.join(Constants.Directory.Actions, actionName);
+  const actionDir = path.join(WellKnownDirectory.Actions, actionName);
   const putExecutor = runner.container?.put(actionDir, path.join('./test/actions', actionName));
   await putExecutor?.execute();
   nodejsAction.Dir = actionDir;

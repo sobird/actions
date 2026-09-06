@@ -1,4 +1,4 @@
-import type { CommandExtension } from '.';
+import { type CommandExtension } from '.';
 
 const EndGroupCommandExtension: CommandExtension = {
   command: 'endgroup',

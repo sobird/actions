@@ -1,11 +1,7 @@
-import type { CommandExtension } from '.';
+import { IssueType } from '@/gen/runner/v1/messages_pb.ts';
 
-const NoticeCommandExtension: CommandExtension = {
-  command: 'notice',
-  echo: false,
-  process(runner, actionCommand) {
-    // runner.notice(actionCommand.data);
-  },
-};
+import { IssueCommandExtension } from './issue';
+
+const NoticeCommandExtension = IssueCommandExtension('notice', IssueType.NOTICE);
 
 export default NoticeCommandExtension;

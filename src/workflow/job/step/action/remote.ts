@@ -8,7 +8,7 @@
 
 import path from 'node:path';
 
-import Constants from '@/common/constants';
+import { WellKnownDirectory } from '@/common/constants';
 import Executor, { Conditional } from '@/common/executor';
 import Git from '@/common/git';
 import logger from '@/common/logger';
@@ -33,7 +33,7 @@ class StepActionRemote extends StepAction {
       replaceGheActionWithGithubCom.forEach((action) => {
         if (uses.repository === action) {
           uses.url = 'https://github.com';
-          uses.token = runner.config.replaceGheActionTokenWithGithubCom;
+          uses.token = runner.config.replaceGheActionTokenWithGithubCom ?? '';
         }
       });
 
@@ -97,7 +97,7 @@ class StepActionRemote extends StepAction {
 
       const repositoryDir = path.join(runner.ActionCacheDir, reusable.repository, reusable.ref);
       const actionLocalDir = path.join(repositoryDir, reusable.path);
-      const actionDir = path.join(Constants.Directory.Actions, reusable.repository, reusable.ref);
+      const actionDir = path.join(WellKnownDirectory.Actions, reusable.repository, reusable.ref);
 
       return runner.container?.put(actionDir, actionLocalDir).next(this.LoadAction(actionDir));
     });
@@ -111,7 +111,7 @@ class StepActionRemote extends StepAction {
       if (actionCache) {
         await actionCache.fetch(reusable.repositoryUrl, reusable.repository, reusable.ref);
         const archive = await actionCache.archive(reusable.repository, reusable.ref, '.');
-        const actionDir = path.join(Constants.Directory.Actions, reusable.repository, reusable.ref);
+        const actionDir = path.join(WellKnownDirectory.Actions, reusable.repository, reusable.ref);
 
         return runner.container?.putArchive(actionDir, archive).next(this.LoadAction(actionDir));
       }
