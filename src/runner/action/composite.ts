@@ -1,7 +1,7 @@
-import Executor from "@/common/executor";
-import { withCompositeLogger } from "@/runner/logger";
+import Executor from '@/common/executor';
+import { withCompositeLogger } from '@/runner/logger';
 
-import Action from ".";
+import Action from '.';
 
 class CompositeAction extends Action {
   protected main() {
@@ -12,7 +12,6 @@ class CompositeAction extends Action {
 
       const { steps } = this.runs;
 
-      // 对齐 act execAsComposite：进入 composite 作用域后再跑内部步骤
       await withCompositeLogger(async () => {
         return Executor.Pipeline(...steps.PrePipeline, ...steps.MainPipeline).execute(runner);
       });

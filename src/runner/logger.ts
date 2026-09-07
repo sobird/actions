@@ -1,13 +1,7 @@
 import chalk, { ChalkInstance } from 'chalk';
 import winston from 'winston';
 
-import {
-  storage,
-  getLogger,
-  withLogger,
-  getLoggerHook,
-  type LoggerCallback,
-} from '@/common/logger';
+import { storage, getLogger, withLogger, getLoggerHook, type LoggerCallback } from '@/common/logger';
 import Config from '@/runner/config';
 import { cycle } from '@/utils/index.ts';
 
@@ -60,7 +54,7 @@ export function withJobLogger<T>(
     logger = winston.createLogger({
       level: config.jobLoggerLevel,
       transports: [new winston.transports.Console()],
-      format: winston.format.combine(formatter),
+      format: winston.format.combine(winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }), formatter),
     });
   }
 
@@ -96,7 +90,6 @@ export function withCompositeLogger<T>(callback: LoggerCallback<T>): T {
 
 export function withCompositeStepLogger<T>(stepId: string, callback: LoggerCallback<T>): T {
   const store = storage.getStore() || {};
-  // 对齐 act：在已有 stepID 栈上 append，支持 composite 嵌套层级
   const stepIds = [...(store.stepIds ?? [])];
   stepIds.push(stepId);
 
@@ -118,7 +111,7 @@ export function withStepLogger<T>(
   callback: LoggerCallback<T>,
 ): T {
   const store = storage.getStore() || {};
-  // 对齐 act withStepLogger：job 级 step 重置 stepID 栈为当前 step，并携带 stepNumber/step/stage
+
   return storage.run(
     {
       ...store,

@@ -13,7 +13,10 @@ class Steps {
 
   public PostPipeline: Executor[] = [];
 
-  constructor(private steps: StepProps[] = [], private composite: boolean = false) {
+  constructor(
+    private steps: StepProps[] = [],
+    private composite: boolean = false,
+  ) {
     if (!steps || steps.length === 0) {
       // 实例化时无需打印此信息，真正要执行时再打印
       // logger.debug('No steps found in composite action');
@@ -37,15 +40,12 @@ class Steps {
       const stepAction = StepActionFactory.create(step);
       stepAction.number = number;
 
-      const scope =
-        (executor: Executor, stage: string) =>
+      const scope = (executor: Executor, stage: string) =>
         new Executor((ctx) => {
           if (this.composite) {
-            // 对齐 act WithCompositeStepLogger：在 job step 的 stepID 栈上 append
             return withCompositeStepLogger(stepId, () => executor.execute(ctx));
           }
           const stepName = ctx ? stepAction.Name(ctx) : stepId;
-          // 对齐 act withStepLogger：job 级 step 按 pre/main/post stage 建立日志作用域
           return withStepLogger(number, stepId, stepName, stage, () => executor.execute(ctx));
         });
 

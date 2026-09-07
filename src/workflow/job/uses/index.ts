@@ -4,14 +4,14 @@
  * sobird<i@sobird.me> at 2024/10/18 16:34:46 created.
  */
 
-import path from "node:path";
+import path from 'node:path';
 
-import Executor from "@/common/executor";
-import Git from "@/common/git";
-import type Runner from "@/runner";
-import WorkflowPlanner from "@/workflow/planner";
-import Reusable from "@/workflow/reusable";
-import { readEntry } from "@/utils/tar";
+import Executor from '@/common/executor';
+import Git from '@/common/git';
+import type Runner from '@/runner';
+import { readEntry } from '@/utils/tar';
+import WorkflowPlanner from '@/workflow/planner';
+import Reusable from '@/workflow/reusable';
 
 class Uses extends Reusable {
   get Executor() {
@@ -56,7 +56,7 @@ class Uses extends Reusable {
   static ReusableWorkflowExecutor(workflowPath: string) {
     return new Executor(async (runner) => {
       const workflowPlanner = await WorkflowPlanner.Collect(workflowPath);
-      const plan = workflowPlanner.planEvent("workflow_call");
+      const plan = await workflowPlanner.planEvent('workflow_call');
       await plan.executor(runner!.config, runner).execute();
     });
   }
@@ -70,7 +70,7 @@ class Uses extends Reusable {
         const entry = await readEntry(archive);
         if (entry) {
           const workflowPlanner = WorkflowPlanner.Single(entry.body);
-          const plan = workflowPlanner.planEvent("workflow_call");
+          const plan = await workflowPlanner.planEvent('workflow_call');
           await plan.executor(runner!.config, runner).execute();
         }
       }

@@ -1,24 +1,23 @@
-/* eslint-disable no-underscore-dangle */
 /**
  * Job is the structure of one job in a workflow
  *
  * sobird<i@sobird.me> at 2024/05/02 20:26:29 created.
  */
 
-import Executor from "@/common/executor";
-import Expression from "@/expression";
-import Runner from "@/runner";
-import { Needs } from "@/runner/context/needs";
+import Executor from '@/common/executor';
+import Expression from '@/expression';
+import Runner from '@/runner';
+import { Needs } from '@/runner/context/needs';
 
-import Container, { ContainerProps } from "./container";
-import Defaults, { DefaultsProps } from "./defaults";
-import Environment, { EnvironmentOptions } from "./environment";
-import { StepProps } from "./step";
-import Steps from "./steps";
+import { WorkflowDispatchInput, Permissions, Concurrency } from '../types';
+import Container, { ContainerProps } from './container';
+import Defaults, { DefaultsProps } from './defaults';
+import Environment, { EnvironmentOptions } from './environment';
+import { StepProps } from './step';
+import Steps from './steps';
 // import { StepProps } from './step/step';
-import Strategy, { StrategyProps } from "./strategy";
-import Uses from "./uses";
-import { WorkflowDispatchInput, Permissions, Concurrency } from "../types";
+import Strategy, { StrategyProps } from './strategy';
+import Uses from './uses';
 
 export enum JobType {
   /**
@@ -42,17 +41,14 @@ export enum JobType {
   Invalid,
 }
 
-export interface JobProps extends Pick<
-  Job,
-  "permissions" | "needs" | "timeout-minutes" | "services"
-> {
+export interface JobProps extends Pick<Job, 'permissions' | 'needs' | 'timeout-minutes' | 'services'> {
   id?: string;
   name: string;
   if?: string;
-  "runs-on": string | string[] | { group: string; labels: string };
+  'runs-on': string | string[] | { group: string; labels: string };
   concurrency?: Concurrency;
   container?: ContainerProps;
-  "continue-on-error"?: boolean;
+  'continue-on-error'?: boolean;
   defaults?: DefaultsProps;
   env?: Record<string, string>;
   outputs: Record<string, string>;
@@ -61,7 +57,7 @@ export interface JobProps extends Pick<
   strategy?: StrategyProps;
   uses?: string;
   with?: Record<string, string | WorkflowDispatchInput>;
-  secrets?: Record<string, string> | "inherit";
+  secrets?: Record<string, string> | 'inherit';
 }
 
 /**
@@ -87,7 +83,7 @@ class Job {
    */
   #total: number = 1;
 
-  #result: Needs[string]["result"] = "success";
+  #result: Needs[string]['result'] = 'success';
 
   /**
    * 每次job运行完成时，都会将 this.outputs.evaluate(runner) 的运行结果存放到此处
@@ -97,7 +93,7 @@ class Job {
   /**
    * Use `jobs.<job_id>.name` to set a name for the job, which is displayed in the GitHub UI.
    */
-  name: Expression<JobProps["name"]>;
+  name: Expression<JobProps['name']>;
 
   /**
    * For a specific job, you can use `jobs.<job_id>.permissions` to modify the default permissions granted to the `GITHUB_TOKEN`,
@@ -142,7 +138,7 @@ class Job {
    * if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
    * ```
    */
-  if: Expression<JobProps["if"]>;
+  if: Expression<JobProps['if']>;
 
   /**
    * Use `jobs.<job_id>.runs-on` to define the type of machine to run the job on.
@@ -167,7 +163,7 @@ class Job {
    *
    * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-self-hosted-runners Choosing self-hosted runners}."
    */
-  "runs-on": Expression<JobProps["runs-on"]>;
+  'runs-on': Expression<JobProps['runs-on']>;
 
   /**
    * Use `jobs.<job_id>.environment` to define the environment that the job references.
@@ -229,7 +225,7 @@ class Job {
    * To conditionally cancel currently running jobs or workflows in the same concurrency group,
    * you can specify `cancel-in-progress` as an expression with any of the allowed expression contexts.
    */
-  concurrency: Expression<JobProps["concurrency"]>;
+  concurrency: Expression<JobProps['concurrency']>;
 
   /**
    * You can use `jobs.<job_id>.outputs` to create a `map` of outputs for a job.
@@ -253,7 +249,7 @@ class Job {
    * You can use the `matrix` context to create unique output names for each job configuration.
    * For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/contexts#matrix-context Contexts}."
    */
-  outputs: Expression<JobProps["outputs"]>;
+  outputs: Expression<JobProps['outputs']>;
 
   /**
    * A map of variables that are available to all steps in the job.
@@ -264,7 +260,7 @@ class Job {
    * For example, an environment variable defined in a step will override job and workflow environment variables with the same name, while the step executes.
    * An environment variable defined for a job will override a workflow variable with the same name, while the job executes.
    */
-  env: Expression<JobProps["env"]>;
+  env: Expression<JobProps['env']>;
 
   /**
    * Use `jobs.<job_id>.defaults` to create a map of default settings that will apply to all steps in the job.
@@ -302,7 +298,7 @@ class Job {
    * For self-hosted runners, the token may be the limiting factor if the job timeout is greater than 24 hours.
    * For more information on the `GITHUB_TOKEN`, see "{@link https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret Automatic token authentication}."
    */
-  "timeout-minutes"?: number;
+  'timeout-minutes'?: number;
 
   /**
    * Use `jobs.<job_id>.strategy` to use a matrix strategy for your jobs.
@@ -316,7 +312,7 @@ class Job {
    * Prevents a workflow run from failing when a job fails.
    * Set to `true` to allow a workflow run to pass when this job fails.
    */
-  "continue-on-error": Expression<JobProps["continue-on-error"]>;
+  'continue-on-error': Expression<JobProps['continue-on-error']>;
 
   container: Container;
 
@@ -378,7 +374,7 @@ class Job {
    * Unlike `jobs.<job_id>.steps[*].with`, the inputs you pass with `jobs.<job_id>.with` are not available as environment variables in the called workflow.
    * Instead, you can reference the inputs by using the inputs context.
    */
-  with: Expression<JobProps["with"]>;
+  with: Expression<JobProps['with']>;
 
   /**
    * When a job is used to call a reusable workflow,
@@ -394,80 +390,44 @@ class Job {
    * The identifier must match the name of a secret defined by {@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onworkflow_callsecretssecret_id `on.workflow_call.secrets.<secret_id>`} in the called workflow.
    * Allowed expression contexts: `github`, `needs`, and `secrets`.
    */
-  secrets: Expression<JobProps["secrets"]>;
+  secrets: Expression<JobProps['secrets']>;
 
   constructor(job: JobProps) {
     this.#id = job.id;
 
-    this.name = new Expression(
-      job.name,
-      ["github", "needs", "strategy", "matrix", "vars", "inputs"],
-      [],
-      "",
-    );
+    this.name = new Expression(job.name, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs'], [], '');
     this.permissions = job.permissions;
     this.needs = job.needs;
     this.if = new Expression(
       job.if,
-      ["github", "needs", "vars", "inputs"],
-      ["always", "cancelled", "success", "failure"],
-      "success()",
+      ['github', 'needs', 'vars', 'inputs'],
+      ['always', 'cancelled', 'success', 'failure'],
+      'success()',
       true,
     );
-    this["runs-on"] = new Expression(job["runs-on"], [
-      "github",
-      "needs",
-      "strategy",
-      "matrix",
-      "vars",
-      "inputs",
-    ]);
+    this['runs-on'] = new Expression(job['runs-on'], ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
     this.environment = new Environment(job.environment);
-    this.concurrency = new Expression(job.concurrency, [
-      "github",
-      "needs",
-      "strategy",
-      "matrix",
-      "vars",
-      "inputs",
-    ]);
+    this.concurrency = new Expression(job.concurrency, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
     this.outputs = new Expression(
       job.outputs,
-      [
-        "github",
-        "needs",
-        "strategy",
-        "matrix",
-        "job",
-        "runner",
-        "env",
-        "vars",
-        "secrets",
-        "steps",
-        "inputs",
-      ],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
       [],
       {},
     );
-    this.env = new Expression(
-      job.env,
-      ["github", "needs", "strategy", "matrix", "vars", "secrets", "inputs"],
-      [],
-      {},
-    );
+    this.env = new Expression(job.env, ['github', 'needs', 'strategy', 'matrix', 'vars', 'secrets', 'inputs'], [], {});
     this.defaults = new Defaults(job.defaults);
 
     this.steps = new Steps(job.steps);
 
-    this["timeout-minutes"] = job["timeout-minutes"];
+    this['timeout-minutes'] = job['timeout-minutes'];
     this.strategy = new Strategy(job.strategy);
-    this["continue-on-error"] = new Expression(job["continue-on-error"], [
-      "github",
-      "needs",
-      "strategy",
-      "vars",
-      "matrix",
-      "inputs",
+    this['continue-on-error'] = new Expression(job['continue-on-error'], [
+      'github',
+      'needs',
+      'strategy',
+      'vars',
+      'matrix',
+      'inputs',
     ]);
     this.container = new Container(job.container);
     this.services = Object.fromEntries(
@@ -477,23 +437,8 @@ class Job {
     );
 
     this.uses = new Uses(job.uses);
-    this.with = new Expression(job.with, [
-      "github",
-      "needs",
-      "strategy",
-      "matrix",
-      "vars",
-      "inputs",
-    ]);
-    this.secrets = new Expression(job.secrets, [
-      "github",
-      "needs",
-      "strategy",
-      "matrix",
-      "secrets",
-      "vars",
-      "inputs",
-    ]);
+    this.with = new Expression(job.with, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
+    this.secrets = new Expression(job.secrets, ['github', 'needs', 'strategy', 'matrix', 'secrets', 'vars', 'inputs']);
   }
 
   get id() {
@@ -524,7 +469,7 @@ class Job {
     return this.#result;
   }
 
-  set Result(result: Needs[string]["result"]) {
+  set Result(result: Needs[string]['result']) {
     this.#result = result;
   }
 
@@ -558,8 +503,8 @@ class Job {
 
       // console.log('first', name.source?.includes('${{'));
       // console.log('first', !name.scopes.includes('}}'))
-      if (!name.source?.includes("${{") || !name.source.includes("}}")) {
-        job.name.source = `${name.source || job.id}${Object.values(matrix).length > 0 ? ` (${Object.values(matrix).join(", ")})` : ""}`;
+      if (!name.source?.includes('${{') || !name.source.includes('}}')) {
+        job.name.source = `${name.source || job.id}${Object.values(matrix).length > 0 ? ` (${Object.values(matrix).join(', ')})` : ''}`;
       }
 
       job.strategy.matrix = Object.entries(matrix).reduce(
@@ -577,16 +522,16 @@ class Job {
     if (!this.needs) {
       return [];
     }
-    return typeof this.needs === "string" ? [this.needs] : this.needs;
+    return typeof this.needs === 'string' ? [this.needs] : this.needs;
   }
 
   runsOn(runner: Runner) {
-    const runsOn = this["runs-on"].evaluate(runner);
+    const runsOn = this['runs-on'].evaluate(runner);
     if (!runsOn) {
       return [];
     }
 
-    if (typeof runsOn === "string") {
+    if (typeof runsOn === 'string') {
       return [runsOn];
     }
     if (Array.isArray(runsOn)) {
@@ -596,7 +541,7 @@ class Job {
     const { group, labels } = runsOn;
     let results = [];
 
-    if (typeof labels === "string") {
+    if (typeof labels === 'string') {
       results.push(labels);
     } else if (Array.isArray(labels)) {
       results = labels;
@@ -608,7 +553,6 @@ class Job {
     return results;
   }
 
-  // job executor
   executor(runner: Runner) {
     // this.resolveNeeds(runner);
     this.resolveInputs(runner);
@@ -660,8 +604,8 @@ class Job {
     return Executor.Pipeline(
       runner.startContainer(),
       this.steps.run(),
+      // job post executor
       new Executor((ctx) => {
-        // job post executor
         if (!ctx) {
           return;
         }
@@ -685,17 +629,16 @@ class Job {
 
           const outputs = Object.fromEntries(
             Object.entries(workflow.workflowCall()?.outputs || {}).map(([outputId, output]) => {
-              let value = "";
+              let value = '';
               try {
                 value = output.value.evaluate(runner, { jobs: jobsContext });
               } catch (err) {
-                console.log("err", err);
+                console.log('err', err);
               }
               return [outputId, value];
             }),
           );
 
-          // eslint-disable-next-line no-param-reassign
           runner.caller.run.workflow.jobs[runner.caller.run.jobId].Outputs = outputs;
         }
       }),
@@ -724,15 +667,12 @@ class Job {
   resolveInputs(runner: Runner) {
     if (runner.caller) {
       const { workflow } = runner.run;
-      const callerJobWith =
-        runner.caller.run.workflow.jobs[runner.caller.run.jobId].with.evaluate(runner.caller) || {};
+      const callerJobWith = runner.caller.run.workflow.jobs[runner.caller.run.jobId].with.evaluate(runner.caller) || {};
 
-      const result = Object.entries(workflow.workflowCall()?.inputs || {}).map(
-        ([inputId, input]) => {
-          const value = callerJobWith[inputId];
-          return [inputId, value || input.default.evaluate(runner)];
-        },
-      );
+      const result = Object.entries(workflow.workflowCall()?.inputs || {}).map(([inputId, input]) => {
+        const value = callerJobWith[inputId];
+        return [inputId, value || input.default.evaluate(runner)];
+      });
 
       const inputs = Object.fromEntries(result);
 
@@ -750,25 +690,22 @@ class Job {
     if (runner.caller) {
       const { workflow } = runner.run;
       const callerJobSecrets =
-        runner.caller.run.workflow.jobs[runner.caller.run.jobId].secrets.evaluate(runner.caller) ||
-        {};
-      if (callerJobSecrets === "inherit") {
+        runner.caller.run.workflow.jobs[runner.caller.run.jobId].secrets.evaluate(runner.caller) || {};
+      if (callerJobSecrets === 'inherit') {
         return;
       }
 
       const callerJobSecretKeys = Object.keys(callerJobSecrets);
 
-      const result = Object.entries(workflow.workflowCall()?.secrets || {}).map(
-        ([secretId, secret]) => {
-          if (secret.required && !callerJobSecretKeys.includes(secretId)) {
-            throw Error(`Secret ${secretId} is required, but not provided while calling.`);
-          }
+      const result = Object.entries(workflow.workflowCall()?.secrets || {}).map(([secretId, secret]) => {
+        if (secret.required && !callerJobSecretKeys.includes(secretId)) {
+          throw Error(`Secret ${secretId} is required, but not provided while calling.`);
+        }
 
-          const value = callerJobSecrets[secretId];
+        const value = callerJobSecrets[secretId];
 
-          return [secretId, value];
-        },
-      );
+        return [secretId, value];
+      });
 
       const secrets = Object.fromEntries(result);
 

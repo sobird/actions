@@ -4,7 +4,7 @@ import path from 'node:path';
 import { parse } from 'yaml';
 
 import Executor, { Conditional } from '@/common/executor';
-import logger from '@/common/logger';
+import logger, { getLogger } from '@/common/logger';
 import Action, { ActionProps } from '@/runner/action';
 import ActionCommandFile from '@/runner/action/command/file';
 import ActionFactory from '@/runner/action/factory';
@@ -77,7 +77,10 @@ abstract class StepAction extends Step {
             outcome: 'skipped',
             conclusion: 'skipped',
           };
-          logger.debug("Skipping step '%s' due to '%s'", this.Name(runner), this.if.source || '');
+
+          getLogger().debug(`Skipping step '${this.Name(runner)}' due to '${this.if.source || ''}'`, {
+            stepResult: 'skipped',
+          });
           return;
         }
       } catch (err) {
@@ -100,7 +103,7 @@ abstract class StepAction extends Step {
         // this.applyEnv(runner, this.environment);
         await withTimeout(executor.execute(runner), timeoutMinutes * 60 * 1000);
         await actionCommandFile.process();
-        logger.info(`🎉 Finishing: ${stage} ${name}`);
+        getLogger().info(`🎉 Finishing: ${stage} ${name}`, { stepResult: 'success' });
       } catch (error) {
         // steps 按照循序执行，如果有一个步骤失败，则后续步骤会跳过，且该步骤所在的job状态变为 failure
         logger.error((error as Error).message);
@@ -130,7 +133,7 @@ abstract class StepAction extends Step {
           );
         }
 
-        logger.error(`🍎 Failure: ${stage} ${name}`);
+        getLogger().error(`🍎 Failure: ${stage} ${name}`, { stepResult: 'failure' });
       }
     });
   }

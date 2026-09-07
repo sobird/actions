@@ -12,7 +12,7 @@
 
 import Executor, { Conditional } from '@/common/executor';
 import Yaml from '@/common/yaml';
-import Runner from '@/runner';
+import Runner, { WellKnownTags } from '@/runner';
 
 import Input, { InputProps } from './input';
 import Output, { OutputProps } from './output';
@@ -200,7 +200,7 @@ abstract class Action extends Yaml {
       const { uses } = stepAction;
       const groupName = `Run ${uses.uses}`;
 
-      runner.output(`##[group]${groupName}`);
+      runner.write(WellKnownTags.Group, `${groupName}`);
 
       if (inputs.length > 0) {
         runner.output('with:');
@@ -220,7 +220,7 @@ abstract class Action extends Yaml {
         });
       }
 
-      runner.output('##[endgroup]');
+      runner.output(WellKnownTags.EndGroup);
     });
   }
 

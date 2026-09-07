@@ -192,9 +192,15 @@ class Runner {
     return new Executor(() =>
       withJobLogger(this.run.jobId, this.name, this.config, {}, async () => {
         if (!this.enabled) {
+          getLogger().debug(`Skipping job '${this.name}' due to '${job.if}'`, { jobResult: 'skipped' });
           return;
         }
+
         await job.executor(this).execute(this);
+
+        const jobResult: 'success' | 'failure' = this.context.job.status === 'failure' ? 'failure' : 'success';
+        job.Result = jobResult;
+        getLogger().info(`\u{1F3C1}  Job ${jobResult === 'success' ? 'succeeded' : 'failed'}`, { jobResult });
       }),
     );
   }

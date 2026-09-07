@@ -27,21 +27,25 @@ export class Runner {
   async run(task: Task) {
     const reporter = new Reporter(this.client, task);
     await reporter.runDaemon(); // 启动 1s 定时上报
-    reporter.log(
-      `Received task ${task.id} of job ${task.context?.['job']}, triggered by event: ${task.context?.['event_name']}`,
-    );
+
+    const jobId = task.context?.['job']?.toString() ?? '';
+
+    reporter.log(`Received task ${task.id} of job ${jobId}, triggered by event: ${task.context?.['event_name']}`);
 
     withLoggerHook(reporter, async () => {
       try {
-        const plan = Workflow.Load(task.workflowPayload?.toString() ?? '').plan();
+        const workflow = Workflow.Load(task.workflowPayload?.toString() ?? '');
+        const plan = workflow.plan();
         const runnerConfig = this.configure(task);
+
+        reporter.resetSteps(workflow.jobs[jobId].steps.toJSON().length);
 
         await withTimeout(
           plan.executor(runnerConfig).execute(),
           this.config.daemon.timeout,
           `Task ${task.id} timed out`,
         );
-        await reporter.close(); // 成功：终结状态 + noMore 日志
+        await reporter.close(''); // 成功：jobResult marker 已置 SUCCESS，close 不再补 "Early termination"
       } catch (error) {
         reporter.log('Task failed:', error instanceof Error ? error.message : String(error));
         await reporter.close('Task failed'); // 失败：标记 FAILURE

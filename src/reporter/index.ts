@@ -1,3 +1,4 @@
+import { appendFile } from 'node:fs/promises';
 /**
  * 任务状态&日志 报告器 向Runner所属的服务器实例报告日志
  * @todo 每个任务运行时，才会创建一个Reporter实例，任务结束，超时或者出错时，自动结束报告
@@ -6,7 +7,7 @@
  */
 import util from 'node:util';
 
-import { create, clone } from '@bufbuild/protobuf';
+import { create, clone, toJson } from '@bufbuild/protobuf';
 import { timestampFromDate } from '@bufbuild/protobuf/wkt';
 import { Mutex } from 'async-mutex';
 import retry from 'async-retry';
@@ -23,6 +24,8 @@ import {
   StepState,
   StepStateSchema,
   Result,
+  UpdateLogRequestSchema,
+  UpdateTaskRequestSchema,
 } from '@/gen/runner/v1/messages_pb';
 import { Replacer } from '@/utils';
 
@@ -43,6 +46,7 @@ class Reporter implements LoggerHook {
 
   private debugOutputEnabled = false;
   private stopCommandEndToken = '';
+  private apiLogFile = process.env.ACT_RUNNER_API_LOG ?? 'act_runner_api.jsonl';
 
   private clientMutex = new Mutex();
   private daemonTimer?: NodeJS.Timeout;
@@ -96,7 +100,7 @@ class Reporter implements LoggerHook {
    */
   fire(entry: LogEntry) {
     // 使用提供的日志条目
-    logger.verbose(entry);
+    // logger.verbose(entry);
 
     const timestamp = timestampFromDate(new Date(entry.timestamp));
     if (!this.state.startedAt) {
@@ -114,7 +118,8 @@ class Reporter implements LoggerHook {
         this.state.steps.map((item) => {
           const step = item;
           if (step.result === Result.UNSPECIFIED) {
-            step.result = Result.UNSPECIFIED;
+            // 与 act_runner 对齐：job 结束时未跑到的步骤标记为 CANCELLED
+            step.result = Result.CANCELLED;
             if (jobResult === Result.SKIPPED) {
               step.result = Result.SKIPPED;
             }
@@ -237,6 +242,26 @@ class Reporter implements LoggerHook {
   }
 
   /**
+   * 将 UpdateLog/UpdateTask 请求数据以 JSONL 追加到本地文件，与 Runner(Go) 侧记录格式保持一致。
+   */
+  private async appendApiLog(api: string, data: unknown): Promise<void> {
+    if (process.env.VITEST) {
+      return;
+    }
+
+    const record = {
+      timestamp: new Date().toISOString(),
+      api,
+      data,
+    };
+    try {
+      await appendFile(this.apiLogFile, `${JSON.stringify(record)}\n`, 'utf8');
+    } catch (err) {
+      logger.error(`append ${api} api log failed: ${err}`);
+    }
+  }
+
+  /**
    * 关闭报告器并报告最终状态
    * @param lastWords
    */
@@ -286,15 +311,15 @@ class Reporter implements LoggerHook {
    */
   async reportLog(noMore: boolean) {
     return this.clientMutex.runExclusive(async () => {
-      const updateLogResponse = await this.client.updateLog(
-        {
-          taskId: this.state.id,
-          index: this.logOffset,
-          rows: this.logRows,
-          noMore,
-        },
-        { signal: this.abortController.signal },
-      );
+      const request = create(UpdateLogRequestSchema, {
+        taskId: this.state.id,
+        index: this.logOffset,
+        rows: this.logRows,
+        noMore,
+      });
+      await this.appendApiLog('UpdateLog', toJson(UpdateLogRequestSchema, request));
+
+      const updateLogResponse = await this.client.updateLog(request, { signal: this.abortController.signal });
 
       const { ackIndex } = updateLogResponse;
       if (ackIndex < this.logOffset) {
@@ -318,10 +343,10 @@ class Reporter implements LoggerHook {
       const state = clone(TaskStateSchema, this.state);
       const outputs = Object.fromEntries(this.outputs);
 
-      const updateTaskResponse = await this.client.updateTask(
-        { state, outputs },
-        { signal: this.abortController.signal },
-      );
+      const request = create(UpdateTaskRequestSchema, { state, outputs });
+      await this.appendApiLog('UpdateTask', toJson(UpdateTaskRequestSchema, request));
+
+      const updateTaskResponse = await this.client.updateTask(request, { signal: this.abortController.signal });
       if (!updateTaskResponse) {
         return;
       }
