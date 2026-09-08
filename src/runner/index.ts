@@ -125,6 +125,14 @@ class Runner {
     return Boolean(this.parent);
   }
 
+  get isDebuged() {
+    return (
+      this.context.secrets[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' ||
+      this.context.vars[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' ||
+      false
+    );
+  }
+
   get root(): Runner {
     return this.parent ? this.parent.root : this;
   }
@@ -171,10 +179,7 @@ class Runner {
     }
 
     // Initialize 'echo on action command success' property, default to false, unless Step_Debug is set
-    this.echoOnActionCommand =
-      context.secrets[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' ||
-      context.vars[Constants.Variables.Actions.StepDebug]?.toLowerCase() === 'true' ||
-      false;
+    this.echoOnActionCommand = this.isDebuged;
 
     if (config.serverInstance) {
       const serverInstance = /^http(s)?:\/\//i.test(config.serverInstance)
@@ -667,7 +672,7 @@ class Runner {
     const jobIf = job.if.evaluate(this);
 
     if (!jobIf) {
-      console.error(`Skipping job '${this.name}' due to '${job.if}'`);
+      // console.error(`Skipping job '${this.name}' due to '${job.if}'`);
       return false;
     }
 
@@ -868,23 +873,23 @@ class Runner {
     }
     return message;
   }
-  // logger
 
-  /**
-   * 官方 ExecutionContext.Write 的等价物：所有用户可见日志行的统一出口。
-   * 组合 tag+message 后统一经 maskSecrets 脱敏，再写入 job logger。
-   */
-  write(tag: string, message: string) {
+  // logger
+  write(tag: string, message: string, ...meta: unknown[]) {
     const line = tag ? `${tag}${message}` : message;
-    getLogger().info(this.maskSecrets(line));
+    getLogger().info(this.maskSecrets(line), ...meta);
   }
 
-  output(message: string) {
-    this.write('', message);
+  output(message: string, ...meta: unknown[]) {
+    this.write('', message, ...meta);
   }
 
   debug(message: string) {
-    getLogger().debug(this.maskSecrets(message));
+    if (this.isDebuged) {
+      message.split(/\r?\n/).forEach((line) => {
+        this.write(WellKnownTags.Debug, line);
+      });
+    }
   }
 
   error(message: string) {

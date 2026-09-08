@@ -6,6 +6,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { create } from '@bufbuild/protobuf';
+
+import { IssueType, IssueSchema } from '@/gen/runner/v1/messages_pb';
+
 import type Runner from '.';
 import { IssueMatcher, IssueMatch } from './action/command/issueMatcher';
 import ActionCommandManager from './action/command/manager';
@@ -27,7 +31,10 @@ export default class OutputManager {
 
   matchers: IssueMatcher[] = [];
 
-  constructor(public runner: Runner, public actionCommandManager = new ActionCommandManager(runner)) {}
+  constructor(
+    public runner: Runner,
+    public actionCommandManager = new ActionCommandManager(runner),
+  ) {}
 
   async onDataReceived(line: string) {
     if (await this.actionCommandManager.process(line)) {
@@ -46,7 +53,9 @@ export default class OutputManager {
             break;
           } catch (error) {
             if (attempt < this._maxAttempts) {
-              this.runner.debug(`Timeout processing issue matcher '${matcher.owner}' against line '${stripped}'. Exception: ${error}`);
+              this.runner.debug(
+                `Timeout processing issue matcher '${matcher.owner}' against line '${stripped}'. Exception: ${error}`,
+              );
             } else {
               // this.runner.warning(`Removing issue matcher '${matcher.owner}'. Matcher failed ${this._maxAttempts} times. Error: ${error.message}`);
               this.removeMatcher(matcher);
@@ -56,7 +65,13 @@ export default class OutputManager {
 
         if (match) {
           // Reset other matchers
-          this.matchers.filter((m) => { return m !== matcher; }).forEach((m) => { return m.reset(); });
+          this.matchers
+            .filter((m) => {
+              return m !== matcher;
+            })
+            .forEach((m) => {
+              return m.reset();
+            });
 
           // Convert to issue
           const issue = this.convertToIssue(match);
@@ -75,11 +90,15 @@ export default class OutputManager {
     }
 
     // Regular output
-    this.runner.output(line);
+    this.runner.output('', line, {
+      rawOutput: true,
+    });
   }
 
   removeMatcher(matcher: IssueMatcher) {
-    this.matchers = this.matchers.filter((m) => { return m !== matcher; });
+    this.matchers = this.matchers.filter((m) => {
+      return m !== matcher;
+    });
   }
 
   convertToIssue(match: IssueMatch) {
@@ -90,22 +109,34 @@ export default class OutputManager {
 
     const issueType = this.getIssueType(match.severity);
     if (!issueType) {
-      this.runner.debug(`Skipped logging an issue for the matched line because the severity '${match.severity}' is not supported.`);
+      this.runner.debug(
+        `Skipped logging an issue for the matched line because the severity '${match.severity}' is not supported.`,
+      );
       return null;
     }
 
-    const issue = {
+    const issue = create(IssueSchema, {
       message: match.message,
       type: issueType,
       data: {},
-    };
+    });
 
-    if (match.line && !Number.isNaN(parseInt(match.line, 10))) {
-      issue.data.line = parseInt(match.line, 10);
+    if (match.line) {
+      const line = Number(match.line);
+      if (!isNaN(line) && Number.isInteger(line) && line >= 0) {
+        issue.data['line'] = line.toString();
+      } else {
+        this.runner.debug(`Unable to parse line number '${match.line}'`);
+      }
     }
 
-    if (match.column && !Number.isNaN(parseInt(match.column, 10))) {
-      issue.data.col = parseInt(match.column, 10);
+    if (match.column) {
+      const column = Number(match.column);
+      if (!isNaN(column) && Number.isInteger(column) && column >= 0) {
+        issue.data['col'] = column.toString();
+      } else {
+        this.runner.debug(`Unable to parse column number '${match.column}'`);
+      }
     }
 
     if (match.code && match.code.trim()) {
@@ -147,7 +178,9 @@ export default class OutputManager {
           this.runner.debug(`Dropping file value '${filePath}'. Path does not exist.`);
         }
       } catch (error) {
-        this.runner.debug(`Dropping file value '${match.file}' and fromPath value '${match.fromPath}'. Exception during validation: ${error}`);
+        this.runner.debug(
+          `Dropping file value '${match.file}' and fromPath value '${match.fromPath}'. Exception during validation: ${error}`,
+        );
       }
     }
 
@@ -156,11 +189,13 @@ export default class OutputManager {
 
   getIssueType(severity?: string) {
     if (!severity || severity.toLowerCase() === 'error') {
-      return 'error';
-    } if (severity.toLowerCase() === 'warning') {
-      return 'warning';
-    } if (severity.toLowerCase() === 'notice') {
-      return 'notice';
+      return IssueType.ERROR;
+    }
+    if (severity.toLowerCase() === 'warning') {
+      return IssueType.WARNING;
+    }
+    if (severity.toLowerCase() === 'notice') {
+      return IssueType.NOTICE;
     }
     return null;
   }
@@ -186,14 +221,15 @@ export default class OutputManager {
         const serverUrl = this.runner.context.github.server_url || 'https://github.com';
         const { host } = new URL(serverUrl);
         const nameWithOwner = this.runner.context.github.repository;
-        const patterns = [
-          `url = ${serverUrl}/${nameWithOwner}`,
-          `url = git@${host}:${nameWithOwner}.git`,
-        ];
+        const patterns = [`url = ${serverUrl}/${nameWithOwner}`, `url = git@${host}:${nameWithOwner}.git`];
 
         const content = fs.readFileSync(gitConfigPath, 'utf8');
         for (const line of content.split('\n')) {
-          if (patterns.some((pattern) => { return line.trim() === pattern; })) {
+          if (
+            patterns.some((pattern) => {
+              return line.trim() === pattern;
+            })
+          ) {
             repoPath = dirPath;
             break;
           }
@@ -202,7 +238,9 @@ export default class OutputManager {
         repoPath = this.getRepositoryPath(dirPath, recursion + 1);
       }
     } catch (error) {
-      this.runner.debug(`Error when attempting to determine whether the path '${filePath}' is under the workflow repository: ${error.message}`);
+      this.runner.debug(
+        `Error when attempting to determine whether the path '${filePath}' is under the workflow repository: ${(error as Error).message}`,
+      );
     }
 
     this._directoryMap.set(dirPath, repoPath);
