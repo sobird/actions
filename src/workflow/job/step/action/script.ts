@@ -40,10 +40,23 @@ class StepActionScript extends StepAction {
 
       const env = Object.entries(stepAction.env.evaluate(runner) || {});
 
-      const groupName = `Run ${this.script}`;
+      let firstLine = this.script.trimStart(); // 去除前导空白（含 \r\n）
+      const firstNewLineIndex = firstLine.search(/[\r\n]/);
+      if (firstNewLineIndex !== -1) {
+        firstLine = firstLine.substring(0, firstNewLineIndex);
+      }
+
+      const groupName = `Run ${firstLine}`;
 
       runner.output(`${WellKnownTags.Group}${groupName}`);
-      runner.output(this.script);
+
+      const normalized = this.script.replace(/\r\n/g, '\n');
+      const lines = normalized.replace(/\n$/, '').split('\n');
+
+      for (const line of lines) {
+        runner.output(line);
+      }
+
       runner.output(`shell: ${this.cmd}`);
 
       if (env.length > 0) {
