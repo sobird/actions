@@ -12,7 +12,7 @@ export interface LogEntry extends winston.Logform.TransformableInfo {
   timestamp: string;
 
   stage?: string;
-  rawOutput?: boolean;
+  verbatim?: boolean;
   jobResult?: string;
   stepResult?: string;
   stepNumber?: string;

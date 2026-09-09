@@ -103,6 +103,7 @@ class Reporter implements LoggerHook {
     // logger.verbose(entry);
 
     const timestamp = timestampFromDate(new Date(entry.timestamp));
+
     if (!this.state.startedAt) {
       this.state.startedAt = timestamp;
     }
@@ -161,8 +162,8 @@ class Reporter implements LoggerHook {
       step.startedAt = timestamp;
     }
 
-    const rawOutput = entry.rawOutput;
-    if (rawOutput) {
+    const verbatim = entry.verbatim;
+    if (verbatim) {
       const logRow = this.parseLogRow(entry);
       if (logRow) {
         if (step.logLength === BigInt(0)) {
@@ -288,7 +289,7 @@ class Reporter implements LoggerHook {
           content: lastWords,
         }),
       );
-      this.state.startedAt = timestampFromDate(new Date());
+      this.state.stoppedAt = timestampFromDate(new Date());
     } else if (lastWords !== '') {
       this.logRows.push(
         create(LogRowSchema, {

@@ -1,12 +1,12 @@
 import os from 'node:os';
 import path from 'node:path';
-import { format } from 'node:util';
+import util from 'node:util';
 
 import shellQuote from 'shell-quote';
 
 import { WellKnownDirectory } from '@/common/constants';
 import Executor from '@/common/executor';
-import Runner from '@/runner';
+import Runner, { WellKnownTags } from '@/runner';
 
 import StepAction from '.';
 
@@ -42,7 +42,7 @@ class StepActionScript extends StepAction {
 
       const groupName = `Run ${this.script}`;
 
-      runner.output(`##[group]${groupName}`);
+      runner.output(`${WellKnownTags.Group}${groupName}`);
       runner.output(this.script);
       runner.output(`shell: ${this.cmd}`);
 
@@ -55,7 +55,7 @@ class StepActionScript extends StepAction {
         });
       }
 
-      runner.output('##[endgroup]');
+      runner.output(WellKnownTags.EndGroup);
 
       runner.debug(this.command);
     });
@@ -71,7 +71,7 @@ class StepActionScript extends StepAction {
     const scriptFilePath = path.join(WellKnownDirectory.Temp, `${this.uuid}${ext}`);
     const resolvedScriptPath = runner.container?.resolve(scriptFilePath);
 
-    this.command = format(cmd, resolvedScriptPath);
+    this.command = util.format(cmd, resolvedScriptPath);
 
     runner.container
       ?.putContent('.', {

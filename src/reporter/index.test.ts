@@ -133,7 +133,7 @@ describe('Reporter', () => {
       const context = {
         stage: 'Main',
         stepNumber: '0',
-        rawOutput: true,
+        verbatim: true,
       };
       const tests = [
         {

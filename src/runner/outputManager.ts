@@ -13,6 +13,7 @@ import { IssueType, IssueSchema } from '@/gen/runner/v1/messages_pb';
 import type Runner from '.';
 import { IssueMatcher, IssueMatch } from './action/command/issueMatcher';
 import ActionCommandManager from './action/command/manager';
+import { withVerbatimLogger } from './logger.ts';
 
 export default class OutputManager {
   _colorCodePrefix = '\x1b[';
@@ -37,61 +38,61 @@ export default class OutputManager {
   ) {}
 
   async onDataReceived(line: string) {
-    if (await this.actionCommandManager.process(line)) {
-      return;
-    }
+    withVerbatimLogger(async () => {
+      if (await this.actionCommandManager.process(line)) {
+        return;
+      }
 
-    // Handle issue matchers
-    if (this.matchers.length > 0) {
-      const stripped = line.includes(this._colorCodePrefix) ? line.replace(this._colorCodeRegex, '') : line;
+      // Handle issue matchers
+      if (this.matchers.length > 0) {
+        const stripped = line.includes(this._colorCodePrefix) ? line.replace(this._colorCodeRegex, '') : line;
 
-      for (const matcher of this.matchers) {
-        let match = null;
-        for (let attempt = 1; attempt <= this._maxAttempts; attempt++) {
-          try {
-            match = matcher.match(stripped);
-            break;
-          } catch (error) {
-            if (attempt < this._maxAttempts) {
-              this.runner.debug(
-                `Timeout processing issue matcher '${matcher.owner}' against line '${stripped}'. Exception: ${error}`,
-              );
-            } else {
-              // this.runner.warning(`Removing issue matcher '${matcher.owner}'. Matcher failed ${this._maxAttempts} times. Error: ${error.message}`);
-              this.removeMatcher(matcher);
+        for (const matcher of this.matchers) {
+          let match = null;
+          for (let attempt = 1; attempt <= this._maxAttempts; attempt++) {
+            try {
+              match = matcher.match(stripped);
+              break;
+            } catch (error) {
+              if (attempt < this._maxAttempts) {
+                this.runner.debug(
+                  `Timeout processing issue matcher '${matcher.owner}' against line '${stripped}'. Exception: ${error}`,
+                );
+              } else {
+                // this.runner.warning(`Removing issue matcher '${matcher.owner}'. Matcher failed ${this._maxAttempts} times. Error: ${error.message}`);
+                this.removeMatcher(matcher);
+              }
+            }
+          }
+
+          if (match) {
+            // Reset other matchers
+            this.matchers
+              .filter((m) => {
+                return m !== matcher;
+              })
+              .forEach((m) => {
+                return m.reset();
+              });
+
+            // Convert to issue
+            const issue = this.convertToIssue(match);
+            if (issue) {
+              const logOptions = { logMessage: stripped };
+              this.runner.addIssue(issue, logOptions);
+              return;
             }
           }
         }
-
-        if (match) {
-          // Reset other matchers
-          this.matchers
-            .filter((m) => {
-              return m !== matcher;
-            })
-            .forEach((m) => {
-              return m.reset();
-            });
-
-          // Convert to issue
-          const issue = this.convertToIssue(match);
-          if (issue) {
-            const logOptions = { logMessage: stripped };
-            this.runner.addIssue(issue, logOptions);
-            return;
-          }
-        }
       }
-    }
 
-    // Handle fatal errors
-    if (line.toLowerCase().includes('fatal: unsafe repository')) {
-      // this.runner.stepTelemetry.errorMessages.push(line);
-    }
+      // Handle fatal errors
+      if (line.toLowerCase().includes('fatal: unsafe repository')) {
+        // this.runner.stepTelemetry.errorMessages.push(line);
+      }
 
-    // Regular output
-    this.runner.output('', line, {
-      rawOutput: true,
+      // Regular output
+      this.runner.output(line);
     });
   }
 

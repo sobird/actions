@@ -21,7 +21,7 @@ const jobLogFormat = (color: ChalkInstance, logPrefixJobID?: boolean) =>
     const job = logPrefixJobID ? info.jobID : info.job;
     const debugFlag = info.level === 'debug' ? '[DEBUG] ' : '';
 
-    if (info.raw_output === true) {
+    if (info.verbatim === true) {
       return `${color(`[${job}]`)} | ${msg}`;
     } else if (info.dryrun === true) {
       return `${chalk.gray('*DRYRUN*')} ${color(`[${job}]`)} ${debugFlag}${msg}`;
@@ -30,6 +30,14 @@ const jobLogFormat = (color: ChalkInstance, logPrefixJobID?: boolean) =>
     }
   });
 
+export function withVerbatimLogger<T>(callback: LoggerCallback<T>): T {
+  return withLogger(
+    getLogger().child({
+      verbatim: true,
+    }),
+    callback,
+  );
+}
 export function withJobLogger<T>(
   jobID: string,
   jobName: string,

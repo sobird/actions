@@ -875,19 +875,19 @@ class Runner {
   }
 
   // logger
-  write(tag: string, message: string, ...meta: unknown[]) {
+  write(tag: string, message: string, verbatim = true) {
     const line = tag ? `${tag}${message}` : message;
-    getLogger().info(this.maskSecrets(line), ...meta);
+    getLogger().info(this.maskSecrets(line), { verbatim });
   }
 
-  output(message: string, ...meta: unknown[]) {
-    this.write('', message, ...meta);
+  output(message: string, verbatim = true) {
+    this.write('', message, verbatim);
   }
 
-  debug(message: string) {
+  debug(message: string, verbatim = true) {
     if (this.isDebuged) {
       message.split(/\r?\n/).forEach((line) => {
-        this.write(WellKnownTags.Debug, line);
+        this.write(WellKnownTags.Debug, line, verbatim);
       });
     }
   }
