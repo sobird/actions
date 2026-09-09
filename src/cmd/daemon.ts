@@ -40,7 +40,7 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
         return;
       }
     } catch (err) {
-      logger.error('Failed to load registration file: %s', (err as Error).message);
+      logger.error(`Failed to load registration file: ${(err as Error).message}`);
       return;
     }
 

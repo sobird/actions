@@ -877,7 +877,15 @@ class Runner {
   // logger
   write(tag: string, message: string, verbatim = true) {
     const line = tag ? `${tag}${message}` : message;
-    getLogger().info(this.maskSecrets(line), { verbatim });
+    // verbatim 不能作为 info 的第二个参数传入：format.splat() 会把额外参数用于
+    // 对含 %s 占位符的消息做 util.format 插值，改坏日志内容。用 child logger 的
+    // 默认元数据携带 verbatim，使其不进入 splat 插值流程。
+    const masked = this.maskSecrets(line);
+    if (verbatim) {
+      getLogger().child({ verbatim: true }).info(masked);
+    } else {
+      getLogger().info(masked);
+    }
   }
 
   output(message: string, verbatim = true) {

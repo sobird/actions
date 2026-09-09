@@ -6,6 +6,7 @@
 
 import os from 'node:os';
 import path from 'node:path';
+import util from 'node:util';
 
 import { Command, Option } from 'commander';
 import ip from 'ip';
@@ -53,7 +54,7 @@ function collectMatrix(value: string, previous: Record<string, unknown[]> = {}) 
   const pairs = value.split(':');
 
   if (pairs.length < 2) {
-    logger.error('Invalid matrix format. Failed to parse %s', value);
+    logger.error(`Invalid matrix format. Failed to parse ${value}`);
   }
 
   previous[pairs[0]] = [...new Set(previous[pairs[0]] || []).add(pairs[1])];
@@ -240,14 +241,14 @@ export const runCommand = new Command('run')
     let plan = planner.planAll();
 
     if (eventName) {
-      logger.info('Using chosed event for filtering: %s', eventName);
+      logger.info(`Using chosed event for filtering: ${eventName}`);
     } else if (events.length === 1 && events[0]) {
-      logger.info('Using the only detected workflow event: %s', events[0]);
+      logger.info(`Using the only detected workflow event: ${events[0]}`);
       [eventName] = events;
     } else if (options.detectEvent && events.length > 0 && events[0]) {
       // set default event type to first event from many available
       // this way user dont have to specify the event.
-      logger.info('Using first detected workflow event for filtering: %s', events[0]);
+      logger.info(`Using first detected workflow event for filtering: ${events[0]}`);
       [eventName] = events;
     } else {
       // logger.debug('Using default workflow event: push');
@@ -255,10 +256,10 @@ export const runCommand = new Command('run')
     }
 
     if (options.job) {
-      logger.info('Preparing plan with a job: %s', options.job);
+      logger.info(`Preparing plan with a job: ${options.job}`);
       plan = planner.planJob(options.job);
     } else if (eventName) {
-      logger.info('Preparing plan for a event: %s', eventName);
+      logger.info(`Preparing plan for a event: ${eventName}`);
       plan = await planner.planEvent(eventName);
     } else {
       logger.info('Preparing plan with all jobs');
@@ -276,30 +277,36 @@ export const runCommand = new Command('run')
     const deprecationWarning =
       '--%s is deprecated and will be removed soon, please switch to cli: --container-options "%s" or .actionsrc: { "containerOptions": "%s" }.';
     if (options.containerPrivileged) {
-      logger.warn(deprecationWarning, 'privileged', '--privileged', '--privileged');
+      logger.warn(util.format(deprecationWarning, 'privileged', '--privileged', '--privileged'));
     }
     if (options.containerUsernsMode) {
       logger.warn(
-        deprecationWarning,
-        'userns',
-        `--userns=${options.containerUsernsMode}`,
-        `--userns=${options.containerUsernsMode}`,
+        util.format(
+          deprecationWarning,
+          'userns',
+          `--userns=${options.containerUsernsMode}`,
+          `--userns=${options.containerUsernsMode}`,
+        ),
       );
     }
     if (options.containerCapAdd) {
       logger.warn(
-        deprecationWarning,
-        'container-cap-add',
-        `--cap-add=${options.containerCapAdd.join(' ')}`,
-        `--cap-add=${options.containerCapAdd.join(' ')}`,
+        util.format(
+          deprecationWarning,
+          'container-cap-add',
+          `--cap-add=${options.containerCapAdd.join(' ')}`,
+          `--cap-add=${options.containerCapAdd.join(' ')}`,
+        ),
       );
     }
     if (options.containerCapDrop) {
       logger.warn(
-        deprecationWarning,
-        'container-cap-drop',
-        `--cap-drop=${options.containerCapDrop.join(' ')}`,
-        `--cap-drop=${options.containerCapDrop.join(' ')}`,
+        util.format(
+          deprecationWarning,
+          'container-cap-drop',
+          `--cap-drop=${options.containerCapDrop.join(' ')}`,
+          `--cap-drop=${options.containerCapDrop.join(' ')}`,
+        ),
       );
     }
 
@@ -361,9 +368,9 @@ export const runCommand = new Command('run')
       const { socket, host } = Docker.SocketAndHost(runner.containerDaemonSocket);
       process.env.DOCKER_HOST = host;
       runner.containerDaemonSocket = socket;
-      logger.info("Using docker host '%s', and daemon socket '%s'", host, socket);
+      logger.info(`Using docker host '${host}', and daemon socket '${socket}'`);
     } catch (error) {
-      logger.warn("Couldn't get a valid docker connection: %s", (error as Error).message);
+      logger.warn(`Couldn't get a valid docker connection: ${(error as Error).message}`);
     }
 
     if (process.platform === 'darwin' && process.arch === 'arm64' && !runner.containerPlatform) {
@@ -372,23 +379,23 @@ export const runCommand = new Command('run')
       );
     }
 
-    logger.debug('Loading environment from %s', runner.envFile);
+    logger.debug(`Loading environment from ${runner.envFile}`);
     Object.assign(runner.env, readConfSync(runner.envFile));
     Object.assign(runner.context.env, runner.env);
 
-    logger.debug('Loading vars from %s', runner.varsFile);
+    logger.debug(`Loading vars from ${runner.varsFile}`);
     Object.assign(runner.vars, readConfSync(runner.varsFile));
     Object.assign(runner.context.vars, runner.vars);
 
-    logger.debug('Loading secrets from %s', runner.secretsFile);
+    logger.debug(`Loading secrets from ${runner.secretsFile}`);
     Object.assign(runner.secrets, readConfSync(runner.secretsFile));
     Object.assign(runner.context.secrets, runner.secrets);
 
-    logger.debug('Loading action inputs from %s', runner.inputsFile);
+    logger.debug(`Loading action inputs from ${runner.inputsFile}`);
     Object.assign(runner.inputs, readConfSync(runner.inputsFile));
     Object.assign(runner.context.inputs, runner.inputs);
 
-    logger.debug('Loading github event from %s', runner.eventFile);
+    logger.debug(`Loading github event from ${runner.eventFile}`);
     const event = readJsonSync(runner.eventFile ?? '');
     if (!event?.repository?.default_branch) {
       event.repository = event.repository || {};
