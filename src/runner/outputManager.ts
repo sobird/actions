@@ -32,13 +32,28 @@ export default class OutputManager {
 
   matchers: IssueMatcher[] = [];
 
+  /**
+   * stdout/stderr 的回调可能并发进入同一个有状态的 ActionCommandManager。
+   * 用 Promise 链逐行排队处理：保证日志顺序与到达顺序一致，
+   * 也避免 stop-commands / stopToken 这类命令状态被并发打乱。
+   */
+  private lineQueue: Promise<void> = Promise.resolve();
+
   constructor(
     public runner: Runner,
     public actionCommandManager = new ActionCommandManager(runner),
   ) {}
 
-  async onDataReceived(line: string) {
-    withVerbatimLogger(async () => {
+  onDataReceived(line: string) {
+    this.lineQueue = this.lineQueue
+      .catch(() => undefined)
+      .then(() => this.processLine(line))
+      .catch(() => undefined);
+    return this.lineQueue;
+  }
+
+  async processLine(line: string) {
+    return withVerbatimLogger(async () => {
       if (await this.actionCommandManager.process(line)) {
         return;
       }
