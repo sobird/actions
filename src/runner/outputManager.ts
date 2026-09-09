@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { create } from '@bufbuild/protobuf';
+import { Mutex } from 'async-mutex';
 
 import { IssueType, IssueSchema } from '@/gen/runner/v1/messages_pb';
 
@@ -24,91 +25,78 @@ export default class OutputManager {
 
   _colorCodeRegex = /\\x1b\[[0-9;]*m?/g;
 
-  // _commandManager = commandManager;
-
   _failsafe = 50;
 
   _directoryMap = new Map();
 
   matchers: IssueMatcher[] = [];
 
-  /**
-   * stdout/stderr 的回调可能并发进入同一个有状态的 ActionCommandManager。
-   * 用 Promise 链逐行排队处理：保证日志顺序与到达顺序一致，
-   * 也避免 stop-commands / stopToken 这类命令状态被并发打乱。
-   */
-  private lineQueue: Promise<void> = Promise.resolve();
+  private lineQueue = new Mutex();
 
   constructor(
     public runner: Runner,
     public actionCommandManager = new ActionCommandManager(runner),
   ) {}
 
-  onDataReceived(line: string) {
-    this.lineQueue = this.lineQueue
-      .catch(() => undefined)
-      .then(() => this.processLine(line))
-      .catch(() => undefined);
-    return this.lineQueue;
-  }
+  async onDataReceived(line: string) {
+    return this.lineQueue.runExclusive(() =>
+      withVerbatimLogger(async () => {
+        if (await this.actionCommandManager.process(line)) {
+          return;
+        }
 
-  async processLine(line: string) {
-    return withVerbatimLogger(async () => {
-      if (await this.actionCommandManager.process(line)) {
-        return;
-      }
+        // Handle issue matchers
+        if (this.matchers.length > 0) {
+          const stripped = line.includes(this._colorCodePrefix) ? line.replace(this._colorCodeRegex, '') : line;
 
-      // Handle issue matchers
-      if (this.matchers.length > 0) {
-        const stripped = line.includes(this._colorCodePrefix) ? line.replace(this._colorCodeRegex, '') : line;
+          for (const matcher of this.matchers) {
+            let match = null;
+            for (let attempt = 1; attempt <= this._maxAttempts; attempt++) {
+              try {
+                match = matcher.match(stripped);
+                break;
+              } catch (error) {
+                if (attempt < this._maxAttempts) {
+                  this.runner.debug(
+                    `Timeout processing issue matcher '${matcher.owner}' against line '${stripped}'. Exception: ${error}`,
+                  );
+                } else {
+                  // this.runner.warning(`Removing issue matcher '${matcher.owner}'. Matcher failed ${this._maxAttempts} times. Error: ${error.message}`);
+                  this.removeMatcher(matcher);
+                }
+              }
+            }
 
-        for (const matcher of this.matchers) {
-          let match = null;
-          for (let attempt = 1; attempt <= this._maxAttempts; attempt++) {
-            try {
-              match = matcher.match(stripped);
-              break;
-            } catch (error) {
-              if (attempt < this._maxAttempts) {
-                this.runner.debug(
-                  `Timeout processing issue matcher '${matcher.owner}' against line '${stripped}'. Exception: ${error}`,
-                );
-              } else {
-                // this.runner.warning(`Removing issue matcher '${matcher.owner}'. Matcher failed ${this._maxAttempts} times. Error: ${error.message}`);
-                this.removeMatcher(matcher);
+            if (match) {
+              // Reset other matchers
+              this.matchers
+                .filter((m) => {
+                  return m !== matcher;
+                })
+                .forEach((m) => {
+                  return m.reset();
+                });
+
+              // Convert to issue
+              const issue = this.convertToIssue(match);
+              if (issue) {
+                const logOptions = { logMessage: stripped };
+                this.runner.addIssue(issue, logOptions);
+                return;
               }
             }
           }
-
-          if (match) {
-            // Reset other matchers
-            this.matchers
-              .filter((m) => {
-                return m !== matcher;
-              })
-              .forEach((m) => {
-                return m.reset();
-              });
-
-            // Convert to issue
-            const issue = this.convertToIssue(match);
-            if (issue) {
-              const logOptions = { logMessage: stripped };
-              this.runner.addIssue(issue, logOptions);
-              return;
-            }
-          }
         }
-      }
 
-      // Handle fatal errors
-      if (line.toLowerCase().includes('fatal: unsafe repository')) {
-        // this.runner.stepTelemetry.errorMessages.push(line);
-      }
+        // Handle fatal errors
+        if (line.toLowerCase().includes('fatal: unsafe repository')) {
+          // this.runner.stepTelemetry.errorMessages.push(line);
+        }
 
-      // Regular output
-      this.runner.output(line);
-    });
+        // Regular output
+        this.runner.output(line);
+      }),
+    );
   }
 
   removeMatcher(matcher: IssueMatcher) {
