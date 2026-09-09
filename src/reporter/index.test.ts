@@ -9,7 +9,9 @@ import Reporter from './index';
 
 vi.mock('../gen');
 
+import { create } from '@bufbuild/protobuf';
 import { type LogEntry } from '@/common/logger';
+import { UpdateLogResponseSchema } from '@/gen/runner/v1/messages_pb';
 
 const { RunnerServiceClient } = new Client('', '', false);
 const { task } = await RunnerServiceClient.fetchTask({
@@ -17,122 +19,13 @@ const { task } = await RunnerServiceClient.fetchTask({
 });
 
 describe('Reporter', () => {
-  describe('parseLogRow', () => {
-    const tests = [
-      {
-        name: 'No command',
-        debugOutputEnabled: false,
-        args: ['Hello, world!'],
-        want: ['Hello, world!'],
-      },
-      {
-        name: 'Add-mask',
-        debugOutputEnabled: false,
-        args: ['foo mysecret bar', '::add-mask::mysecret', 'foo mysecret bar'],
-        want: ['foo mysecret bar', null, 'foo *** bar'],
-      },
-      {
-        name: 'Debug enabled',
-        debugOutputEnabled: true,
-        args: ['::debug::GitHub Actions runtime token access controls'],
-        want: ['GitHub Actions runtime token access controls'],
-      },
-      {
-        name: 'Debug not enabled',
-        debugOutputEnabled: false,
-        args: ['::debug::GitHub Actions runtime token access controls'],
-        want: [null],
-      },
-      {
-        name: 'notice',
-        debugOutputEnabled: false,
-        args: ["::notice file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
-        want: ["::notice file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
-      },
-      {
-        name: 'warning',
-        debugOutputEnabled: false,
-        args: ["::warning file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
-        want: ["::warning file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
-      },
-      {
-        name: 'error',
-        debugOutputEnabled: false,
-        args: ["::error file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
-        want: ["::error file=file.name,line=42,endLine=48,title=Cool Title::Gosh, that's not going to work"],
-      },
-      {
-        name: 'group',
-        debugOutputEnabled: false,
-        args: ['::group::', '::endgroup::'],
-        want: ['::group::', '::endgroup::'],
-      },
-      {
-        name: 'stop-commands',
-        debugOutputEnabled: false,
-        args: [
-          '::add-mask::foo',
-          '::stop-commands::myverycoolstoptoken',
-          '::add-mask::bar',
-          '::debug::Stuff',
-          'myverycoolstoptoken',
-          '::add-mask::baz',
-          '::myverycoolstoptoken::',
-          '::add-mask::wibble',
-          'foo bar baz wibble',
-        ],
-        want: [
-          null,
-          null,
-          '::add-mask::bar',
-          '::debug::Stuff',
-          'myverycoolstoptoken',
-          '::add-mask::baz',
-          null,
-          null,
-          '*** bar baz ***',
-        ],
-      },
-      {
-        name: 'unknown command',
-        debugOutputEnabled: false,
-        args: ['::set-mask::foo'],
-        want: ['::set-mask::foo'],
-      },
-      // ... 根据实际测试需求，可以在这里添加更多的测试用例 ...
-    ];
-
-    tests.forEach((test) => {
-      const reporter = new Reporter(RunnerServiceClient, task);
-      it(test.name, () => {
-        // @ts-expect-error 快速设置类的私有属性
-        reporter.debugOutputEnabled = test.debugOutputEnabled;
-
-        test.args.forEach((arg, index) => {
-          const logEntry: LogEntry = {
-            timestamp: new Date().toDateString(),
-            level: 'debug',
-            message: arg,
-          };
-
-          const result = reporter.parseLogRow(logEntry);
-          let got = null;
-          if (result?.content) {
-            got = result?.content;
-          }
-          expect(got).toStrictEqual(test.want[index]);
-        });
-      });
-    });
-  });
-
   // fire
   describe('fire', () => {
     const reporter = new Reporter(RunnerServiceClient, task);
     it('test fire', () => {
       const context = {
         stage: 'Main',
-        stepNumber: '0',
+        stepNumber: '2',
         verbatim: true,
       };
       const tests = [
@@ -174,7 +67,7 @@ describe('Reporter', () => {
       });
 
       // @ts-expect-error
-      expect(reporter.state.steps[stepNumber].logLength).toBe(BigInt(3));
+      expect(reporter.state.steps[stepNumber].logLength).toBe(BigInt(6));
     });
   });
 
@@ -216,7 +109,13 @@ describe('Reporter', () => {
   reporter.fire(logEntry);
 
   it('test reportLog', async () => {
+    // 服务端只 ack 部分行时,noMore=true 关闭上报应抛错以触发重试
+    vi.mocked(RunnerServiceClient.updateLog).mockResolvedValueOnce(
+      create(UpdateLogResponseSchema, { ackIndex: BigInt(0) }),
+    );
     await expect(reporter.reportLog(true)).rejects.toThrow('Not all logs are submitted');
+
+    // 服务端全量 ack 时正常返回
     await expect(reporter.reportLog(false)).resolves.not.toThrow();
     expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
   });

@@ -25,7 +25,6 @@ import {
   UpdateLogRequestSchema,
   UpdateTaskRequestSchema,
 } from '@/gen/runner/v1/messages_pb';
-import { Replacer } from '@/utils';
 
 const stringToResult: any = {
   success: Result.SUCCESS,
@@ -35,15 +34,11 @@ const stringToResult: any = {
 };
 
 class Reporter implements LoggerHook {
-  private logReplacer = new Replacer();
   private state: TaskState;
   private outputs = new Map<string, string>();
   private logOffset = BigInt(0);
   private logRows = <LogRow[]>[];
   private closed = false;
-
-  private debugOutputEnabled = false;
-  private stopCommandEndToken = '';
 
   private clientMutex = new Mutex();
   private daemonTimer?: NodeJS.Timeout;
@@ -53,24 +48,9 @@ class Reporter implements LoggerHook {
     public client: RunnerServiceClient,
     public task: Task = create(TaskSchema),
   ) {
-    ['token', 'gitea_runtime_token'].forEach((key) => {
-      const value = task.context?.[key]?.toString();
-      if (value) {
-        this.logReplacer.add(value, '***');
-      }
-    });
-
-    Object.entries(task.secrets).forEach(([, value]) => {
-      this.logReplacer.add(value, '***');
-    });
-
     this.state = create(TaskStateSchema, {
       id: task.id,
     });
-
-    if (task.secrets.ACTIONS_STEP_DEBUG === 'true') {
-      this.debugOutputEnabled = true;
-    }
   }
 
   /**
@@ -384,88 +364,17 @@ class Reporter implements LoggerHook {
   }
 
   /**
-   * 处理日志中的特定命令的逻辑
-   *
-   * @param originalContent
-   * @param command
-   * @param parameters
-   * @param value
-   */
-  handleCommand(originalContent: string, command: string, parameters: string, value: string) {
-    if (this.stopCommandEndToken !== '' && command !== this.stopCommandEndToken) {
-      return originalContent;
-    }
-
-    switch (command) {
-      case 'add-mask':
-        /**
-         * @todo
-         * 此处逻辑可能有问题，这将会mask添加到实例全局
-         */
-        this.addMask(value);
-        return null;
-      case 'debug':
-        if (this.debugOutputEnabled) {
-          return value;
-        }
-        return null;
-      // The following cases are placeholders for future implementation
-      // and currently just return the original content.
-      case 'notice':
-        return originalContent;
-      case 'warning':
-        return originalContent;
-      case 'error':
-        return originalContent;
-      case 'group':
-        return originalContent;
-      case 'endgroup':
-        return originalContent;
-      case 'stop-commands':
-        this.stopCommandEndToken = value;
-        return null;
-      case this.stopCommandEndToken:
-        this.stopCommandEndToken = '';
-        return null;
-      default:
-        return originalContent;
-    }
-  }
-
-  /**
    * 解析日志行的逻辑
    *
    * @param entry
    */
   parseLogRow(entry: LogEntry) {
-    const cmdRegex = /^::([^ :]+)( .*)?::(.*)$/;
     let content = (entry.message as string).replace(/\r|\n$/g, '');
-
-    const matches = cmdRegex.exec(content);
-    if (matches) {
-      // matches[1] 是第一个捕获组，matches[2] 是第二个捕获组，以此类推
-      const output = this.handleCommand(content, matches[1], matches[2], matches[3]);
-      if (output) {
-        content = output;
-      } else {
-        return;
-      }
-    }
-
-    content = this.logReplacer.replace(content);
 
     return create(LogRowSchema, {
       time: timestampFromDate(new Date(entry.timestamp)),
       content,
     });
-  }
-
-  /**
-   * 添加掩码
-   * @param mask
-   */
-  addMask(mask: string): void {
-    this.logReplacer.add(mask, '***');
   }
 }
 
