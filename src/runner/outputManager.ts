@@ -10,7 +10,6 @@ import { IssueType, IssueSchema } from '@/gen/runner/v1/messages_pb';
 import type Runner from '.';
 import { IssueMatcher, IssueMatch } from './action/command/issueMatcher';
 import ActionCommandManager from './action/command/manager';
-import { withVerbatimLogger } from './logger.ts';
 
 export default class OutputManager {
   colorCodePrefix = '\x1b[';
@@ -32,64 +31,62 @@ export default class OutputManager {
   ) {}
 
   async onDataReceived(line: string) {
-    return this.lineQueue.runExclusive(() =>
-      withVerbatimLogger(async () => {
-        if (await this.actionCommandManager.process(line)) {
-          return;
-        }
+    return this.lineQueue.runExclusive(async () => {
+      if (await this.actionCommandManager.process(line)) {
+        return;
+      }
 
-        // Handle issue matchers
-        if (this.matchers.length > 0) {
-          const stripped = line.includes(this.colorCodePrefix) ? line.replace(this.colorCodeRegex, '') : line;
+      // Handle issue matchers
+      if (this.matchers.length > 0) {
+        const stripped = line.includes(this.colorCodePrefix) ? line.replace(this.colorCodeRegex, '') : line;
 
-          for (const matcher of this.matchers) {
-            let match = null;
-            for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
-              try {
-                match = matcher.match(stripped);
-                break;
-              } catch (error) {
-                if (attempt < this.maxAttempts) {
-                  this.runner.debug(
-                    `Timeout processing issue matcher '${matcher.owner}' against line '${stripped}'. Exception: ${error}`,
-                  );
-                } else {
-                  // this.runner.warning(`Removing issue matcher '${matcher.owner}'. Matcher failed ${this.maxAttempts} times. Error: ${error.message}`);
-                  this.removeMatcher(matcher);
-                }
-              }
-            }
-
-            if (match) {
-              // Reset other matchers
-              this.matchers
-                .filter((m) => {
-                  return m !== matcher;
-                })
-                .forEach((m) => {
-                  return m.reset();
-                });
-
-              // Convert to issue
-              const issue = this.convertToIssue(match);
-              if (issue) {
-                const logOptions = { logMessage: stripped };
-                this.runner.addIssue(issue, logOptions);
-                return;
+        for (const matcher of this.matchers) {
+          let match = null;
+          for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
+            try {
+              match = matcher.match(stripped);
+              break;
+            } catch (error) {
+              if (attempt < this.maxAttempts) {
+                this.runner.debug(
+                  `Timeout processing issue matcher '${matcher.owner}' against line '${stripped}'. Exception: ${error}`,
+                );
+              } else {
+                // this.runner.warning(`Removing issue matcher '${matcher.owner}'. Matcher failed ${this.maxAttempts} times. Error: ${error.message}`);
+                this.removeMatcher(matcher);
               }
             }
           }
-        }
 
-        // Handle fatal errors
-        if (line.toLowerCase().includes('fatal: unsafe repository')) {
-          // this.runner.stepTelemetry.errorMessages.push(line);
-        }
+          if (match) {
+            // Reset other matchers
+            this.matchers
+              .filter((m) => {
+                return m !== matcher;
+              })
+              .forEach((m) => {
+                return m.reset();
+              });
 
-        // Regular output
-        this.runner.output(line);
-      }),
-    );
+            // Convert to issue
+            const issue = this.convertToIssue(match);
+            if (issue) {
+              const logOptions = { logMessage: stripped };
+              this.runner.addIssue(issue, logOptions);
+              return;
+            }
+          }
+        }
+      }
+
+      // Handle fatal errors
+      if (line.toLowerCase().includes('fatal: unsafe repository')) {
+        // this.runner.stepTelemetry.errorMessages.push(line);
+      }
+
+      // Regular output
+      this.runner.output(line);
+    });
   }
 
   removeMatcher(matcher: IssueMatcher) {

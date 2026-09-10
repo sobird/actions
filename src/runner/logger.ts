@@ -30,14 +30,6 @@ const jobLogFormat = (color: ChalkInstance, logPrefixJobID?: boolean) =>
     }
   });
 
-export function withVerbatimLogger<T>(callback: LoggerCallback<T>): T {
-  return withLogger(
-    getLogger().child({
-      verbatim: true,
-    }),
-    callback,
-  );
-}
 export function withJobLogger<T>(
   jobID: string,
   jobName: string,
