@@ -137,6 +137,10 @@ class Runner {
     return this.parent ? this.parent.root : this;
   }
 
+  get logger() {
+    return getLogger();
+  }
+
   constructor(
     public run: Run,
     public config: Config,
@@ -205,7 +209,7 @@ class Runner {
 
         const jobResult: 'success' | 'failure' = this.context.job.status === 'failure' ? 'failure' : 'success';
         job.Result = jobResult;
-        this.output(`\u{1F3C1}  Job ${jobResult === 'success' ? 'succeeded' : 'failed'}`, { jobResult });
+        this.output(`Job ${jobResult === 'success' ? 'succeeded' : 'failed'}`, { jobResult });
       }),
     );
   }
@@ -879,9 +883,7 @@ class Runner {
     const line = tag ? `${tag}${message}` : message;
 
     const masked = this.maskSecrets(line);
-    getLogger()
-      .child({ verbatim: true, ...child })
-      .info(masked);
+    this.logger.child({ verbatim: true, ...child }).info(masked);
   }
 
   output(message: string, child?: LoggerChild) {
@@ -889,9 +891,15 @@ class Runner {
   }
 
   debug(message: string, child?: LoggerChild) {
+    const lines = message.split(/\r?\n/);
     if (this.isDebuged) {
-      message.split(/\r?\n/).forEach((line) => {
+      lines.forEach((line) => {
         this.write(WellKnownTags.Debug, line, child);
+      });
+    } else {
+      // console debug
+      lines.forEach((line) => {
+        logger.debug(line);
       });
     }
   }

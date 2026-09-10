@@ -4,7 +4,6 @@ import path from 'node:path';
 import { parse } from 'yaml';
 
 import Executor, { Conditional } from '@/common/executor';
-import logger, { getLogger } from '@/common/logger';
 import Action, { ActionProps } from '@/runner/action';
 import ActionCommandFile from '@/runner/action/command/file';
 import ActionFactory from '@/runner/action/factory';
@@ -57,7 +56,7 @@ abstract class StepAction extends Step {
     return new Executor(async (ctx) => {
       const runner = ctx!;
       const { id } = this;
-      const { context } = runner;
+      const { context, logger } = runner;
 
       // set current step
       context.github.action = id;
@@ -78,7 +77,7 @@ abstract class StepAction extends Step {
             conclusion: 'skipped',
           };
 
-          getLogger().debug(`Skipping step '${this.Name(runner)}' due to '${this.if.source || ''}'`, {
+          logger.debug(`Skipping step '${this.Name(runner)}' due to '${this.if.source || ''}'`, {
             stepResult: 'skipped',
           });
           return;
@@ -92,7 +91,7 @@ abstract class StepAction extends Step {
         return;
       }
 
-      logger.info('\u{1F525} Starting: %s %s', stage, this.Name(runner));
+      logger.info('Starting: %s %s', stage, this.Name(runner));
 
       const actionCommandFile = new ActionCommandFile(runner);
       await actionCommandFile.initialize(this.uuid);
@@ -103,7 +102,7 @@ abstract class StepAction extends Step {
         // this.applyEnv(runner, this.environment);
         await withTimeout(executor.execute(runner), timeoutMinutes * 60 * 1000);
         await actionCommandFile.process();
-        getLogger().info(`🎉 Finishing: ${stage} ${name}`, { stepResult: 'success' });
+        logger.info(`Finishing: ${stage} ${name}`, { stepResult: 'success' });
       } catch (error) {
         // steps 按照循序执行，如果有一个步骤失败，则后续步骤会跳过，且该步骤所在的job状态变为 failure
         logger.error((error as Error).message);
@@ -133,20 +132,24 @@ abstract class StepAction extends Step {
           );
         }
 
-        getLogger().error(`🍎 Failure: ${stage} ${name}`, { stepResult: 'failure' });
+        logger.error(`🍎 Failure: ${stage} ${name}`, { stepResult: 'failure' });
       }
     });
   }
 
   protected get ShouldRunPre() {
     return new Conditional((ctx) => {
-      const runner = ctx!;
+      if (!ctx) {
+        return false;
+      }
+      const { logger } = ctx;
+
       if (!this.action) {
-        logger.debug("Skip pre step for '%s': no action model available", this.Name(runner));
+        logger.debug("Skip pre step for '%s': no action model available", this.Name(ctx));
         return false;
       }
       if (!this.action.HasPost.evaluate(ctx)) {
-        logger.debug("Skipping pre step for '%s': no action pre available", this.Name(runner));
+        logger.debug("Skipping pre step for '%s': no action pre available", this.Name(ctx));
         return false;
       }
       return true;
@@ -155,25 +158,29 @@ abstract class StepAction extends Step {
 
   protected get ShouldRunPost() {
     return new Conditional((ctx) => {
-      const runner = ctx!;
-      const { StepResult } = runner.context;
+      if (!ctx) {
+        return false;
+      }
+      const { context } = ctx;
+      const { StepResult } = context;
+      const name = this.Name(ctx);
 
       if (!StepResult) {
-        logger.debug("Skipping post step for '%s'; step was not executed", this.Name(runner));
+        ctx.debug(`Skipping post step for '${name}'; step was not executed`);
         return false;
       }
 
       if (StepResult.conclusion === 'skipped') {
-        logger.debug("Skipping post step for '%s'; main step was skipped", this.Name(runner));
+        ctx.debug(`Skipping post step for '${name}'; main step was skipped`);
         return false;
       }
 
       if (!this.action) {
-        logger.debug("Skipping post step for '%s': no action model available", this.Name(runner));
+        ctx.debug(`Skipping post step for '${name}': no action model available`);
         return false;
       }
       if (!this.action.HasPost.evaluate(ctx)) {
-        logger.debug("Skipping post step for '%s': no action post available", this.Name(runner));
+        ctx.debug(`Skipping post step for '${name}': no action post available`);
         return false;
       }
       return true;

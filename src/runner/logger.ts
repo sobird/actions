@@ -54,7 +54,11 @@ export function withJobLogger<T>(
     logger = winston.createLogger({
       level: config.jobLoggerLevel,
       transports: [new winston.transports.Console()],
-      format: winston.format.combine(winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }), formatter),
+      format: winston.format.combine(
+        winston.format.splat(),
+        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
+        formatter,
+      ),
     });
   }
 
