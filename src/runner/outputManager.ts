@@ -1,8 +1,4 @@
-/* eslint-disable class-methods-use-this */
-/* eslint-disable no-underscore-dangle */
 // https://github.com/actions/runner/blob/main/src/Runner.Worker/Handlers/OutputManager.cs
-// @todo
-
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -17,19 +13,16 @@ import ActionCommandManager from './action/command/manager';
 import { withVerbatimLogger } from './logger.ts';
 
 export default class OutputManager {
-  _colorCodePrefix = '\x1b[';
+  colorCodePrefix = '\x1b[';
+  colorCodeRegex = /\\x1b\[[0-9;]*m?/g;
 
-  _maxAttempts = 3;
+  maxAttempts = 3;
+  failsafe = 50;
 
-  _timeoutKey = 'GITHUB_ACTIONS_RUNNER_ISSUE_MATCHER_TIMEOUT';
-
-  _colorCodeRegex = /\\x1b\[[0-9;]*m?/g;
-
-  _failsafe = 50;
-
-  _directoryMap = new Map();
-
+  directoryMap = new Map();
   matchers: IssueMatcher[] = [];
+
+  timeoutKey = 'GITHUB_ACTIONS_RUNNER_ISSUE_MATCHER_TIMEOUT';
 
   private lineQueue = new Mutex();
 
@@ -47,21 +40,21 @@ export default class OutputManager {
 
         // Handle issue matchers
         if (this.matchers.length > 0) {
-          const stripped = line.includes(this._colorCodePrefix) ? line.replace(this._colorCodeRegex, '') : line;
+          const stripped = line.includes(this.colorCodePrefix) ? line.replace(this.colorCodeRegex, '') : line;
 
           for (const matcher of this.matchers) {
             let match = null;
-            for (let attempt = 1; attempt <= this._maxAttempts; attempt++) {
+            for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
               try {
                 match = matcher.match(stripped);
                 break;
               } catch (error) {
-                if (attempt < this._maxAttempts) {
+                if (attempt < this.maxAttempts) {
                   this.runner.debug(
                     `Timeout processing issue matcher '${matcher.owner}' against line '${stripped}'. Exception: ${error}`,
                   );
                 } else {
-                  // this.runner.warning(`Removing issue matcher '${matcher.owner}'. Matcher failed ${this._maxAttempts} times. Error: ${error.message}`);
+                  // this.runner.warning(`Removing issue matcher '${matcher.owner}'. Matcher failed ${this.maxAttempts} times. Error: ${error.message}`);
                   this.removeMatcher(matcher);
                 }
               }
@@ -205,17 +198,17 @@ export default class OutputManager {
   }
 
   getRepositoryPath(filePath: string, recursion = 0): string {
-    if (this._directoryMap.size > 100) {
-      this._directoryMap.clear();
+    if (this.directoryMap.size > 100) {
+      this.directoryMap.clear();
     }
 
     const dirPath = path.dirname(filePath);
-    if (!dirPath || recursion > this._failsafe) {
+    if (!dirPath || recursion > this.failsafe) {
       return '';
     }
 
-    if (this._directoryMap.has(dirPath)) {
-      return this._directoryMap.get(dirPath);
+    if (this.directoryMap.has(dirPath)) {
+      return this.directoryMap.get(dirPath);
     }
 
     let repoPath = '';
@@ -247,7 +240,7 @@ export default class OutputManager {
       );
     }
 
-    this._directoryMap.set(dirPath, repoPath);
+    this.directoryMap.set(dirPath, repoPath);
     return repoPath;
   }
 }
