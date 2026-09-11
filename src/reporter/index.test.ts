@@ -4,10 +4,10 @@
  * sobird<i@sobird.me> at 2024/04/26 18:18:27 created.
  */
 
-import { createClients } from '../gen';
+import { createClients } from '../gen/client';
 import Reporter from './index';
 
-vi.mock('../gen');
+vi.mock('../gen/client');
 
 import { create } from '@bufbuild/protobuf';
 

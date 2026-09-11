@@ -1,6 +1,6 @@
 export { default as Workflow } from './workflow';
 export { default as Reporter } from './reporter';
-export { createClients } from './gen';
+export { createClients } from './gen/client';
 export { default as Labels } from './labels';
 export { default as Poller } from './poller';
 export { default as Docker } from './docker';

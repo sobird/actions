@@ -1,7 +1,7 @@
 import { create } from '@bufbuild/protobuf';
 import { timestampFromDate } from '@bufbuild/protobuf/wkt';
 
-import { createClients } from './index';
+import { createClients } from './client';
 import {
   UpdateLogRequestSchema,
   LogRow,
@@ -10,7 +10,7 @@ import {
   RegisterResponseSchema,
 } from './runner/v1/messages_pb';
 
-vi.mock('./index');
+vi.mock('./client');
 
 const { runnerServiceClient, pingServiceClient } = createClients('http://localhost:3000/', '', false);
 

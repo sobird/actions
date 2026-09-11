@@ -11,7 +11,7 @@ import { Mutex } from 'async-mutex';
 import retry from 'async-retry';
 
 import logger, { LoggerHook, LogEntry } from '@/common/logger';
-import type { RunnerServiceClient } from '@/gen';
+import type { RunnerServiceClient } from '@/gen/client';
 import {
   LogRow,
   LogRowSchema,

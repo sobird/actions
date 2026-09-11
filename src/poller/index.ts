@@ -10,7 +10,7 @@ import { Semaphore } from 'async-mutex';
 
 import logger from '@/common/logger';
 import type { Config } from '@/config';
-import type { RunnerServiceClient } from '@/gen';
+import type { RunnerServiceClient } from '@/gen/client';
 import { withTimeout } from '@/utils';
 import { sleep } from '@/utils';
 
