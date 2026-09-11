@@ -8,7 +8,6 @@ const AttachmentSizeLimit = 1024 * 1024;
 
 const CreateStepSummaryCommand: FileCommandExtension = {
   contextKey: 'step_summary',
-
   filePrefix: 'step_summary_',
 
   async process(runner, filename) {

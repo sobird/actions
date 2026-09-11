@@ -1,6 +1,8 @@
 import { Constants } from '@/common/constants';
+import { Result } from '@/gen/runner/v1/messages_pb';
 import Runner from '@/runner';
 
+import extensions from './extensions';
 import ActionCommandManager from './manager';
 
 vi.mock('@/runner');
@@ -13,6 +15,7 @@ beforeEach(() => {
   runner.context.env = {};
   runner.masks = new Set();
   runner.echoOnActionCommand = false;
+  runner.commandResult = Result.SUCCESS;
 });
 
 describe('::set-env:: Action Command Manager Test', () => {
@@ -211,6 +214,24 @@ describe('::echo:: Action Command Manager Test', () => {
   it('echo no value', () => {
     commandManager.process('::echo::');
     expect(runner.echoOnActionCommand).toBe(false);
+  });
+});
+
+describe('CommandResult Action Command Manager Test', () => {
+  it('sets FAILURE when a command handler throws', async () => {
+    vi.spyOn(extensions['set-env'], 'process').mockRejectedValueOnce(new Error('boom'));
+
+    await commandManager.process('::set-env name=name,::sobird');
+
+    expect(runner.commandResult).toBe(Result.FAILURE);
+  });
+
+  it('keeps SUCCESS when a command handler resolves', async () => {
+    vi.spyOn(extensions['set-env'], 'process').mockResolvedValueOnce(undefined);
+
+    await commandManager.process('::set-env name=name,::sobird');
+
+    expect(runner.commandResult).toBe(Result.SUCCESS);
   });
 });
 

@@ -22,7 +22,7 @@ import ArtifactCache from '@/artifact/cache';
 import { Constants, WellKnownDirectory } from '@/common/constants';
 import logger, { getLogger, type LoggerChild } from '@/common/logger';
 import { Docker } from '@/docker';
-import { Issue, IssueType, IssueSchema } from '@/gen/runner/v1/messages_pb';
+import { Issue, IssueType, IssueSchema, Result } from '@/gen/runner/v1/messages_pb';
 import Config from '@/runner/config';
 import Context from '@/runner/context';
 import { createSafeName, assignIgnoreCase, createFnv1aHash } from '@/utils';
@@ -113,6 +113,8 @@ class Runner {
   matchers: IssueMatcherConfig[] = [];
 
   issues: Issue[] = [];
+
+  commandResult: Result = Result.SUCCESS;
 
   private issueCounts: Record<IssueType, number> = {
     [IssueType.UNSPECIFIED]: 0,

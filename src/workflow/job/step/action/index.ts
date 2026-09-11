@@ -4,6 +4,8 @@ import path from 'node:path';
 import { parse } from 'yaml';
 
 import Executor, { Conditional } from '@/common/executor';
+import { Result } from '@/gen/runner/v1/messages_pb';
+import { Status } from '@/models/actions/status';
 import Action, { ActionProps } from '@/runner/action';
 import ActionCommandFile from '@/runner/action/command/file';
 import ActionFactory from '@/runner/action/factory';
@@ -62,6 +64,7 @@ abstract class StepAction extends Step {
       context.github.action = id;
       runner.stepAction = this;
       context.StepResult = {};
+      runner.commandResult = Result.SUCCESS;
 
       if (this.uses.ref) {
         context.github.action_ref = this.uses.ref;
@@ -98,40 +101,45 @@ abstract class StepAction extends Step {
       const timeoutMinutes = Number(this['timeout-minutes'].evaluate(runner)) || 60;
 
       const name = this.Name(runner);
+      let outcome: 'success' | 'failure' = 'success';
+
       try {
         // this.applyEnv(runner, this.environment);
         await withTimeout(executor.execute(runner), timeoutMinutes * 60 * 1000);
-        await actionCommandFile.process();
-        logger.info(`Finishing: ${stage} ${name}`, { stepResult: 'success' });
       } catch (error) {
         // steps 按照循序执行，如果有一个步骤失败，则后续步骤会跳过，且该步骤所在的job状态变为 failure
         logger.error((error as Error).message);
-        context.StepResult = {
-          outcome: 'failure',
-        };
+        outcome = 'failure';
+      } finally {
+        // 对齐上游 ActionRunner：无论步骤成败，都要处理文件命令
+        await actionCommandFile.process();
+      }
 
+      // 命令处理失败按「取最差」合并进 outcome（对齐上游 StepsRunner.MergeTaskResults）
+      if (runner.commandResult !== Result.SUCCESS) {
+        const merged = Status.mergeResults(Status.from(outcome).asResult(), runner.commandResult);
+        outcome = Status.fromResult(merged).toString() as 'success' | 'failure';
+      }
+
+      // 对齐上游：continue-on-error 在合并之后应用，可把失败结论翻成 success
+      let conclusion: 'success' | 'failure' = outcome;
+      if (outcome === 'failure') {
         try {
-          const continueOnError = this['continue-on-error'].evaluate(runner);
-          if (continueOnError) {
+          if (this['continue-on-error'].evaluate(runner)) {
             logger.info('Failed but continue next step');
-            context.StepResult = {
-              conclusion: 'success',
-            };
-          } else {
-            context.StepResult = {
-              conclusion: 'failure',
-            };
+            conclusion = 'success';
           }
         } catch (err) {
-          context.StepResult = {
-            conclusion: 'failure',
-          };
-
           logger.error(
             `🍎 Error in continue-on-error-expression: "continue-on-error: ${this['continue-on-error'].source}" (${(err as Error).message})`,
           );
         }
+      }
+      context.StepResult = { outcome, conclusion };
 
+      if (conclusion === 'success') {
+        logger.info(`Finishing: ${stage} ${name}`, { stepResult: 'success' });
+      } else {
         logger.error(`🍎 Failure: ${stage} ${name}`, { stepResult: 'failure' });
       }
     });

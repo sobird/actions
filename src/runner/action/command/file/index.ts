@@ -1,17 +1,16 @@
 import path from 'node:path';
 
 import { WellKnownDirectory } from '@/common/constants';
+import { Result } from '@/gen/runner/v1/messages_pb';
 import Runner from '@/runner';
 
 import extensions, { FileCommandExtension } from './extensions';
 
 class ActionCommandFile {
   private folderName = '_runner_file_commands';
-
   private fileSuffix = '';
 
   private fileCommandDirectory = '';
-
   private commandExtensions: FileCommandExtension[] = extensions;
 
   constructor(public runner: Runner) {
@@ -46,9 +45,8 @@ class ActionCommandFile {
           path.join(this.fileCommandDirectory, fileCommand.filePrefix + this.fileSuffix),
         );
       } catch {
-        // todo logger.error
-        console.error(`Unable to process file command '${fileCommand.contextKey}' successfully.`);
-        // context.CommandResult = TaskResult.Failed;
+        this.runner.error(`Unable to process file command '${fileCommand.contextKey}' successfully.`);
+        this.runner.commandResult = Result.FAILURE;
       }
     }
   }

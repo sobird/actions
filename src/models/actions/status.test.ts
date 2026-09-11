@@ -43,6 +43,25 @@ describe('Status', () => {
     });
   });
 
+  describe('mergeResults', () => {
+    const cases = [
+      { current: Result.SUCCESS, coming: Result.SUCCESS, want: Result.SUCCESS },
+      { current: Result.SUCCESS, coming: Result.FAILURE, want: Result.FAILURE },
+      { current: Result.FAILURE, coming: Result.SUCCESS, want: Result.FAILURE },
+      { current: Result.FAILURE, coming: Result.CANCELLED, want: Result.CANCELLED },
+      { current: Result.CANCELLED, coming: Result.FAILURE, want: Result.CANCELLED },
+      { current: Result.SKIPPED, coming: Result.FAILURE, want: Result.SKIPPED },
+      { current: Result.UNSPECIFIED, coming: Result.FAILURE, want: Result.FAILURE },
+      { current: Result.FAILURE, coming: Result.UNSPECIFIED, want: Result.FAILURE },
+    ];
+
+    cases.forEach(({ current, coming, want }) => {
+      it(`should merge ${Result[current]}/${Result[coming]} to ${Result[want]}`, () => {
+        expect(Status.mergeResults(current, coming)).toBe(want);
+      });
+    });
+  });
+
   describe('AggregateJobStatus', () => {
     // 辅助函数：创建模拟的 Job 对象
     function createJob(status: Status, continueOnError: boolean): ActionRunJob {

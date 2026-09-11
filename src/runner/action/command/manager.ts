@@ -1,4 +1,5 @@
 import { Constants } from '@/common/constants';
+import { Result } from '@/gen/runner/v1/messages_pb';
 import type Runner from '@/runner';
 
 import ActionCommand from '.';
@@ -71,9 +72,7 @@ class ActionCommandManager {
         const commandInformation = extension.echo ? line : extension.command;
         const message = `Unable to process command '${commandInformation}' successfully.`;
         runner.error(message);
-        // console.error(err);
-        // context.Error(ex);
-        // context.CommandResult = TaskResult.Failed;
+        runner.commandResult = Result.FAILURE;
       }
     } else {
       // Command not found

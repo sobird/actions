@@ -104,6 +104,16 @@ export class Status {
     }
   }
 
+  /**
+   * 合并两个 Result，取更差者
+   *
+   * 依赖枚举值本身的大小序：UNSPECIFIED(0) < SUCCESS(1) < FAILURE(2) < CANCELLED(3) < SKIPPED(4)
+   * 与上游 TaskResultUtil.MergeTaskResults 的取最差语义一致
+   */
+  static mergeResults(current: Result, coming: Result): Result {
+    return coming > current ? coming : current;
+  }
+
   static values() {
     return [
       this.Unknown,
