@@ -1,6 +1,6 @@
 // index.js
 
-import { spawn } from 'child_process';
+import { spawn } from 'node:child_process';
 
 // console.log('__dirname', __dirname);
 

@@ -1,4 +1,4 @@
-import tty from 'tty';
+import tty from 'node:tty';
 
 // 获取标准输出的文件描述符
 const stdoutFd = process.stdout.fd;

@@ -1,11 +1,11 @@
-import { createHmac } from 'node:crypto';
+// import { createHmac } from 'node:crypto';
 
-import { Webhooks, createNodeMiddleware, EmitterWebhookEvent } from '@octokit/webhooks';
+// import { Webhooks, createNodeMiddleware, EmitterWebhookEvent } from '@octokit/webhooks';
 import { NextRequest, NextResponse } from 'next/server';
 
-const webhooks = new Webhooks({
-  secret: 'mysecret',
-});
+// const webhooks = new Webhooks({
+//   secret: 'mysecret',
+// });
 
 // webhooks
 //   .verifyAndReceive({
@@ -17,8 +17,8 @@ const webhooks = new Webhooks({
 
 // webhooks.receive();
 
-const algorithm_sha256 = 'sha256';
-const algorithm_sha1 = 'sha1';
+// const algorithm_sha256 = 'sha256';
+// const algorithm_sha1 = 'sha1';
 
 // const hookEvent: EmitterWebhookEvent<'push'>;
 

@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-import fs from 'fs';
+// oxlint-disable no-underscore-dangle
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 

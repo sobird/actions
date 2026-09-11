@@ -19,7 +19,9 @@ describe('listFilesInDirectorySync', () => {
 
   beforeEach(() => {
     // Set up some mocked out file info before each test
-    (fs as any).__setMockFiles(MOCK_FILE_INFO);
+    // @ts-expect-error
+    // oxlint-disable-next-line no-underscore-dangle
+    fs.__setMockFiles(MOCK_FILE_INFO);
   });
 
   test('includes all files in the directory in the summary', () => {

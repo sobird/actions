@@ -6,6 +6,9 @@ import { Readable } from 'node:stream';
 
 import { Storage } from './storage'; // 假设你的文件名是 Storage.ts
 
+// 辅助函数：将字符串转换为可读流
+const createMockReq = (content: string) => Readable.from(Buffer.from(content));
+
 describe('Storage', () => {
   let storage: Storage;
   let testDir: string;
@@ -20,9 +23,6 @@ describe('Storage', () => {
     // 测试结束后清理物理文件
     await fs.rm(testDir, { recursive: true, force: true });
   });
-
-  // 辅助函数：将字符串转换为可读流
-  const createMockReq = (content: string) => Readable.from(Buffer.from(content));
 
   describe('Initialization', () => {
     it('should create the root directory if it does not exist', () => {

@@ -9,6 +9,7 @@ import path from 'node:path';
 // what the files on the "mock" filesystem should look like when any of the
 // `fs` APIs are used.
 let mockFiles = Object.create(null);
+// oxlint-disable-next-line no-underscore-dangle
 function __setMockFiles(newMockFiles: { [key in string]: string }) {
   mockFiles = Object.create(null);
 

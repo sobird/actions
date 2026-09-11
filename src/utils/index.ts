@@ -15,7 +15,6 @@ export { sleep } from './sleep';
 export { readJsonSync } from './readJsonSync';
 export { readConfSync } from './readConfSync';
 export { replaceAllAsync } from './replaceAllAsync';
-// export { readIgnoreSync } from './readIgnoreSync';
 export { assignIgnoreCase } from './assignIgnoreCase';
 export { trimSuffix } from './trimSuffix';
 export { trimPrefix } from './trimPrefix';

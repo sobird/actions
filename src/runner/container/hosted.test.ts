@@ -10,12 +10,12 @@ import HostedContainer from './hosted';
 
 vi.mock('./hosted');
 
+// @ts-expect-error
 const hosted: HostedContainer = new HostedContainer();
 
 console.log('hosted', hosted);
 
 const workdir = '/home/runner';
-const _testdir = createAllDir('hosted-test');
 const filedir = createAllDir('hosted-test', 'file');
 
 const files = [

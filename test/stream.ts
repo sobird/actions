@@ -1,4 +1,4 @@
-import { PassThrough } from 'stream';
+import { PassThrough } from 'node:stream';
 
 // 创建一个 PassThrough 流来合并 stdout 和 stderr
 const combinedStream = new PassThrough();

@@ -1,3 +1,4 @@
+// oxlint-disable no-unused-vars
 /* eslint-disable no-param-reassign */
 /**
  * Hosted Container

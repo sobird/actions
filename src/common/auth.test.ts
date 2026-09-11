@@ -2,7 +2,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 
-import { createAuthorizationToken, parseAuthorizationToken, ActionsCacheScope } from './auth';
+import { createAuthorizationToken, parseAuthorizationToken } from './auth';
 
 describe('Authorization Tests', () => {
   test('Test Create Authorization Token', () => {
@@ -23,21 +23,21 @@ describe('Authorization Tests', () => {
     // expect(ac.).toBe(JSON.stringify([{ scope: 'Actions.Results:1:2' }]));
   });
 
-  // test('Test Parse Authorization Token', () => {
-  //   const taskID = 23;
-  //   const token = createAuthorizationToken(taskID, 1, 2);
-  //   const req = express.Request();
-  //   req.headers = { authorization: `Bearer ${token}` };
+  test('Test Parse Authorization Token', () => {
+    const taskID = 23;
+    const token = createAuthorizationToken(taskID, 1, 2);
+    const req = express.Request();
+    req.headers = { authorization: `Bearer ${token}` };
 
-  //   const parsedTaskID = parseAuthorizationToken(req);
-  //   expect(parsedTaskID).toBe(taskID);
-  // });
+    const parsedTaskID = parseAuthorizationToken(req);
+    expect(parsedTaskID).toBe(taskID);
+  });
 
-  // test('Test Parse Authorization Token with No Auth Header', () => {
-  //   const req = express.Request();
-  //   req.headers = {};
+  test('Test Parse Authorization Token with No Auth Header', () => {
+    const req = express.Request();
+    req.headers = {};
 
-  //   const parsedTaskID = parseAuthorizationToken(req);
-  //   expect(parsedTaskID).toBeNull();
-  // });
+    const parsedTaskID = parseAuthorizationToken(req);
+    expect(parsedTaskID).toBeNull();
+  });
 });
