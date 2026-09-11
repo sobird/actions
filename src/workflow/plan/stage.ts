@@ -6,7 +6,9 @@ class Stage {
 
   /** will get all the job names in the stage */
   get jobIds() {
-    return this.runs.map((run) => { return run.jobId; });
+    return this.runs.map((run) => {
+      return run.jobId;
+    });
   }
 
   concat(stage: Stage) {

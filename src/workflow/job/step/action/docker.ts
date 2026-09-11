@@ -1,8 +1,8 @@
-import Executor from "@/common/executor";
-import { ActionProps } from "@/runner/action";
-import DockerAction from "@/runner/action/docker";
+import Executor from '@/common/executor';
+import { ActionProps } from '@/runner/action';
+import DockerAction from '@/runner/action/docker';
 
-import StepAction from ".";
+import StepAction from '.';
 
 class StepActionDocker extends StepAction {
   protected get PrepareAction() {
@@ -25,11 +25,11 @@ class StepActionDocker extends StepAction {
       );
 
       this.action = new DockerAction({
-        name: "(Synthetic)",
-        description: "docker hub action",
+        name: '(Synthetic)',
+        description: 'docker hub action',
         inputs,
         runs: {
-          using: "docker",
+          using: 'docker',
           image: this.uses.uses,
         },
       } as ActionProps);

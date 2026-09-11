@@ -1,6 +1,6 @@
 name: reusable workflow inputs test
 
-on: 
+on:
   push:
     branches:
       - master

@@ -1,6 +1,6 @@
 name: call circular reusable workflow
 
-on: 
+on:
   push:
     branches:
       - master

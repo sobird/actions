@@ -72,13 +72,17 @@ class Ref {
   shortName() {
     if (this.isBranch()) {
       return this.nameWithoutPrefix(BranchPrefix);
-    } if (this.isTag()) {
+    }
+    if (this.isTag()) {
       return this.nameWithoutPrefix(TagPrefix);
-    } if (this.isRemote()) {
+    }
+    if (this.isRemote()) {
       return this.nameWithoutPrefix(RemotePrefix);
-    } if (this.isPull()) {
+    }
+    if (this.isPull()) {
       return this.pullName();
-    } if (this.isFor()) {
+    }
+    if (this.isFor()) {
       return this.forBranchName();
     }
     return this.name;
@@ -87,13 +91,17 @@ class Ref {
   group() {
     if (this.isBranch()) {
       return 'heads';
-    } if (this.isTag()) {
+    }
+    if (this.isTag()) {
       return 'tags';
-    } if (this.isRemote()) {
+    }
+    if (this.isRemote()) {
       return 'remotes';
-    } if (this.isPull()) {
+    }
+    if (this.isPull()) {
       return 'pull';
-    } if (this.isFor()) {
+    }
+    if (this.isFor()) {
       return 'for';
     }
     return '';
@@ -102,7 +110,8 @@ class Ref {
   type() {
     if (this.isBranch()) {
       return 'branch';
-    } if (this.isTag()) {
+    }
+    if (this.isTag()) {
       return 'tag';
     }
     return '';
@@ -122,7 +131,7 @@ class Ref {
 
   static URL(repoURL: string, ref: string) {
     const refFullName = new this(ref);
-    const refName = (refFullName.shortName());
+    const refName = refFullName.shortName();
     switch (true) {
       case refFullName.isBranch():
         return `${repoURL}/src/branch/${refName}`;

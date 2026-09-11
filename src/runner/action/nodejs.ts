@@ -4,11 +4,11 @@
  * sobird<i@sobird.me> at 2024/10/16 21:08:02 created.
  */
 
-import path from "node:path";
+import path from 'node:path';
 
-import Executor from "@/common/executor";
+import Executor from '@/common/executor';
 
-import Action, { ActionProps } from ".";
+import Action, { ActionProps } from '.';
 
 interface Output {
   description: string;
@@ -19,12 +19,12 @@ interface Runs {
   using: string;
   main: string;
   pre?: string;
-  "pre-if"?: string;
+  'pre-if'?: string;
   post?: string;
-  "post-if"?: string;
+  'post-if'?: string;
 }
 
-export interface NodeJSActionProps extends Omit<ActionProps, "outputs" | "runs" | "Dir"> {
+export interface NodeJSActionProps extends Omit<ActionProps, 'outputs' | 'runs' | 'Dir'> {
   outputs: Record<string, Output>;
   runs: Runs;
 }
@@ -39,7 +39,7 @@ class NodeJSAction extends Action {
       this.applyInput(runner!, env);
       await container?.applyPath(runner!.prependPath, env);
 
-      return container?.exec(["node", path.posix.join(this.Dir, this.runs.pre)], { env });
+      return container?.exec(['node', path.posix.join(this.Dir, this.runs.pre)], { env });
     }).if(this.HasPre);
   }
 
@@ -49,7 +49,7 @@ class NodeJSAction extends Action {
       const env = runner.stepAction?.environment;
       await runner.container?.applyPath(runner.prependPath, env);
 
-      return runner.container?.exec(["node", path.posix.join(this.Dir, this.runs.main)], { env });
+      return runner.container?.exec(['node', path.posix.join(this.Dir, this.runs.main)], { env });
     });
   }
 
@@ -62,7 +62,7 @@ class NodeJSAction extends Action {
       NodeJSAction.ApplyState(runner, env);
       await container?.applyPath(runner.prependPath, env);
 
-      return container?.exec(["node", path.posix.join(this.Dir, this.runs.post)], { env });
+      return container?.exec(['node', path.posix.join(this.Dir, this.runs.post)], { env });
     }).if(this.HasPost);
   }
 }

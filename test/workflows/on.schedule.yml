@@ -20,4 +20,3 @@ jobs:
         run: echo "This step will be skipped on Monday and Wednesday"
       - name: Every time
         run: echo "This step will always run"
-

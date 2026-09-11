@@ -200,9 +200,7 @@
         },
         "added": [],
         "removed": [],
-        "modified": [
-          "app/api/github/webhooks/route.ts"
-        ]
+        "modified": ["app/api/github/webhooks/route.ts"]
       }
     ],
     "head_commit": {
@@ -224,9 +222,7 @@
       },
       "added": [],
       "removed": [],
-      "modified": [
-        "app/api/github/webhooks/route.ts"
-      ]
+      "modified": ["app/api/github/webhooks/route.ts"]
     }
   }
 }

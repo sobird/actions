@@ -3,7 +3,7 @@ name: Continuous Integration
 on:
   # release:
   #   types: [published]
-  workflow_dispatch:  
+  workflow_dispatch:
 # on:
 #   push:
 #     branches: [ "master" ]
@@ -12,7 +12,7 @@ on:
 
 permissions:
   contents: read
-  
+
 jobs:
   unit-test:
     strategy:

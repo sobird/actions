@@ -35,7 +35,7 @@ export class Needs {
      * Possible values are `success`, `failure`, `cancelled`, or `skipped`.
      */
     result: 'success' | 'failure' | 'cancelled' | 'skipped';
-  }
+  };
 
   constructor(needs: Needs) {
     Object.entries(needs).forEach(([needId, need]) => {

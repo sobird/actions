@@ -26,8 +26,8 @@ export class Job {
   result: 'success' | 'failure' | 'cancelled' | 'skipped';
 
   /**
-  * The set of outputs of a job in a reusable workflow.
-  */
+   * The set of outputs of a job in a reusable workflow.
+   */
   outputs: Record<string, string>;
 
   constructor(job: Job = {} as Job) {
@@ -39,7 +39,9 @@ export class Job {
 export type JobsType = Record<string, Job>;
 
 export function Jobs(jobs: JobsType) {
-  return Object.fromEntries(Object.entries(jobs).map(([jobId, job]) => {
-    return [jobId, new Job(job)];
-  }));
+  return Object.fromEntries(
+    Object.entries(jobs).map(([jobId, job]) => {
+      return [jobId, new Job(job)];
+    }),
+  );
 }

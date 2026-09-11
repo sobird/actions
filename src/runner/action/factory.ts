@@ -3,8 +3,8 @@ import CompositeAction from './composite';
 import DockerAction from './docker';
 import NodeJSAction from './nodejs';
 
-class ActionFactory {
-  static create(action: ActionProps) {
+const ActionFactory = {
+  create(action: ActionProps) {
     const { runs } = action;
     const { using, image, main } = action.runs;
     if (using) {
@@ -18,7 +18,9 @@ class ActionFactory {
 
       if (using === 'node12' || using === 'node16' || using === 'node20') {
         if (!main) {
-          throw new Error(`You are using a JavaScript Action but there is not an entry JavaScript file provided in ${action.Dir}.`);
+          throw new Error(
+            `You are using a JavaScript Action but there is not an entry JavaScript file provided in ${action.Dir}.`,
+          );
         } else {
           return new NodeJSAction(action);
         }
@@ -32,7 +34,7 @@ class ActionFactory {
     }
 
     throw new Error("Missing 'using' value. 'using' requires 'composite', 'docker', 'node12', 'node16' or 'node20'.");
-  }
-}
+  },
+};
 
 export default ActionFactory;

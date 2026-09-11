@@ -37,14 +37,7 @@ describe('Port.ParsePortRange test case', () => {
     });
   });
 
-  const invalidRanges = [
-    '',
-    'asdf',
-    '9000-8000',
-    '1asdf',
-    '80-',
-    '-90',
-  ];
+  const invalidRanges = ['', 'asdf', '9000-8000', '1asdf', '80-', '-90'];
 
   invalidRanges.forEach((item) => {
     it(`InvalidRanges: "${item}"`, () => {
@@ -179,14 +172,18 @@ describe('Port.ParsePorts test case', () => {
         '3334/tcp': {},
       },
       portBindings: {
-        '3333/tcp': [{
-          HostIp: '0.0.0.0',
-          HostPort: '1234',
-        }],
-        '3334/tcp': [{
-          HostIp: '0.0.0.0',
-          HostPort: '1235',
-        }],
+        '3333/tcp': [
+          {
+            HostIp: '0.0.0.0',
+            HostPort: '1234',
+          },
+        ],
+        '3334/tcp': [
+          {
+            HostIp: '0.0.0.0',
+            HostPort: '1235',
+          },
+        ],
       },
     });
   });
@@ -202,7 +199,7 @@ describe('Port.ParsePorts test case', () => {
       const { exposedPorts, portBindings } = Port.ParsePorts(value);
 
       value.forEach((port) => {
-        const [,,containerPort] = Port.Split(port);
+        const [, , containerPort] = Port.Split(port);
         expect(exposedPorts[containerPort]).toEqual({});
       });
 

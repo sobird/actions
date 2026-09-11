@@ -4,11 +4,11 @@
  * sobird<i@sobird.me> at 2024/05/02 21:41:14 created.
  */
 
-import Expression from "@/expression";
+import Expression from '@/expression';
 
-import Port from "./port";
+import Port from './port';
 
-export interface ContainerProps extends Pick<Container, "ports" | "volumes" | "options"> {
+export interface ContainerProps extends Pick<Container, 'ports' | 'volumes' | 'options'> {
   image?: string;
   credentials?: {
     username?: string;
@@ -60,7 +60,7 @@ export default class Container {
   /**
    * Use `jobs.<job_id>.container.env` to set a `map` of environment variables in the container.
    */
-  env?: Expression<ContainerProps["env"]>;
+  env?: Expression<ContainerProps['env']>;
 
   /**
    * Use `jobs.<job_id>.container.ports` to set an array of ports to expose on the container.
@@ -88,47 +88,33 @@ export default class Container {
    */
   options?: string;
 
-  constructor(container: ContainerProps | string = "") {
-    if (typeof container === "string") {
-      this.image = new Expression(container, [
-        "github",
-        "needs",
-        "strategy",
-        "matrix",
-        "vars",
-        "inputs",
-      ]);
+  constructor(container: ContainerProps | string = '') {
+    if (typeof container === 'string') {
+      this.image = new Expression(container, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
       return;
     }
-    this.image = new Expression(container.image, [
-      "github",
-      "needs",
-      "strategy",
-      "matrix",
-      "vars",
-      "inputs",
-    ]);
+    this.image = new Expression(container.image, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
     this.credentials = new Expression(container.credentials, [
-      "github",
-      "needs",
-      "strategy",
-      "matrix",
-      "env",
-      "vars",
-      "secrets",
-      "inputs",
+      'github',
+      'needs',
+      'strategy',
+      'matrix',
+      'env',
+      'vars',
+      'secrets',
+      'inputs',
     ]);
     this.env = new Expression(container.env, [
-      "github",
-      "needs",
-      "strategy",
-      "matrix",
-      "job",
-      "runner",
-      "env",
-      "vars",
-      "secrets",
-      "inputs",
+      'github',
+      'needs',
+      'strategy',
+      'matrix',
+      'job',
+      'runner',
+      'env',
+      'vars',
+      'secrets',
+      'inputs',
     ]);
     this.ports = container.ports || [];
     this.volumes = container.volumes;

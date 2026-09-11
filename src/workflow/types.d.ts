@@ -10,7 +10,7 @@ export interface WorkflowCallInput {
   description: string;
   required: boolean;
   default?: string;
-  type: 'boolean' | 'number' | 'string'
+  type: 'boolean' | 'number' | 'string';
 }
 
 export interface WorkflowCallOutput {
@@ -22,7 +22,7 @@ export interface WorkflowDispatchInput {
   description: string;
   required: boolean;
   default?: string;
-  type: 'boolean' | 'choice' | 'number' | 'environment' | 'string'
+  type: 'boolean' | 'choice' | 'number' | 'environment' | 'string';
   options?: string[];
 }
 
@@ -41,7 +41,21 @@ export interface OnEvents {
   deployment: string;
   deployment_status: string;
   discussion: {
-    types: Array<'created' | 'edited' | 'deleted' | 'transferred' | 'pinned' | 'unpinned' | 'labeled' | 'unlabeled' | 'locked' | 'unlocked' | 'category_changed' | 'answered' | 'unanswered'>;
+    types: Array<
+      | 'created'
+      | 'edited'
+      | 'deleted'
+      | 'transferred'
+      | 'pinned'
+      | 'unpinned'
+      | 'labeled'
+      | 'unlabeled'
+      | 'locked'
+      | 'unlocked'
+      | 'category_changed'
+      | 'answered'
+      | 'unanswered'
+    >;
   };
   discussion_comment: {
     types: Array<'created' | 'edited' | 'deleted'>;
@@ -52,12 +66,29 @@ export interface OnEvents {
     types: Array<'created' | 'edited' | 'deleted'>;
   };
   issues: {
-    types: Array<'opened' | 'edited' | 'deleted' | 'transferred' | 'pinned' | 'unpinned' | 'closed' | 'reopened' | 'assigned' | 'unassigned' | 'labeled' | 'unlabeled' | 'locked' | 'unlocked' | 'milestoned' | 'demilestoned'>
+    types: Array<
+      | 'opened'
+      | 'edited'
+      | 'deleted'
+      | 'transferred'
+      | 'pinned'
+      | 'unpinned'
+      | 'closed'
+      | 'reopened'
+      | 'assigned'
+      | 'unassigned'
+      | 'labeled'
+      | 'unlabeled'
+      | 'locked'
+      | 'unlocked'
+      | 'milestoned'
+      | 'demilestoned'
+    >;
   };
   label: {
     types: Array<'created' | 'edited' | 'deleted'>;
   };
-  merge_group:{
+  merge_group: {
     types: Array<'checks_requested'>;
   };
   milestone: {
@@ -75,7 +106,29 @@ export interface OnEvents {
   };
   public: string;
   pull_request: {
-    types: Array<'assigned' | 'unassigned' | 'labeled' | 'unlabeled' | 'opened' | 'edited' | 'closed' | 'reopened' | 'synchronize' | 'converted_to_draft' | 'locked' | 'unlocked' | 'enqueued' | 'dequeued' | 'milestoned' | 'demilestoned' | 'ready_for_review' | 'review_requested' | 'review_request_removed' | 'auto_merge_enabled' | 'auto_merge_disabled'>;
+    types: Array<
+      | 'assigned'
+      | 'unassigned'
+      | 'labeled'
+      | 'unlabeled'
+      | 'opened'
+      | 'edited'
+      | 'closed'
+      | 'reopened'
+      | 'synchronize'
+      | 'converted_to_draft'
+      | 'locked'
+      | 'unlocked'
+      | 'enqueued'
+      | 'dequeued'
+      | 'milestoned'
+      | 'demilestoned'
+      | 'ready_for_review'
+      | 'review_requested'
+      | 'review_request_removed'
+      | 'auto_merge_enabled'
+      | 'auto_merge_disabled'
+    >;
     branches: string[];
     'branches-ignore': string[];
     paths: string[];
@@ -89,22 +142,42 @@ export interface OnEvents {
     types: Array<'created' | 'edited' | 'deleted'>;
   };
   pull_request_target: {
-    types: Array<'assigned' | 'unassigned' | 'labeled' | 'unlabeled' | 'opened' | 'edited' | 'closed' | 'reopened' | 'synchronize' | 'converted_to_draft' | 'ready_for_review' | 'locked' | 'unlocked' | 'review_requested' | 'review_request_removed' | 'auto_merge_enabled' | 'auto_merge_disabled'>;
+    types: Array<
+      | 'assigned'
+      | 'unassigned'
+      | 'labeled'
+      | 'unlabeled'
+      | 'opened'
+      | 'edited'
+      | 'closed'
+      | 'reopened'
+      | 'synchronize'
+      | 'converted_to_draft'
+      | 'ready_for_review'
+      | 'locked'
+      | 'unlocked'
+      | 'review_requested'
+      | 'review_request_removed'
+      | 'auto_merge_enabled'
+      | 'auto_merge_disabled'
+    >;
     branches: string[];
     'branches-ignore': string[];
     paths: string[];
     'paths-ignore': string[];
   };
-  push: string | {
-    branches: string[];
-    'branches-ignore': string[];
-    paths: string[];
-    'paths-ignore': string[];
-    tags: string[];
-    'tags-ignore': string[];
-  };
+  push:
+    | string
+    | {
+        branches: string[];
+        'branches-ignore': string[];
+        paths: string[];
+        'paths-ignore': string[];
+        tags: string[];
+        'tags-ignore': string[];
+      };
   registry_package: {
-    types: Array<'published' | 'updated'>
+    types: Array<'published' | 'updated'>;
   };
   release: {
     types: Array<'published' | 'unpublished' | 'created' | 'edited' | 'deleted' | 'prereleased' | 'released'>;
@@ -117,12 +190,12 @@ export interface OnEvents {
   }[];
   status: string;
   watch: {
-    types: Array<'started'>
-  }
+    types: Array<'started'>;
+  };
   workflow_call: {
     inputs: Record<string, WorkflowCallInput>;
-    outputs: Record<string, WorkflowCallOutput>
-    secrets: Record<string, { description: string, required: boolean }>
+    outputs: Record<string, WorkflowCallOutput>;
+    secrets: Record<string, { description: string; required: boolean }>;
   };
   workflow_dispatch: {
     inputs: Record<string, WorkflowDispatchInput>;
@@ -130,13 +203,30 @@ export interface OnEvents {
   workflow_run: {
     workflows: string[];
     types: Array<'completed' | 'requested' | 'in_progress'>;
-  }
+  };
 }
 
 export type On = OnEvents | Array<keyof OnEvents> | string;
 
-type PermissionsKey = 'actions' | 'checks' | 'contents' | 'deployments' | 'id-token' | 'issues' | 'discussions' | 'packages' | 'pages' | 'pull-requests' | 'repository-projects' | 'security-events' | 'statuses';
+type PermissionsKey =
+  | 'actions'
+  | 'checks'
+  | 'contents'
+  | 'deployments'
+  | 'id-token'
+  | 'issues'
+  | 'discussions'
+  | 'packages'
+  | 'pages'
+  | 'pull-requests'
+  | 'repository-projects'
+  | 'security-events'
+  | 'statuses';
 type PermissionsValue = 'read' | 'write' | 'none' | 'read|write' | 'read|none' | 'write|none' | 'read|write|none';
-export type Permissions = { [key in PermissionsKey]: PermissionsValue } | 'read-all' | 'write-all' | Record<string, never>;
+export type Permissions =
+  | { [key in PermissionsKey]: PermissionsValue }
+  | 'read-all'
+  | 'write-all'
+  | Record<string, never>;
 
-export type Concurrency = { group: string, 'cancel-in-progress': boolean };
+export type Concurrency = { group: string; 'cancel-in-progress': boolean };

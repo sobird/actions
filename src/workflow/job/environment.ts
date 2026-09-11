@@ -1,4 +1,4 @@
-import Expression from "@/expression";
+import Expression from '@/expression';
 
 export interface EnvironmentOptions {
   name?: string;
@@ -13,31 +13,24 @@ class Environment {
   constructor(environment: EnvironmentOptions = {}) {
     let env: EnvironmentOptions = {};
 
-    if (typeof environment === "string") {
+    if (typeof environment === 'string') {
       env.name = environment;
     } else {
       env = environment;
     }
 
-    this.name = new Expression(env.name, [
-      "github",
-      "needs",
-      "strategy",
-      "matrix",
-      "vars",
-      "inputs",
-    ]);
+    this.name = new Expression(env.name, ['github', 'needs', 'strategy', 'matrix', 'vars', 'inputs']);
     this.url = new Expression(env.url, [
-      "github",
-      "needs",
-      "strategy",
-      "matrix",
-      "job",
-      "runner",
-      "env",
-      "vars",
-      "steps",
-      "inputs",
+      'github',
+      'needs',
+      'strategy',
+      'matrix',
+      'job',
+      'runner',
+      'env',
+      'vars',
+      'steps',
+      'inputs',
     ]);
   }
 }

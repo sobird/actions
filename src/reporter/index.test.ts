@@ -10,6 +10,7 @@ import Reporter from './index';
 vi.mock('../gen');
 
 import { create } from '@bufbuild/protobuf';
+
 import { type LogEntry } from '@/common/logger';
 import { UpdateLogResponseSchema } from '@/gen/runner/v1/messages_pb';
 

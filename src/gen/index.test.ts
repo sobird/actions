@@ -3,7 +3,11 @@ import { timestampFromDate } from '@bufbuild/protobuf/wkt';
 
 import Client from './index';
 import {
-  UpdateLogRequestSchema, LogRow, LogRowSchema, RunnerSchema, RegisterResponseSchema,
+  UpdateLogRequestSchema,
+  LogRow,
+  LogRowSchema,
+  RunnerSchema,
+  RegisterResponseSchema,
 } from './runner/v1/messages_pb';
 
 vi.mock('./index');
@@ -30,9 +34,7 @@ describe('RunnerServiceClient', () => {
         token: '158251cb53728b3d2d9777527b522a78420aed36',
         name: 'test',
         version: '0.0.1',
-        labels: [
-          'ubuntu-latest=gitea/runner-images:ubuntu-latest',
-        ],
+        labels: ['ubuntu-latest=gitea/runner-images:ubuntu-latest'],
       }),
     });
     vi.spyOn(RunnerServiceClient, 'register').mockResolvedValue(mockResolvedValue);

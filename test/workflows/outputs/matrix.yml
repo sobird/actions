@@ -19,7 +19,7 @@ jobs:
           version="${{ matrix.version }}"
           echo "output_${version}=${version}" >> "$GITHUB_OUTPUT"
       - name: Print step output ${{ matrix.version }}
-        run:  |
+        run: |
           version="${{ matrix.version }}"
           echo "${{toJSON(steps.gen_output)}}"
   job2:

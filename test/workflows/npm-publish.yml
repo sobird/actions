@@ -8,33 +8,33 @@ jobs:
   test-npm-publish:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Install pnpm
-      uses: pnpm/action-setup@v4
-      with:
-        version: 10
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
-    # - name: Setup Node
-    #   uses: actions/setup-node@v4
-    #   with:
-    #     node-version: 20
-    #     registry-url: https://registry.npmjs.org/
+      # - name: Setup Node
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: 20
+      #     registry-url: https://registry.npmjs.org/
 
-    - name: Restore cache
-      id: cache-dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          test
-        key: ${{ runner.os }}-dependencies-${{ hashFiles('pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-dependencies-
+      - name: Restore cache
+        id: cache-dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            test
+          key: ${{ runner.os }}-dependencies-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-dependencies-
 
-    - name: Install Dependencies 🔧
-      if: ${{ steps.cache-dependencies.outputs.cache-hit != 'true' }}
-      run: pnpm install --no-frozen-lockfile
+      - name: Install Dependencies 🔧
+        if: ${{ steps.cache-dependencies.outputs.cache-hit != 'true' }}
+        run: pnpm install --no-frozen-lockfile
 
     # - name: Build ☕️
     #   run: |
@@ -43,4 +43,3 @@ jobs:
     #     npm publish
     #   env:
     #     NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-

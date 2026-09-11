@@ -1,4 +1,4 @@
-import Reusable from "@/workflow/reusable";
+import Reusable from '@/workflow/reusable';
 
 /**
  * Selects an action to run as part of a step in your job. An action is a reusable unit of code.

@@ -47,13 +47,18 @@ const styles = {
 };
 
 class Pad {
-  constructor(public outputs: string[], public width: number) {}
+  constructor(
+    public outputs: string[],
+    public width: number,
+  ) {}
 
   padLeft(centerOnWidth: number = 0) {
     const pad = Math.max(0, (centerOnWidth + this.width) / 2);
-    return this.outputs.map((item) => {
-      return `${item.padStart(pad)}`;
-    }).join('\n');
+    return this.outputs
+      .map((item) => {
+        return `${item.padStart(pad)}`;
+      })
+      .join('\n');
   }
 
   toString() {
@@ -99,7 +104,7 @@ export class Pen {
     return new Pad(outputs, maxWidth);
   }
 
-  drawTable(data: Record<string, unknown>[], columns: { title: string, key: string }[] | Record<string, string>) {
+  drawTable(data: Record<string, unknown>[], columns: { title: string; key: string }[] | Record<string, string>) {
     const styleDef = styles[this.style];
     const maxWidth: Record<string, number> = {};
 
@@ -125,9 +130,11 @@ export class Pen {
 
     const outputs = [];
 
-    const hd = columns.map((item) => {
-      return item.title.padEnd(maxWidth[item.key]);
-    }).join('  ');
+    const hd = columns
+      .map((item) => {
+        return item.title.padEnd(maxWidth[item.key]);
+      })
+      .join('  ');
 
     outputs.push(chalk.magentaBright(hd));
 
@@ -135,9 +142,11 @@ export class Pen {
     outputs.push(chalk.magenta.dim(hr));
 
     data.forEach((item) => {
-      const result = columns.map((col) => {
-        return String(item[col.key]).padEnd(maxWidth[col.key]);
-      }).join('  ');
+      const result = columns
+        .map((col) => {
+          return String(item[col.key]).padEnd(maxWidth[col.key]);
+        })
+        .join('  ');
       outputs.push(result);
     });
 

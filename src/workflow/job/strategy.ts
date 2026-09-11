@@ -96,22 +96,22 @@ export default class Strategy {
   'fail-fast'?: boolean;
 
   /**
- * By default, GitHub will maximize the number of jobs run in parallel depending on runner availability.
- * To set the maximum number of jobs that can run simultaneously when using a `matrix` job strategy, use `jobs.<job_id>.strategy.max-parallel`.
- *
- * For example, the following workflow will run a maximum of two jobs at a time,
- * even if there are runners available to run all six jobs at once.
- *
- * ```yaml
- * jobs:
- *   example_matrix:
- *     strategy:
- *       max-parallel: 2
- *       matrix:
- *         version: [10, 12, 14]
- *         os: [ubuntu-latest, windows-latest]
- * ```
- */
+   * By default, GitHub will maximize the number of jobs run in parallel depending on runner availability.
+   * To set the maximum number of jobs that can run simultaneously when using a `matrix` job strategy, use `jobs.<job_id>.strategy.max-parallel`.
+   *
+   * For example, the following workflow will run a maximum of two jobs at a time,
+   * even if there are runners available to run all six jobs at once.
+   *
+   * ```yaml
+   * jobs:
+   *   example_matrix:
+   *     strategy:
+   *       max-parallel: 2
+   *       matrix:
+   *         version: [10, 12, 14]
+   *         os: [ubuntu-latest, windows-latest]
+   * ```
+   */
   'max-parallel'?: number;
 
   constructor(strategy: StrategyProps = {} as StrategyProps) {
@@ -184,7 +184,9 @@ export default class Strategy {
           if (Object.prototype.hasOwnProperty.call(originalMatrix, k)) {
             excludeEntry[k] = item[k];
           } else {
-            throw new Error(`The workflow is not valid. Matrix exclude key "${k}" does not match any key within the matrix`);
+            throw new Error(
+              `The workflow is not valid. Matrix exclude key "${k}" does not match any key within the matrix`,
+            );
           }
         }
         excludes.push(excludeEntry);
@@ -207,12 +209,15 @@ export default class Strategy {
       return acc;
     }, new Map());
 
-    matrixes = matrixProduct.reduce((acc, item) => {
-      if (!excludesMap.has(JSON.stringify(item))) {
-        acc.push(item);
-      }
-      return acc;
-    }, [] as Record<string, unknown>[]);
+    matrixes = matrixProduct.reduce(
+      (acc, item) => {
+        if (!excludesMap.has(JSON.stringify(item))) {
+          acc.push(item);
+        }
+        return acc;
+      },
+      [] as Record<string, unknown>[],
+    );
 
     const matchIncludes: Record<string, string>[] = [];
     includes.forEach((includeItem) => {

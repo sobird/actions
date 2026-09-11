@@ -19,12 +19,10 @@ async function run() {
   );
 
   // 创建解包流
-  const unpack = tar.x(
-    {
-      // gzip: true, // 启用 gzip 解压（可选）
-      cwd: destDir, // 解包到的目标目录
-    },
-  );
+  const unpack = tar.x({
+    // gzip: true, // 启用 gzip 解压（可选）
+    cwd: destDir, // 解包到的目标目录
+  });
 
   // 将打包流通过管道连接到解包流
   pack.pipe(unpack);

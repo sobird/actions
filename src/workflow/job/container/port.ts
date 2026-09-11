@@ -1,11 +1,11 @@
 import url from 'node:url';
 
 export interface ExposedPorts {
-  [port: string]: {}
+  [port: string]: {};
 }
 
 export interface PortBindings {
-  [port: string]: { HostIp: string, HostPort: string }[]
+  [port: string]: { HostIp: string; HostPort: string }[];
 }
 
 export default class Port {
@@ -29,8 +29,8 @@ export default class Port {
 
   // IP:HostPort:ContainerPort
   static Split(portInfo: string = '') {
-    const [containerPort = '', HostPort = '', ...ips] = portInfo.split(':').reverse();
-    return [ips.reverse().join(':'), HostPort, containerPort];
+    const [containerPort = '', HostPort = '', ...ips] = portInfo.split(':').toReversed();
+    return [ips.toReversed().join(':'), HostPort, containerPort];
   }
 
   // Port/Protocol -> [protocol, port]
@@ -38,7 +38,7 @@ export default class Port {
     const [port, protocol = 'tcp'] = portInfo.split('/');
 
     if (!port) {
-      throw new Error((`No port specified: ${port}<empty>`));
+      throw new Error(`No port specified: ${port}<empty>`);
     }
 
     return [protocol, port];
@@ -90,7 +90,7 @@ export default class Port {
       }
 
       return [parsed.hostname, parsed.port.startsWith(':') ? parsed.port.slice(1) : parsed.port];
-    } catch (err) {
+    } catch {
       return ['', ''];
     }
   }
@@ -109,7 +109,7 @@ export default class Port {
       [startHostPort, endHostPort] = this.ParsePortRange(hostPort);
     }
 
-    if (hostPort !== '' && (endPort - startPort) !== (endHostPort - startHostPort)) {
+    if (hostPort !== '' && endPort - startPort !== endHostPort - startHostPort) {
       // Allow host port range iff containerPort is not a range.
       // In this case, use the host port range as the dynamic
       // host port range to allocate into.
@@ -165,7 +165,7 @@ export default class Port {
           const currentBindings = portBindings[portStr] || [];
           portBindings[portStr] = [...currentBindings, bind];
         }
-      } catch (err) {
+      } catch {
         // console.log('err', err);
       }
     }

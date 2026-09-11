@@ -24,17 +24,15 @@ describe('cartesian product', () => {
 
   it('cartesianProduct test case', () => {
     const result = cartesianProduct(mapOfLists);
-    expect(result).toEqual(
-      [
-        { a: 'a1', b: 1, c: 'c1' },
-        { a: 'a1', b: 1, c: 'c2' },
-        { a: 'a1', b: 2, c: 'c1' },
-        { a: 'a1', b: 2, c: 'c2' },
-        { a: 'a2', b: 1, c: 'c1' },
-        { a: 'a2', b: 1, c: 'c2' },
-        { a: 'a2', b: 2, c: 'c1' },
-        { a: 'a2', b: 2, c: 'c2' },
-      ],
-    );
+    expect(result).toEqual([
+      { a: 'a1', b: 1, c: 'c1' },
+      { a: 'a1', b: 1, c: 'c2' },
+      { a: 'a1', b: 2, c: 'c1' },
+      { a: 'a1', b: 2, c: 'c2' },
+      { a: 'a2', b: 1, c: 'c1' },
+      { a: 'a2', b: 1, c: 'c2' },
+      { a: 'a2', b: 2, c: 'c1' },
+      { a: 'a2', b: 2, c: 'c2' },
+    ]);
   });
 });

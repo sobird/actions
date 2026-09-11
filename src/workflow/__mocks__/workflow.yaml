@@ -1,10 +1,10 @@
 name: Actions Workflow Test
-run-name: ${{ github.actor }} is testing out Actions  
-on: 
+run-name: ${{ github.actor }} is testing out Actions
+on:
   pull_request:
   push:
-      branches:
-        - main
+    branches:
+      - main
   release:
     types: [published]
   label:
@@ -73,7 +73,7 @@ jobs:
             **/node_modules
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
-              ${{ runner.os }}-yarn-
+            ${{ runner.os }}-yarn-
       - name: Install Dependencies
         if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: |

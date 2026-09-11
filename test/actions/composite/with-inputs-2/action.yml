@@ -1,13 +1,13 @@
-name: "composite"
-description: "composite"
+name: 'composite'
+description: 'composite'
 
 inputs:
   composite-input:
-    description: "value"
+    description: 'value'
     required: true
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: test input value
       run: |

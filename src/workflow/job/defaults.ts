@@ -1,8 +1,8 @@
-import Expression from "@/expression";
+import Expression from '@/expression';
 
 type Run = {
-  shell: "unspecified" | "bash" | "pwsh" | "python" | "sh" | "cmd" | "powershell";
-  "working-directory": string;
+  shell: 'unspecified' | 'bash' | 'pwsh' | 'python' | 'sh' | 'cmd' | 'powershell';
+  'working-directory': string;
 };
 
 export interface DefaultsProps {
@@ -13,15 +13,7 @@ class Defaults {
   run: Expression<Run | undefined>;
 
   constructor(defaults: DefaultsProps = {}) {
-    this.run = new Expression(defaults.run, [
-      "github",
-      "needs",
-      "strategy",
-      "matrix",
-      "env",
-      "vars",
-      "inputs",
-    ]);
+    this.run = new Expression(defaults.run, ['github', 'needs', 'strategy', 'matrix', 'env', 'vars', 'inputs']);
   }
 }
 

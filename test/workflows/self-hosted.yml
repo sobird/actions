@@ -15,7 +15,7 @@ jobs:
         with:
           entrypoint: /bin/echo
           args: The ${{ github.event_name }} event triggered this step.
-      
+
       - name: Javascript Action
         id: javascript_action
         uses: ./test/actions/hello-world-javascript-action

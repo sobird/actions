@@ -5,7 +5,10 @@ import type Job from '../job';
 class Run {
   job: Job;
 
-  constructor(public jobId: string, public workflow: Workflow) {
+  constructor(
+    public jobId: string,
+    public workflow: Workflow,
+  ) {
     this.job = workflow.jobs[this.jobId];
   }
 

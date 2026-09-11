@@ -13,7 +13,11 @@ describe('Strategy Class Test', () => {
       matrix: {
         datacenter: ['site-c', 'site-d'],
         exclude: [{ datacenter: 'site-d', 'node-version': '14.x', site: 'staging' }],
-        include: [{ 'php-version': '5.4' }, { datacenter: 'site-a', 'node-version': '10.x', site: 'prod' }, { datacenter: 'site-b', 'node-version': '12.x', site: 'dev' }],
+        include: [
+          { 'php-version': '5.4' },
+          { datacenter: 'site-a', 'node-version': '10.x', site: 'prod' },
+          { datacenter: 'site-b', 'node-version': '12.x', site: 'dev' },
+        ],
         'node-version': ['14.x', '16.x'],
         site: ['staging'],
       },
@@ -22,16 +26,28 @@ describe('Strategy Class Test', () => {
 
     expect(strategy.Matrices).toEqual([
       {
-        datacenter: 'site-c', 'node-version': '14.x', site: 'staging', 'php-version': '5.4',
+        datacenter: 'site-c',
+        'node-version': '14.x',
+        site: 'staging',
+        'php-version': '5.4',
       },
       {
-        datacenter: 'site-c', 'node-version': '16.x', site: 'staging', 'php-version': '5.4',
+        datacenter: 'site-c',
+        'node-version': '16.x',
+        site: 'staging',
+        'php-version': '5.4',
       },
       {
-        datacenter: 'site-d', 'node-version': '14.x', site: 'staging', 'php-version': '5.4',
+        datacenter: 'site-d',
+        'node-version': '14.x',
+        site: 'staging',
+        'php-version': '5.4',
       },
       {
-        datacenter: 'site-d', 'node-version': '16.x', site: 'staging', 'php-version': '5.4',
+        datacenter: 'site-d',
+        'node-version': '16.x',
+        site: 'staging',
+        'php-version': '5.4',
       },
       { datacenter: 'site-a', 'node-version': '10.x', site: 'prod' },
       { datacenter: 'site-b', 'node-version': '12.x', site: 'dev' },
@@ -43,16 +59,28 @@ describe('Strategy Class Test', () => {
       matrix: {
         fruit: ['apple', 'pear'],
         animal: ['cat', 'dog'],
-        include: [{ color: 'green' }, { color: 'pink', animal: 'cat' }, { fruit: 'apple', shape: 'circle' }, { fruit: 'banana' }, { fruit: 'banana', animal: 'cat' }],
+        include: [
+          { color: 'green' },
+          { color: 'pink', animal: 'cat' },
+          { fruit: 'apple', shape: 'circle' },
+          { fruit: 'banana' },
+          { fruit: 'banana', animal: 'cat' },
+        ],
       },
     });
 
     expect(strategy.Matrices).toEqual([
       {
-        fruit: 'apple', animal: 'cat', color: 'pink', shape: 'circle',
+        fruit: 'apple',
+        animal: 'cat',
+        color: 'pink',
+        shape: 'circle',
       },
       {
-        fruit: 'apple', animal: 'dog', color: 'green', shape: 'circle',
+        fruit: 'apple',
+        animal: 'dog',
+        color: 'green',
+        shape: 'circle',
       },
       { fruit: 'pear', animal: 'cat', color: 'pink' },
       { fruit: 'pear', animal: 'dog', color: 'green' },
@@ -66,7 +94,13 @@ describe('Strategy Class Test', () => {
       matrix: {
         fruit: ['apple', 'pear'],
         animal: ['cat', 'dog'],
-        include: [{ color: 'green' }, { color: 'pink', animal: 'cat' }, { fruit: 'apple', shape: 'circle' }, { fruit: 'banana' }, { fruit: 'banana', animal: 'cat' }],
+        include: [
+          { color: 'green' },
+          { color: 'pink', animal: 'cat' },
+          { fruit: 'apple', shape: 'circle' },
+          { fruit: 'banana' },
+          { fruit: 'banana', animal: 'cat' },
+        ],
       },
     });
 
@@ -76,10 +110,16 @@ describe('Strategy Class Test', () => {
 
     expect(selected).toEqual([
       {
-        fruit: 'apple', animal: 'cat', color: 'pink', shape: 'circle',
+        fruit: 'apple',
+        animal: 'cat',
+        color: 'pink',
+        shape: 'circle',
       },
       {
-        fruit: 'apple', animal: 'dog', color: 'green', shape: 'circle',
+        fruit: 'apple',
+        animal: 'dog',
+        color: 'green',
+        shape: 'circle',
       },
     ]);
   });

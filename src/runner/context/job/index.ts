@@ -27,9 +27,11 @@ export class Job {
 
   constructor(job: Job) {
     this.container = new Container(job.container ?? {});
-    this.services = Object.fromEntries(Object.entries(job.services ?? {}).map(([serviceId, container]) => {
-      return [serviceId, new Container(container ?? {})];
-    }));
+    this.services = Object.fromEntries(
+      Object.entries(job.services ?? {}).map(([serviceId, container]) => {
+        return [serviceId, new Container(container ?? {})];
+      }),
+    );
     this.status = job.status ?? 'success';
   }
 }

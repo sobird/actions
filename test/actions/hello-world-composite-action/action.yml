@@ -1,16 +1,16 @@
 name: 'Hello World'
 description: 'Greet someone'
 inputs:
-  who-to-greet:  # id of input
+  who-to-greet: # id of input
     description: 'Who to greet'
     required: true
     default: 'inputs default'
 outputs:
   random-number:
-    description: "Random number"
+    description: 'Random number'
     value: ${{ steps.random-number-generator.outputs.random-number }}
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -27,8 +27,7 @@ runs:
       shell: bash
 
     - name: Set GitHub Path
-      run: 
-        echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH |
+      run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH |
         echo "$GITHUB_ACTION_PATH"
       shell: bash
       env:
@@ -37,4 +36,3 @@ runs:
     - name: Run goodbye.sh
       run: goodbye.sh
       shell: bash
-

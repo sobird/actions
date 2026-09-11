@@ -1,6 +1,6 @@
 name: Reusable Workflow workflow_call Test
-run-name: ${{ github.actor }} is testing out Actions  
-on: 
+run-name: ${{ github.actor }} is testing out Actions
+on:
   workflow_call:
 
 permissions:
@@ -19,7 +19,7 @@ jobs:
         os: ['ubuntu-latest']
         node: [16, 18, 20]
       fail-fast: false
-      
+
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server hosted by !"
@@ -32,7 +32,6 @@ jobs:
         run: |
           ls ${{ github.workspace }}
       - run: echo "This job's status is ${{ job.status }}."
-
       - name: Hello world action step
         id: hello_javascript
         uses: ./.github/actions/hello-world-javascript-action
@@ -40,7 +39,7 @@ jobs:
           who-to-greet: 'javascript action step'
       - name: Get the output time
         run: echo "The time was ${{ steps.hello_javascript.outputs.time }}"
-      
+
       - name: Hello world docker action step
         id: hello_docker
         uses: ./.github/actions/hello-world-docker-action

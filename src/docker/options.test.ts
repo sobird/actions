@@ -1,7 +1,8 @@
 import Options from './options';
 
 it('should parse Docker container create options correctly', () => {
-  const clistring = '--cpus 1 --memory 512m --volume /host/path:/container/path --publish 8080:80 --env MY_ENV=value --restart always --network bridge';
+  const clistring =
+    '--cpus 1 --memory 512m --volume /host/path:/container/path --publish 8080:80 --env MY_ENV=value --restart always --network bridge';
   const options = new Options(clistring);
 
   const results = options.parse();

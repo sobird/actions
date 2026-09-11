@@ -30,6 +30,8 @@
     "build": "next build",
     "build:actions": "bun scripts/build.ts",
     "dev": "next dev",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "postinstall": "echo \"postinstall\"",
@@ -120,7 +122,8 @@
     "vitest": "^5.0.0"
   },
   "lint-staged": {
-    "**/*.{js,ts,jsx,tsx}": "oxlint --fix"
+    "**/*": "oxfmt --no-error-on-unmatched-pattern",
+    "**/*.{js,jsx,ts,tsx,mjs,cjs}": "oxlint --fix"
   },
   "trustedDependencies": [
     "@bufbuild/buf",

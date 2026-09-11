@@ -1,21 +1,13 @@
-import Expression from "@/expression";
-import { StepProps } from "@/workflow/job/step";
-import Steps from "@/workflow/job/steps";
+import Expression from '@/expression';
+import { StepProps } from '@/workflow/job/step';
+import Steps from '@/workflow/job/steps';
 
 export interface RunsProps extends Pick<
   Runs,
-  | "using"
-  | "main"
-  | "pre"
-  | "post"
-  | "image"
-  | "env"
-  | "pre-entrypoint"
-  | "entrypoint"
-  | "post-entrypoint"
+  'using' | 'main' | 'pre' | 'post' | 'image' | 'env' | 'pre-entrypoint' | 'entrypoint' | 'post-entrypoint'
 > {
-  "pre-if"?: string;
-  "post-if"?: string;
+  'pre-if'?: string;
+  'post-if'?: string;
   steps?: StepProps[];
   args: string[];
 }
@@ -63,7 +55,7 @@ class Runs {
    *   pre-if: runner.os == 'linux'
    * ```
    */
-  "pre-if": Expression<RunsProps["pre-if"]>;
+  'pre-if': Expression<RunsProps['pre-if']>;
 
   /**
    * Optional Allows you to run a script at the end of a job, once the main: action has completed.
@@ -91,7 +83,7 @@ class Runs {
    *   post-if: runner.os == 'linux'
    * ```
    */
-  "post-if": Expression<RunsProps["post-if"]>;
+  'post-if': Expression<RunsProps['post-if']>;
 
   /**
    * Required The Docker image to use as the container to run the action.
@@ -106,13 +98,13 @@ class Runs {
    */
   env: Record<string, string>;
 
-  "pre-entrypoint": string;
+  'pre-entrypoint': string;
 
   entrypoint: string;
 
-  "post-entrypoint": string;
+  'post-entrypoint': string;
 
-  args: Expression<RunsProps["args"]>;
+  args: Expression<RunsProps['args']>;
 
   steps: Steps;
 
@@ -120,30 +112,30 @@ class Runs {
     this.using = runs.using;
     this.main = runs.main;
 
-    this["pre-if"] = new Expression(
-      runs["pre-if"],
-      ["github", "needs", "vars", "inputs"],
-      ["github", "needs", "strategy", "matrix", "job", "runner", "env", "vars", "steps", "inputs"],
-      "always()",
+    this['pre-if'] = new Expression(
+      runs['pre-if'],
+      ['github', 'needs', 'vars', 'inputs'],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'steps', 'inputs'],
+      'always()',
       true,
     );
     this.pre = runs.pre;
 
-    this["post-if"] = new Expression(
-      runs["post-if"],
-      ["github", "needs", "strategy", "matrix", "job", "runner", "env", "vars", "steps", "inputs"],
-      ["always", "cancelled", "success", "failure"],
-      "always()",
+    this['post-if'] = new Expression(
+      runs['post-if'],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'steps', 'inputs'],
+      ['always', 'cancelled', 'success', 'failure'],
+      'always()',
       true,
     );
     this.post = runs.post;
 
     this.image = runs.image;
     this.env = runs.env;
-    this["pre-entrypoint"] = runs["pre-entrypoint"];
+    this['pre-entrypoint'] = runs['pre-entrypoint'];
     this.entrypoint = runs.entrypoint;
-    this["post-entrypoint"] = runs["post-entrypoint"];
-    this.args = new Expression(runs.args, ["inputs"], [], []);
+    this['post-entrypoint'] = runs['post-entrypoint'];
+    this.args = new Expression(runs.args, ['inputs'], [], []);
     this.steps = new Steps(runs.steps, true);
   }
 }

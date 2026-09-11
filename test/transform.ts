@@ -1,11 +1,9 @@
 /* eslint-disable max-classes-per-file */
 /* eslint-disable no-underscore-dangle */
-import { spawn } from 'child_process';
-import {
-  Transform, TransformOptions, PassThrough, TransformCallback,
-} from 'stream';
+import { spawn } from 'node:child_process';
+import { Transform, TransformOptions, PassThrough, TransformCallback } from 'node:stream';
 
-const child = spawn('sh', ['-c', 'echo "This is stdout" && echo "This is stderr" >&2'], {});
+const _child = spawn('sh', ['-c', 'echo "This is stdout" && echo "This is stderr" >&2'], {});
 
 // 创建一个自定义的 Transform 流
 export class MyTransform extends Transform {
@@ -73,7 +71,7 @@ class StdioTransform extends Transform {
   }
 }
 
-const stdioTransform = new StdioTransform();
+const _stdioTransform = new StdioTransform();
 
 // const stream = process.stdin.pipe(stdioTransform);
 // stream.stdout.pipe(process.stdout);

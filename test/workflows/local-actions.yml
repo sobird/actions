@@ -49,16 +49,16 @@ jobs:
         uses: ./test/actions/hello-world-composite-action
         with:
           who-to-greet: 'composite'
-      
+
       - name: Get the Javascript Action output time
         run: echo "The time was ${{ steps.javascript_action.outputs.time }}"
-        
+
       - name: Get the Docker Action output time
         run: echo "The time was ${{ steps.docker_action.outputs.time }}"
 
       - name: Get the Docker File Action output time
         run: echo "The time was ${{ steps.docker_file_action.outputs.time }}"
-      
+
       - name: Get the Docker Hub Action output time
         run: echo "The time was ${{ steps.docker_hub_action.outputs.time }}"
 
@@ -82,4 +82,3 @@ jobs:
         uses: ./test/actions/hello-world-docker-action
         with:
           who-to-greet: 'docker action'
-

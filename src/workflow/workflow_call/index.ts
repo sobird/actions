@@ -15,12 +15,16 @@ export default class WorkflowCall {
   secrets: OnEvents['workflow_call']['secrets'];
 
   constructor(workflowCall: WorkflowCallProps = {} as WorkflowCallProps) {
-    this.inputs = Object.fromEntries(Object.entries(workflowCall.inputs || {}).map(([inputId, input]) => {
-      return [inputId, new Input(input)];
-    }));
-    this.outputs = Object.fromEntries(Object.entries(workflowCall.outputs || {}).map(([ouputId, output]) => {
-      return [ouputId, new Output(output)];
-    }));
+    this.inputs = Object.fromEntries(
+      Object.entries(workflowCall.inputs || {}).map(([inputId, input]) => {
+        return [inputId, new Input(input)];
+      }),
+    );
+    this.outputs = Object.fromEntries(
+      Object.entries(workflowCall.outputs || {}).map(([ouputId, output]) => {
+        return [ouputId, new Output(output)];
+      }),
+    );
 
     this.secrets = workflowCall.secrets;
   }

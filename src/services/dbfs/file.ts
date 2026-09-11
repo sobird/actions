@@ -21,9 +21,7 @@ class DbFile {
 
   public offset: number = 0;
 
-  constructor(public fullPath: string) {
-
-  }
+  constructor(public fullPath: string) {}
 
   async open(flags: number) {
     if ((flags & fs.constants.O_WRONLY) !== 0) {
@@ -164,15 +162,18 @@ class DbFile {
       };
 
       // eslint-disable-next-line no-await-in-loop
-      const [affectedCount] = await DbfsData.update({
-        revision: sequelize.literal('revision + 1'),
-        blobData: buf,
-      }, {
-        where: {
-          metaId: fileMeta?.id,
-          blobOffset,
+      const [affectedCount] = await DbfsData.update(
+        {
+          revision: sequelize.literal('revision + 1'),
+          blobData: buf,
         },
-      });
+        {
+          where: {
+            metaId: fileMeta?.id,
+            blobOffset,
+          },
+        },
+      );
       if (affectedCount === 0) {
         // eslint-disable-next-line no-await-in-loop
         await DbfsData.create(fileData);
@@ -189,11 +190,14 @@ class DbFile {
     }
 
     if (needUpdateSize) {
-      await DbfsMeta.update({ fileSize: this.offset }, {
-        where: {
-          id: fileMeta?.id,
+      await DbfsMeta.update(
+        { fileSize: this.offset },
+        {
+          where: {
+            id: fileMeta?.id,
+          },
         },
-      });
+      );
     }
 
     return written;
@@ -253,13 +257,16 @@ class DbFile {
       return;
     }
 
-    return DbfsMeta.update({
-      fullPath: DbFile.buildPath(newPath),
-    }, {
-      where: {
-        id: this.metaId,
+    return DbfsMeta.update(
+      {
+        fullPath: DbFile.buildPath(newPath),
       },
-    });
+      {
+        where: {
+          id: this.metaId,
+        },
+      },
+    );
   }
 
   async delete() {

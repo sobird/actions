@@ -1,6 +1,6 @@
-import Expression from "@/expression";
+import Expression from '@/expression';
 
-export interface OutputProps extends Pick<Output, "description"> {
+export interface OutputProps extends Pick<Output, 'description'> {
   value: string;
 }
 
@@ -15,27 +15,15 @@ export default class Output {
    * You can set this to a string or an expression with context.
    * For example, you can use the steps context to set the value of an output to the output value of a step.
    */
-  value: Expression<OutputProps["value"]>;
+  value: Expression<OutputProps['value']>;
 
   constructor(output: OutputProps) {
     this.description = output.description;
     this.value = new Expression(
       output.value,
-      [
-        "github",
-        "needs",
-        "strategy",
-        "matrix",
-        "job",
-        "runner",
-        "env",
-        "vars",
-        "secrets",
-        "steps",
-        "inputs",
-      ],
-      ["always", "cancelled", "success", "failure"],
-      "always()",
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
+      ['always', 'cancelled', 'success', 'failure'],
+      'always()',
     );
   }
 

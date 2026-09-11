@@ -5,14 +5,7 @@ import { describe, it, expect } from 'vitest';
 import LineTransform from './lineTransform';
 
 describe('LineTransform', () => {
-  const testLines = [
-    'hello',
-    ' ',
-    'world!!\nextra',
-    ' line\n and another\nlast',
-    ' line\n',
-    'no newline here...',
-  ];
+  const testLines = ['hello', ' ', 'world!!\nextra', ' line\n and another\nlast', ' line\n', 'no newline here...'];
 
   it('line transform unit test', () => {
     const lines: string[] = [];
@@ -57,7 +50,9 @@ describe('LineTransform', () => {
     readable.pipe(lineTransform).pipe(writable);
 
     // 等待流结束
-    await new Promise((resolve) => { writable.on('finish', resolve); });
+    await new Promise((resolve) => {
+      writable.on('finish', resolve);
+    });
 
     // 断言输出数据是否符合预期
     expect(outputData).toBe(expectedOutput);
@@ -86,7 +81,9 @@ describe('LineTransform', () => {
     readable.pipe(lineTransform).pipe(writable);
 
     // 等待流结束
-    await new Promise((resolve) => { writable.on('finish', resolve); });
+    await new Promise((resolve) => {
+      writable.on('finish', resolve);
+    });
 
     // 断言输出数据是否符合预期
     expect(outputData).toBe(expectedOutput);
@@ -115,7 +112,9 @@ describe('LineTransform', () => {
     readable.pipe(lineTransform).pipe(writable);
 
     // 等待流结束
-    await new Promise((resolve) => { writable.on('finish', resolve); });
+    await new Promise((resolve) => {
+      writable.on('finish', resolve);
+    });
 
     // 断言输出数据是否符合预期
     expect(outputData).toBe(expectedOutput);

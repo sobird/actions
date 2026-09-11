@@ -2,16 +2,19 @@
 // @generated from file ping/v1/services.proto (package ping.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenService } from "@bufbuild/protobuf/codegenv1";
-import { fileDesc, serviceDesc } from "@bufbuild/protobuf/codegenv1";
-import type { PingRequestSchema, PingResponseSchema } from "./messages_pb";
-import { file_ping_v1_messages } from "./messages_pb";
+import type { GenFile, GenService } from '@bufbuild/protobuf/codegenv1';
+import { fileDesc, serviceDesc } from '@bufbuild/protobuf/codegenv1';
+
+import type { PingRequestSchema, PingResponseSchema } from './messages_pb';
+import { file_ping_v1_messages } from './messages_pb';
 
 /**
  * Describes the file ping/v1/services.proto.
  */
-export const file_ping_v1_services: GenFile = /*@__PURE__*/
-  fileDesc("ChZwaW5nL3YxL3NlcnZpY2VzLnByb3RvEgdwaW5nLnYxMkIKC1BpbmdTZXJ2aWNlEjMKBFBpbmcSFC5waW5nLnYxLlBpbmdSZXF1ZXN0GhUucGluZy52MS5QaW5nUmVzcG9uc2VCWQoLY29tLnBpbmcudjFCDVNlcnZpY2VzUHJvdG9QAaICA1BYWKoCB1BpbmcuVjHKAgdQaW5nXFYx4gITUGluZ1xWMVxHUEJNZXRhZGF0YeoCCFBpbmc6OlYxYgZwcm90bzM", [file_ping_v1_messages]);
+export const file_ping_v1_services: GenFile /*@__PURE__*/ = fileDesc(
+  'ChZwaW5nL3YxL3NlcnZpY2VzLnByb3RvEgdwaW5nLnYxMkIKC1BpbmdTZXJ2aWNlEjMKBFBpbmcSFC5waW5nLnYxLlBpbmdSZXF1ZXN0GhUucGluZy52MS5QaW5nUmVzcG9uc2VCWQoLY29tLnBpbmcudjFCDVNlcnZpY2VzUHJvdG9QAaICA1BYWKoCB1BpbmcuVjHKAgdQaW5nXFYx4gITUGluZ1xWMVxHUEJNZXRhZGF0YeoCCFBpbmc6OlYxYgZwcm90bzM',
+  [file_ping_v1_messages],
+);
 
 /**
  * @generated from service ping.v1.PingService
@@ -21,10 +24,8 @@ export const PingService: GenService<{
    * @generated from rpc ping.v1.PingService.Ping
    */
   ping: {
-    methodKind: "unary";
+    methodKind: 'unary';
     input: typeof PingRequestSchema;
     output: typeof PingResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_ping_v1_services, 0);
-
+  };
+}> /*@__PURE__*/ = serviceDesc(file_ping_v1_services, 0);

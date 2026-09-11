@@ -17,12 +17,16 @@ describe('Issue Matchers Config Validation', () => {
       ],
     } as IssueMatchersConfig);
 
-    expect(() => { return config.validate(); }).toThrow();
+    expect(() => {
+      return config.validate();
+    }).toThrow();
 
-    config.problemMatcher[0].pattern = [new IssuePatternConfig({
-      regexp: '^file: (.+)$',
-      message: 1,
-    } as IssuePatternConfig)];
+    config.problemMatcher[0].pattern = [
+      new IssuePatternConfig({
+        regexp: '^file: (.+)$',
+        message: 1,
+      } as IssuePatternConfig),
+    ];
 
     config.validate();
   });
@@ -50,7 +54,9 @@ describe('Issue Matchers Config Validation', () => {
         },
       ],
     } as IssueMatchersConfig);
-    expect(() => { return config.validate(); }).toThrow();
+    expect(() => {
+      return config.validate();
+    }).toThrow();
 
     // Sanity test
     config.problemMatcher[0].pattern[1].loop = false;
@@ -77,7 +83,9 @@ describe('Issue Matchers Config Validation', () => {
         },
       ],
     } as IssueMatchersConfig);
-    expect(() => { return config.validate(); }).toThrow();
+    expect(() => {
+      return config.validate();
+    }).toThrow();
 
     config.problemMatcher[0].pattern[1].loop = false;
     config.validate();
@@ -102,7 +110,9 @@ describe('Issue Matchers Config Validation', () => {
       ],
     } as IssueMatchersConfig);
 
-    expect(() => { return config.validate(); }).not.toThrow();
+    expect(() => {
+      return config.validate();
+    }).not.toThrow();
   });
 
   it('should require message property', () => {
@@ -120,7 +130,9 @@ describe('Issue Matchers Config Validation', () => {
       ],
     } as IssueMatchersConfig);
 
-    expect(() => { return config.validate(); }).toThrow();
+    expect(() => {
+      return config.validate();
+    }).toThrow();
 
     // Sanity test
     config.problemMatcher[0].pattern[0].file = undefined;
@@ -152,7 +164,9 @@ describe('Issue Matchers Config Validation', () => {
       ],
     } as IssueMatchersConfig);
 
-    expect(() => { return config.validate(); }).toThrow(Error);
+    expect(() => {
+      return config.validate();
+    }).toThrow(Error);
 
     // Sanity test
     config.problemMatcher[0].owner = 'asdf';
@@ -174,7 +188,9 @@ describe('Issue Matchers Config Validation', () => {
       ],
     } as IssueMatchersConfig);
 
-    expect(() => { return config.validate(); }).toThrow();
+    expect(() => {
+      return config.validate();
+    }).toThrow();
 
     // Sanity test
     config.problemMatcher[0].owner = 'asdf';
@@ -191,13 +207,17 @@ describe('Issue Matchers Config Validation', () => {
       ],
     } as unknown as IssueMatchersConfig);
 
-    expect(() => { return config.validate(); }).toThrow();
+    expect(() => {
+      return config.validate();
+    }).toThrow();
 
     // Sanity test
-    config.problemMatcher[0].pattern = [new IssuePatternConfig({
-      regexp: '^error: (.+)$',
-      message: 1,
-    } as IssuePatternConfig)];
+    config.problemMatcher[0].pattern = [
+      new IssuePatternConfig({
+        regexp: '^error: (.+)$',
+        message: 1,
+      } as IssuePatternConfig),
+    ];
     config.validate();
   });
 
@@ -224,7 +244,9 @@ describe('Issue Matchers Config Validation', () => {
       ],
     } as IssueMatchersConfig);
 
-    expect(() => { return config.validate(); }).toThrow();
+    expect(() => {
+      return config.validate();
+    }).toThrow();
     // Sanity test
     config.problemMatcher[0].pattern[0].file = undefined;
     config.problemMatcher[0].pattern[0].severity = 1;
@@ -246,7 +268,9 @@ describe('Issue Matchers Config Validation', () => {
       ],
     } as IssueMatchersConfig);
 
-    expect(() => { return config.validate(); }).toThrow();
+    expect(() => {
+      return config.validate();
+    }).toThrow();
 
     // Sanity test
     config.problemMatcher[0].pattern[0].message = 1;
@@ -268,7 +292,9 @@ describe('Issue Matchers Config Validation', () => {
       ],
     } as IssueMatchersConfig);
 
-    expect(() => { return config.validate(); }).toThrow();
+    expect(() => {
+      return config.validate();
+    }).toThrow();
     // Sanity test
     config.problemMatcher[0].pattern[0].message = 1;
     config.validate();

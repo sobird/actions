@@ -1,5 +1,5 @@
 name: circular workflow_call
-on: 
+on:
   workflow_call:
 
 permissions:

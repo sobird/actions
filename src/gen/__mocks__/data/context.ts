@@ -33,20 +33,23 @@ export default {
   event: {
     ref: 'refs/heads/main',
     before: 'e5363b40183374ed1ad1be2b732131189693de10',
-    commits: [{
-      committer: { name: 'root', email: 'root@SOBIRD', username: '' },
-      verification: null,
-      removed: [],
-      message: 'test: workflow\n',
-      id: '5ca327be95231ca11e05ea73d7483872f63e4e24',
-      author: { email: 'root@SOBIRD', username: '', name: 'root' },
-      timestamp: '2024-04-21T23:18:29+08:00',
-      added: [],
-      modified: ['.gitea/workflows/build.yaml'],
-      url: 'http://localhost:3000/sobird/actions-test/commit/5ca327be95231ca11e05ea73d7483872f63e4e24',
-    }],
+    commits: [
+      {
+        committer: { name: 'root', email: 'root@SOBIRD', username: '' },
+        verification: null,
+        removed: [],
+        message: 'test: workflow\n',
+        id: '5ca327be95231ca11e05ea73d7483872f63e4e24',
+        author: { email: 'root@SOBIRD', username: '', name: 'root' },
+        timestamp: '2024-04-21T23:18:29+08:00',
+        added: [],
+        modified: ['.gitea/workflows/build.yaml'],
+        url: 'http://localhost:3000/sobird/actions-test/commit/5ca327be95231ca11e05ea73d7483872f63e4e24',
+      },
+    ],
     total_commits: 0,
-    compare_url: 'http://localhost:3000/sobird/actions-test/compare/e5363b40183374ed1ad1be2b732131189693de10...5ca327be95231ca11e05ea73d7483872f63e4e24',
+    compare_url:
+      'http://localhost:3000/sobird/actions-test/compare/e5363b40183374ed1ad1be2b732131189693de10...5ca327be95231ca11e05ea73d7483872f63e4e24',
     pusher: {
       full_name: '',
       language: '',
@@ -84,7 +87,11 @@ export default {
     },
     after: '5ca327be95231ca11e05ea73d7483872f63e4e24',
     repository: {
-      internal_tracker: { enable_time_tracker: true, allow_only_contributors_to_track_time: true, enable_issue_dependencies: true },
+      internal_tracker: {
+        enable_time_tracker: true,
+        allow_only_contributors_to_track_time: true,
+        enable_issue_dependencies: true,
+      },
       html_url: 'http://localhost:3000/sobird/actions-test',
       created_at: '2024-04-18T04:27:06Z',
       has_releases: true,

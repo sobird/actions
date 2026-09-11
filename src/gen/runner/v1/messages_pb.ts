@@ -2,22 +2,24 @@
 // @generated from file runner/v1/messages.proto (package runner.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv1";
-import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv1";
-import type { Timestamp } from "@bufbuild/protobuf/wkt";
-import { file_google_protobuf_struct, file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
-import type { JsonObject, Message } from "@bufbuild/protobuf";
+import type { JsonObject, Message } from '@bufbuild/protobuf';
+import type { GenEnum, GenFile, GenMessage } from '@bufbuild/protobuf/codegenv1';
+import { enumDesc, fileDesc, messageDesc } from '@bufbuild/protobuf/codegenv1';
+import type { Timestamp } from '@bufbuild/protobuf/wkt';
+import { file_google_protobuf_struct, file_google_protobuf_timestamp } from '@bufbuild/protobuf/wkt';
 
 /**
  * Describes the file runner/v1/messages.proto.
  */
-export const file_runner_v1_messages: GenFile = /*@__PURE__*/
-  fileDesc("ChhydW5uZXIvdjEvbWVzc2FnZXMucHJvdG8SCXJ1bm5lci52MSKtAQoPUmVnaXN0ZXJSZXF1ZXN0EgwKBG5hbWUYASABKAkSDQoFdG9rZW4YAiABKAkSGAoMYWdlbnRfbGFiZWxzGAMgAygJQgIYARIZCg1jdXN0b21fbGFiZWxzGAQgAygJQgIYARIPCgd2ZXJzaW9uGAUgASgJEg4KBmxhYmVscxgGIAMoCRIRCgllcGhlbWVyYWwYByABKAgSFAoMY2FwYWJpbGl0aWVzGAggAygJIjUKEFJlZ2lzdGVyUmVzcG9uc2USIQoGcnVubmVyGAEgASgLMhEucnVubmVyLnYxLlJ1bm5lciJHCg5EZWNsYXJlUmVxdWVzdBIPCgd2ZXJzaW9uGAEgASgJEg4KBmxhYmVscxgCIAMoCRIUCgxjYXBhYmlsaXRpZXMYAyADKAkiNAoPRGVjbGFyZVJlc3BvbnNlEiEKBnJ1bm5lchgBIAEoCzIRLnJ1bm5lci52MS5SdW5uZXIiKQoQRmV0Y2hUYXNrUmVxdWVzdBIVCg10YXNrc192ZXJzaW9uGAEgASgDIkkKEUZldGNoVGFza1Jlc3BvbnNlEh0KBHRhc2sYASABKAsyDy5ydW5uZXIudjEuVGFzaxIVCg10YXNrc192ZXJzaW9uGAIgASgDIqQBChFVcGRhdGVUYXNrUmVxdWVzdBIjCgVzdGF0ZRgBIAEoCzIULnJ1bm5lci52MS5UYXNrU3RhdGUSOgoHb3V0cHV0cxgCIAMoCzIpLnJ1bm5lci52MS5VcGRhdGVUYXNrUmVxdWVzdC5PdXRwdXRzRW50cnkaLgoMT3V0cHV0c0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiTwoSVXBkYXRlVGFza1Jlc3BvbnNlEiMKBXN0YXRlGAEgASgLMhQucnVubmVyLnYxLlRhc2tTdGF0ZRIUCgxzZW50X291dHB1dHMYAiADKAkiZAoQVXBkYXRlTG9nUmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEg0KBWluZGV4GAIgASgDEh8KBHJvd3MYAyADKAsyES5ydW5uZXIudjEuTG9nUm93Eg8KB25vX21vcmUYBCABKAgiJgoRVXBkYXRlTG9nUmVzcG9uc2USEQoJYWNrX2luZGV4GAEgASgDItEBCgZSdW5uZXISCgoCaWQYASABKAMSDAoEdXVpZBgCIAEoCRINCgV0b2tlbhgDIAEoCRIMCgRuYW1lGAQgASgJEicKBnN0YXR1cxgFIAEoDjIXLnJ1bm5lci52MS5SdW5uZXJTdGF0dXMSGAoMYWdlbnRfbGFiZWxzGAYgAygJQgIYARIZCg1jdXN0b21fbGFiZWxzGAcgAygJQgIYARIPCgd2ZXJzaW9uGAggASgJEg4KBmxhYmVscxgJIAMoCRIRCgllcGhlbWVyYWwYCiABKAgiuQMKBFRhc2sSCgoCaWQYASABKAMSHQoQd29ya2Zsb3dfcGF5bG9hZBgCIAEoDEgAiAEBEi0KB2NvbnRleHQYAyABKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0SAGIAQESLQoHc2VjcmV0cxgEIAMoCzIcLnJ1bm5lci52MS5UYXNrLlNlY3JldHNFbnRyeRITCgdtYWNoaW5lGAUgASgJQgIYARIpCgVuZWVkcxgGIAMoCzIaLnJ1bm5lci52MS5UYXNrLk5lZWRzRW50cnkSJwoEdmFycxgHIAMoCzIZLnJ1bm5lci52MS5UYXNrLlZhcnNFbnRyeRouCgxTZWNyZXRzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARpBCgpOZWVkc0VudHJ5EgsKA2tleRgBIAEoCRIiCgV2YWx1ZRgCIAEoCzITLnJ1bm5lci52MS5UYXNrTmVlZDoCOAEaKwoJVmFyc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCEwoRX3dvcmtmbG93X3BheWxvYWRCCgoIX2NvbnRleHQikAEKCFRhc2tOZWVkEjEKB291dHB1dHMYASADKAsyIC5ydW5uZXIudjEuVGFza05lZWQuT3V0cHV0c0VudHJ5EiEKBnJlc3VsdBgCIAEoDjIRLnJ1bm5lci52MS5SZXN1bHQaLgoMT3V0cHV0c0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEi4QEKCVRhc2tTdGF0ZRIKCgJpZBgBIAEoAxIhCgZyZXN1bHQYAiABKA4yES5ydW5uZXIudjEuUmVzdWx0Ei4KCnN0YXJ0ZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnN0b3BwZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiMKBXN0ZXBzGAUgAygLMhQucnVubmVyLnYxLlN0ZXBTdGF0ZRIgCgZpc3N1ZXMYBiADKAsyEC5ydW5uZXIudjEuSXNzdWUi4wEKCVN0ZXBTdGF0ZRIKCgJpZBgBIAEoAxIhCgZyZXN1bHQYAiABKA4yES5ydW5uZXIudjEuUmVzdWx0Ei4KCnN0YXJ0ZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnN0b3BwZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCWxvZ19pbmRleBgFIAEoAxISCgpsb2dfbGVuZ3RoGAYgASgDEiAKBmlzc3VlcxgHIAMoCzIQLnJ1bm5lci52MS5Jc3N1ZSJDCgZMb2dSb3cSKAoEdGltZRgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHY29udGVudBgCIAEoCSKlAQoFSXNzdWUSIgoEdHlwZRgBIAEoDjIULnJ1bm5lci52MS5Jc3N1ZVR5cGUSDwoHbWVzc2FnZRgCIAEoCRIQCghjYXRlZ29yeRgDIAEoCRIoCgRkYXRhGAQgAygLMhoucnVubmVyLnYxLklzc3VlLkRhdGFFbnRyeRorCglEYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASp6CgxSdW5uZXJTdGF0dXMSHQoZUlVOTkVSX1NUQVRVU19VTlNQRUNJRklFRBAAEhYKElJVTk5FUl9TVEFUVVNfSURMRRABEhgKFFJVTk5FUl9TVEFUVVNfQUNUSVZFEAISGQoVUlVOTkVSX1NUQVRVU19PRkZMSU5FEAMqcgoGUmVzdWx0EhYKElJFU1VMVF9VTlNQRUNJRklFRBAAEhIKDlJFU1VMVF9TVUNDRVNTEAESEgoOUkVTVUxUX0ZBSUxVUkUQAhIUChBSRVNVTFRfQ0FOQ0VMTEVEEAMSEgoOUkVTVUxUX1NLSVBQRUQQBCpsCglJc3N1ZVR5cGUSGgoWSVNTVUVfVFlQRV9VTlNQRUNJRklFRBAAEhQKEElTU1VFX1RZUEVfRVJST1IQARIWChJJU1NVRV9UWVBFX1dBUk5JTkcQAhIVChFJU1NVRV9UWVBFX05PVElDRRADQmMKDWNvbS5ydW5uZXIudjFCDU1lc3NhZ2VzUHJvdG9QAaICA1JYWKoCCVJ1bm5lci5WMcoCCVJ1bm5lclxWMeICFVJ1bm5lclxWMVxHUEJNZXRhZGF0YeoCClJ1bm5lcjo6VjFiBnByb3RvMw", [file_google_protobuf_struct, file_google_protobuf_timestamp]);
+export const file_runner_v1_messages: GenFile /*@__PURE__*/ = fileDesc(
+  'ChhydW5uZXIvdjEvbWVzc2FnZXMucHJvdG8SCXJ1bm5lci52MSKtAQoPUmVnaXN0ZXJSZXF1ZXN0EgwKBG5hbWUYASABKAkSDQoFdG9rZW4YAiABKAkSGAoMYWdlbnRfbGFiZWxzGAMgAygJQgIYARIZCg1jdXN0b21fbGFiZWxzGAQgAygJQgIYARIPCgd2ZXJzaW9uGAUgASgJEg4KBmxhYmVscxgGIAMoCRIRCgllcGhlbWVyYWwYByABKAgSFAoMY2FwYWJpbGl0aWVzGAggAygJIjUKEFJlZ2lzdGVyUmVzcG9uc2USIQoGcnVubmVyGAEgASgLMhEucnVubmVyLnYxLlJ1bm5lciJHCg5EZWNsYXJlUmVxdWVzdBIPCgd2ZXJzaW9uGAEgASgJEg4KBmxhYmVscxgCIAMoCRIUCgxjYXBhYmlsaXRpZXMYAyADKAkiNAoPRGVjbGFyZVJlc3BvbnNlEiEKBnJ1bm5lchgBIAEoCzIRLnJ1bm5lci52MS5SdW5uZXIiKQoQRmV0Y2hUYXNrUmVxdWVzdBIVCg10YXNrc192ZXJzaW9uGAEgASgDIkkKEUZldGNoVGFza1Jlc3BvbnNlEh0KBHRhc2sYASABKAsyDy5ydW5uZXIudjEuVGFzaxIVCg10YXNrc192ZXJzaW9uGAIgASgDIqQBChFVcGRhdGVUYXNrUmVxdWVzdBIjCgVzdGF0ZRgBIAEoCzIULnJ1bm5lci52MS5UYXNrU3RhdGUSOgoHb3V0cHV0cxgCIAMoCzIpLnJ1bm5lci52MS5VcGRhdGVUYXNrUmVxdWVzdC5PdXRwdXRzRW50cnkaLgoMT3V0cHV0c0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiTwoSVXBkYXRlVGFza1Jlc3BvbnNlEiMKBXN0YXRlGAEgASgLMhQucnVubmVyLnYxLlRhc2tTdGF0ZRIUCgxzZW50X291dHB1dHMYAiADKAkiZAoQVXBkYXRlTG9nUmVxdWVzdBIPCgd0YXNrX2lkGAEgASgDEg0KBWluZGV4GAIgASgDEh8KBHJvd3MYAyADKAsyES5ydW5uZXIudjEuTG9nUm93Eg8KB25vX21vcmUYBCABKAgiJgoRVXBkYXRlTG9nUmVzcG9uc2USEQoJYWNrX2luZGV4GAEgASgDItEBCgZSdW5uZXISCgoCaWQYASABKAMSDAoEdXVpZBgCIAEoCRINCgV0b2tlbhgDIAEoCRIMCgRuYW1lGAQgASgJEicKBnN0YXR1cxgFIAEoDjIXLnJ1bm5lci52MS5SdW5uZXJTdGF0dXMSGAoMYWdlbnRfbGFiZWxzGAYgAygJQgIYARIZCg1jdXN0b21fbGFiZWxzGAcgAygJQgIYARIPCgd2ZXJzaW9uGAggASgJEg4KBmxhYmVscxgJIAMoCRIRCgllcGhlbWVyYWwYCiABKAgiuQMKBFRhc2sSCgoCaWQYASABKAMSHQoQd29ya2Zsb3dfcGF5bG9hZBgCIAEoDEgAiAEBEi0KB2NvbnRleHQYAyABKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0SAGIAQESLQoHc2VjcmV0cxgEIAMoCzIcLnJ1bm5lci52MS5UYXNrLlNlY3JldHNFbnRyeRITCgdtYWNoaW5lGAUgASgJQgIYARIpCgVuZWVkcxgGIAMoCzIaLnJ1bm5lci52MS5UYXNrLk5lZWRzRW50cnkSJwoEdmFycxgHIAMoCzIZLnJ1bm5lci52MS5UYXNrLlZhcnNFbnRyeRouCgxTZWNyZXRzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ARpBCgpOZWVkc0VudHJ5EgsKA2tleRgBIAEoCRIiCgV2YWx1ZRgCIAEoCzITLnJ1bm5lci52MS5UYXNrTmVlZDoCOAEaKwoJVmFyc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCEwoRX3dvcmtmbG93X3BheWxvYWRCCgoIX2NvbnRleHQikAEKCFRhc2tOZWVkEjEKB291dHB1dHMYASADKAsyIC5ydW5uZXIudjEuVGFza05lZWQuT3V0cHV0c0VudHJ5EiEKBnJlc3VsdBgCIAEoDjIRLnJ1bm5lci52MS5SZXN1bHQaLgoMT3V0cHV0c0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEi4QEKCVRhc2tTdGF0ZRIKCgJpZBgBIAEoAxIhCgZyZXN1bHQYAiABKA4yES5ydW5uZXIudjEuUmVzdWx0Ei4KCnN0YXJ0ZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnN0b3BwZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiMKBXN0ZXBzGAUgAygLMhQucnVubmVyLnYxLlN0ZXBTdGF0ZRIgCgZpc3N1ZXMYBiADKAsyEC5ydW5uZXIudjEuSXNzdWUi4wEKCVN0ZXBTdGF0ZRIKCgJpZBgBIAEoAxIhCgZyZXN1bHQYAiABKA4yES5ydW5uZXIudjEuUmVzdWx0Ei4KCnN0YXJ0ZWRfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnN0b3BwZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCWxvZ19pbmRleBgFIAEoAxISCgpsb2dfbGVuZ3RoGAYgASgDEiAKBmlzc3VlcxgHIAMoCzIQLnJ1bm5lci52MS5Jc3N1ZSJDCgZMb2dSb3cSKAoEdGltZRgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHY29udGVudBgCIAEoCSKlAQoFSXNzdWUSIgoEdHlwZRgBIAEoDjIULnJ1bm5lci52MS5Jc3N1ZVR5cGUSDwoHbWVzc2FnZRgCIAEoCRIQCghjYXRlZ29yeRgDIAEoCRIoCgRkYXRhGAQgAygLMhoucnVubmVyLnYxLklzc3VlLkRhdGFFbnRyeRorCglEYXRhRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASp6CgxSdW5uZXJTdGF0dXMSHQoZUlVOTkVSX1NUQVRVU19VTlNQRUNJRklFRBAAEhYKElJVTk5FUl9TVEFUVVNfSURMRRABEhgKFFJVTk5FUl9TVEFUVVNfQUNUSVZFEAISGQoVUlVOTkVSX1NUQVRVU19PRkZMSU5FEAMqcgoGUmVzdWx0EhYKElJFU1VMVF9VTlNQRUNJRklFRBAAEhIKDlJFU1VMVF9TVUNDRVNTEAESEgoOUkVTVUxUX0ZBSUxVUkUQAhIUChBSRVNVTFRfQ0FOQ0VMTEVEEAMSEgoOUkVTVUxUX1NLSVBQRUQQBCpsCglJc3N1ZVR5cGUSGgoWSVNTVUVfVFlQRV9VTlNQRUNJRklFRBAAEhQKEElTU1VFX1RZUEVfRVJST1IQARIWChJJU1NVRV9UWVBFX1dBUk5JTkcQAhIVChFJU1NVRV9UWVBFX05PVElDRRADQmMKDWNvbS5ydW5uZXIudjFCDU1lc3NhZ2VzUHJvdG9QAaICA1JYWKoCCVJ1bm5lci5WMcoCCVJ1bm5lclxWMeICFVJ1bm5lclxWMVxHUEJNZXRhZGF0YeoCClJ1bm5lcjo6VjFiBnByb3RvMw',
+  [file_google_protobuf_struct, file_google_protobuf_timestamp],
+);
 
 /**
  * @generated from message runner.v1.RegisterRequest
  */
-export type RegisterRequest = Message<"runner.v1.RegisterRequest"> & {
+export type RegisterRequest = Message<'runner.v1.RegisterRequest'> & {
   /**
    * @generated from field: string name = 1;
    */
@@ -67,13 +69,12 @@ export type RegisterRequest = Message<"runner.v1.RegisterRequest"> & {
  * Describes the message runner.v1.RegisterRequest.
  * Use `create(RegisterRequestSchema)` to create a new message.
  */
-export const RegisterRequestSchema: GenMessage<RegisterRequest> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 0);
+export const RegisterRequestSchema: GenMessage<RegisterRequest> /*@__PURE__*/ = messageDesc(file_runner_v1_messages, 0);
 
 /**
  * @generated from message runner.v1.RegisterResponse
  */
-export type RegisterResponse = Message<"runner.v1.RegisterResponse"> & {
+export type RegisterResponse = Message<'runner.v1.RegisterResponse'> & {
   /**
    * @generated from field: runner.v1.Runner runner = 1;
    */
@@ -84,13 +85,15 @@ export type RegisterResponse = Message<"runner.v1.RegisterResponse"> & {
  * Describes the message runner.v1.RegisterResponse.
  * Use `create(RegisterResponseSchema)` to create a new message.
  */
-export const RegisterResponseSchema: GenMessage<RegisterResponse> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 1);
+export const RegisterResponseSchema: GenMessage<RegisterResponse> /*@__PURE__*/ = messageDesc(
+  file_runner_v1_messages,
+  1,
+);
 
 /**
  * @generated from message runner.v1.DeclareRequest
  */
-export type DeclareRequest = Message<"runner.v1.DeclareRequest"> & {
+export type DeclareRequest = Message<'runner.v1.DeclareRequest'> & {
   /**
    * @generated from field: string version = 1;
    */
@@ -113,13 +116,12 @@ export type DeclareRequest = Message<"runner.v1.DeclareRequest"> & {
  * Describes the message runner.v1.DeclareRequest.
  * Use `create(DeclareRequestSchema)` to create a new message.
  */
-export const DeclareRequestSchema: GenMessage<DeclareRequest> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 2);
+export const DeclareRequestSchema: GenMessage<DeclareRequest> /*@__PURE__*/ = messageDesc(file_runner_v1_messages, 2);
 
 /**
  * @generated from message runner.v1.DeclareResponse
  */
-export type DeclareResponse = Message<"runner.v1.DeclareResponse"> & {
+export type DeclareResponse = Message<'runner.v1.DeclareResponse'> & {
   /**
    * @generated from field: runner.v1.Runner runner = 1;
    */
@@ -130,13 +132,12 @@ export type DeclareResponse = Message<"runner.v1.DeclareResponse"> & {
  * Describes the message runner.v1.DeclareResponse.
  * Use `create(DeclareResponseSchema)` to create a new message.
  */
-export const DeclareResponseSchema: GenMessage<DeclareResponse> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 3);
+export const DeclareResponseSchema: GenMessage<DeclareResponse> /*@__PURE__*/ = messageDesc(file_runner_v1_messages, 3);
 
 /**
  * @generated from message runner.v1.FetchTaskRequest
  */
-export type FetchTaskRequest = Message<"runner.v1.FetchTaskRequest"> & {
+export type FetchTaskRequest = Message<'runner.v1.FetchTaskRequest'> & {
   /**
    * Runner use `tasks_version` to compare with Gitea and detemine whether new tasks may exist.
    *
@@ -149,13 +150,15 @@ export type FetchTaskRequest = Message<"runner.v1.FetchTaskRequest"> & {
  * Describes the message runner.v1.FetchTaskRequest.
  * Use `create(FetchTaskRequestSchema)` to create a new message.
  */
-export const FetchTaskRequestSchema: GenMessage<FetchTaskRequest> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 4);
+export const FetchTaskRequestSchema: GenMessage<FetchTaskRequest> /*@__PURE__*/ = messageDesc(
+  file_runner_v1_messages,
+  4,
+);
 
 /**
  * @generated from message runner.v1.FetchTaskResponse
  */
-export type FetchTaskResponse = Message<"runner.v1.FetchTaskResponse"> & {
+export type FetchTaskResponse = Message<'runner.v1.FetchTaskResponse'> & {
   /**
    * @generated from field: runner.v1.Task task = 1;
    */
@@ -173,13 +176,15 @@ export type FetchTaskResponse = Message<"runner.v1.FetchTaskResponse"> & {
  * Describes the message runner.v1.FetchTaskResponse.
  * Use `create(FetchTaskResponseSchema)` to create a new message.
  */
-export const FetchTaskResponseSchema: GenMessage<FetchTaskResponse> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 5);
+export const FetchTaskResponseSchema: GenMessage<FetchTaskResponse> /*@__PURE__*/ = messageDesc(
+  file_runner_v1_messages,
+  5,
+);
 
 /**
  * @generated from message runner.v1.UpdateTaskRequest
  */
-export type UpdateTaskRequest = Message<"runner.v1.UpdateTaskRequest"> & {
+export type UpdateTaskRequest = Message<'runner.v1.UpdateTaskRequest'> & {
   /**
    * @generated from field: runner.v1.TaskState state = 1;
    */
@@ -197,13 +202,15 @@ export type UpdateTaskRequest = Message<"runner.v1.UpdateTaskRequest"> & {
  * Describes the message runner.v1.UpdateTaskRequest.
  * Use `create(UpdateTaskRequestSchema)` to create a new message.
  */
-export const UpdateTaskRequestSchema: GenMessage<UpdateTaskRequest> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 6);
+export const UpdateTaskRequestSchema: GenMessage<UpdateTaskRequest> /*@__PURE__*/ = messageDesc(
+  file_runner_v1_messages,
+  6,
+);
 
 /**
  * @generated from message runner.v1.UpdateTaskResponse
  */
-export type UpdateTaskResponse = Message<"runner.v1.UpdateTaskResponse"> & {
+export type UpdateTaskResponse = Message<'runner.v1.UpdateTaskResponse'> & {
   /**
    * @generated from field: runner.v1.TaskState state = 1;
    */
@@ -221,13 +228,15 @@ export type UpdateTaskResponse = Message<"runner.v1.UpdateTaskResponse"> & {
  * Describes the message runner.v1.UpdateTaskResponse.
  * Use `create(UpdateTaskResponseSchema)` to create a new message.
  */
-export const UpdateTaskResponseSchema: GenMessage<UpdateTaskResponse> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 7);
+export const UpdateTaskResponseSchema: GenMessage<UpdateTaskResponse> /*@__PURE__*/ = messageDesc(
+  file_runner_v1_messages,
+  7,
+);
 
 /**
  * @generated from message runner.v1.UpdateLogRequest
  */
-export type UpdateLogRequest = Message<"runner.v1.UpdateLogRequest"> & {
+export type UpdateLogRequest = Message<'runner.v1.UpdateLogRequest'> & {
   /**
    * @generated from field: int64 task_id = 1;
    */
@@ -257,13 +266,15 @@ export type UpdateLogRequest = Message<"runner.v1.UpdateLogRequest"> & {
  * Describes the message runner.v1.UpdateLogRequest.
  * Use `create(UpdateLogRequestSchema)` to create a new message.
  */
-export const UpdateLogRequestSchema: GenMessage<UpdateLogRequest> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 8);
+export const UpdateLogRequestSchema: GenMessage<UpdateLogRequest> /*@__PURE__*/ = messageDesc(
+  file_runner_v1_messages,
+  8,
+);
 
 /**
  * @generated from message runner.v1.UpdateLogResponse
  */
-export type UpdateLogResponse = Message<"runner.v1.UpdateLogResponse"> & {
+export type UpdateLogResponse = Message<'runner.v1.UpdateLogResponse'> & {
   /**
    * If all lines are received, should be index + length(lines).
    *
@@ -276,15 +287,17 @@ export type UpdateLogResponse = Message<"runner.v1.UpdateLogResponse"> & {
  * Describes the message runner.v1.UpdateLogResponse.
  * Use `create(UpdateLogResponseSchema)` to create a new message.
  */
-export const UpdateLogResponseSchema: GenMessage<UpdateLogResponse> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 9);
+export const UpdateLogResponseSchema: GenMessage<UpdateLogResponse> /*@__PURE__*/ = messageDesc(
+  file_runner_v1_messages,
+  9,
+);
 
 /**
  * Runner Payload
  *
  * @generated from message runner.v1.Runner
  */
-export type Runner = Message<"runner.v1.Runner"> & {
+export type Runner = Message<'runner.v1.Runner'> & {
   /**
    * @generated from field: int64 id = 1;
    */
@@ -342,15 +355,14 @@ export type Runner = Message<"runner.v1.Runner"> & {
  * Describes the message runner.v1.Runner.
  * Use `create(RunnerSchema)` to create a new message.
  */
-export const RunnerSchema: GenMessage<Runner> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 10);
+export const RunnerSchema: GenMessage<Runner> /*@__PURE__*/ = messageDesc(file_runner_v1_messages, 10);
 
 /**
  * Task represents a task.
  *
  * @generated from message runner.v1.Task
  */
-export type Task = Message<"runner.v1.Task"> & {
+export type Task = Message<'runner.v1.Task'> & {
   /**
    * A unique number for each workflow run, unlike run_id or job_id, task_id never be reused.
    *
@@ -406,15 +418,14 @@ export type Task = Message<"runner.v1.Task"> & {
  * Describes the message runner.v1.Task.
  * Use `create(TaskSchema)` to create a new message.
  */
-export const TaskSchema: GenMessage<Task> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 11);
+export const TaskSchema: GenMessage<Task> /*@__PURE__*/ = messageDesc(file_runner_v1_messages, 11);
 
 /**
  * TaskNeed represents a task need.
  *
  * @generated from message runner.v1.TaskNeed
  */
-export type TaskNeed = Message<"runner.v1.TaskNeed"> & {
+export type TaskNeed = Message<'runner.v1.TaskNeed'> & {
   /**
    * The set of outputs of a job that the current job depends on.
    *
@@ -434,15 +445,14 @@ export type TaskNeed = Message<"runner.v1.TaskNeed"> & {
  * Describes the message runner.v1.TaskNeed.
  * Use `create(TaskNeedSchema)` to create a new message.
  */
-export const TaskNeedSchema: GenMessage<TaskNeed> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 12);
+export const TaskNeedSchema: GenMessage<TaskNeed> /*@__PURE__*/ = messageDesc(file_runner_v1_messages, 12);
 
 /**
  * TaskState represents the state of a task.
  *
  * @generated from message runner.v1.TaskState
  */
-export type TaskState = Message<"runner.v1.TaskState"> & {
+export type TaskState = Message<'runner.v1.TaskState'> & {
   /**
    * @generated from field: int64 id = 1;
    */
@@ -478,15 +488,14 @@ export type TaskState = Message<"runner.v1.TaskState"> & {
  * Describes the message runner.v1.TaskState.
  * Use `create(TaskStateSchema)` to create a new message.
  */
-export const TaskStateSchema: GenMessage<TaskState> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 13);
+export const TaskStateSchema: GenMessage<TaskState> /*@__PURE__*/ = messageDesc(file_runner_v1_messages, 13);
 
 /**
  * TaskState represents the state of a step.
  *
  * @generated from message runner.v1.StepState
  */
-export type StepState = Message<"runner.v1.StepState"> & {
+export type StepState = Message<'runner.v1.StepState'> & {
   /**
    * @generated from field: int64 id = 1;
    */
@@ -531,15 +540,14 @@ export type StepState = Message<"runner.v1.StepState"> & {
  * Describes the message runner.v1.StepState.
  * Use `create(StepStateSchema)` to create a new message.
  */
-export const StepStateSchema: GenMessage<StepState> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 14);
+export const StepStateSchema: GenMessage<StepState> /*@__PURE__*/ = messageDesc(file_runner_v1_messages, 14);
 
 /**
  * LogRow represents a row of logs.
  *
  * @generated from message runner.v1.LogRow
  */
-export type LogRow = Message<"runner.v1.LogRow"> & {
+export type LogRow = Message<'runner.v1.LogRow'> & {
   /**
    * @generated from field: google.protobuf.Timestamp time = 1;
    */
@@ -555,13 +563,12 @@ export type LogRow = Message<"runner.v1.LogRow"> & {
  * Describes the message runner.v1.LogRow.
  * Use `create(LogRowSchema)` to create a new message.
  */
-export const LogRowSchema: GenMessage<LogRow> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 15);
+export const LogRowSchema: GenMessage<LogRow> /*@__PURE__*/ = messageDesc(file_runner_v1_messages, 15);
 
 /**
  * @generated from message runner.v1.Issue
  */
-export type Issue = Message<"runner.v1.Issue"> & {
+export type Issue = Message<'runner.v1.Issue'> & {
   /**
    * @generated from field: runner.v1.IssueType type = 1;
    */
@@ -591,8 +598,7 @@ export type Issue = Message<"runner.v1.Issue"> & {
  * Describes the message runner.v1.Issue.
  * Use `create(IssueSchema)` to create a new message.
  */
-export const IssueSchema: GenMessage<Issue> = /*@__PURE__*/
-  messageDesc(file_runner_v1_messages, 16);
+export const IssueSchema: GenMessage<Issue> /*@__PURE__*/ = messageDesc(file_runner_v1_messages, 16);
 
 /**
  * RunnerStatus runner all status
@@ -624,8 +630,7 @@ export enum RunnerStatus {
 /**
  * Describes the enum runner.v1.RunnerStatus.
  */
-export const RunnerStatusSchema: GenEnum<RunnerStatus> = /*@__PURE__*/
-  enumDesc(file_runner_v1_messages, 0);
+export const RunnerStatusSchema: GenEnum<RunnerStatus> /*@__PURE__*/ = enumDesc(file_runner_v1_messages, 0);
 
 /**
  * The result of a task or a step, see https://docs.github.com/en/actions/learn-github-actions/contexts#jobs-context .
@@ -662,8 +667,7 @@ export enum Result {
 /**
  * Describes the enum runner.v1.Result.
  */
-export const ResultSchema: GenEnum<Result> = /*@__PURE__*/
-  enumDesc(file_runner_v1_messages, 1);
+export const ResultSchema: GenEnum<Result> /*@__PURE__*/ = enumDesc(file_runner_v1_messages, 1);
 
 /**
  * @generated from enum runner.v1.IssueType
@@ -693,6 +697,4 @@ export enum IssueType {
 /**
  * Describes the enum runner.v1.IssueType.
  */
-export const IssueTypeSchema: GenEnum<IssueType> = /*@__PURE__*/
-  enumDesc(file_runner_v1_messages, 2);
-
+export const IssueTypeSchema: GenEnum<IssueType> /*@__PURE__*/ = enumDesc(file_runner_v1_messages, 2);

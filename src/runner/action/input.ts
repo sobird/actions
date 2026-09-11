@@ -1,6 +1,6 @@
-import Expression from "@/expression";
+import Expression from '@/expression';
 
-export interface InputProps extends Pick<Input, "description" | "required" | "deprecationMessage"> {
+export interface InputProps extends Pick<Input, 'description' | 'required' | 'deprecationMessage'> {
   default: string;
 }
 
@@ -19,7 +19,7 @@ export default class Input {
   /**
    * **Optional** A string representing the default value. The default value is used when an input parameter isn't specified in a workflow file.
    */
-  default: Expression<InputProps["default"]>;
+  default: Expression<InputProps['default']>;
 
   /**
    * **Optional** If the input parameter is used, this string is logged as a warning message.
@@ -32,9 +32,9 @@ export default class Input {
     this.required = input.required;
     this.default = new Expression(
       input.default,
-      ["github", "needs", "vars", "inputs"],
-      ["always", "cancelled", "success", "failure"],
-      "",
+      ['github', 'needs', 'vars', 'inputs'],
+      ['always', 'cancelled', 'success', 'failure'],
+      '',
     );
     this.deprecationMessage = input.deprecationMessage;
   }

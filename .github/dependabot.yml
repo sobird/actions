@@ -1,21 +1,21 @@
 # https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference
 version: 2
 updates:
-  - package-ecosystem: npm            # 指定依赖生态系统为 npm
+  - package-ecosystem: npm # 指定依赖生态系统为 npm
     open-pull-requests-limit: 0
-    directory: /                      # 指定依赖文件所在的根目录
+    directory: / # 指定依赖文件所在的根目录
     schedule:
       interval: monthly
-      timezone: "Asia/Shanghai"       # 指定时区
-      time: "09:00"                   # 指定检查时间
+      timezone: 'Asia/Shanghai' # 指定时区
+      time: '09:00' # 指定检查时间
     groups:
       npm-development:
-        dependency-type: development  # 仅处理开发依赖
+        dependency-type: development # 仅处理开发依赖
         update-types:
           - minor
           - patch
       npm-production:
-        dependency-type: production   # 仅处理生产依赖
+        dependency-type: production # 仅处理生产依赖
         update-types:
           - patch
 

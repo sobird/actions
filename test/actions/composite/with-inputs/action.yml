@@ -1,25 +1,25 @@
-name: "composite with inputs action"
-description: "composite with inputs action"
+name: 'composite with inputs action'
+description: 'composite with inputs action'
 
 inputs:
   some:
-    description: "some input"
+    description: 'some input'
     required: true
   other:
-    description: "other input"
+    description: 'other input'
     default: value
     required: false
 outputs:
   output:
-    description: "some output"
-    value: "value"
+    description: 'some output'
+    value: 'value'
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - run: env
       shell: bash
-      
+
     - name: Print composite context
       run: |
         echo "github=${{toJSON(github)}}"

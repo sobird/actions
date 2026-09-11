@@ -25,6 +25,7 @@ actions runner 通过 [connectrpc](https://github.com/connectrpc) 来跟服务�
 下面是该工具的简单使用:
 
 **安装 buf 工具**
+
 ```sh
 npm install --save-dev @bufbuild/buf @bufbuild/protoc-gen-es @connectrpc/protoc-gen-connect-es
 npm install @connectrpc/connect @bufbuild/protobuf
@@ -50,6 +51,7 @@ plugins:
       # Add more plugin options here
       - target=ts
 ```
+
 项目中的所有protobuf文件生成代码：
 
 ```sh
@@ -63,11 +65,12 @@ npx buf generate https://gitea.com/sobird/actions-proto-def.git
 ```
 
 ### 插件选项
-* **target**: 控制插件生成 JavaScript、TypeScript 或 TypeScript 声明文件。可能的值有 js、ts 和 dts。
-* **import_extension**: 允许在导入路径中替换 .js 扩展名。
-* **js_import_style**: 生成 ECMAScript 导入/导出语句或 CommonJS require() 调用。
-* **keep_empty_files**: 允许保留空文件，以兼容需要提前声明所有输出文件的工具，如 Bazel。
-* **ts_nocheck**: 控制是否在每个文件顶部生成 // @ts-nocheck 注释。
+
+- **target**: 控制插件生成 JavaScript、TypeScript 或 TypeScript 声明文件。可能的值有 js、ts 和 dts。
+- **import_extension**: 允许在导入路径中替换 .js 扩展名。
+- **js_import_style**: 生成 ECMAScript 导入/导出语句或 CommonJS require() 调用。
+- **keep_empty_files**: 允许保留空文件，以兼容需要提前声明所有输出文件的工具，如 Bazel。
+- **ts_nocheck**: 控制是否在每个文件顶部生成 // @ts-nocheck 注释。
 
 --bind-workdir 和 --no-skip-checkout 参数互斥，不可同时设为true
 
@@ -76,17 +79,19 @@ npx buf generate https://gitea.com/sobird/actions-proto-def.git
 
 `actions/checkout`下载之前会清空工作目录的文件，所以这种情况下会导致本地仓库的文件丢失，禁止同时设置这两个参数值为`true`。
 
-* Error: Could not locate the bindings file. Tried: #9
+- Error: Could not locate the bindings file. Tried: #9
 
 Error: Could not locate the bindings file. Tried:
- → \node_modules\.pnpm\better-sqlite3@11.8.1\node_modules\better-sqlite3\build\better_sqlite3.node
+→ \node_modules\.pnpm\better-sqlite3@11.8.1\node_modules\better-sqlite3\build\better_sqlite3.node
 
 运行下面命令解决
+
 ```sh
 cd node_modules/better-sqlite3
 npm run build-release
 cd ../..
 ```
+
 [issues 886](https://github.com/WiseLibs/better-sqlite3/issues/866)
 
 actions/cache hosted when run bindwork save cache throw error Cannot stat: No such file or directory #8
@@ -97,10 +102,13 @@ If you are using a `self-hosted` Windows runner, `GNU tar` and `zstd` are requir
 `/Users/sobird/.actions/actions/c88dd2466a5b7752/home/runner/work/temp/7a3d7800-55cb-4962-bc11-684f0fccefb4`
 
 执行下面tar打包命名， 其中manifest.txt的内容为: `../../../../c88dd2466a5b7752/Users/sobird/actions/test`
+
 ```sh
 /usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /Users/sobird/.actions/actions/c88dd2466a5b7752/Users/sobird/actions --files-from manifest.txt --use-compress-program zstdmt
 ```
+
 则会报下面的错误
+
 ```sh
 tar: ../../../../c88dd2466a5b7752/Users/sobird/actions/test: Cannot stat: No such file or directory
 ```
@@ -116,18 +124,21 @@ tar: ../../../../c88dd2466a5b7752/Users/sobird/actions/test: Cannot stat: No suc
 ```sh
 /usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /Users/sobird/.actions/actions/c88dd2466a5b7752/Users/sobird/actions
 ```
+
 上面命令中 -C后面的参数，如果是软连接的目录，则实际执行时会转为物理路径`/Users/sobird/actions`，而此时manifest.txt的内容为: `../../../../c88dd2466a5b7752/Users/sobird/actions/test`，导致出现下面的错误：
+
 ```sh
 tar: ../../../../c88dd2466a5b7752/Users/sobird/actions/test: Cannot stat: No such file or directory
-````
+```
 
 当以`hosted`和`bindwork`模式运行时，设置`context.github.workspace`为容器物理地址，不要使用软连接的地址
 
 见此[commit](https://github.com/sobird/actions/commit/b8d7440f5b2869ad1c4ea6ba6461122d28af65f6#diff-23b707279c18febbfef7ef9a041ac9e35f0ead2cabd643f4befb86a21eefd127)
 
-
 在macOS下使用 gnu-tar，执行下面命令安装
+
 ```sh
 brew install gnu-tar
 ```
+
 详细见：[cache tar.ts](https://github.com/actions/toolkit/blob/main/packages/cache/src/internal/tar.ts#L31)

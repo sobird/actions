@@ -20,7 +20,7 @@ jobs:
           echo "output_${version}=${version}" >> "$GITHUB_OUTPUT"
           [[ "${version}" = "2" ]] || exit 1
       - name: Print step output ${{ matrix.version }}
-        run:  |
+        run: |
           version="${{ matrix.version }}"
           echo "${{toJSON(steps.gen_output)}}"
   job2:

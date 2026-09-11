@@ -3,14 +3,7 @@ import { Readable } from 'node:stream';
 
 import LineWritable from './lineWritable';
 
-const testLines = [
-  'hello',
-  ' ',
-  'world!!\nextra',
-  ' line\n and another\nlast',
-  ' line\n',
-  'no newline here...',
-];
+const testLines = ['hello', ' ', 'world!!\nextra', ' line\n and another\nlast', ' line\n', 'no newline here...'];
 
 it('LineWritable unit test', () => {
   const lines: string[] = [];
@@ -47,7 +40,9 @@ it('readline createInterface', async () => {
     lines.push(line);
   });
 
-  await new Promise((resolve) => { rl.on('close', resolve); });
+  await new Promise((resolve) => {
+    rl.on('close', resolve);
+  });
 
   // console.log('lines', lines);
 

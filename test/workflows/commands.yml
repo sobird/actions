@@ -1,7 +1,7 @@
 # https://docs.github.com/zh/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions
 name: Workflow Commands Test
 run-name: workflow commands test by ${{ github.actor }}
-on: 
+on:
   push:
     branches:
       - master
@@ -10,7 +10,7 @@ jobs:
   commands-job-test:
     runs-on: ubuntu-latest
     env:
-      MY_NAME: "Mona The Octocat"
+      MY_NAME: 'Mona The Octocat'
     steps:
       - name: Print Env
         run: env
@@ -26,16 +26,16 @@ jobs:
         run: echo "::error file=app.js,line=1,col=5,endColumn=7::Missing semicolon"
       - name: Grouping log lines
         run: |
-            echo "::group::My title"
-            echo "Inside group"
-            echo "::endgroup::"
+          echo "::group::My title"
+          echo "Inside group"
+          echo "::endgroup::"
       - name: Masking a value in a log(Masking a string)
         run: |
           echo "::add-mask::Mona The Octocat"
           echo "Mona The Octocat"
       - name: Masking a value in a log(Masking an environment variable)
         run: echo "::add-mask::$MY_NAME"
-      
+
   generate-a-secret-output:
     runs-on: ubuntu-latest
     steps:
@@ -54,23 +54,23 @@ jobs:
     outputs:
       handle: ${{ steps.generate-secret.outputs.handle }}
     steps:
-    - name: generate secret
-      id: generate-secret
-      shell: bash
-      run: |
-        GENERATED_SECRET=$((RANDOM))
-        echo "::add-mask::$GENERATED_SECRET"
-        echo "handle=$GENERATED_SECRET" >> "$GITHUB_OUTPUT"
+      - name: generate secret
+        id: generate-secret
+        shell: bash
+        run: |
+          GENERATED_SECRET=$((RANDOM))
+          echo "::add-mask::$GENERATED_SECRET"
+          echo "handle=$GENERATED_SECRET" >> "$GITHUB_OUTPUT"
   secret-consumer:
     runs-on: ubuntu-latest
     needs: secret-generator
     steps:
-    - name: use secret
-      shell: bash
-      run: |
-        SECRET_HANDLE="${{ needs.secret-generator.outputs.handle }}"
-        echo "::add-mask::$SECRET_HANDLE"
-        echo "We retrieved our masked secret: $SECRET_HANDLE"
+      - name: use secret
+        shell: bash
+        run: |
+          SECRET_HANDLE="${{ needs.secret-generator.outputs.handle }}"
+          echo "::add-mask::$SECRET_HANDLE"
+          echo "We retrieved our masked secret: $SECRET_HANDLE"
 
   command-job:
     runs-on: ubuntu-latest
@@ -108,7 +108,7 @@ jobs:
         id: step_two
         run: |
           printf '%s\n' "$action_state" # This will output 'yellow'
-      
+
       - name: Set the value in bash
         id: step_three
         run: |
@@ -128,7 +128,7 @@ jobs:
 
       - name: Adding a job summary
         run: echo "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY
-      
+
       - name: Generate list using Markdown(Multiline Markdown content)
         run: |
           echo "This is the lead in sentence for the list" >> $GITHUB_STEP_SUMMARY
@@ -141,7 +141,7 @@ jobs:
         run: |
           echo "Adding some Markdown content" >> $GITHUB_STEP_SUMMARY
           echo "There was an error, we need to clear the previous Markdown with some new content." > $GITHUB_STEP_SUMMARY
-      
+
       - name: Delete all summary content(Removing job summaries)
         run: |
           echo "Adding Markdown content that we want to remove before the step ends" >> $GITHUB_STEP_SUMMARY
@@ -150,4 +150,3 @@ jobs:
       - name: Adding a system path
         run: |
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-

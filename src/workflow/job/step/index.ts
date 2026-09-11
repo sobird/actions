@@ -4,18 +4,18 @@
  * sobird<i@sobird.me> at 2024/05/02 18:29:27 created.
  */
 
-import { type UUID, randomUUID } from "node:crypto";
+import { type UUID, randomUUID } from 'node:crypto';
 
-import Expression from "@/expression";
-import Runner from "@/runner";
+import Expression from '@/expression';
+import Runner from '@/runner';
 
-import Uses from "./uses";
+import Uses from './uses';
 
-export interface StepProps extends Pick<Step, "id" | "shell"> {
+export interface StepProps extends Pick<Step, 'id' | 'shell'> {
   if?: string;
   name?: string;
   run: string;
-  "working-directory"?: string;
+  'working-directory'?: string;
   with?: {
     /**
      * A `string` that defines the inputs for a Docker container.
@@ -36,8 +36,8 @@ export interface StepProps extends Pick<Step, "id" | "shell"> {
     [key: string]: string;
   };
   env?: Record<string, string>;
-  "continue-on-error"?: boolean;
-  "timeout-minutes"?: string;
+  'continue-on-error'?: boolean;
+  'timeout-minutes'?: string;
 
   uses?: string;
 }
@@ -69,12 +69,12 @@ class Step {
    * if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
    * ```
    */
-  if: Expression<StepProps["if"]>;
+  if: Expression<StepProps['if']>;
 
   /**
    * A name for your step to display on GitHub.
    */
-  name: Expression<StepProps["name"]>;
+  name: Expression<StepProps['name']>;
 
   /**
    * Selects an action to run as part of a step in your job. An action is a reusable unit of code.
@@ -116,7 +116,7 @@ class Step {
    *       npm run build
    * ```
    */
-  run: Expression<StepProps["run"]>;
+  run: Expression<StepProps['run']>;
 
   /**
    * Using the `working-directory` keyword, you can specify the working directory of where to run the command.
@@ -124,7 +124,7 @@ class Step {
    * Alternatively, you can specify a default working directory for all run steps in a job, or for all run steps in the entire workflow.
    * For more information, see "${@link https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions#defaultsrunworking-directory `defaults.run.working-directory`}" and "{@link https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_iddefaultsrunworking-directory `jobs.<job_id>.defaults.run.working-directory`}."
    */
-  "working-directory": Expression<StepProps["working-directory"]>;
+  'working-directory': Expression<StepProps['working-directory']>;
 
   /**
    * You can override the default shell settings in the runner's operating system and the job's default using the `shell` keyword.
@@ -142,7 +142,7 @@ class Step {
    * Input parameters defined for a Docker container must use args.
    * For more information, see "{@link https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepswithargs `jobs.<job_id>.steps[*].with.args`}."
    */
-  with: Expression<StepProps["with"]>;
+  with: Expression<StepProps['with']>;
 
   /**
    * Sets variables for steps to use in the runner environment.
@@ -157,17 +157,17 @@ class Step {
    * If you are setting a secret or sensitive value, such as a password or token,
    * you must set secrets using the secrets context. For more information, see "{@link https://docs.github.com/en/actions/learn-github-actions/contexts Contexts}."
    */
-  env: Expression<StepProps["env"]>;
+  env: Expression<StepProps['env']>;
 
   /**
    * Prevents a job from failing when a step fails. Set to true to allow a job to pass when this step fails.
    */
-  "continue-on-error": Expression<StepProps["continue-on-error"]>;
+  'continue-on-error': Expression<StepProps['continue-on-error']>;
 
   /**
    * The maximum number of minutes to run the step before killing the process.
    */
-  "timeout-minutes": Expression<StepProps["timeout-minutes"]>;
+  'timeout-minutes': Expression<StepProps['timeout-minutes']>;
 
   #number: number = 0;
 
@@ -176,136 +176,52 @@ class Step {
     this.id = step.id;
     this.if = new Expression(
       step.if,
-      ["github", "needs", "strategy", "matrix", "job", "runner", "env", "vars", "steps", "inputs"],
-      ["always", "cancelled", "success", "failure", "hashFiles"],
-      "success()",
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'steps', 'inputs'],
+      ['always', 'cancelled', 'success', 'failure', 'hashFiles'],
+      'success()',
       true,
-      "step",
+      'step',
     );
     this.name = new Expression(
       step.name,
-      [
-        "github",
-        "needs",
-        "strategy",
-        "matrix",
-        "job",
-        "runner",
-        "env",
-        "vars",
-        "secrets",
-        "steps",
-        "inputs",
-      ],
-      ["hashFiles"],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
+      ['hashFiles'],
     );
 
     this.uses = new Uses(step.uses);
 
     this.run = new Expression(
       step.run,
-      [
-        "github",
-        "needs",
-        "strategy",
-        "matrix",
-        "job",
-        "runner",
-        "env",
-        "vars",
-        "secrets",
-        "steps",
-        "inputs",
-      ],
-      ["hashFiles"],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
+      ['hashFiles'],
     );
 
-    this["working-directory"] = new Expression(
-      step["working-directory"],
-      [
-        "github",
-        "needs",
-        "strategy",
-        "matrix",
-        "job",
-        "runner",
-        "env",
-        "vars",
-        "secrets",
-        "steps",
-        "inputs",
-      ],
-      ["hashFiles"],
+    this['working-directory'] = new Expression(
+      step['working-directory'],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
+      ['hashFiles'],
     );
-    this.shell = step.shell || "";
+    this.shell = step.shell || '';
     this.with = new Expression(
       step.with,
-      [
-        "github",
-        "needs",
-        "strategy",
-        "matrix",
-        "job",
-        "runner",
-        "env",
-        "vars",
-        "secrets",
-        "steps",
-        "inputs",
-      ],
-      ["hashFiles"],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
+      ['hashFiles'],
       {},
     );
     this.env = new Expression(
       step.env || {},
-      [
-        "github",
-        "needs",
-        "strategy",
-        "matrix",
-        "job",
-        "runner",
-        "env",
-        "vars",
-        "secrets",
-        "steps",
-        "inputs",
-      ],
-      ["hashFiles"],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
+      ['hashFiles'],
     );
-    this["continue-on-error"] = new Expression(
-      step["continue-on-error"],
-      [
-        "github",
-        "needs",
-        "strategy",
-        "matrix",
-        "job",
-        "runner",
-        "env",
-        "vars",
-        "secrets",
-        "steps",
-        "inputs",
-      ],
-      ["hashFiles"],
+    this['continue-on-error'] = new Expression(
+      step['continue-on-error'],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
+      ['hashFiles'],
     );
-    this["timeout-minutes"] = new Expression(
-      step["timeout-minutes"],
-      [
-        "github",
-        "needs",
-        "strategy",
-        "matrix",
-        "job",
-        "runner",
-        "env",
-        "vars",
-        "secrets",
-        "steps",
-        "inputs",
-      ],
-      ["hashFiles"],
+    this['timeout-minutes'] = new Expression(
+      step['timeout-minutes'],
+      ['github', 'needs', 'strategy', 'matrix', 'job', 'runner', 'env', 'vars', 'secrets', 'steps', 'inputs'],
+      ['hashFiles'],
     );
   }
 
@@ -322,9 +238,7 @@ class Step {
   }
 
   Name(runner: Runner) {
-    return (
-      this.name.evaluate(runner) || this.uses.toString() || this.run.evaluate(runner) || this.id
-    );
+    return this.name.evaluate(runner) || this.uses.toString() || this.run.evaluate(runner) || this.id;
   }
 
   // Merge variables from with into env
@@ -338,12 +252,7 @@ class Step {
     //   env[envKey] = value;
     // });
 
-    return runner.Assign(
-      out,
-      runner.context.github.Env,
-      runner.context.runner.Env,
-      runner.Env(env),
-    );
+    return runner.Assign(out, runner.context.github.Env, runner.context.runner.Env, runner.Env(env));
   }
 }
 

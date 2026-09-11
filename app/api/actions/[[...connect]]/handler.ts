@@ -15,17 +15,13 @@
 // https://github.com/connectrpc/connect-es/blob/main/packages/connect-next/src/connect-nextjs-adapter.ts
 // https://github.com/connectrpc/connect-es/issues/542
 
-import {
-  createConnectRouter,
-  type ConnectRouter,
-  type ConnectRouterOptions,
-} from '@connectrpc/connect';
+import { createConnectRouter, type ConnectRouter, type ConnectRouterOptions } from '@connectrpc/connect';
+import { compressionBrotli, compressionGzip } from '@connectrpc/connect-node';
 import {
   type UniversalHandler,
   universalServerRequestFromFetch,
   universalServerResponseToFetch,
 } from '@connectrpc/connect/protocol';
-import { compressionBrotli, compressionGzip } from '@connectrpc/connect-node';
 import { type NextRequest } from 'next/server';
 
 interface NextConnectRouterOptions extends ConnectRouterOptions {
@@ -85,10 +81,7 @@ export function createConnectHandler(options: NextConnectRouterOptions) {
       return universalServerResponseToFetch(uRes);
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error(
-        `handler for rpc ${uHandler.method.name} of ${uHandler.service.typeName} failed`,
-        error,
-      );
+      console.error(`handler for rpc ${uHandler.method.name} of ${uHandler.service.typeName} failed`, error);
     }
   }
 

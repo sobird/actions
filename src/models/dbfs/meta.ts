@@ -4,10 +4,7 @@
  * sobird<i@sobird.me> at 2024/11/23 23:28:48 created.
  */
 
-import {
-  DataTypes,
-  type InferAttributes, InferCreationAttributes, CreationOptional,
-} from 'sequelize';
+import { DataTypes, type InferAttributes, InferCreationAttributes, CreationOptional } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 

@@ -17,7 +17,10 @@ export default class Reusable {
 
   public ref: string = '';
 
-  constructor(public uses: string = '', public token: string = '') {
+  constructor(
+    public uses: string = '',
+    public token: string = '',
+  ) {
     if (this.isLocal) {
       this.path = uses;
       return;
@@ -27,7 +30,7 @@ export default class Reusable {
     const matches = /^(https?:\/\/[^/?#]+\/)?([^/@]+)(?:\/([^/@]+))?(?:\/([^@]*))?(?:@(.*))?$/.exec(uses);
 
     if (matches) {
-      const [,url, owner = '', repo = '', path = '', ref = ''] = matches;
+      const [, url, owner = '', repo = '', path = '', ref = ''] = matches;
       this.url = url;
       this.owner = owner;
       this.repo = repo;
@@ -56,7 +59,7 @@ export default class Reusable {
       }
 
       return url.toString();
-    } catch (err) {
+    } catch {
       return '';
     }
   }

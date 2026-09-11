@@ -10,7 +10,7 @@ import { isMatchBy } from './isMatchBy';
 
 declare module 'lodash' {
   interface LoDashStatic {
-    isMatchBy: typeof isMatchBy
+    isMatchBy: typeof isMatchBy;
   }
 }
 

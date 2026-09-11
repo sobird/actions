@@ -36,8 +36,8 @@ jobs:
           # The short ref name of the branch or tag that triggered
           # the workflow run. For example, `main` or `1.x`
           # target-branch: ${{ github.ref_name }}
-          
-          # If true, do not attempt to create releases. 
+
+          # If true, do not attempt to create releases.
           # This is useful if splitting release tagging from PR creation.
           # skip-github-release: true
 

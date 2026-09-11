@@ -1,6 +1,6 @@
 name: workflow-2
-run-name: ${{ github.actor }} is testing out Actions  
-on: 
+run-name: ${{ github.actor }} is testing out Actions
+on:
   workflow_call:
 
 permissions:

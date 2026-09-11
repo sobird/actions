@@ -1,17 +1,16 @@
 name: Gitea Actions Test
-run-name: ${{ github.actor }} is testing out Gitea Actions  
-on: 
+run-name: ${{ github.actor }} is testing out Gitea Actions
+on:
   pull_request:
   push:
-      branches:
-        - main
+    branches:
+      - main
   release:
     types: [published]
   label:
     types:
       - created
-on1: 
-  push
+on1: push
 
 permissions:
   contents: read|write|none
@@ -72,7 +71,7 @@ jobs:
             **/node_modules
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
-              ${{ runner.os }}-yarn-
+            ${{ runner.os }}-yarn-
       - name: Install Dependencies
         if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: |

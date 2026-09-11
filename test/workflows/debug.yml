@@ -27,7 +27,7 @@ jobs:
 
       # - name: github (Github Packages Container registry)
       #   uses: docker://ghcr.io/alpinejs/alpine
-      
+
       - name: Hello world action step
         id: hello_javascript
         uses: ./.github/actions/hello-world-javascript-action
@@ -43,7 +43,7 @@ jobs:
           who-to-greet: 'docker action step'
       - name: Get the output time
         run: echo "The time was ${{ steps.hello_docker.outputs.time }}"
-      
+
       - name: Hello world composite action step
         id: hello_composite
         uses: ./.github/actions/hello-world-composite-action
