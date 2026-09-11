@@ -6,7 +6,7 @@ import { Command } from 'commander';
 
 import logger from '@/common/logger';
 import { getConfig, saveRegistration, DEFAULT_LABELS } from '@/config';
-import { Labels, Client } from '@/index';
+import { Labels, createClients } from '@/index';
 
 type Register = ReturnType<typeof registerCommand.opts>;
 type RegisterOptions = Required<Register> & {
@@ -20,13 +20,13 @@ async function register(options: RegisterOptions) {
 
   const config = getConfig();
 
-  const { PingServiceClient, RunnerServiceClient } = new Client(instance, '', config.daemon.insecure, '', version);
+  const { pingServiceClient, runnerServiceClient } = createClients(instance, '', config.daemon.insecure, '', version);
 
   const pingResponse = await new Promise((resolve) => {
     let timer: NodeJS.Timeout;
     const ping = async () => {
       try {
-        const response = await PingServiceClient.ping({
+        const response = await pingServiceClient.ping({
           data: name,
         });
         logger.info('Successfully pinged the instance server');
@@ -44,7 +44,7 @@ async function register(options: RegisterOptions) {
   logger.debug(pingResponse);
 
   try {
-    const { runner } = await RunnerServiceClient.register({
+    const { runner } = await runnerServiceClient.register({
       name,
       token,
       labels,

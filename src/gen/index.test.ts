@@ -1,7 +1,7 @@
 import { create } from '@bufbuild/protobuf';
 import { timestampFromDate } from '@bufbuild/protobuf/wkt';
 
-import Client from './index';
+import { createClients } from './index';
 import {
   UpdateLogRequestSchema,
   LogRow,
@@ -12,12 +12,12 @@ import {
 
 vi.mock('./index');
 
-const { RunnerServiceClient, PingServiceClient } = new Client('http://localhost:3000/', '', false);
+const { runnerServiceClient, pingServiceClient } = createClients('http://localhost:3000/', '', false);
 
 describe('PingServiceClient Test', () => {
   it('ping', async () => {
     const data = 'test';
-    const res = await PingServiceClient.ping({
+    const res = await pingServiceClient.ping({
       data,
     });
 
@@ -37,9 +37,9 @@ describe('RunnerServiceClient', () => {
         labels: ['ubuntu-latest=gitea/runner-images:ubuntu-latest'],
       }),
     });
-    vi.spyOn(RunnerServiceClient, 'register').mockResolvedValue(mockResolvedValue);
+    vi.spyOn(runnerServiceClient, 'register').mockResolvedValue(mockResolvedValue);
 
-    const { runner } = await RunnerServiceClient.register({
+    const { runner } = await runnerServiceClient.register({
       name: 'test',
       token: 'token',
       labels: [],
@@ -50,7 +50,7 @@ describe('RunnerServiceClient', () => {
     expect(runner?.token).not.toBeFalsy();
 
     // 断言模拟方法被调用
-    expect(RunnerServiceClient.register).toHaveBeenCalled();
+    expect(runnerServiceClient.register).toHaveBeenCalled();
   });
 
   it('updateLog', async () => {
@@ -68,11 +68,11 @@ describe('RunnerServiceClient', () => {
       noMore: false,
     });
 
-    const updateLogResponse = await RunnerServiceClient.updateLog(request);
+    const updateLogResponse = await runnerServiceClient.updateLog(request);
 
     expect(updateLogResponse.ackIndex).toBe(request.index + BigInt(request.rows.length));
 
     // 断言模拟方法被调用
-    // expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
+    // expect(runnerServiceClient.updateLog).toHaveBeenCalled();
   });
 });

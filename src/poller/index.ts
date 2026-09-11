@@ -10,7 +10,7 @@ import { Semaphore } from 'async-mutex';
 
 import logger from '@/common/logger';
 import type { Config } from '@/config';
-import type { Client } from '@/index';
+import type { RunnerServiceClient } from '@/gen';
 import { withTimeout } from '@/utils';
 import { sleep } from '@/utils';
 
@@ -23,7 +23,7 @@ class Poller {
   private semaphore: Semaphore;
 
   constructor(
-    public client: typeof Client.prototype.RunnerServiceClient,
+    public client: RunnerServiceClient,
     public config: Config,
     public runner: Runner,
     public version?: string,

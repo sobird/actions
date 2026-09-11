@@ -4,7 +4,7 @@
  * sobird<i@sobird.me> at 2024/04/26 18:18:27 created.
  */
 
-import Client from '../gen';
+import { createClients } from '../gen';
 import Reporter from './index';
 
 vi.mock('../gen');
@@ -14,15 +14,15 @@ import { create } from '@bufbuild/protobuf';
 import { type LogEntry } from '@/common/logger';
 import { UpdateLogResponseSchema } from '@/gen/runner/v1/messages_pb';
 
-const { RunnerServiceClient } = new Client('', '', false);
-const { task } = await RunnerServiceClient.fetchTask({
+const { runnerServiceClient } = createClients('', '', false);
+const { task } = await runnerServiceClient.fetchTask({
   tasksVersion: 123n,
 });
 
 describe('Reporter', () => {
   // fire
   describe('fire', () => {
-    const reporter = new Reporter(RunnerServiceClient, task);
+    const reporter = new Reporter(runnerServiceClient, task);
     it('test fire', () => {
       const context = {
         stage: 'Main',
@@ -63,8 +63,8 @@ describe('Reporter', () => {
           });
         }).not.toThrow();
         // 断言模拟方法被调用
-        // expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
-        // expect(RunnerServiceClient.updateTask).toHaveBeenCalled();
+        // expect(runnerServiceClient.updateLog).toHaveBeenCalled();
+        // expect(runnerServiceClient.updateTask).toHaveBeenCalled();
       });
 
       // @ts-expect-error
@@ -73,7 +73,7 @@ describe('Reporter', () => {
   });
 
   describe('setOutputs', () => {
-    const reporter = new Reporter(RunnerServiceClient, task);
+    const reporter = new Reporter(runnerServiceClient, task);
     it('outputs: key > 255', () => {
       const outputs = new Map();
       const key = Array(64).fill('test').join('');
@@ -101,7 +101,7 @@ describe('Reporter', () => {
     });
   });
 
-  const reporter = new Reporter(RunnerServiceClient, task);
+  const reporter = new Reporter(runnerServiceClient, task);
   const logEntry: LogEntry = {
     timestamp: new Date().toDateString(),
     level: 'debug',
@@ -111,24 +111,24 @@ describe('Reporter', () => {
 
   it('test reportLog', async () => {
     // 服务端只 ack 部分行时,noMore=true 关闭上报应抛错以触发重试
-    vi.mocked(RunnerServiceClient.updateLog).mockResolvedValueOnce(
+    vi.mocked(runnerServiceClient.updateLog).mockResolvedValueOnce(
       create(UpdateLogResponseSchema, { ackIndex: BigInt(0) }),
     );
     await expect(reporter.reportLog(true)).rejects.toThrow('Not all logs are submitted');
 
     // 服务端全量 ack 时正常返回
     await expect(reporter.reportLog(false)).resolves.not.toThrow();
-    expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
+    expect(runnerServiceClient.updateLog).toHaveBeenCalled();
   });
 
   it('test reportState', async () => {
     await expect(reporter.reportState()).resolves.not.toThrow();
-    expect(RunnerServiceClient.updateTask).toHaveBeenCalled();
+    expect(runnerServiceClient.updateTask).toHaveBeenCalled();
   });
 
   it('test runDaemon', async () => {
     await expect(reporter.runDaemon()).resolves.not.toThrow();
-    expect(RunnerServiceClient.updateTask).toHaveBeenCalled();
-    expect(RunnerServiceClient.updateLog).toHaveBeenCalled();
+    expect(runnerServiceClient.updateTask).toHaveBeenCalled();
+    expect(runnerServiceClient.updateLog).toHaveBeenCalled();
   });
 });

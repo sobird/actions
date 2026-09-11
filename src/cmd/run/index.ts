@@ -11,6 +11,7 @@ import util from 'node:util';
 import { Command, Option } from 'commander';
 import ip from 'ip';
 
+import { Constants } from '@/common/constants';
 import Git from '@/common/git';
 import logger from '@/common/logger';
 import { getConfig } from '@/config';
@@ -356,7 +357,11 @@ export const runCommand = new Command('run')
       github,
       secrets: { GITHUB_TOKEN: runner.token },
       env: {},
-      vars: {},
+      vars: {
+        ...(options.verbose && {
+          [Constants.Variables.Actions.StepDebug]: 'true',
+        }),
+      },
       inputs: {},
     };
 

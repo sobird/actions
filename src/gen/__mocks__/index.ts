@@ -48,16 +48,16 @@ export const fetchTaskResponse = create(FetchTaskResponseSchema, {
   }),
 });
 
-const mock = vi.fn(function () {
+export const createClients = vi.fn(function () {
   return {
-    PingServiceClient: {
+    pingServiceClient: {
       ping: vi.fn((req) => {
         return create(PingResponseSchema, {
           data: `Hello, ${req.data}`,
         });
       }),
     },
-    RunnerServiceClient: {
+    runnerServiceClient: {
       register: vi.fn(),
       declare: vi.fn().mockResolvedValue(
         create(DeclareResponseSchema, {
@@ -85,5 +85,3 @@ const mock = vi.fn(function () {
     },
   };
 });
-
-export default mock;

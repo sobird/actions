@@ -10,7 +10,7 @@ import { Command } from 'commander';
 import logger from '@/common/logger';
 import { getConfig, loadRegistration, saveRegistration, Registration } from '@/config';
 import docker from '@/docker';
-import { Labels, Client } from '@/index';
+import { Labels, createClients } from '@/index';
 import Poller, { Runner } from '@/poller';
 
 export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
@@ -79,7 +79,7 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
     }
 
     try {
-      const { RunnerServiceClient } = new Client(
+      const { runnerServiceClient } = createClients(
         registration.address,
         registration.token,
         config.daemon.insecure,
@@ -87,7 +87,7 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
         version,
       );
 
-      const { runner } = await RunnerServiceClient.declare({
+      const { runner } = await runnerServiceClient.declare({
         labels: labels.names(),
         version,
       });
@@ -97,7 +97,7 @@ export const daemonCommand = new Command<[], {}, { config: string }>('daemon')
         );
       }
 
-      const poller = new Poller(RunnerServiceClient, config, new Runner(RunnerServiceClient, config, labels), version);
+      const poller = new Poller(runnerServiceClient, config, new Runner(runnerServiceClient, config, labels), version);
       poller.poll();
     } catch (err) {
       const connectError = err as ConnectError;
