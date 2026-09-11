@@ -1,25 +1,23 @@
-import { createContextKey, type ServiceImpl } from '@connectrpc/connect';
+import type { ServiceImpl } from '@connectrpc/connect';
 
 import { RunnerService } from '@/gen/runner/v1/services_pb';
-import { ActionRunner } from '@/models';
 
 import { declare } from './declare';
 import { fetchTask } from './fetchTask';
 import { register } from './register';
+import { updateLog } from './updateLog';
+import { updateTask } from './updateTask';
 
 export { RunnerService };
 export { default as RunnerServiceInterceptors } from './interceptors';
+export { RunnerModelFrom } from './context';
 
 export type ServiceMethodImpl = ServiceImpl<typeof RunnerService>;
-
-export const runnerModelContextKey = createContextKey<typeof ActionRunner | undefined>(undefined, {
-  description: 'current runner model',
-});
-
-// console.log('fetchTask', fetchTask2);
 
 export const RunnerServiceImpl = {
   register,
   declare,
   fetchTask,
+  updateTask,
+  updateLog,
 };

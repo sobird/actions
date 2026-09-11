@@ -1,13 +1,7 @@
-import { Constants } from '@/common/constants';
-
 import type { ServiceMethodImpl } from '.';
 
-const { XRunnerUUID } = Constants.Protocol;
-
-export const updateTask: ServiceMethodImpl['updateTask'] = async (req, { requestHeader }) => {
-  console.log('requestHeader', requestHeader);
-  const runnerUUID = requestHeader.get(XRunnerUUID);
-  console.log('runnerUUID', runnerUUID);
-
+// Wired up so the RPC is reachable, but the reported task state is not
+// persisted yet; the client tolerates an empty acknowledgment.
+export const updateTask: ServiceMethodImpl['updateTask'] = async () => {
   return {};
 };

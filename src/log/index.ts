@@ -2,10 +2,9 @@
 import fs from 'node:fs';
 import fsP from 'node:fs/promises';
 
-import { create } from '@bufbuild/protobuf';
 import { timestampFromDate, timestampDate } from '@bufbuild/protobuf/wkt';
 
-import { LogRow, LogRowSchema } from '@/gen/runner/v1/messages_pb';
+import { LogRow } from '@/gen/runner/v1/messages_pb';
 
 const MaxLineSize = 64 * 1024;
 const DBFSPrefix = 'logs/';
@@ -23,7 +22,6 @@ class Log {
     const fd = await fsP.open(name, flags);
 
     const stat = await fd.stat();
-    console.log('stat', stat);
 
     if (stat.size < offset) {
       throw Error(`size of ${name} is less than offset`);
@@ -58,16 +56,3 @@ class Log {
 }
 
 export default Log;
-
-const rows = [
-  { time: timestampFromDate(new Date('2022-01-01T12:00:00Z')), content: 'Log entry 1' },
-  { time: timestampFromDate(new Date('2022-01-01T12:00:01Z')), content: 'Log entry 2' },
-];
-
-await Log.write(
-  'example.log',
-  2,
-  rows.map((item) => {
-    return create(LogRowSchema, item);
-  }),
-);

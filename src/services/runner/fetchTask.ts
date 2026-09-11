@@ -1,14 +1,9 @@
 import { ConnectError, Code } from '@connectrpc/connect';
 
 import { ActionTaskVersion, ActionRunner } from '@/models';
-// import { runnerModelContextKey } from '@/services/runner';
 
 import type { ServiceMethodImpl } from '.';
-import { RunnerModelFrom } from './interceptors/with_runner';
-
-// export const runnerModelContextKey = createContextKey< undefined>(undefined, {
-//   description: 'current runner model',
-// });
+import { RunnerModelFrom } from './context';
 
 export const fetchTask: ServiceMethodImpl['fetchTask'] = async (req, { values }) => {
   const runner = RunnerModelFrom(values)!;

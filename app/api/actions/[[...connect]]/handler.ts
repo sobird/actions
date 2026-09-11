@@ -15,13 +15,20 @@
 // https://github.com/connectrpc/connect-es/blob/main/packages/connect-next/src/connect-nextjs-adapter.ts
 // https://github.com/connectrpc/connect-es/issues/542
 
-import { createConnectRouter, type ConnectRouter, type ConnectRouterOptions } from '@connectrpc/connect';
+import {
+  createConnectRouter,
+  ConnectError,
+  Code,
+  type ConnectRouter,
+  type ConnectRouterOptions,
+} from '@connectrpc/connect';
 import { compressionBrotli, compressionGzip } from '@connectrpc/connect-node';
 import {
   type UniversalHandler,
   universalServerRequestFromFetch,
   universalServerResponseToFetch,
 } from '@connectrpc/connect/protocol';
+import { codeToHttpStatus, errorToJson } from '@connectrpc/connect/protocol-connect';
 import { type NextRequest } from 'next/server';
 
 interface NextConnectRouterOptions extends ConnectRouterOptions {
@@ -82,6 +89,15 @@ export function createConnectHandler(options: NextConnectRouterOptions) {
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error(`handler for rpc ${uHandler.method.name} of ${uHandler.service.typeName} failed`, error);
+
+      // The protocol handler already turns a ConnectError into a response, so
+      // anything reaching here is unexpected. Answer with a real Response:
+      // returning undefined makes Next.js throw its own opaque 500.
+      const connectError = ConnectError.from(error, Code.Internal);
+      return new Response(JSON.stringify(errorToJson(connectError, undefined)), {
+        status: codeToHttpStatus(connectError.code),
+        headers: { 'content-type': 'application/json' },
+      });
     }
   }
 
