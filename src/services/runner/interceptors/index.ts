@@ -1,3 +1,3 @@
-import { withRunner } from './with_runner';
+import { withRunner } from './withRunner';
 
 export default [withRunner];

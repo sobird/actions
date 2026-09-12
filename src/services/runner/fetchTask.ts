@@ -1,11 +1,11 @@
-import { ConnectError, Code } from '@connectrpc/connect';
+import { ConnectError, Code, type MethodImpl } from '@connectrpc/connect';
 
+import type { RunnerService } from '@/gen/runner/v1/services_pb';
 import { ActionTaskVersion, ActionRunner } from '@/models';
 
-import type { ServiceMethodImpl } from '.';
 import { getRunnerModel } from './context';
 
-export const fetchTask: ServiceMethodImpl['fetchTask'] = async (req, { values }) => {
+export const fetchTask: MethodImpl<typeof RunnerService.method.fetchTask> = async (req, { values }) => {
   const runner = getRunnerModel(values)!;
   const { ownerId = 0, repositoryId = 0 } = runner;
   const taskVersion = req.tasksVersion;

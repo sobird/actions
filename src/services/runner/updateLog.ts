@@ -1,13 +1,12 @@
 import { create } from '@bufbuild/protobuf';
-import { ConnectError } from '@connectrpc/connect';
+import { ConnectError, Code, type MethodImpl } from '@connectrpc/connect';
 
 import { UpdateLogResponseSchema } from '@/gen/runner/v1/messages_pb';
+import type { RunnerService } from '@/gen/runner/v1/services_pb';
 import Log from '@/log';
 import { models } from '@/models';
 
-import type { ServiceMethodImpl } from '.';
-
-export const updateLog: ServiceMethodImpl['updateLog'] = async (req) => {
+export const updateLog: MethodImpl<typeof RunnerService.method.updateLog> = async (req) => {
   const response = create(UpdateLogResponseSchema);
 
   const task = await models.ActionTask.findByPk(req.taskId);
@@ -21,7 +20,7 @@ export const updateLog: ServiceMethodImpl['updateLog'] = async (req) => {
 
   if (task?.logInStorage) {
     // AlreadyExists
-    throw new ConnectError('log file has been archived', 6);
+    throw new ConnectError('log file has been archived', Code.AlreadyExists);
   }
 
   const rows = req.rows.slice(ack - Number(req.index));

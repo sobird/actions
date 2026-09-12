@@ -1,9 +1,10 @@
-import { ConnectError, Code } from '@connectrpc/connect';
+import { ConnectError, Code, type MethodImpl } from '@connectrpc/connect';
 
-import type { ServiceMethodImpl } from '.';
+import type { RunnerService } from '@/gen/runner/v1/services_pb';
+
 import { getRunnerModel } from './context';
 
-export const declare: ServiceMethodImpl['declare'] = async (req, { values }) => {
+export const declare: MethodImpl<typeof RunnerService.method.declare> = async (req, { values }) => {
   const runner = getRunnerModel(values)!;
   runner.labels = req.labels;
   runner.version = req.version;

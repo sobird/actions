@@ -1,14 +1,13 @@
-import { ConnectError, Code } from '@connectrpc/connect';
+import { ConnectError, Code, type MethodImpl } from '@connectrpc/connect';
 
+import type { RunnerService } from '@/gen/runner/v1/services_pb';
 import { ActionRunnerToken, ActionRunner } from '@/models';
 import lodash from '@/utils/lodash';
-
-import type { ServiceMethodImpl } from '.';
 
 const RUNNER_CAPABILITY_CANCELLING = 'cancelling';
 
 // Register register a new runner in server.
-export const register: ServiceMethodImpl['register'] = async (req) => {
+export const register: MethodImpl<typeof RunnerService.method.register> = async (req) => {
   if (req.token === '' || req.name === '') {
     throw new ConnectError('missing runner token, name', Code.InvalidArgument);
   }

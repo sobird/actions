@@ -12,12 +12,10 @@ export { RunnerService };
 export { default as RunnerServiceInterceptors } from './interceptors';
 export { getRunnerModel } from './context';
 
-export type ServiceMethodImpl = ServiceImpl<typeof RunnerService>;
-
 export const RunnerServiceImpl = {
   register,
   declare,
   fetchTask,
   updateTask,
   updateLog,
-};
+} satisfies ServiceImpl<typeof RunnerService>;

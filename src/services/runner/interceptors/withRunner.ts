@@ -1,6 +1,7 @@
 import { Interceptor, ConnectError, Code } from '@connectrpc/connect';
 
 import { Constants } from '@/common/constants';
+import { RunnerService } from '@/gen/runner/v1/services_pb';
 import { ActionRunner } from '@/models/actions';
 
 import { setRunnerModel } from '../context';
@@ -9,8 +10,8 @@ const { XRunnerUUID, XRunnerToken } = Constants.Protocol;
 
 export const withRunner: Interceptor = (next) => {
   return async (req) => {
-    const methodName = req.method.name;
-    if (methodName === 'Register') {
+    // Register is the only unauthenticated RPC: it is how a runner obtains its token.
+    if (req.method === RunnerService.method.register) {
       return next(req);
     }
 
@@ -28,7 +29,7 @@ export const withRunner: Interceptor = (next) => {
     }
 
     runner.lastOnline = new Date();
-    if (methodName === 'UpdateTask' || methodName === 'UpdateLog') {
+    if (req.method === RunnerService.method.updateTask || req.method === RunnerService.method.updateLog) {
       runner.lastActive = new Date();
     }
 
