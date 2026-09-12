@@ -10,7 +10,7 @@ import { updateTask } from './updateTask';
 
 export { RunnerService };
 export { default as RunnerServiceInterceptors } from './interceptors';
-export { RunnerModelFrom } from './context';
+export { getRunnerModel } from './context';
 
 export type ServiceMethodImpl = ServiceImpl<typeof RunnerService>;
 

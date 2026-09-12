@@ -3,10 +3,10 @@ import { ConnectError, Code } from '@connectrpc/connect';
 import { ActionTaskVersion, ActionRunner } from '@/models';
 
 import type { ServiceMethodImpl } from '.';
-import { RunnerModelFrom } from './context';
+import { getRunnerModel } from './context';
 
 export const fetchTask: ServiceMethodImpl['fetchTask'] = async (req, { values }) => {
-  const runner = RunnerModelFrom(values)!;
+  const runner = getRunnerModel(values)!;
   const { ownerId = 0, repositoryId = 0 } = runner;
   const taskVersion = req.tasksVersion;
 

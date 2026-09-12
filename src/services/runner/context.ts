@@ -12,6 +12,6 @@ export function setRunnerModel(values: HandlerContext['values'], runner: ActionR
   values.set(runnerModelContextKey, runner);
 }
 
-export function RunnerModelFrom(values: HandlerContext['values']) {
+export function getRunnerModel(values: HandlerContext['values']) {
   return values.get(runnerModelContextKey);
 }
