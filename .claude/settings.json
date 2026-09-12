@@ -1,0 +1,22 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(bun -e 'let s=\"\";process.stdin.on(\"data\",d=>s+=d).on(\"end\",()=>{try{const j=JSON.parse(s);process.stdout.write(j.tool_response&&j.tool_response.filePath||j.tool_input&&j.tool_input.file_path||\"\")}catch(e){}})'); [ -n \"$f\" ] && bunx oxfmt \"$f\" 2>/dev/null || true",
+            "timeout": 60,
+            "statusMessage": "Formatting with oxfmt"
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "playwright@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "github@claude-plugins-official": true
+  }
+}
