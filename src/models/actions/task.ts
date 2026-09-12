@@ -39,8 +39,8 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
   declare runnerId: bigint;
   declare attempt: CreationOptional<number>;
   declare status: CreationOptional<Status>;
-  declare started: CreationOptional<Date>;
-  declare stopped: CreationOptional<Date>;
+  declare started: CreationOptional<Date | null>;
+  declare stopped: CreationOptional<Date | null>;
   declare repositoryId: number;
   declare ownerId: number;
   declare commitSha: string;

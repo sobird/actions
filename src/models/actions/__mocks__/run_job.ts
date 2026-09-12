@@ -1,4 +1,5 @@
 import { ActionRunJob, type ActionRunJobCreationAttributes } from '../run_job';
+import { Status } from '../status';
 
 const seeds: ActionRunJobCreationAttributes[] = [
   {
@@ -12,7 +13,7 @@ const seeds: ActionRunJobCreationAttributes[] = [
     attempt: 1,
     jobId: 'job_2',
     taskId: 47,
-    status: 1,
+    status: Status.Success,
     started: new Date(1683636528000),
     stopped: new Date(1683636626000),
   },
@@ -27,7 +28,7 @@ const seeds: ActionRunJobCreationAttributes[] = [
     attempt: 1,
     jobId: 'job_2',
     taskId: 48,
-    status: 1,
+    status: Status.Success,
     started: new Date(1683636528000),
     stopped: new Date(1683636626000),
   },

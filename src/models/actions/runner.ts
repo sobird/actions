@@ -24,6 +24,7 @@ import {
   type HasManyHasAssociationsMixin,
   type HasManyCreateAssociationMixin,
   type HasManyCountAssociationsMixin,
+  type Transaction,
 } from 'sequelize';
 
 import { RunnerStatus } from '@/gen/runner/v1/messages_pb';
@@ -81,6 +82,15 @@ export class ActionRunner extends BaseModel<InferAttributes<ActionRunner>, Infer
 
   public static hashToken(token: string, salt: string) {
     return pbkdf2Sync(Buffer.from(token), Buffer.from(salt), 10000, 50, 'sha256').toString('hex');
+  }
+
+  /** deletes an ephemeral runner by its id; a missing or non-ephemeral runner is a no-op */
+  public static async deleteEphemeralRunner(id: bigint, transaction?: Transaction) {
+    const runner = await this.findByPk(id, { transaction });
+    if (!runner?.ephemeral) {
+      return;
+    }
+    await runner.destroy({ transaction });
   }
 
   /**

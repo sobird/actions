@@ -30,6 +30,7 @@ import {
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
 import type { Models, ActionTask, ActionRun } from '.';
+import { Status } from './status';
 
 export type ActionRunJobCreationAttributes = CreationAttributes<ActionRunJob>;
 
@@ -57,11 +58,11 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
 
   declare runsOn: CreationOptional<string[]>;
 
-  declare status: number;
+  declare status: Status;
 
-  declare started: Date;
+  declare started: Date | null;
 
-  declare stopped: Date;
+  declare stopped: Date | null;
 
   declare run?: NonAttribute<ActionRun>;
 
@@ -156,7 +157,22 @@ ActionRunJob.init(
       type: DataTypes.STRING,
     },
     status: {
-      type: DataTypes.TINYINT,
+      // https://github.com/sequelize/sequelize/issues/5765
+      type: DataTypes.ENUM,
+      values: Status.names(),
+      defaultValue: Status.Unknown.toString(),
+      get() {
+        return Status.from(this.getDataValue('status') as unknown as string);
+      },
+      set(value: Status) {
+        this.setDataValue('status', value.toString() as unknown as Status);
+      },
+      validate: {
+        isIn: {
+          args: [Status.names()],
+          msg: `Must be in ${Status.names()}`,
+        },
+      },
     },
     started: DataTypes.DATE,
     stopped: DataTypes.DATE,

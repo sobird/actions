@@ -5,6 +5,7 @@ import { ActionRunnerToken } from './runner_token';
 import { ActionSchedule } from './schedule';
 import { ActionScheduleSpec } from './schedule_spec';
 import { ActionTask } from './task';
+import { ActionTaskOutput } from './task_output';
 import { ActionTaskStep } from './task_step';
 import { ActionTaskVersion } from './task_version';
 
@@ -17,6 +18,7 @@ export const models = {
   ActionScheduleSpec,
   ActionTaskStep,
   ActionTask,
+  ActionTaskOutput,
   ActionTaskVersion,
 };
 
@@ -35,3 +37,4 @@ export * from './schedule';
 export * from './schedule_spec';
 export * from './task_step';
 export * from './task';
+export * from './task_output';

@@ -33,8 +33,8 @@ export class ActionTaskStep extends BaseModel<
   declare logIndex: number;
   declare logLength: number;
   declare status: string;
-  declare startedAt: Date;
-  declare stoppedAt: Date;
+  declare startedAt: Date | null;
+  declare stoppedAt: Date | null;
 
   static associate({ ActionTask }: Models) {
     this.belongsTo(ActionTask, { foreignKey: 'taskId' });
