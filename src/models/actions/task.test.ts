@@ -1,4 +1,4 @@
-import { ActionTask, ActionRunner } from '@/models/actions';
+import { ActionTask, ActionRunJob, ActionRunner } from '@/models/actions';
 
 vi.mock('@/lib/sequelize');
 vi.mock('./task');
@@ -18,9 +18,10 @@ describe('ActionTask Test', async () => {
   it('createForRunner', async () => {
     console.log('actionsRunner', ActionRunner);
     const actionsRunner = await ActionRunner.findByPk(1);
+    const job = await ActionRunJob.findOne();
 
-    if (actionsRunner) {
-      const rows = await ActionTask.createForRunner(actionsRunner);
+    if (actionsRunner && job) {
+      const rows = await ActionTask.createForRunner(actionsRunner, job);
       console.log('rows', rows);
     }
   });

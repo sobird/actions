@@ -118,8 +118,6 @@ class DbFile {
     const fileMeta = await DbFile.findFileMetaById(this.metaId);
     const readBytes = await this.readAt(fileMeta, this.offset, buffer);
 
-    console.log('readBytes', readBytes);
-
     this.offset += readBytes;
 
     return readBytes;
@@ -229,8 +227,10 @@ class DbFile {
   }
 
   async createEmpty() {
+    // open() calls this for O_CREAT without O_EXCL, so an existing file is a
+    // no-op rather than an error.
     if (this.metaId !== 0) {
-      throw new Error('ErrExist');
+      return;
     }
 
     await DbfsMeta.create({

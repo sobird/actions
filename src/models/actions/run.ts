@@ -31,17 +31,17 @@ export type ActionRunCreationAttributes = CreationAttributes<ActionRun>;
 
 export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreationAttributes<ActionRun>> {
   declare title: string;
-  declare repositoryId: bigint;
-  declare ownerId: bigint;
+  declare repositoryId: number;
+  declare ownerId: number;
   declare workflowId: string;
-  declare index: bigint;
-  declare triggerUserId: bigint;
+  declare index: number;
+  declare triggerUserId: CreationOptional<bigint | null>;
   declare scheduleId: CreationOptional<bigint>;
   declare ref: string;
   declare commitSha: string;
   declare isForkPullRequest: boolean;
   declare needApproval: boolean;
-  declare approvedBy: bigint;
+  declare approvedBy: CreationOptional<bigint | null>;
   declare eventName: string;
   declare eventPayload: CreationOptional<string>;
   declare triggerEvent: CreationOptional<string>;
@@ -53,8 +53,8 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   declare workflowCommitSha: CreationOptional<string>;
   declare isScopedRun: CreationOptional<boolean>;
 
-  declare started: Date;
-  declare stopped: Date;
+  declare started: CreationOptional<Date | null>;
+  declare stopped: CreationOptional<Date | null>;
 
   declare previousDuration: CreationOptional<bigint>;
   declare duration: CreationOptional<number>;

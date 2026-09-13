@@ -1,7 +1,10 @@
+import { create } from '@bufbuild/protobuf';
 import { ConnectError, Code, type MethodImpl } from '@connectrpc/connect';
 
+import { FetchTaskResponseSchema } from '@/gen/runner/v1/messages_pb';
 import type { RunnerService } from '@/gen/runner/v1/services_pb';
-import { ActionTaskVersion, ActionRunner } from '@/models';
+import { ActionTaskVersion } from '@/models';
+import { pickTask } from '@/services/actions/task';
 
 import { getRunnerModel } from './context';
 
@@ -32,14 +35,15 @@ export const fetchTask: MethodImpl<typeof RunnerService.method.fetchTask> = asyn
     // it means there may still be some tasks not be assgined.
     // try to pick a task for the runner that send the request.
 
-    await ActionRunner.findOne({
-      where: {
-        uuid: runner.uuid,
-      },
+    const picked = await pickTask(runner);
+
+    return create(FetchTaskResponseSchema, {
+      tasksVersion: latestVersion,
+      task: picked?.task,
     });
   }
 
-  return {
+  return create(FetchTaskResponseSchema, {
     tasksVersion: latestVersion,
-  };
+  });
 };

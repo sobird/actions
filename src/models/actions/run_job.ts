@@ -46,7 +46,7 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   declare commitSha: string;
   declare isForkPullRequest: boolean;
   declare attempt: number;
-  declare workflowPayload: CreationOptional<Blob>;
+  declare workflowPayload: CreationOptional<Buffer>;
 
   /** job id in workflow, not job's id */
   declare jobId: string;
@@ -54,9 +54,11 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   /** the latest task of the job */
   declare taskId: number;
 
-  declare needs: CreationOptional<string[]>;
+  /** JSON-encoded list of job ids this job depends on */
+  declare needs: CreationOptional<string>;
 
-  declare runsOn: CreationOptional<string[]>;
+  /** JSON-encoded list of labels this job requires */
+  declare runsOn: CreationOptional<string>;
 
   declare status: Status;
 

@@ -5,8 +5,10 @@ import { Command } from 'commander';
 import pkg from '../../package.json' with { type: 'json' };
 import { configCommand } from './config';
 import { daemonCommand } from './daemon';
+import { logsCommand } from './logs';
 import { registerCommand } from './register';
 import { runCommand } from './run';
+import { submitCommand } from './submit';
 
 const program = new Command()
   .name('actions')
@@ -24,6 +26,8 @@ program.addCommand(registerCommand);
 program.addCommand(daemonCommand);
 program.addCommand(configCommand);
 program.addCommand(runCommand);
+program.addCommand(submitCommand);
+program.addCommand(logsCommand);
 
 try {
   program.exitOverride();

@@ -25,12 +25,17 @@ import {
   type BelongsToGetAssociationMixin,
   type BelongsToSetAssociationMixin,
   type BelongsToCreateAssociationMixin,
+  type Transaction,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
+import { logFileName } from '@/utils';
+import Workflow from '@/workflow';
 
 import type { Models, ActionRunJob, ActionRunner, ActionTaskStep } from '.';
+import { ActionRunJob as ActionRunJobModel } from './run_job';
 import { Status } from './status';
+import { ActionTaskStep as ActionTaskStepModel } from './task_step';
 
 export type ActionTaskCreationAttributes = CreationAttributes<ActionTask>;
 
@@ -94,18 +99,109 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
   declare setActionRunner: BelongsToSetAssociationMixin<ActionRunner, bigint>;
   declare createActionRunner: BelongsToCreateAssociationMixin<ActionRunner>;
 
-  public static async createForRunner(_runner: ActionRunner) {
-    // const t = await sequelize.transaction();
-    // const { ownerId, repositoryId } = runner;
+  /**
+   * Claim a waiting job for the runner and materialize it as a task.
+   *
+   * The job is claimed with an optimistic update, so two runners racing for the
+   * same job produce exactly one task; the loser gets `null`.
+   */
+  public static async createForRunner(runner: ActionRunner, job: ActionRunJob): Promise<ActionTask | null> {
+    const now = new Date();
+    const repoFullName = `repo_${job.repositoryId}`;
+    let created: ActionTask | null = null;
 
-    // const jobs = this
+    try {
+      await sequelize.transaction(async (transaction) => {
+        const task = await this.create(
+          {
+            jobId: Number(job.id!),
+            runnerId: runner.id!,
+            attempt: job.attempt || 1,
+            status: Status.Running,
+            started: now,
+            repositoryId: job.repositoryId,
+            ownerId: job.ownerId,
+            commitSha: job.commitSha,
+            isForkPullRequest: job.isForkPullRequest ?? false,
+            logFilename: '',
+            logInStorage: false,
+            logLength: 0,
+            logSize: 0,
+            logExpired: false,
+          },
+          { transaction },
+        );
 
-    return this.create();
+        // logFilename embeds the task id, which only exists after the insert.
+        task.logFilename = logFileName(repoFullName, task.id!);
+        await task.save({ fields: ['logFilename'], transaction });
+
+        await this.createSteps(task, job, transaction);
+
+        const [affectedCount] = await ActionRunJobModel.update(
+          { taskId: Number(task.id), status: Status.Running, started: now },
+          {
+            where: { id: job.id, taskId: 0, status: Status.Waiting.toString() },
+            transaction,
+          },
+        );
+        if (affectedCount !== 1) {
+          throw new Error('job already claimed by another runner');
+        }
+
+        task.job = job;
+        created = task;
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'job already claimed by another runner') {
+        return null;
+      }
+      throw error;
+    }
+
+    return created;
   }
 
+  /**
+   * Undo a claim whose task payload could not be built, so the job goes back to
+   * the waiting queue instead of deadlocking in running.
+   */
   public static async releaseTaskForRunner(task: ActionTask) {
-    // todo
-    console.log('task', task);
+    await sequelize.transaction(async (transaction) => {
+      await ActionRunJobModel.update(
+        { taskId: 0, status: Status.Waiting, started: null },
+        { where: { id: task.jobId, taskId: Number(task.id) }, transaction },
+      );
+      await ActionTaskStepModel.destroy({ where: { taskId: Number(task.id) }, transaction });
+      await task.destroy({ transaction });
+    });
+  }
+
+  /** Create one step row per step in the job's workflow, in workflow order. */
+  private static async createSteps(task: ActionTask, job: ActionRunJob, transaction: Transaction) {
+    const workflow = Workflow.Load(job.workflowPayload?.toString() ?? '');
+    const steps = (workflow.jobs[job.jobId]?.steps?.toJSON() ?? []) as {
+      name?: string;
+      uses?: string;
+      run?: string;
+    }[];
+
+    if (steps.length === 0) {
+      return;
+    }
+
+    await ActionTaskStepModel.bulkCreate(
+      steps.map((step, index) => ({
+        name: (step.name || step.uses || step.run || `step-${index}`).slice(0, 255),
+        taskId: Number(task.id),
+        index,
+        repositoryId: task.repositoryId,
+        logIndex: 0,
+        logLength: 0,
+        status: Status.Waiting.toString(),
+      })),
+      { transaction },
+    );
   }
 
   // public static async claimJobForRunner(runner: ActionRunner, job: ActionRunJob) {

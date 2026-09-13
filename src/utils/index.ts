@@ -18,6 +18,7 @@ export { replaceAllAsync } from './replaceAllAsync';
 export { assignIgnoreCase } from './assignIgnoreCase';
 export { trimSuffix } from './trimSuffix';
 export { trimPrefix } from './trimPrefix';
+export { logFileName } from './logFileName';
 export { isExecutable } from './isExecutable';
 export { createSha1Hash, createFnv1aHash } from './hash';
 

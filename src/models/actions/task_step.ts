@@ -67,7 +67,6 @@ ActionTaskStep.init(
     },
     index: {
       type: DataTypes.INTEGER,
-      unique: true,
       comment: 'task index',
     },
     repositoryId: {

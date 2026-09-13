@@ -33,28 +33,21 @@ export class ActionTaskVersion extends BaseModel<ActionTaskVersionAttributes, Ac
       },
     });
 
-    return taskVersion ? taskVersion.version : 0n;
+    // Coerce to bigint: the column reads back as a number/string depending on the
+    // dialect, while callers compare it against the int64 tasksVersion.
+    return taskVersion ? BigInt(taskVersion.version) : 0n;
   }
 
   public static async increaseVersionByScope(ownerId: number, repositoryId: number, transaction?: Transaction) {
-    const [, affectedCount] = await this.increment('version', {
-      by: 1,
-      where: {
-        ownerId,
-        repositoryId,
-      },
-      transaction,
-    });
+    const where = { ownerId, repositoryId };
+    const existing = await this.findOne({ where, transaction });
 
-    if (affectedCount === 0) {
-      await this.create(
-        {
-          ownerId,
-          repositoryId,
-        },
-        { transaction },
-      );
+    if (existing) {
+      await this.increment('version', { by: 1, where, transaction });
+      return;
     }
+
+    await this.create({ ownerId, repositoryId }, { transaction });
   }
 
   public static async increaseVersion(ownerId: number, repositoryId: number) {

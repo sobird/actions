@@ -13,3 +13,6 @@ import { sequelize } from '@/lib/sequelize';
 export { sequelize };
 
 export * from './actions';
+// Importing the dbfs models registers them on the shared sequelize instance, so
+// a schema sync creates the tables the log storage writes to.
+export * from './dbfs';

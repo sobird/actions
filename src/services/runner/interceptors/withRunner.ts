@@ -37,6 +37,11 @@ export const withRunner: Interceptor = (next) => {
 
     setRunnerModel(req.contextValues, runner);
 
-    return next(req);
+    try {
+      return await next(req);
+    } catch (err) {
+      console.log('err', err);
+      throw err;
+    }
   };
 };

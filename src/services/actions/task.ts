@@ -1,14 +1,109 @@
-import { Task } from '@/gen/runner/v1/messages_pb.ts';
-import { ActionRunner, ActionTask } from '@/models';
+import { create } from '@bufbuild/protobuf';
+
+import { Task, TaskNeed, TaskNeedSchema, TaskSchema } from '@/gen/runner/v1/messages_pb';
+import { ActionRun, ActionRunJob, ActionRunner, ActionTask, ActionTaskOutput } from '@/models';
 import { Status } from '@/models/actions/status';
+import Workflow from '@/workflow';
 
-async function buildRunnerTask(task: ActionTask) {
-  console.log('task', task);
+import { parseStringList } from './createRun';
 
-  return {
-    task: {} as Task,
-    job: task.job,
+/**
+ * Assemble the payload a runner needs to execute a claimed task.
+ *
+ * The workflow yaml travels with the task, so the runner never has to ask the
+ * server for the workflow again.
+ */
+async function buildRunnerTask(task: ActionTask): Promise<Task> {
+  const job = task.job ?? (await ActionRunJob.findByPk(task.jobId));
+  if (!job) {
+    throw new Error(`task ${task.id}: job ${task.jobId} not found`);
+  }
+
+  const run = await ActionRun.findByPk(job.runId);
+  const workflowPayload = job.workflowPayload?.toString() ?? '';
+  const workflow = Workflow.Load(workflowPayload);
+
+  // The local checkout the steps run in; the runner reads it from
+  // `context.repository`.
+  const workdir = run?.eventPayload ? (JSON.parse(run.eventPayload).workdir ?? '') : '';
+
+  const context = {
+    event_name: run?.eventName ?? 'workflow_dispatch',
+    job: job.jobId,
+    ref: run?.ref ?? '',
+    sha: run?.commitSha ?? '',
+    run_id: String(run?.id ?? ''),
+    run_number: String(run?.index ?? ''),
+    run_attempt: String(task.attempt ?? 1),
+    actor: 'actions',
+    triggering_actor: 'actions',
+    workflow: workflow.name || workflow.file || '',
+    server_url: 'https://github.com',
+    repository: workdir,
+    workspace: workdir,
+    repository_id: String(job.repositoryId),
+    repository_owner: '',
   };
+
+  const needs: Record<string, TaskNeed> = {};
+  for (const needId of parseStringList(job.needs)) {
+    // eslint-disable-next-line no-await-in-loop
+    const needJob = await ActionRunJob.findOne({ where: { runId: job.runId, jobId: needId } });
+    if (!needJob) {
+      continue;
+    }
+
+    const outputs: Record<string, string> = {};
+    if (needJob.taskId) {
+      // eslint-disable-next-line no-await-in-loop
+      const rows = await ActionTaskOutput.findAll({ where: { taskId: needJob.taskId } });
+      rows.forEach((row) => {
+        outputs[row.outputKey] = row.outputValue;
+      });
+    }
+
+    needs[needId] = create(TaskNeedSchema, {
+      result: needJob.status.asResult(),
+      outputs,
+    });
+  }
+
+  return create(TaskSchema, {
+    id: BigInt(task.id!),
+    workflowPayload: Buffer.from(workflowPayload),
+    context,
+    secrets: {},
+    needs,
+    vars: {},
+  });
+}
+
+/**
+ * Whether every job this one depends on has finished successfully.
+ *
+ * A failed dependency is terminal: the job is marked skipped so it leaves the
+ * queue instead of being retried forever.
+ */
+async function needsSatisfied(job: ActionRunJob): Promise<boolean> {
+  const needs = parseStringList(job.needs);
+  if (needs.length === 0) {
+    return true;
+  }
+
+  const dependencies = await ActionRunJob.findAll({ where: { runId: job.runId, jobId: needs } });
+  if (dependencies.length !== needs.length) {
+    return false;
+  }
+  if (!dependencies.every((dependency) => dependency.status.isDone())) {
+    return false;
+  }
+
+  if (!dependencies.every((dependency) => dependency.status.isSuccess())) {
+    await job.update({ status: Status.Skipped, stopped: new Date() });
+    return false;
+  }
+
+  return true;
 }
 
 /**
@@ -23,7 +118,7 @@ export async function pickTask(runner: ActionRunner) {
 
   // 1. 处理短暂/一次性 Runner (Ephemeral) 的特殊生命周期
   if (runner.ephemeral) {
-    let task = await ActionTask.findOne({
+    const task = await ActionTask.findOne({
       where: {
         runnerId: runner.id,
       },
@@ -45,45 +140,49 @@ export async function pickTask(runner: ActionRunner) {
     }
   }
 
-  // 2. 尝试在数据库中为 Runner 创建/锁定一个任务
-  // 对应 Go 的: t, ok, err := actions_model.CreateTaskForRunner(...)
-  let t: ActionTask | null = null;
-  const task = await ActionTask.createForRunner(runner);
-  if (!task) {
-    return null; // 没有可领的任务
-  }
-  t = task;
+  // 2. 按标签与依赖挑一个已入队但尚未被认领的 job
+  const jobs = await ActionRunJob.findAll({
+    where: { taskId: 0, status: Status.Waiting.toString() },
+    order: [['id', 'ASC']],
+  });
 
-  // 3. 装配 Task 载荷
-  let taskPayload: any;
-  // let job: ActionRunJob;
-
-  try {
-    const buildResult = await buildRunnerTask(t);
-    taskPayload = buildResult.task;
-    // job = buildResult.job;
-  } catch (err) {
-    // 【核心补偿逻辑】：Job 已经被抢占锁定，但组装 Payload 失败了。
-    // 必须立刻释放锁定，让 Job 回到等待队列，否则该 Job 将死锁在 running 状态。
-    try {
-      await ActionTask.releaseTaskForRunner(t);
-    } catch (relErr) {
-      const relMsg = relErr instanceof Error ? relErr.message : String(relErr);
-      console.error(`ReleaseTaskForRunner [task_id: ${t.id}]: ${relMsg}`);
+  for (const job of jobs) {
+    if (!runner.canMatchLabels(parseStringList(job.runsOn))) {
+      // eslint-disable-next-line no-continue
+      continue;
     }
-    throw err; // 继续向上抛出组装失败的原始错误
+    // eslint-disable-next-line no-await-in-loop
+    if (!(await needsSatisfied(job))) {
+      // eslint-disable-next-line no-continue
+      continue;
+    }
+
+    // 3. 抢占 job 并落库 task
+    // eslint-disable-next-line no-await-in-loop
+    const task = await ActionTask.createForRunner(runner, job);
+    if (!task) {
+      // 被其他 runner 抢占了，继续尝试下一个 job
+      // eslint-disable-next-line no-continue
+      continue;
+    }
+
+    // 4. 装配 Task 载荷
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      return { task: await buildRunnerTask(task) };
+    } catch (err) {
+      // 【核心补偿逻辑】：Job 已经被抢占锁定，但组装 Payload 失败了。
+      // 必须立刻释放锁定，让 Job 回到等待队列，否则该 Job 将死锁在 running 状态。
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await ActionTask.releaseTaskForRunner(task);
+      } catch (relErr) {
+        const relMsg = relErr instanceof Error ? relErr.message : String(relErr);
+        console.error(`ReleaseTaskForRunner [task_id: ${task.id}]: ${relMsg}`);
+      }
+      throw err; // 继续向上抛出组装失败的原始错误
+    }
   }
 
-  // const actionTask = t;
-
-  // 4. 触发后续的各种状态更新通知（非阻塞/或顺序执行取决于业务，这里采用 await）
-  // await createCommitStatusForRunJobs(ctx, job.run, job);
-  // await notifyWorkflowJobStatusUpdateWithTask(ctx, job, actionTask);
-
-  // // job.run 在事务内部加载，如果 started 为空（或零值），代表这是该 Run 的第一次认领
-  // if (!job.run.started || job.run.started.getTime() === 0) {
-  //   await notifyWorkflowRunStatusUpdateWithReload(ctx, job.repoID, job.runID);
-  // }
-
-  return { task: taskPayload };
+  return null;
 }
