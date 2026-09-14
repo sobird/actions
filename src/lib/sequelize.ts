@@ -21,138 +21,106 @@ interface FindManyByPageOptions extends Omit<FindAndCountOptions, 'offset' | 'li
   limit?: number;
 }
 
-/**
- * Cache the instance on globalThis rather than in a module variable.
- *
- * Next.js evaluates this module more than once: every route is bundled and
- * evaluated separately, and each hot reload re-runs it. Each extra copy of a
- * module-level instance opens its own sqlite connection, and several connections
- * to one file then fight over sqlite's single write lock, surfacing as
- * SQLITE_BUSY. One cached instance means one connection per process.
- */
-const globalForSequelize = globalThis as unknown as { sequelize?: Sequelize };
-
-function createSequelize() {
-  return new Sequelize({
-    // The name of the database
-    // database: 'mix',
-
-    // The username which is used to authenticate against the database.
-    // username: 'root',
-
-    // The password which is used to authenticate against the database.
-    // password: '12345678',
-
-    // the sql dialect of the database
-    // currently supported: 'mysql', 'sqlite', 'postgres', 'mssql'
-    dialect: 'sqlite',
-
-    dialectModule: sqlite3,
-
-    // custom host; default: localhost
-    host: '127.0.0.1',
-    // for postgres, you can also specify an absolute path to a directory
-    // containing a UNIX socket to connect over
-    // host: '/sockets/psql_sockets'.
-
-    // custom port; default: dialect default
-    // port: 3306,
-
-    // custom protocol; default: 'tcp'
-    // postgres only, useful for Heroku
-    // protocol: null,
-
-    // disable logging or provide a custom logging function; default: console.log
-    // logging: false,
-
-    // you can also pass any dialect options to the underlying dialect library
-    // - default is empty
-    // - currently supported: 'mysql', 'postgres', 'mssql'
-    dialectOptions: {
-      // 指定套接字文件路径
-      // socketPath: '/var/lib/mysql/mysql.sock',
-      supportBigNumbers: true,
-      bigNumberStrings: true,
-      // if your server run on full cpu load, please set trace to false
-      trace: true,
-    },
-
-    // the storage engine for sqlite
-    // - default ':memory:'
-    storage: './database.sqlite',
-
-    // disable inserting undefined values as NULL
-    // - default: false
-    omitNull: true,
-
-    // a flag for using a native library or not.
-    // in the case of 'pg' -- set this to true will allow SSL support
-    // - default: false
-    native: true,
-
-    // Specify options, which are used when sequelize.define is called.
-    // The following example:
-    //   define: { timestamps: false }
-    // is basically the same as:
-    //   Model.init(attributes, { timestamps: false });
-    //   sequelize.define(name, attributes, { timestamps: false });
-    // so defining the timestamps for each model will be not necessary
-    define: {
-      underscored: true,
-      // 强制表名称等于模型名称
-      // freezeTableName: true,
-      charset: 'utf8',
-      // dialectOptions: {
-      //   collate: 'utf8_general_ci'
-      // },
-      timestamps: true,
-
-      // createdAt: 'createdAt',
-      // updatedAt: 'updatedAt',
-      // noPrimaryKey: true,
-    },
-
-    // similar for sync: you can define this to always force sync for models
-    // sync: { force: true },
-
-    // pool configuration used to pool database connections
-    pool: {
-      max: 5,
-      idle: 30000,
-      acquire: 60000,
-    },
-
-    // isolation level of each transaction
-    // defaults to dialect default
-    // isolationLevel: Transaction.ISOLATION_LEVELS.REPEATABLE_READ
-    logging: (sql, queryObject: any) => {
-      const { type, bind } = queryObject;
-      logger.debug(`${type}: ${sql}`);
-      if (['INSERT', 'UPDATE', 'BULKUPDATE'].includes(type)) {
-        logger.debug(bind);
-      }
-    },
-  });
-}
-
 /** 数据库链接实例 */
-export const sequelize = globalForSequelize.sequelize ?? createSequelize();
-globalForSequelize.sequelize = sequelize;
+export const sequelize = new Sequelize({
+  // The name of the database
+  // database: 'mix',
 
-// sqlite admits one writer at a time, and node-sqlite3 gives up after 1s by
-// default. Sequelize cannot raise that for us: its afterConnect hook never fires
-// for sqlite, because the sqlite connection manager bypasses the pool. This
-// applies to the single connection this instance holds.
-//
-// busy_timeout is per-connection and cheap, so it is set inline. journal_mode is
-// deliberately not set here: switching to WAL needs an exclusive lock, and
-// awaiting it on this connection would queue every other query behind it at
-// startup. WAL is also persistent in the database file, so switching it once,
-// while nothing else holds the database, is enough — see scripts/install.ts.
-const sqlitePragmas = sequelize.query('PRAGMA busy_timeout = 10000');
+  // The username which is used to authenticate against the database.
+  // username: 'root',
 
-sqlitePragmas.catch((error: unknown) => {
-  logger.warn(`sqlite pragmas: ${error}`);
+  // The password which is used to authenticate against the database.
+  // password: '12345678',
+
+  // the sql dialect of the database
+  // currently supported: 'mysql', 'sqlite', 'postgres', 'mssql'
+  dialect: 'sqlite',
+
+  dialectModule: sqlite3,
+
+  // custom host; default: localhost
+  host: '127.0.0.1',
+  // for postgres, you can also specify an absolute path to a directory
+  // containing a UNIX socket to connect over
+  // host: '/sockets/psql_sockets'.
+
+  // custom port; default: dialect default
+  // port: 3306,
+
+  // custom protocol; default: 'tcp'
+  // postgres only, useful for Heroku
+  // protocol: null,
+
+  // disable logging or provide a custom logging function; default: console.log
+  // logging: false,
+
+  // you can also pass any dialect options to the underlying dialect library
+  // - default is empty
+  // - currently supported: 'mysql', 'postgres', 'mssql'
+  dialectOptions: {
+    // 指定套接字文件路径
+    // socketPath: '/var/lib/mysql/mysql.sock',
+    supportBigNumbers: true,
+    bigNumberStrings: true,
+    // if your server run on full cpu load, please set trace to false
+    trace: true,
+  },
+
+  // the storage engine for sqlite
+  // - default ':memory:'
+  storage: './database.sqlite',
+
+  // disable inserting undefined values as NULL
+  // - default: false
+  omitNull: true,
+
+  // a flag for using a native library or not.
+  // in the case of 'pg' -- set this to true will allow SSL support
+  // - default: false
+  native: true,
+
+  // Specify options, which are used when sequelize.define is called.
+  // The following example:
+  //   define: { timestamps: false }
+  // is basically the same as:
+  //   Model.init(attributes, { timestamps: false });
+  //   sequelize.define(name, attributes, { timestamps: false });
+  // so defining the timestamps for each model will be not necessary
+  define: {
+    underscored: true,
+    // 强制表名称等于模型名称
+    // freezeTableName: true,
+    charset: 'utf8',
+    // dialectOptions: {
+    //   collate: 'utf8_general_ci'
+    // },
+    timestamps: true,
+
+    // createdAt: 'createdAt',
+    // updatedAt: 'updatedAt',
+    // noPrimaryKey: true,
+  },
+
+  // similar for sync: you can define this to always force sync for models
+  // sync: { force: true },
+
+  // pool configuration used to pool database connections
+  pool: {
+    max: 5,
+    idle: 30000,
+    acquire: 60000,
+  },
+
+  // isolation level of each transaction
+  // defaults to dialect default
+  // isolationLevel: Transaction.ISOLATION_LEVELS.REPEATABLE_READ
+  logging: (sql, queryObject: any) => {
+    const { type, bind } = queryObject;
+    logger.debug(`${type}: ${sql}`);
+    if (['INSERT', 'UPDATE', 'BULKUPDATE'].includes(type)) {
+      logger.debug(bind);
+    }
+  },
 });
 
 // sequelize.addHook('beforeDefine', (attributes) => {
