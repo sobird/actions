@@ -33,7 +33,7 @@ export const GET = async (req: NextRequest, { params }: { params: Promise<{ id: 
 
   // The log file only exists once the runner has written the first row.
   if (logSize > 0 && offset < logSize) {
-    const result = await Log.read(task.logFilename, offset, limit);
+    const result = await Log.read(task.logFilename, offset, limit, task.logInStorage);
     nextOffset = result.nextOffset;
     rows = result.rows.map((row) => ({
       time: row.time ? timestampDate(row.time).toISOString() : '',

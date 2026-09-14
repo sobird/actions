@@ -4,6 +4,9 @@ import { timestampFromDate, timestampDate } from '@bufbuild/protobuf/wkt';
 
 import { LogRow } from '@/gen/runner/v1/messages_pb';
 import dbfs from '@/services/dbfs';
+import type DbFile from '@/services/dbfs/file';
+
+import storage from './storage';
 
 const MaxLineSize = 64 * 1024;
 
@@ -57,14 +60,45 @@ class Log {
   }
 
   /**
+   * Move a task's log from DBFS to the archive, the point at which no more rows
+   * will be appended.
+   *
+   * @param filename path returned by {@link logFileName}
+   * @returns cleanup that drops the DBFS copy; the caller runs it only after the
+   *   row marking the log as archived is durable, so a crash in between still
+   *   leaves the log readable.
+   */
+  static async transfer(filename: string): Promise<() => Promise<void>> {
+    const fd = await dbfs.open(filename, fs.constants.O_RDONLY);
+
+    await storage.save(filename, await this.readBlocks(fd, 0, await fd.size()));
+
+    return () => dbfs.remove(filename);
+  }
+
+  /**
    * Read rows from a task's log file.
    *
    * @param filename path returned by {@link logFileName}
    * @param offset byte offset to start reading at
    * @param limit maximum number of bytes to read
+   * @param inStorage read the archived copy instead of the DBFS one
    * @returns the parsed rows and the byte offset to resume from
    */
-  static async read(filename: string, offset: number, limit: number): Promise<{ rows: LogRow[]; nextOffset: number }> {
+  static async read(
+    filename: string,
+    offset: number,
+    limit: number,
+    inStorage = false,
+  ): Promise<{ rows: LogRow[]; nextOffset: number }> {
+    if (inStorage) {
+      const size = await storage.size(filename);
+      if (offset >= size || limit <= 0) {
+        return { rows: [], nextOffset: offset };
+      }
+      return this.parseChunk((await storage.read(filename, offset, Math.min(limit, size - offset))).toString(), offset);
+    }
+
     const fd = await dbfs.open(filename, fs.constants.O_RDONLY);
     const size = await fd.size();
 
@@ -72,24 +106,11 @@ class Log {
       return { rows: [], nextOffset: offset };
     }
 
-    await fd.seek(offset, 'SeekStart');
+    return this.parseChunk((await this.readBlocks(fd, offset, Math.min(limit, size - offset))).toString(), offset);
+  }
 
-    // A single DbFile.read only crosses one block, so keep reading until we have
-    // the requested range or hit EOF.
-    const chunks: Buffer[] = [];
-    let remaining = Math.min(limit, size - offset);
-    while (remaining > 0) {
-      const buffer = Buffer.alloc(Math.min(remaining, fd.blockSize));
-      // oxlint-disable-next-line no-await-in-loop
-      const n = await fd.read(buffer);
-      if (n <= 0) {
-        break;
-      }
-      chunks.push(buffer.subarray(0, n));
-      remaining -= n;
-    }
-
-    const text = Buffer.concat(chunks).toString();
+  /** Parse a chunk read starting at `offset` into rows plus the resume offset. */
+  static parseChunk(text: string, offset: number): { rows: LogRow[]; nextOffset: number } {
     const lines = text.split('\n');
 
     // A trailing fragment without a newline is a partially written line: leave it
@@ -106,6 +127,31 @@ class Log {
     }
 
     return { rows, nextOffset: offset + consumed };
+  }
+
+  /**
+   * Read `length` bytes at `offset`.
+   *
+   * A single DbFile.read only crosses one block, so keep reading until the range
+   * is covered or EOF is hit.
+   */
+  static async readBlocks(fd: DbFile, offset: number, length: number): Promise<Buffer> {
+    await fd.seek(offset, 'SeekStart');
+
+    const chunks: Buffer[] = [];
+    let remaining = length;
+    while (remaining > 0) {
+      const buffer = Buffer.alloc(Math.min(remaining, fd.blockSize));
+      // oxlint-disable-next-line no-await-in-loop
+      const n = await fd.read(buffer);
+      if (n <= 0) {
+        break;
+      }
+      chunks.push(buffer.subarray(0, n));
+      remaining -= n;
+    }
+
+    return Buffer.concat(chunks);
   }
 
   /** Parse a stored line of the form `<timestamp> <content>` back into a row. */

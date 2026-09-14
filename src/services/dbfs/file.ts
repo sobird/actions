@@ -1,18 +1,16 @@
+// oxlint-disable no-await-in-loop
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { sequelize } from '@/models';
-import { DbfsData, DbfsMeta } from '@/models';
+import { DbfsData, DbfsMeta, sequelize } from '@/models';
 import { trimSuffix } from '@/utils';
 
-const DefaultFileBlockSize: number = 32 * 1024;
-
-// fs.Stats(dev, mode, nlink, uid, gid, rdev, blksize, ino, size, blocks, atimeMs, mtimeMs, ctimeMs, birthtimeMs)
+export const DEFAULT_FILE_BLOCK_SIZE: number = 32 * 1024; // 32KB
 
 class DbFile {
-  public metaId: number = 0;
+  public metaId: bigint = 0n;
 
-  public blockSize: number = DefaultFileBlockSize;
+  public blockSize: number = DEFAULT_FILE_BLOCK_SIZE;
 
   public allowRead: boolean = false;
 
@@ -21,6 +19,12 @@ class DbFile {
   public offset: number = 0;
 
   constructor(public fullPath: string) {}
+
+  static async create(p: string) {
+    const df = new DbFile(this.buildPath(p));
+    await df.loadMetaByPath();
+    return df;
+  }
 
   async open(flags: number) {
     if ((flags & fs.constants.O_WRONLY) !== 0) {
@@ -35,14 +39,17 @@ class DbFile {
     if (this.allowWrite) {
       if (flags & fs.constants.O_CREAT) {
         if (flags & fs.constants.O_EXCL) {
-          // File must not exist
-          if (this.metaId !== 0) {
+          if (this.metaId !== 0n) {
             throw new Error('EEXIST: file already exists');
           }
         } else {
           // Create a new file if none exists
           await this.createEmpty();
         }
+      }
+
+      if (this.metaId === 0n) {
+        throw new Error('ENOENT: no such file or directory');
       }
 
       if (flags & fs.constants.O_TRUNC) {
@@ -56,16 +63,12 @@ class DbFile {
     }
 
     // Read-only mode
-    if (this.metaId === 0) {
+    if (this.metaId === 0n) {
       throw new Error('ENOENT: no such file or directory');
     }
   }
 
-  async readAt(fileMeta: DbfsMeta | null, offset: number, buffer: Buffer) {
-    if (!fileMeta) {
-      return 0;
-    }
-
+  async readAt(fileMeta: DbfsMeta, offset: number, buffer: Buffer) {
     if (offset >= fileMeta.fileSize) {
       return 0;
     }
@@ -91,27 +94,23 @@ class DbFile {
     });
 
     const blobData = fileData?.blobData || Buffer.alloc(0);
-    const canCopy = blobData.length - blobPos;
-    let realRead = needRead;
-    if (realRead > canCopy) {
-      realRead = canCopy;
-    }
+    const canCopy = Math.max(blobData.length - blobPos, 0);
+    const realRead = Math.min(needRead, canCopy);
 
     if (realRead > 0) {
-      buffer.fill(blobData.slice(blobPos, blobPos + realRead), 0, realRead);
+      blobData.copy(buffer, 0, blobPos, blobPos + realRead);
     }
 
-    for (let i = realRead; i < needRead; i++) {
-      // eslint-disable-next-line no-param-reassign
-      // buffer[i] = 0;
+    if (realRead < needRead) {
+      buffer.fill(0, realRead, needRead);
     }
 
     return needRead;
   }
 
   async read(buffer: Buffer) {
-    if (this.metaId === 0 || !this.allowRead) {
-      throw new Error('Write permission denied');
+    if (!this.allowRead) {
+      throw new Error('Invalid argument: File not opened for reading');
     }
 
     const fileMeta = await DbFile.findFileMetaById(this.metaId);
@@ -123,8 +122,8 @@ class DbFile {
   }
 
   async write(buffer: Buffer) {
-    if (this.metaId === 0 || !this.allowWrite) {
-      throw new Error('Write permission denied');
+    if (!this.allowWrite) {
+      throw new Error('Invalid argument: File not opened for writing');
     }
 
     const fileMeta = await DbFile.findFileMetaById(this.metaId);
@@ -136,54 +135,59 @@ class DbFile {
       const blobOffset = this.offset - blobPos;
       const blobRemaining = this.blockSize - blobPos;
       const needWrite = Math.min(buffer.length, blobRemaining);
+
       let buf = Buffer.alloc(this.blockSize);
-
-      // const buffer = Buffer.alloc(needRead, 0);
-      //   buffer.copy(data.slice(blobPos, blobPos + bytesRead));
-
-      // eslint-disable-next-line no-await-in-loop
       const readBytes = await this.readAt(fileMeta, blobOffset, buf);
-      buf.fill(buffer.slice(0, needWrite), blobPos, blobPos + needWrite);
-      // buf.slice(blobPos, blobPos + needWrite).set(buffer.slice(0, needWrite));
+      buffer.copy(buf, blobPos, 0, needWrite);
 
       if (blobPos + needWrite > readBytes) {
-        buf = buf.slice(0, blobPos + needWrite);
+        buf = buf.subarray(0, blobPos + needWrite);
       } else {
-        buf = buf.slice(0, readBytes);
+        buf = buf.subarray(0, readBytes);
       }
 
-      const fileData = {
-        metaId: fileMeta!.id,
-        blobOffset,
-        blobData: buf,
-      };
-
-      // eslint-disable-next-line no-await-in-loop
-      const [affectedCount] = await DbfsData.update(
-        {
-          revision: sequelize.literal('revision + 1'),
-          blobData: buf,
-        },
-        {
+      await sequelize.transaction(async (t) => {
+        // 1. 在事务中先查询该 Block 是否存在，并施加行级排他锁 (FOR UPDATE)
+        const existingData = await DbfsData.findOne({
           where: {
-            metaId: fileMeta?.id,
+            metaId: fileMeta.id,
             blobOffset,
           },
-        },
-      );
-      if (affectedCount === 0) {
-        // eslint-disable-next-line no-await-in-loop
-        await DbfsData.create(fileData);
-      }
+          lock: t.LOCK.UPDATE, // 🔑 排他锁：高并发下防止多个请求同时创建
+          transaction: t,
+        });
+
+        if (existingData) {
+          // 2. 记录已存在：更新数据块并递增 revision
+          await existingData.update(
+            {
+              revision: sequelize.literal('revision + 1'),
+              blobData: buf,
+            },
+            { transaction: t },
+          );
+        } else {
+          // 3. 记录不存在：首次创建数据块（初始 revision 显式设为 1）
+          await DbfsData.create(
+            {
+              metaId: fileMeta.id,
+              blobOffset,
+              blobData: buf,
+              revision: 1, // 显式设定初始版本号
+            },
+            { transaction: t },
+          );
+        }
+      });
 
       written += needWrite;
       this.offset += needWrite;
+
       if (this.offset > (fileMeta?.fileSize || 0)) {
         fileMeta!.fileSize = this.offset;
         needUpdateSize = true;
       }
-      // eslint-disable-next-line no-param-reassign
-      buffer = buffer.slice(needWrite);
+      buffer = buffer.subarray(needWrite);
     }
 
     if (needUpdateSize) {
@@ -191,7 +195,7 @@ class DbFile {
         { fileSize: this.offset },
         {
           where: {
-            id: fileMeta?.id,
+            id: fileMeta.id,
           },
         },
       );
@@ -201,8 +205,8 @@ class DbFile {
   }
 
   async seek(offset: number, whence: 'SeekStart' | 'SeekCurrent' | 'SeekEnd') {
-    if (this.metaId === 0) {
-      return;
+    if (this.metaId === 0n) {
+      throw new Error('Invalid file handle');
     }
 
     let newOffset = this.offset;
@@ -221,15 +225,18 @@ class DbFile {
       default:
         throw new Error('Invalid whence');
     }
+
+    if (newOffset < 0) {
+      throw new Error('Invalid argument: negative seek offset');
+    }
+
     this.offset = newOffset;
     return newOffset;
   }
 
   async createEmpty() {
-    // open() calls this for O_CREAT without O_EXCL, so an existing file is a
-    // no-op rather than an error.
-    if (this.metaId !== 0) {
-      return;
+    if (this.metaId !== 0n) {
+      throw new Error('File already exists');
     }
 
     await DbfsMeta.create({
@@ -241,8 +248,8 @@ class DbFile {
   }
 
   async truncate() {
-    if (this.metaId === 0) {
-      return;
+    if (this.metaId === 0n) {
+      throw new Error('File does not exist');
     }
 
     return sequelize.transaction(async () => {
@@ -252,8 +259,8 @@ class DbFile {
   }
 
   async rename(newPath: string) {
-    if (this.metaId === 0) {
-      return;
+    if (this.metaId === 0n) {
+      throw new Error('File does not exist');
     }
 
     return DbfsMeta.update(
@@ -269,8 +276,8 @@ class DbFile {
   }
 
   async delete() {
-    if (this.metaId === 0) {
-      return;
+    if (this.metaId === 0n) {
+      throw new Error('File does not exist');
     }
     return sequelize.transaction(async () => {
       await DbfsMeta.destroy({ where: { id: this.metaId } });
@@ -279,25 +286,18 @@ class DbFile {
   }
 
   async size() {
-    if (this.metaId === 0) {
-      return 0;
-    }
     const fileMeta = await DbFile.findFileMetaById(this.metaId);
-    return fileMeta?.fileSize || 0;
+    return fileMeta.fileSize;
   }
 
   async stat() {
-    if (this.metaId === 0) {
-      throw Error('ErrInvalid');
-    }
-
     const fileMeta = await DbFile.findFileMetaById(this.metaId);
-    const stat = new fs.Stats();
-    stat.blksize = fileMeta?.blockSize || 0;
-    stat.size = fileMeta?.fileSize || 0;
-    stat.ctime = fileMeta?.createdAt || new Date();
-    stat.mtime = fileMeta?.updatedAt || new Date();
-    return stat;
+    return {
+      blksize: fileMeta.blockSize,
+      size: fileMeta.fileSize,
+      ctime: fileMeta.createdAt,
+      mtime: fileMeta.updatedAt,
+    };
   }
 
   async loadMetaByPath() {
@@ -311,8 +311,12 @@ class DbFile {
     return fileMeta;
   }
 
-  static async findFileMetaById(metaId: number) {
-    return DbfsMeta.findOne({ where: { id: metaId } });
+  static async findFileMetaById(metaId: bigint) {
+    const fileMeta = await DbfsMeta.findOne({ where: { id: metaId } });
+    if (fileMeta) {
+      return fileMeta;
+    }
+    throw new Error('File does not exist');
   }
 
   static buildPath(p: string) {
@@ -321,12 +325,6 @@ class DbFile {
     cleanedPath = trimSuffix(cleanedPath, '/');
     const count = (cleanedPath.match(/\//g) || []).length;
     return `${count}:${cleanedPath}`;
-  }
-
-  static async New(p: string) {
-    const df = new DbFile(this.buildPath(p));
-    await df.loadMetaByPath();
-    return df;
   }
 }
 

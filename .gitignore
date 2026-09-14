@@ -49,7 +49,10 @@ next-env.d.ts
 event.json
 .actionsrc
 database.sqlite
+database.sqlite-shm
+database.sqlite-wal
 unittest.sqlite
+actions_log
 
 hashFiles
 !packages/hashfiles

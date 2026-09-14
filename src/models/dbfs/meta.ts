@@ -17,9 +17,12 @@ import { sequelize, BaseModel } from '@/lib/sequelize';
 export type DbfsMetaCreationAttributes = CreationAttributes<DbfsMeta>;
 
 export class DbfsMeta extends BaseModel<InferAttributes<DbfsMeta>, InferCreationAttributes<DbfsMeta>> {
+  declare id: CreationOptional<bigint>;
   declare fullPath: string;
   declare blockSize: number;
   declare fileSize: CreationOptional<number>;
+  declare createdAt: CreationOptional<Date>;
+  declare updatedAt: CreationOptional<Date>;
 }
 
 DbfsMeta.init(
@@ -43,6 +46,8 @@ DbfsMeta.init(
       defaultValue: 0,
       allowNull: false,
     },
+    createdAt: DataTypes.DATE,
+    updatedAt: DataTypes.DATE,
   },
   {
     sequelize,
