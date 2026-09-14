@@ -2,8 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { sequelize } from '@/models';
-import DbfsData from '@/models/dbfs/data';
-import DbfsMeta from '@/models/dbfs/meta';
+import { DbfsData, DbfsMeta } from '@/models';
 import { trimSuffix } from '@/utils';
 
 const DefaultFileBlockSize: number = 32 * 1024;

@@ -4,34 +4,28 @@
  * sobird<i@sobird.me> at 2024/11/23 23:28:48 created.
  */
 
-import { DataTypes, type InferAttributes, InferCreationAttributes, CreationOptional } from 'sequelize';
+import {
+  DataTypes,
+  type InferAttributes,
+  type InferCreationAttributes,
+  type CreationAttributes,
+  type CreationOptional,
+} from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-/** These are all the attributes in the DbfsMeta model */
-export type DbfsMetaAttributes = InferAttributes<DbfsMeta>;
+export type DbfsMetaCreationAttributes = CreationAttributes<DbfsMeta>;
 
-/** Some attributes are optional in `DbfsMeta.build` and `DbfsMeta.create` calls */
-export type DbfsMetaCreationAttributes = InferCreationAttributes<DbfsMeta>;
-
-class DbfsMeta extends BaseModel<DbfsMetaAttributes, DbfsMetaCreationAttributes> {
-  declare id: CreationOptional<number>;
-
+export class DbfsMeta extends BaseModel<InferAttributes<DbfsMeta>, InferCreationAttributes<DbfsMeta>> {
   declare fullPath: string;
-
   declare blockSize: number;
-
   declare fileSize: CreationOptional<number>;
-
-  declare createdAt: CreationOptional<Date>;
-
-  declare updatedAt: CreationOptional<Date>;
 }
 
 DbfsMeta.init(
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
     },
@@ -49,13 +43,8 @@ DbfsMeta.init(
       defaultValue: 0,
       allowNull: false,
     },
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE,
   },
   {
     sequelize,
-    modelName: 'DbfsMeta',
   },
 );
-
-export default DbfsMeta;

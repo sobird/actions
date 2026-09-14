@@ -1,2 +1,2 @@
-export { default as DbfsData } from './data';
-export { default as DbfsMeta } from './meta';
+export * from './data';
+export * from './meta';

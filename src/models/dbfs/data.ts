@@ -4,44 +4,40 @@
  * sobird<i@sobird.me> at 2024/11/23 23:28:48 created.
  */
 
-import { DataTypes, type InferAttributes, InferCreationAttributes, CreationOptional } from 'sequelize';
+import {
+  DataTypes,
+  type InferAttributes,
+  InferCreationAttributes,
+  CreationAttributes,
+  CreationOptional,
+} from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-/** These are all the attributes in the DbfsData model */
-export type DbfsDataAttributes = InferAttributes<DbfsData>;
+export type DbfsDataCreationAttributes = CreationAttributes<DbfsData>;
 
-/** Some attributes are optional in `DbfsData.build` and `DbfsData.create` calls */
-export type DbfsDataCreationAttributes = InferCreationAttributes<DbfsData>;
-
-class DbfsData extends BaseModel<DbfsDataAttributes, DbfsDataCreationAttributes> {
-  declare id: CreationOptional<number>;
-
-  declare revision: CreationOptional<number>;
-
+export class DbfsData extends BaseModel<InferAttributes<DbfsData>, InferCreationAttributes<DbfsData>> {
   declare metaId: number;
-
+  declare revision: CreationOptional<number>;
   declare blobOffset: number;
-
   declare blobSize: CreationOptional<number>;
-
   declare blobData: Buffer;
 }
 
 DbfsData.init(
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
+    },
+    metaId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
     revision: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
-      allowNull: false,
-    },
-    metaId: {
-      type: DataTypes.INTEGER,
       allowNull: false,
     },
     blobOffset: {
@@ -61,8 +57,5 @@ DbfsData.init(
   },
   {
     sequelize,
-    modelName: 'DbfsData',
   },
 );
-
-export default DbfsData;
