@@ -1,32 +1,30 @@
-import ActionActionRunnerToken from './runner_token';
+import { ActionRunnerToken } from './runner_token';
 
 vi.mock('./runner_token');
 
 describe('Test Actions Runner Token Model', () => {
-  it('ActionActionRunnerToken.findLatestByScope', async () => {
-    const actionsActionRunnerToken = await ActionActionRunnerToken.create({
-      ownerId: 1,
+  it('ActionRunnerToken.findLatestOne', async () => {
+    const actionsActionRunnerToken = await ActionRunnerToken.create({
+      ownerId: 0,
       repositoryId: 1,
     });
-    const expected = await ActionActionRunnerToken.findLatestByScope(1, 1);
+    const expected = await ActionRunnerToken.findLatestOne(1, 1);
 
     expect(expected.toJSON()).toEqual(actionsActionRunnerToken.toJSON());
   });
 
-  it('ActionActionRunnerToken.createForScope', async () => {
-    const actionsActionRunnerToken = await ActionActionRunnerToken.createForScope(1, 0);
-    const expected = await ActionActionRunnerToken.findLatestByScope(1, 0);
+  it('ActionRunnerToken.createForScope', async () => {
+    const actionsActionRunnerToken = await ActionRunnerToken.rotate(1, 0);
+    const expected = await ActionRunnerToken.findLatestOne(1, 0);
 
     expect(expected.toJSON()).toEqual(actionsActionRunnerToken.toJSON());
   });
 
-  it('ActionActionRunnerToken.update', async () => {
-    const actionsActionRunnerToken = await ActionActionRunnerToken.createForScope(1, 0);
+  it('ActionRunnerToken.update', async () => {
+    const actionsActionRunnerToken = await ActionRunnerToken.rotate(1, 0);
     actionsActionRunnerToken.enabled = false;
     await actionsActionRunnerToken.save();
 
-    const expected = await ActionActionRunnerToken.findLatestByScope(1, 0);
-
-    expect(expected.toJSON()).toEqual(actionsActionRunnerToken.toJSON());
+    await expect(ActionRunnerToken.findLatestOne(1, 0)).rejects.toThrow();
   });
 });

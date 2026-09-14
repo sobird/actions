@@ -42,8 +42,8 @@ describe('Dbfs Tests', () => {
   });
 
   it('remove test', async () => {
-    await expect(dbfs.remove('test2.txt')).resolves.not.toThrowError();
-    await expect(dbfs.open('test2.txt')).rejects.toThrowError();
+    await expect(dbfs.remove('test2.txt')).resolves.not.toThrow();
+    await expect(dbfs.open('test2.txt')).rejects.toThrow();
   });
 
   it('stat test', async () => {

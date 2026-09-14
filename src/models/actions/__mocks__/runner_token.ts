@@ -2,6 +2,10 @@ import { ActionRunnerToken, type ActionRunnerTokenCreationAttributes } from '../
 
 const seed: ActionRunnerTokenCreationAttributes[] = [
   {
+    ownerId: 0,
+    repositoryId: 1,
+  },
+  {
     ownerId: 1,
     repositoryId: 2,
   },
@@ -11,9 +15,7 @@ const seed: ActionRunnerTokenCreationAttributes[] = [
   },
 ];
 
-beforeAll(async () => {});
-
 await ActionRunnerToken.sync({ force: true });
 await ActionRunnerToken.bulkCreate(seed, { individualHooks: true, validate: true });
 
-export default ActionRunnerToken;
+export { ActionRunnerToken };
