@@ -9,7 +9,6 @@ import { models } from '@/models';
 import { getRunnerModel } from './context';
 
 export const updateLog: MethodImpl<typeof RunnerService.method.updateLog> = async (req, { values }) => {
-  console.log('req', req);
   const runner = getRunnerModel(values)!;
 
   const task = await models.ActionTask.findByPk(req.taskId);

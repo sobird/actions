@@ -66,7 +66,7 @@ export const updateTask: MethodImpl<typeof RunnerService.method.updateTask> = as
         transaction,
       });
       if (waiting) {
-        await ActionTaskVersion.increaseVersion(task.ownerId, task.repositoryId);
+        await ActionTaskVersion.increaseVersion(task.ownerId, task.repositoryId, transaction);
       }
     } else {
       // Touch the updated timestamp so the task isn't judged as a zombie task.

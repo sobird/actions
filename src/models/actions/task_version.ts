@@ -50,19 +50,32 @@ export class ActionTaskVersion extends BaseModel<ActionTaskVersionAttributes, Ac
     await this.create({ ownerId, repositoryId }, { transaction });
   }
 
-  public static async increaseVersion(ownerId: number, repositoryId: number) {
-    const transaction = await sequelize.transaction();
+  public static async increaseVersion(ownerId: number, repositoryId: number, transaction?: Transaction) {
+    const increase = async (tx: Transaction) => {
+      // increase global
+      await this.increaseVersionByScope(0, 0, tx);
 
-    // increase global
-    await this.increaseVersionByScope(0, 0, transaction);
+      // increase owner
+      if (ownerId > 0) {
+        await this.increaseVersionByScope(ownerId, 0, tx);
+      }
 
-    // increase owner
-    await this.increaseVersionByScope(ownerId, 0, transaction);
+      // increase repository
+      if (repositoryId > 0) {
+        await this.increaseVersionByScope(0, repositoryId, tx);
+      }
+    };
 
-    // increase repository
-    await this.increaseVersionByScope(0, repositoryId, transaction);
+    // Join the caller's transaction when there is one. Opening a second one here
+    // deadlocks: sqlite gives each transaction its own connection, so the new
+    // transaction blocks on the write lock the caller already holds while the
+    // caller waits for this call to return. Upstream's db.WithTx reuses the
+    // session already in ctx for the same reason.
+    if (transaction) {
+      return increase(transaction);
+    }
 
-    return transaction.commit();
+    await sequelize.transaction(increase);
   }
 }
 
