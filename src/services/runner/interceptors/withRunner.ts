@@ -40,7 +40,7 @@ export const withRunner: Interceptor = (next) => {
     try {
       return await next(req);
     } catch (err) {
-      console.log('err', err);
+      console.error(`handler for rpc ${req.method.name} of ${req.service.typeName} failed`, err);
       throw err;
     }
   };

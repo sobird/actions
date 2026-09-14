@@ -62,7 +62,6 @@ interface NextConnectRouterOptions extends ConnectRouterOptions {
  */
 export function createConnectHandler(options: NextConnectRouterOptions) {
   if (options.acceptCompression === undefined) {
-    // eslint-disable-next-line no-param-reassign
     options.acceptCompression = [compressionGzip, compressionBrotli];
   }
 
@@ -87,7 +86,6 @@ export function createConnectHandler(options: NextConnectRouterOptions) {
       const uRes = await uHandler(uReq);
       return universalServerResponseToFetch(uRes);
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error(`handler for rpc ${uHandler.method.name} of ${uHandler.service.typeName} failed`, error);
 
       // The protocol handler already turns a ConnectError into a response, so
