@@ -1,314 +1,331 @@
+import { type SpawnSyncReturns } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 import * as tar from 'tar';
 
-import { createAllDir } from '@/test/__helpers__';
-import { listEntry } from '@/utils/tar';
+import { WellKnownDirectory } from '@/common/constants';
+import Executor from '@/common/executor';
 
-import Container from './container';
-import DockerContainer from './docker';
-import HostedContainer from './hosted';
-
-vi.mock('./hosted');
-vi.mock('./docker');
+import Container, { type ContainerExecOptions } from './container';
 
 const workdir = '/home/runner';
-const hosted: HostedContainer = new (HostedContainer as any)();
-const docker: DockerContainer = new (DockerContainer as any)();
-docker.options.workdir = workdir;
 
-const fileTestDir = createAllDir('container-test', 'file');
+/**
+ * 只实现抽象成员的最小容器。
+ *
+ * 归档来自磁盘上的夹具目录、子进程调用被替换成假实现，所以基类里 getContent /
+ * getFileEnv / readline / hashFiles 这些逻辑可以脱离 Docker daemon 单独验证。
+ * 真实实现的行为分别由 docker.test.ts（假传输）与 docker.e2e.test.ts（真 daemon）覆盖。
+ */
+class FakeContainer extends Container {
+  OS = 'Linux';
 
-const files = [
-  {
-    name: 'test1.txt',
-    linkName: 'link-test1.txt',
-    symlinkName: 'symlink-test1.txt',
-    // mode: 0o700,
-    body: 'test1 content',
-  },
-  {
-    name: 'test2.txt',
-    linkName: 'link-test2.txt',
-    symlinkName: 'symlink-test2.txt',
-    // mode: 0o700,
-    body: 'test2 content',
-  },
-];
+  Arch = 'X64';
+
+  Environment = 'github-hosted';
+
+  constructor(private dir: string) {
+    super({ workdir }, workdir);
+  }
+
+  async getArchive(filename: string) {
+    if (!fs.existsSync(path.join(this.dir, filename))) {
+      throw new Error(`no such file: ${filename}`);
+    }
+    return tar.create({ cwd: this.dir, portable: true }, [filename]) as unknown as NodeJS.ReadableStream;
+  }
+
+  put() {
+    return new Executor(() => {});
+  }
+
+  putContent() {
+    return new Executor(() => {});
+  }
+
+  putArchive() {
+    return new Executor(() => {});
+  }
+
+  start() {
+    return new Executor(() => {});
+  }
+
+  remove() {
+    return new Executor(() => {});
+  }
+
+  pullImage() {
+    return new Executor(() => {});
+  }
+
+  exec() {
+    return new Executor(() => {});
+  }
+
+  spawnSync(_command: string, _args: string[], _options: ContainerExecOptions) {
+    return {} as unknown as SpawnSyncReturns<string>;
+  }
+
+  async imageEnv() {
+    return {};
+  }
+
+  resolve(...paths: string[]) {
+    return path.posix.resolve(this.workspace, ...paths);
+  }
+
+  async context() {
+    return { id: '', network: '', ports: {} };
+  }
+}
+
+const fixtureDir = fs.mkdtempSync(path.join(os.tmpdir(), 'container-unit-'));
+const container = new FakeContainer(fixtureDir);
+
+const envFiles: Record<string, string> = {
+  'env-normal.txt': 'name=sobird\nhello=world',
+  'env-equals.txt': 'A=b=c',
+  'env-heredoc.txt': 'NAME<<EOF\nline1\nline2\nEOF',
+  'env-unterminated.txt': 'NAME<<EOF\nline1',
+  'env-bad-heredoc.txt': '<<EOF',
+};
 
 beforeAll(() => {
-  for (const file of files) {
-    const fileName = path.join(fileTestDir, file.name);
-    fs.writeFileSync(fileName, file.body);
-    fs.symlinkSync(file.name, path.join(fileTestDir, file.symlinkName));
-    fs.linkSync(fileName, path.join(fileTestDir, file.linkName));
+  fs.writeFileSync(path.join(fixtureDir, 'file.txt'), 'hello world');
+  fs.writeFileSync(path.join(fixtureDir, 'empty.txt'), '');
+  fs.symlinkSync('file.txt', path.join(fixtureDir, 'symlink.txt'));
+  fs.writeFileSync(path.join(fixtureDir, 'lines.txt'), 'hello\n\nworld\n');
+  for (const [name, body] of Object.entries(envFiles)) {
+    fs.writeFileSync(path.join(fixtureDir, name), body);
   }
 });
 
-describe.each([hosted, docker])('Test $constructor.name', (container) => {
-  afterAll(async () => {
-    const removeExecutor = container.remove();
-    await removeExecutor.execute();
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+afterAll(() => {
+  fs.rmSync(fixtureDir, { recursive: true, force: true });
+});
+
+describe('hashFiles', () => {
+  const hash = 'a'.repeat(64);
+
+  function spawnReport(stderr: string) {
+    return vi.spyOn(container, 'spawnSync').mockReturnValue({ stderr } as unknown as SpawnSyncReturns<string>);
+  }
+
+  it('returns the hash the script reports on stderr', () => {
+    const spawn = spawnReport(`__OUTPUT__${hash}__OUTPUT__`);
+
+    expect(container.hashFiles('**/package.json')).toBe(hash);
+
+    const [command, args, options] = spawn.mock.calls[0];
+    expect(command).toBe('node');
+    expect(args).toEqual([container.resolve(WellKnownDirectory.Bin, 'hashFiles', 'index.js')]);
+    expect(options).toEqual({ env: { patterns: '**/package.json' }, cwd: workdir });
   });
 
-  describe('Container Public Methods', () => {
-    it('start container', async () => {
-      const executor = container.start();
-      await expect(executor.execute()).resolves.toBeUndefined();
-    });
+  it('returns an empty string when nothing matched', () => {
+    spawnReport('__OUTPUT____OUTPUT__');
 
-    it('put file to container', async () => {
-      const destination = 'put-file-test';
-      const file = files[0];
-      const sourceFile = path.join(fileTestDir, file.name);
-
-      const executor = container.put(destination, sourceFile);
-      await executor.execute();
-
-      const fileEntry = await container.getContent(path.join(destination, file.name));
-      expect(fileEntry?.body).toEqual(file.body);
-    });
-
-    it('put dir to container', async () => {
-      const destination = 'put-dir-test';
-
-      const executor = container.put(destination, fileTestDir);
-      await executor.execute();
-
-      const archive = await container.getArchive(destination);
-      const fileFiles = await listEntry(archive);
-      const sourceFiles = fs.readdirSync(fileTestDir);
-
-      expect(
-        fileFiles?.map((item) => {
-          return path.basename(item);
-        }),
-      ).toEqual(sourceFiles);
-    });
-
-    it('put content to container relative directory', async () => {
-      const destination = 'put-content-relative-test';
-
-      const executor = container.putContent(destination, ...files);
-      await executor.execute();
-
-      const archive = await container.getArchive(destination);
-      const fileFiles = await listEntry(archive);
-
-      expect(
-        fileFiles?.map((item) => {
-          return path.basename(item);
-        }),
-      ).toEqual(
-        files.map((item) => {
-          return item.name;
-        }),
-      );
-    });
-
-    it('put content to container absolute directory', async () => {
-      const destination = '/put-content-absolute-test';
-
-      const executor = container.putContent(destination, ...files);
-      await executor.execute();
-
-      const archive = await container.getArchive(destination);
-      const fileFiles = await listEntry(archive);
-
-      expect(
-        fileFiles?.map((item) => {
-          return path.basename(item);
-        }),
-      ).toEqual(
-        files.map((item) => {
-          return item.name;
-        }),
-      );
-    });
-
-    it('put archive to container', async () => {
-      const destination = 'put-archive-test';
-
-      const archive = tar.create({ cwd: fileTestDir, portable: true }, ['.']) as unknown as NodeJS.ReadableStream;
-      const putArchiveExecutor = container.putArchive(destination, archive);
-      await putArchiveExecutor.execute();
-
-      const archive2 = await container.getArchive(destination);
-      const fileFiles = await listEntry(archive2);
-      const sourceFiles = fs.readdirSync(fileTestDir);
-
-      expect(
-        fileFiles?.map((item) => {
-          return path.basename(item);
-        }),
-      ).toEqual(sourceFiles);
-    });
-
-    it('get archive to container', async () => {
-      const destination = 'put-archive-test';
-      const archive = await container.getArchive(destination);
-
-      const fileFiles = await listEntry(archive);
-      const sourceFiles = fs.readdirSync(fileTestDir);
-
-      expect(
-        fileFiles?.map((item) => {
-          return path.basename(item);
-        }),
-      ).toEqual(sourceFiles);
-    });
-
-    it('get file content from container', async () => {
-      const destination = 'put-file-test';
-      const file = files[0];
-
-      const fileEntry = await container.getContent(path.join(destination, file.name));
-      expect(fileEntry?.body).toBe(file.body);
-    });
-
-    it('get no exist file content from container', async () => {
-      const fileEntry = await container.getContent('no-exist-file');
-      expect(fileEntry).toBeUndefined();
-    });
-
-    it('get symlink file content from container', async () => {
-      const fileEntry = await container.getContent(path.join('put-archive-test', files[0].symlinkName));
-      expect(fileEntry?.body).toBe(files[0].body);
-    });
-
-    it('get link file content from container', async () => {
-      const fileEntry = await container.getContent(path.join('put-archive-test', files[0].linkName));
-      expect(fileEntry?.body).toBe(files[0].body);
-    });
-
-    it('container exec command', async () => {
-      const scriptName = process.platform === 'win32' ? 'print_message.ps1' : 'print_message.sh';
-      const body = fs.readFileSync(path.join(__dirname, `__mocks__/${scriptName}`), 'utf8');
-      const putContentExecutor = container.putContent('', {
-        name: scriptName,
-        mode: 0o777,
-        body,
-      });
-      await putContentExecutor.execute();
-      const execExecutor = container.exec([
-        process.platform === 'win32' ? 'powershell' : 'sh',
-        container.resolve(scriptName),
-      ]);
-      await execExecutor.execute();
-
-      // spawn.stdout.on('data', (data) => {
-      //   console.log(`stdout: ${data}`);
-      // });
-    });
-
-    it('container hashFiles function', async () => {
-      const putContentExecutor = container.putContent('', {
-        name: 'package.json',
-        mode: 0o777,
-        body: '{"name": "test"}',
-      });
-      await putContentExecutor.execute();
-
-      const hash = container.hashFiles('package.json');
-      expect(hash.length).toBe(64);
-    });
-
-    it('container hashFiles with --follow-symbolic-links', async () => {
-      const hash = container.hashFiles('--follow-symbolic-links', 'package.json');
-      expect(hash.length).toBe(64);
-    });
-
-    it('container get file env', async () => {
-      const putContentExecutor = container.putContent('.', {
-        name: 'env',
-        mode: 0o777,
-        body: ['name=sobird', 'hello=world'].join('\n'),
-      });
-      await putContentExecutor.execute();
-
-      const envObj = await container.getFileEnv('env');
-
-      expect(envObj).toEqual({
-        name: 'sobird',
-        hello: 'world',
-      });
-    });
-
-    it('container readline', async () => {
-      const filename = 'filename';
-      const contents = ['hello', 'world', 'nihao'];
-      const putContentExecutor = container.putContent('', {
-        name: filename,
-        mode: 0o777,
-        body: contents.join('\n'),
-      });
-      await putContentExecutor.execute();
-
-      const callback = vi.fn();
-      await container.readline(filename, callback);
-
-      expect(callback).toBeCalledTimes(contents.length);
-    });
+    expect(container.hashFiles('**/package.json')).toBe('');
   });
 
-  describe('Container Resolve', () => {
-    if (process.platform === 'win32') {
-      const testCases = [
-        ['/mnt/c/Users/act/go/src/github.com/nektos/act', 'C:\\Users\\act\\go\\src\\github.com\\nektos\\act\\'],
-        ['/mnt/f/work/dir', 'F:\\work\\dir'],
-        [`${workdir}/windows/to/unix`, 'windows\\to\\unix'],
-        [`${workdir}/act`, 'act'],
-      ];
+  it('asks the script to follow symbolic links only when told to', () => {
+    const spawn = spawnReport(`__OUTPUT__${hash}__OUTPUT__`);
 
-      testCases.forEach((item) => {
-        const [destination, source] = item;
-        it(source, () => {
-          expect(container.resolve(source)).toBe(destination);
-        });
-      });
-    } else {
-      const testCases = [
-        ['/home/act/go/src/github.com/nektos/act', '/home/act/go/src/github.com/nektos/act'],
-        ['/home/act', '/home/act/'],
-        [workdir, '.'],
-        [`${workdir}/test`, 'test'],
-      ];
+    container.hashFiles('--follow-symbolic-links', '**/package.json');
 
-      testCases.forEach((item) => {
-        const [destination, source] = item;
-        it(source, () => {
-          expect(container.Resolve(source)).toBe(destination);
-        });
-      });
-    }
-  });
-
-  describe('lookPath', () => {
-    it('/bin/bash', () => {
-      const result = container.lookPath('/bin/bash', { PATH: process.env.PATH });
-      expect(result).toBe('/bin/bash');
-    });
-    it('bash', () => {
-      const result = container.lookPath('bash', { PATH: process.env.PATH });
-      expect(result).toBe('/bin/bash');
+    expect(spawn.mock.calls[0][2].env).toEqual({
+      patterns: '**/package.json',
+      followSymbolicLinks: 'true',
     });
   });
 });
 
-describe.skipIf(process.platform === 'win32')('Container Normalize', () => {
-  test('should return POSIX paths unmodified', () => {
-    expect(Container.Normalize('/var/log/app')).toBe('/var/log/app');
-    expect(Container.Normalize('/mnt/c/Project')).toBe('/mnt/c/Project');
-    expect(Container.Normalize('\\mnt/c\\Project')).toBe('/mnt/c/Project');
+describe('getContent', () => {
+  it('reads a file out of the archive', async () => {
+    await expect(container.getContent('file.txt')).resolves.toMatchObject({
+      name: 'file.txt',
+      body: 'hello world',
+      size: 'hello world'.length,
+    });
   });
 
-  test('should convert Windows-style paths when executed on POSIX systems', () => {
-    expect(Container.Normalize('C:\\Project')).toBe('/mnt/c/Project');
-    expect(Container.Normalize('C:/Project\\test')).toBe('/mnt/c/Project/test');
+  it('reads an empty file without waiting for data', async () => {
+    await expect(container.getContent('empty.txt')).resolves.toMatchObject({ body: '', size: 0 });
   });
 
-  test('should resolve relative paths using POSIX semantics', () => {
-    expect(Container.Normalize('docs')).toBe('docs');
+  it('follows a symbolic link to the file it points at', async () => {
+    await expect(container.getContent('symlink.txt')).resolves.toMatchObject({ body: 'hello world' });
+  });
+
+  it('gives up when the archive cannot be read', async () => {
+    await expect(container.getContent('missing.txt')).resolves.toBeUndefined();
+  });
+});
+
+describe('readJSON', () => {
+  it('parses a json body', async () => {
+    fs.writeFileSync(path.join(fixtureDir, 'package.json'), '{"name":"test"}');
+
+    await expect(container.readJSON('package.json')).resolves.toEqual({ name: 'test' });
+  });
+
+  it('yields an empty object when the file is absent', async () => {
+    await expect(container.readJSON('missing.json')).resolves.toEqual({});
+  });
+});
+
+describe('readline', () => {
+  it('visits every non-empty line once', async () => {
+    const lines: string[] = [];
+
+    await container.readline('lines.txt', (line) => {
+      lines.push(line);
+    });
+
+    expect(lines).toEqual(['hello', 'world']);
+  });
+});
+
+describe('getFileEnv', () => {
+  it('reads NAME=VALUE pairs', async () => {
+    await expect(container.getFileEnv('env-normal.txt')).resolves.toEqual({ name: 'sobird', hello: 'world' });
+  });
+
+  it('keeps the rest of the value when it contains an equals sign', async () => {
+    await expect(container.getFileEnv('env-equals.txt')).resolves.toEqual({ A: 'b=c' });
+  });
+
+  it('reads heredoc values up to their delimiter', async () => {
+    await expect(container.getFileEnv('env-heredoc.txt')).resolves.toEqual({
+      NAME: ['line1', 'line2'].join(os.EOL),
+    });
+  });
+
+  it('rejects a heredoc whose delimiter never arrives', async () => {
+    await expect(container.getFileEnv('env-unterminated.txt')).rejects.toThrow(/Matching delimiter not found/);
+  });
+
+  it('rejects a heredoc without a name', async () => {
+    await expect(container.getFileEnv('env-bad-heredoc.txt')).rejects.toThrow(/Invalid format/);
+  });
+});
+
+describe('paths and directories', () => {
+  it('resolves paths against the workspace', () => {
+    expect(container.resolve('test')).toBe('/home/runner/test');
+    expect(container.directory('Tool')).toBe(`/home/runner/${WellKnownDirectory.Tool}`);
+    expect(container.directory('Temp')).toBe(`/home/runner/${WellKnownDirectory.Temp}`);
+  });
+
+  it('strips the root directory when asked for a container path', () => {
+    const rooted = new FakeContainer(fixtureDir);
+    rooted.rootdir = workdir;
+
+    expect(rooted.Resolve(`${workdir}/work/tool`)).toBe('/work/tool');
+  });
+
+  it('reports the well known paths of the runner', () => {
+    expect(container.Env).toMatchObject({
+      RUNNER_OS: 'Linux',
+      RUNNER_ARCH: 'X64',
+      RUNNER_TOOL_CACHE: `${workdir}/${WellKnownDirectory.Tool}`,
+      RUNNER_TEMP: `${workdir}/${WellKnownDirectory.Temp}`,
+    });
+  });
+});
+
+describe('path helpers', () => {
+  it('joins and splits on the posix separator', () => {
+    expect(container.joinPath('/usr/local/bin', '/bin')).toBe('/usr/local/bin:/bin');
+    expect(container.splitPath('/usr/local/bin:/bin')).toEqual(['/usr/local/bin', '/bin']);
+    expect(container.pathVariableName).toBe('PATH');
+    expect(container.isCaseSensitive).toBe(true);
+  });
+
+  it('uses the windows separator and variable name on windows', () => {
+    const windows = new FakeContainer(fixtureDir);
+    windows.OS = 'Windows';
+
+    expect(windows.joinPath('C:\\bin', 'C:\\other')).toBe('C:\\bin;C:\\other');
+    expect(windows.pathVariableName).toBe('Path');
+    expect(windows.isCaseSensitive).toBe(false);
+  });
+
+  it('takes an absolute path as-is when it is executable', () => {
+    expect(container.lookPath(process.execPath, {})).toBe(process.execPath);
+  });
+
+  it('finds an executable on the path', () => {
+    const found = container.lookPath(path.basename(process.execPath), { PATH: path.dirname(process.execPath) });
+
+    expect(found).toBe(process.execPath);
+  });
+
+  it('reports an empty string when nothing matches', () => {
+    expect(container.lookPath('definitely-not-on-path-12345', { PATH: path.dirname(process.execPath) })).toBe('');
+  });
+});
+
+describe('static helpers', () => {
+  it.each([
+    ['/var/log/app', '/var/log/app'],
+    ['docs', 'docs'],
+    ['/mnt/c/Project', '/mnt/c/Project'],
+    ['\\mnt/c\\Project', '/mnt/c/Project'],
+    ['C:\\Project', '/mnt/c/Project'],
+    ['C:/Project\\test', '/mnt/c/Project/test'],
+    ['C:\\Project\\src', '/mnt/c/Project/src'],
+    ['D:/Data/2024', '/mnt/d/Data/2024'],
+    ['C:/Project\\mixed/path', '/mnt/c/Project/mixed/path'],
+    ['E:\\AppData', '/mnt/e/AppData'],
+    ['C:\\Project\\src\\..', '/mnt/c/Project'],
+    ['C:\\', '/mnt/c/'],
+    ['C:\\Program Files', '/mnt/c/Program Files'],
+    ['D:\\测试目录\\文件@2024', '/mnt/d/测试目录/文件@2024'],
+  ])('normalizes %s to %s', (input, expected) => {
+    expect(Container.Normalize(input)).toBe(expected);
+  });
+
+  describe.runIf(process.platform === 'win32')('windows path quirks', () => {
+    // win32 的 path.normalize 会补上 UNC 路径的结尾反斜杠，posix 不会；两者把
+    // 反斜杠换成正斜杠后正好差一个结尾斜杠。
+    it('keeps the trailing separator of a UNC path', () => {
+      expect(Container.Normalize('\\\\server\\share')).toBe('//server/share/');
+    });
+  });
+
+  it('maps platform and architecture names', () => {
+    expect(Container.OS('linux')).toBe('Linux');
+    expect(Container.OS('darwin')).toBe('macOS');
+    expect(Container.OS('plan9')).toBeUndefined();
+    expect(Container.Arch('x64')).toBe('X64');
+    expect(Container.Arch('aarch64')).toBe('ARM64');
+  });
+
+  it('tells files and directories apart when checking executability', () => {
+    expect(Container.isExecutable(process.execPath)).toBe(true);
+    expect(Container.isExecutable(fixtureDir)).toBe(false);
+    expect(Container.isExecutable(path.join(fixtureDir, 'no-such-file'))).toBe(false);
+  });
+
+  it('reads an environment variable by name', () => {
+    expect(Container.GetEnv({ PATH: '/usr/bin' }, 'PATH')).toBe('/usr/bin');
+    expect(Container.GetEnv({}, 'PATH')).toBe('');
+  });
+
+  it('joins a symlink target under the parent directory', () => {
+    expect(Container.SymlinkJoin('dir/file.txt', 'other.txt', '.')).toBe('dir/other.txt');
+    expect(Container.SymlinkJoin('dir/file.txt', 'sub/up.txt', 'dir')).toBe('dir/sub/up.txt');
+  });
+
+  it('refuses a symlink that escapes the parent directory', () => {
+    expect(() => Container.SymlinkJoin('dir/file.txt', '../../etc/passwd', 'dir')).toThrow(/outside of/);
   });
 });

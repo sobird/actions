@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 import * as tar from 'tar';
@@ -8,14 +9,9 @@ import { createAllDir } from '@/test/__helpers__';
 import { FileEntry } from './container';
 import HostedContainer from './hosted';
 
-vi.mock('./hosted');
-
-// @ts-expect-error
-const hosted: HostedContainer = new HostedContainer();
-
-console.log('hosted', hosted);
-
 const workdir = '/home/runner';
+const basedir = fs.mkdtempSync(path.join(os.tmpdir(), 'hosted-test-'));
+const hosted = new HostedContainer({ basedir, workdir });
 const filedir = createAllDir('hosted-test', 'file');
 
 const files = [
@@ -47,6 +43,7 @@ beforeAll(() => {
 afterAll(async () => {
   const removeExecutor = hosted.remove();
   await removeExecutor.execute();
+  fs.rmSync(basedir, { recursive: true, force: true });
 });
 
 describe('Test Hosted Container', () => {
@@ -182,6 +179,18 @@ describe('Test Hosted Container', () => {
     expect(fileEntry?.body).toBe(files[0].body);
   });
 
+  it('visits every non-empty line once', async () => {
+    const destination = 'readline-test';
+    await hosted.putContent(destination, { name: 'lines.txt', body: 'hello\n\nworld\n' }).execute();
+
+    const lines: string[] = [];
+    await hosted.readline(path.join(destination, 'lines.txt'), (line) => {
+      lines.push(line);
+    });
+
+    expect(lines).toEqual(['hello', 'world']);
+  });
+
   it('container exec command', async () => {
     const scriptName = process.platform === 'win32' ? 'print_message.ps1' : 'print_message.sh';
     const body = fs.readFileSync(path.join(__dirname, `__mocks__/${scriptName}`), 'utf8');
@@ -290,5 +299,13 @@ describe('Container Shared Utils Test', () => {
 
     const cmd = hosted.lookPath('node', env);
     expect(cmd).not.toBe('');
+  });
+
+  it('takes an absolute path as-is when it is executable', () => {
+    expect(hosted.lookPath(process.execPath, {})).toBe(process.execPath);
+  });
+
+  it('reports an empty string when nothing matches', () => {
+    expect(hosted.lookPath('definitely-not-on-path-12345', { PATH: path.dirname(process.execPath) })).toBe('');
   });
 });

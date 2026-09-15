@@ -8,7 +8,6 @@ import cp from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import { finished } from 'node:stream/promises';
 
 import Dockerode, { NetworkInspectInfo, AuthConfig, MountConfig } from 'dockerode';
 import dotenv from 'dotenv';
@@ -286,20 +285,21 @@ class DockerContainer extends Container {
       pack.end();
 
       try {
-        const stream = await container.putArchive(pack as unknown as NodeJS.ReadableStream, {
+        // putArchive resolves with the response body, not a stream: docker-modem
+        // buffers the reply unless `isStream` is set, and PUT /archive returns an
+        // empty 200. The await is the upload completing; there is nothing to drain.
+        await container.putArchive(pack as unknown as NodeJS.ReadableStream, {
           path: '/',
         });
-        await finished(stream);
       } catch (err) {
         logger.error('Failed to mkdir to copy content to container: %s', (err as Error).message);
       }
 
       try {
-        const stream = await container.putArchive(archive, {
+        await container.putArchive(archive, {
           path: dest,
         });
 
-        await finished(stream);
         logger.info('Successfully copied archive to %s', dest);
       } catch (err) {
         logger.error('Failed to copy content to container: %s', (err as Error).message);

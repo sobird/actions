@@ -1,279 +1,274 @@
+import cp, { type SpawnSyncReturns } from 'node:child_process';
+import { PassThrough } from 'node:stream';
+
+import type Dockerode from 'dockerode';
+
+import docker from '@/docker';
+
+import DockerContainer, { type DockerContainerOptions } from './docker';
+
+const workspace = '/home/runner';
+
+const options: DockerContainerOptions = {
+  name: 'test-container',
+  image: 'node:lts-slim',
+  workdir: workspace,
+  env: { LANG: 'C.UTF-8' },
+  autoRemove: true,
+};
+
 /**
- * @deprecated
+ * DockerContainer 的单测：daemon 与 docker CLI 全被替换，只断言它构造出的东西。
+ *
+ * 这里验证的是「请求长什么样」——argv 的顺序、env 的拼装、退出码到异常的映射——
+ * 真起容器反而测不到这些（漏传一个 env 不会让容器跑失败）。真 daemon 的集成
+ * 覆盖在 docker.e2e.test.ts。
  */
-import { randomBytes } from 'node:crypto';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 
-import * as tar from 'tar';
+/** 一个已经挂上假 dockerode handle 的容器。 */
+function createContainer() {
+  const container = new DockerContainer(options);
+  container.container = { id: 'abc123' } as unknown as Dockerode.Container;
+  return container;
+}
 
-import DockerContainer from './docker';
+/** 假的 `container.exec()`，返回一个下一个宏任务就结束的流。 */
+function fakeExec(ExitCode: number) {
+  const stream = new PassThrough();
+  setImmediate(() => stream.end());
 
-vi.mock('./docker');
+  return {
+    start: vi.fn(async () => stream),
+    inspect: vi.fn(async () => ({ ExitCode })),
+  };
+}
 
-const workdir = '/home/runner';
-const docker: DockerContainer = new (DockerContainer as any)();
-docker.options.workdir = workdir;
+function spawnReport(stderr: string) {
+  return vi.spyOn(cp, 'spawnSync').mockReturnValue({ stderr } as unknown as SpawnSyncReturns<string>);
+}
 
-const tmp = path.join(os.tmpdir(), `container-docker-${randomBytes(8).toString('hex')}`);
-const files = [
-  {
-    name: 'test1.txt',
-    body: 'test1 content',
-  },
-  {
-    name: 'test2.txt',
-    body: 'test2 content',
-  },
-];
-beforeAll(() => {
-  fs.mkdirSync(tmp, { recursive: true });
-
-  for (const file of files) {
-    fs.writeFileSync(path.join(tmp, file.name), file.body);
-  }
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
-afterAll(async () => {
-  fs.rmSync(tmp, { recursive: true });
-  const removeExecutor = docker.remove();
-  await removeExecutor.execute();
-});
+describe('spawnSync', () => {
+  it('builds a docker exec argv from the exec options', () => {
+    const spawn = vi.spyOn(cp, 'spawnSync').mockReturnValue({} as SpawnSyncReturns<string>);
 
-vi.setConfig({
-  testTimeout: 60000,
-});
-
-describe('Test Docker Container', () => {
-  it('pull image', async () => {
-    const executor = docker.pullImage();
-    await expect(executor.execute()).resolves.not.toThrow();
-  });
-
-  it('create container', async () => {
-    const executor = docker.create();
-    await executor.execute();
-    const id = docker.container?.id;
-    expect(id).not.toBeUndefined();
-  });
-
-  it('start container', async () => {
-    const executor = docker.start();
-    await executor.execute();
-
-    const id = docker.container?.id;
-    expect(id).not.toBeUndefined();
-  });
-
-  it('put file to container', async () => {
-    const executor = docker.put('put-file-test', path.join(tmp, files[0].name));
-    await executor.execute();
-  });
-
-  it('put dir to container', async () => {
-    const executor = docker.put('put-dir-test', tmp);
-    await executor.execute();
-  });
-
-  it('put content to container', async () => {
-    const executor = docker.putContent('put-content-test', ...files);
-    await executor.execute();
-  });
-
-  it('get content from container', async () => {
-    const fileEntry = await docker.getContent('put-content-test/test1.txt');
-    expect(fileEntry?.body).toBe('test1 content');
-  });
-
-  it('put archive to container', async () => {
-    const archive = tar.create({ cwd: tmp, portable: true }, ['.']) as unknown as NodeJS.ReadableStream;
-    await docker.putArchive('put-archive-test', archive).execute();
-  });
-
-  it('get archive from container', async () => {
-    const archive = await docker.getArchive('put-archive-test');
-
-    const extract = tar.t({}) as unknown as NodeJS.WritableStream;
-    archive.pipe(extract);
-
-    const archiveFiles: any = [];
-    extract.on('entry', (entry) => {
-      let body = '';
-      entry.on('data', (chunk: Buffer) => {
-        body += chunk;
-      });
-      entry.on('end', () => {
-        if (entry.type === 'File') {
-          archiveFiles.push({
-            name: path.basename(entry.path),
-            body,
-          });
-        }
-      });
+    createContainer().spawnSync('printenv', ['AMBIENT'], {
+      cwd: '/w',
+      env: { A: '1' },
+      privileged: true,
+      user: 'root',
     });
 
-    await new Promise((resolve) => {
-      extract.on('finish', () => {
-        resolve('');
-      });
-    });
-
-    expect(archiveFiles).toEqual(files);
+    expect(spawn).toHaveBeenCalledWith(
+      'docker',
+      ['exec', '-e', 'A=1', '-w', '/w', '--privileged', '-u', 'root', 'abc123', 'printenv', 'AMBIENT'],
+      { encoding: 'utf8' },
+    );
   });
 
-  it('container exec', async () => {
-    const body = fs.readFileSync(path.join(__dirname, '__mocks__/print_message.sh'), 'utf8');
-    const putContentExecutor = docker.putContent('', {
-      name: 'print_message.sh',
-      mode: 0o777,
-      body,
-    });
-    await putContentExecutor.execute();
+  it('omits the flags the caller did not set', () => {
+    const spawn = vi.spyOn(cp, 'spawnSync').mockReturnValue({} as SpawnSyncReturns<string>);
 
-    const execExecutor = docker.exec(['./print_message.sh']);
-    await execExecutor.execute();
-  });
+    createContainer().spawnSync('true', []);
 
-  it('container spawnSync printenv test case', async () => {
-    const { stdout } = docker.spawnSync('printenv', ['sobird'], { env: { sobird: 'sobird' } });
-
-    expect(stdout.trim()).toBe('sobird');
-  });
-
-  it('container hashFiles test case', async () => {
-    const putContentExecutor = docker.putContent('', {
-      name: 'package.json',
-      mode: 0o777,
-      body: '{"name": "test"}',
-    });
-    await putContentExecutor.execute();
-
-    const hash = docker.hashFiles('package.json');
-    console.log('hash', hash);
-
-    expect(hash.length).toBe(64);
-  });
-
-  it('container hashFiles with --follow-symbolic-links test case', async () => {
-    const hash = docker.hashFiles('--follow-symbolic-links', 'package.json');
-    expect(hash.length).toBe(64);
-  });
-
-  it('container getFileEnv test case', async () => {
-    const putContentExecutor = docker.putContent('.', {
-      name: 'env',
-      mode: 0o777,
-      body: ['name=sobird', 'hello=world'].join('\n'),
-    });
-    await putContentExecutor.execute();
-
-    const envObj = await docker.getFileEnv('env');
-
-    expect(envObj).toEqual({
-      name: 'sobird',
-      hello: 'world',
-    });
+    expect(spawn.mock.calls[0][1]).toEqual(['exec', 'abc123', 'true']);
   });
 });
 
-describe('test docker container path', () => {
-  if (process.platform === 'win32') {
-    const testCases = [
-      ['/mnt/c/Users/act/go/src/github.com/nektos/act', 'C:\\Users\\act\\go\\src\\github.com\\nektos\\act\\'],
-      ['/mnt/f/work/dir', 'F:\\work\\dir'],
-      [`${workdir}/windows/to/unix`, 'windows\\to\\unix'],
-      [`${workdir}/act`, 'act'],
-    ];
+describe('hashFiles', () => {
+  const hash = 'b'.repeat(64);
+  const script = `${workspace}/bin/hashFiles/index.js`;
 
-    testCases.forEach((item) => {
-      const [destination, source] = item;
-      it(source, () => {
-        console.log('destination', destination);
-        expect(docker.resolve(source)).toBe(destination);
-      });
-    });
-  } else {
-    const testCases = [
-      ['/home/act/go/src/github.com/nektos/act', '/home/act/go/src/github.com/nektos/act'],
-      ['/home/act', '/home/act/'],
-      [workdir, '.'],
-      [`${workdir}/test`, 'test'],
-    ];
+  it('returns the hash the script reports on stderr', () => {
+    const spawn = spawnReport(`__OUTPUT__${hash}__OUTPUT__`);
 
-    testCases.forEach((item) => {
-      const [destination, source] = item;
-      it(source, () => {
-        expect(docker.resolve(source)).toBe(destination);
-      });
-    });
-  }
-});
+    expect(createContainer().hashFiles('**/package.json')).toBe(hash);
 
-describe.runIf(process.platform === 'win32')('Windows Platform Resolve', () => {
-  test('should convert standard Windows absolute paths to WSL format', () => {
-    expect(docker.Resolve('C:\\Project\\src')).toBe('/mnt/c/Project/src');
-    expect(docker.Resolve('D:/Data/2024')).toBe('/mnt/d/Data/2024');
+    expect(spawn).toHaveBeenCalledWith(
+      'docker',
+      ['exec', '-e', 'patterns=**/package.json', '-w', workspace, 'abc123', 'node', script],
+      { encoding: 'utf8' },
+    );
   });
 
-  test('should handle mixed path separators consistently', () => {
-    expect(docker.Resolve('C:/Project\\mixed/path')).toBe('/mnt/c/Project/mixed/path');
+  it('returns an empty string when nothing matched', () => {
+    spawnReport('__OUTPUT____OUTPUT__');
+
+    expect(createContainer().hashFiles('**/package.json')).toBe('');
   });
 
-  test('should maintain idempotency for converted paths', () => {
-    const converted = docker.Resolve('E:\\AppData');
-    expect(docker.Resolve(converted)).toBe(converted);
-  });
+  it('passes the follow-symbolic-links flag through to the script', () => {
+    const spawn = spawnReport(`__OUTPUT__${hash}__OUTPUT__`);
 
-  test('should preserve UNC network paths without modification', () => {
-    expect(docker.Resolve('\\\\server\\share')).toBe('\\\\server\\share\\');
-    expect(docker.Resolve('//server/share')).toBe('\\\\server\\share\\');
-  });
+    expect(createContainer().hashFiles('--follow-symbolic-links', '**/package.json')).toBe(hash);
 
-  test('should resolve relative paths to absolute container paths', () => {
-    const expected = path
-      .resolve('relative/path')
-      .replace(/\\/g, '/')
-      .replace(/^([a-zA-Z]):(\/.*)$/, (_, drive, translatedPath) => {
-        return `/mnt/${drive.toLowerCase()}${translatedPath}`;
-      });
-
-    expect(docker.Resolve('relative/path')).toBe(expected);
-  });
-
-  test('should normalize directory traversal patterns', () => {
-    expect(docker.Resolve('C:\\Project\\src\\..')).toBe('/mnt/c/Project');
-  });
-
-  test('should handle root directory paths correctly', () => {
-    expect(docker.Resolve('C:\\')).toBe('/mnt/c/');
-  });
-
-  test('should preserve spaces in directory names', () => {
-    expect(docker.Resolve('C:\\Program Files')).toBe('/mnt/c/Program Files');
-  });
-
-  test('should support Unicode characters in paths', () => {
-    expect(docker.Resolve('D:\\测试目录\\文件@2024')).toBe('/mnt/d/测试目录/文件@2024');
+    expect(spawn).toHaveBeenCalledWith(
+      'docker',
+      [
+        'exec',
+        '-e',
+        'patterns=**/package.json',
+        '-e',
+        'followSymbolicLinks=true',
+        '-w',
+        workspace,
+        'abc123',
+        'node',
+        script,
+      ],
+      { encoding: 'utf8' },
+    );
   });
 });
 
-describe.skipIf(process.platform === 'win32')('POSIX platforms behavior', () => {
-  beforeAll(() => {
-    Object.defineProperty(process, 'platform', { value: 'linux' });
+describe('exec', () => {
+  it('resolves once the process exits with code 0', async () => {
+    const container = createContainer();
+    const exec = fakeExec(0);
+    const start = vi.fn(async () => exec);
+    (container.container as unknown as { exec: unknown }).exec = start;
+
+    await expect(container.exec(['true'], { cwd: 'work', env: { A: '1' } }).execute()).resolves.toBeUndefined();
+
+    expect(start).toHaveBeenCalledWith({
+      WorkingDir: `${workspace}/work`,
+      Cmd: ['true'],
+      Env: ['A=1'],
+      User: undefined,
+      AttachStdout: true,
+      AttachStderr: true,
+    });
+    expect(exec.inspect).toHaveBeenCalled();
   });
 
-  test('should return POSIX paths unmodified', () => {
-    expect(docker.Resolve('/var/log/app')).toBe('/var/log/app');
-    expect(docker.Resolve('/mnt/c/Project')).toBe('/mnt/c/Project');
+  it('rejects when the process exits with a non-zero code', async () => {
+    const container = createContainer();
+    (container.container as unknown as { exec: unknown }).exec = vi.fn(async () => fakeExec(127));
+
+    await expect(container.exec(['definitely-not-a-command']).execute()).rejects.toThrow(
+      'Process completed with exit code 127.',
+    );
+  });
+});
+
+describe('daemon introspection', () => {
+  it('reads the platform off the daemon', async () => {
+    vi.spyOn(docker, 'info').mockResolvedValue({ OSType: 'linux', Architecture: 'x86_64' } as never);
+
+    const container = createContainer();
+    await container.info().execute();
+
+    expect(container.OS).toBe('Linux');
+    expect(container.Arch).toBe('X64');
   });
 
-  test('should convert Windows-style paths when executed on POSIX systems', () => {
-    expect(docker.Resolve('C:\\Project')).toMatch(/^\/mnt\/c\/Project/);
+  it('parses the env of the image config', async () => {
+    vi.spyOn(docker, 'getImage').mockReturnValue({
+      inspect: async () => ({ Config: { Env: ['LANG=C.UTF-8', 'PATH=/usr/bin'] } }),
+    } as never);
+
+    const env = await createContainer().imageEnv();
+
+    expect(docker.getImage).toHaveBeenCalledWith('node:lts-slim');
+    expect(env).toEqual({ LANG: 'C.UTF-8', PATH: '/usr/bin' });
   });
 
-  test('should resolve relative paths using POSIX semantics', () => {
-    const expected = path.resolve(docker.workspace, 'docs').replace(/\\/g, '/');
-    expect(docker.Resolve('docs')).toBe(expected);
+  it('maps the inspected network settings to an id, network and port map', async () => {
+    const container = createContainer();
+    (container.container as unknown as { inspect: unknown }).inspect = vi.fn(async () => ({
+      NetworkSettings: {
+        Ports: {
+          '80/tcp': [{ HostIp: '0.0.0.0', HostPort: '8080' }],
+          '443/tcp': [{ HostIp: '0.0.0.0', HostPort: '8443' }],
+        },
+        Networks: { bridge: { NetworkID: 'net' } },
+      },
+    }));
+
+    await expect(container.context()).resolves.toEqual({
+      id: 'abc123',
+      network: 'bridge',
+      ports: { 80: '8080', 443: '8443' },
+    });
+  });
+
+  it('reports an empty context when there is no container', async () => {
+    await expect(new DockerContainer(options).context()).resolves.toEqual({ id: '', network: '', ports: {} });
+  });
+
+  it('skips following the pull progress when the daemon returns no stream', async () => {
+    const pull = vi.spyOn(docker, 'pullImage').mockResolvedValue(undefined as never);
+
+    await new DockerContainer({ ...options, pull: true }).pullImage().execute();
+
+    expect(pull).toHaveBeenCalledWith('node:lts-slim', {
+      force: true,
+      platform: undefined,
+      authconfig: undefined,
+    });
+  });
+});
+
+describe('create', () => {
+  it('reuses the running container whose name matches', async () => {
+    const container = new DockerContainer(options);
+    const getContainer = vi.spyOn(docker, 'getContainer').mockReturnValue({
+      id: 'found',
+    } as unknown as Dockerode.Container);
+    vi.spyOn(docker, 'listContainers').mockResolvedValue([{ Id: 'found', Names: ['/test-container'] }] as never);
+    const create = vi.spyOn(docker, 'createContainer').mockResolvedValue({ id: 'created' } as never);
+
+    await container.create().execute();
+
+    expect(getContainer).toHaveBeenCalledWith('found');
+    expect(container.container?.id).toBe('found');
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('creates a container when none is running', async () => {
+    const container = new DockerContainer(options);
+    vi.spyOn(docker, 'listContainers').mockResolvedValue([]);
+    const create = vi.spyOn(docker, 'createContainer').mockResolvedValue({ id: 'created' } as never);
+
+    await container.create().execute();
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'test-container',
+        Image: 'node:lts-slim',
+        Env: ['LANG=C.UTF-8'],
+        WorkingDir: workspace,
+        Tty: false,
+        HostConfig: expect.objectContaining({ AutoRemove: true, Privileged: false }),
+      }),
+    );
+    expect(container.container?.id).toBe('created');
+  });
+});
+
+describe.runIf(process.platform !== 'win32')('resolve', () => {
+  it.each([
+    ['/home/act/go/src/github.com/nektos/act', '/home/act/go/src/github.com/nektos/act'],
+    ['/home/act', '/home/act/'],
+    [workspace, '.'],
+    [`${workspace}/test`, 'test'],
+    // A windows style path is normalized to its wsl form before being resolved.
+    ['/mnt/c/Project', 'C:\\Project'],
+  ])('resolves %s', (destination, source) => {
+    expect(createContainer().resolve(source)).toBe(destination);
+  });
+});
+
+describe.runIf(process.platform === 'win32')('resolve', () => {
+  it.each([
+    ['/mnt/c/Users/act/go/src/github.com/nektos/act', 'C:\\Users\\act\\go\\src\\github.com\\nektos\\act\\'],
+    ['/mnt/f/work/dir', 'F:\\work\\dir'],
+    [`${workspace}/windows/to/unix`, 'windows\\to\\unix'],
+    [`${workspace}/act`, 'act'],
+  ])('resolves %s', (destination, source) => {
+    expect(createContainer().resolve(source)).toBe(destination);
   });
 });
