@@ -95,10 +95,13 @@ export default abstract class Container {
       patterns.shift();
     }
 
-    const env = {
+    const env: Record<string, string> = {
       // ...process.env,
       patterns: patterns.join('\n'),
     };
+    if (followSymlink) {
+      env.followSymbolicLinks = 'true';
+    }
 
     const { workdir } = this.options as { workdir: string };
     const hashFilesScript = this.resolve(hashFilesDir, 'index.js');
