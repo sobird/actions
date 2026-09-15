@@ -27,7 +27,6 @@ describe('Set Env File Command Test', () => {
   it('file not found', async () => {
     const envFile = path.join(rootDirectory, 'file-not-found');
 
-    // expect(SetEnvFileCommand.process(runner, envFile)).rejects.toThrowError();
     SetEnvFileCommand.process(runner, envFile);
     expect(runner.context.env).toEqual({});
   });
@@ -248,7 +247,7 @@ describe('Set Env File Command Test', () => {
     });
     putContentExecutor.execute();
 
-    expect(SetEnvFileCommand.process(runner, filename)).rejects.toThrow();
+    await expect(SetEnvFileCommand.process(runner, filename)).rejects.toThrow();
   });
 
   it('heredoc Missing NewLine MultipleLines', async () => {
@@ -267,7 +266,7 @@ describe('Set Env File Command Test', () => {
     });
     putContentExecutor.execute();
 
-    expect(SetEnvFileCommand.process(runner, filename)).rejects.toThrow();
+    await expect(SetEnvFileCommand.process(runner, filename)).rejects.toThrow();
   });
 
   it('real actions/checkout state', async () => {

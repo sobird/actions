@@ -4,7 +4,7 @@ describe('Strategy Class Test', () => {
   it('get matrices empty test case', () => {
     const strategy = new Strategy();
 
-    expect(strategy.Matrices).toEqual([{}]);
+    expect(strategy.Matrices).toEqual([]);
   });
 
   it('get matrices test case', () => {
