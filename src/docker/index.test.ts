@@ -1,4 +1,4 @@
-import { createTestFile } from '@/test/__helpers__';
+import { createTestFile, dockerAvailable } from '@/test/__helpers__';
 
 import docker, { Docker } from '.';
 
@@ -6,7 +6,7 @@ vi.setConfig({
   testTimeout: 20000,
 });
 
-describe('test docker pull executor', () => {
+describe.skipIf(!dockerAvailable())('test docker pull executor', () => {
   it('docker pull test case', async () => {
     await docker.pullImage('alpine');
   });
@@ -63,8 +63,8 @@ describe('Test Get Socket And Host', () => {
     expect(ret).toEqual({ socket: host, host });
   });
 
-  const mySocketFile = createTestFile('act-test.sock');
   it('No Host No Socket DefaultLocation', () => {
+    const mySocketFile = createTestFile('act-test.sock');
     const unixSocket = `unix://${mySocketFile}`;
     process.env.DOCKER_HOST = '';
     Docker.SocketLocations = [mySocketFile];

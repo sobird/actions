@@ -1,11 +1,10 @@
 import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 
 import * as tar from 'tar';
 
-import { dockerAvailable } from '@/test/__helpers__';
+import { createAllDir, dockerAvailable } from '@/test/__helpers__';
 
 import DockerContainer, { type DockerContainerOptions } from './docker';
 
@@ -19,12 +18,22 @@ import DockerContainer, { type DockerContainerOptions } from './docker';
  */
 
 const workdir = '/home/runner';
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), `docker-e2e-${randomBytes(8).toString('hex')}-`));
+const tmp = createAllDir('docker-e2e');
+// 软链与硬链单独放一个目录。tar 会按 inode 去重，把其中一个写成 Link 条目，混进
+// files 里会让归档往返用例的 File 条目列表变成依赖 daemon 遍历顺序的东西。
+const linkTmp = createAllDir('docker-e2e-links');
 
 const files = [
   { name: 'test1.txt', body: 'test1 content' },
   { name: 'test2.txt', body: 'test2 content' },
 ];
+
+const link = {
+  body: 'link content',
+  name: 'test1.txt',
+  symlinkName: 'symlink-test1.txt',
+  hardlinkName: 'link-test1.txt',
+};
 
 describe.skipIf(!dockerAvailable())('DockerContainer end to end', () => {
   vi.setConfig({ testTimeout: 60000 });
@@ -40,15 +49,17 @@ describe.skipIf(!dockerAvailable())('DockerContainer end to end', () => {
   } satisfies DockerContainerOptions);
 
   beforeAll(() => {
-    fs.mkdirSync(tmp, { recursive: true });
     for (const file of files) {
       fs.writeFileSync(path.join(tmp, file.name), file.body);
     }
+
+    fs.writeFileSync(path.join(linkTmp, link.name), link.body);
+    fs.symlinkSync(link.name, path.join(linkTmp, link.symlinkName));
+    fs.linkSync(path.join(linkTmp, link.name), path.join(linkTmp, link.hardlinkName));
   });
 
   afterAll(async () => {
     await container.remove().execute();
-    fs.rmSync(tmp, { recursive: true, force: true });
   });
 
   it('pulls, creates and starts the container', async () => {
@@ -76,6 +87,29 @@ describe.skipIf(!dockerAvailable())('DockerContainer end to end', () => {
 
     const fileEntry = await container.getContent('put-content-test/test1.txt');
     expect(fileEntry?.body).toBe(files[0].body);
+  });
+
+  it('writes content to an absolute directory', async () => {
+    const destination = '/put-content-absolute-test';
+
+    await container.putContent(destination, ...files).execute();
+
+    const fileEntry = await container.getContent(path.join(destination, files[0].name));
+    expect(fileEntry?.body).toBe(files[0].body);
+  });
+
+  it('reads a file through a symbolic link', async () => {
+    await container.put('put-link-test', linkTmp).execute();
+
+    const fileEntry = await container.getContent(`put-link-test/${link.symlinkName}`);
+    expect(fileEntry?.body).toBe(link.body);
+  });
+
+  it('reads a file through a hard link', async () => {
+    await container.put('put-link-test', linkTmp).execute();
+
+    const fileEntry = await container.getContent(`put-link-test/${link.hardlinkName}`);
+    expect(fileEntry?.body).toBe(link.body);
   });
 
   it('reports nothing for a file that is not there', async () => {
@@ -136,5 +170,24 @@ describe.skipIf(!dockerAvailable())('DockerContainer end to end', () => {
       .execute();
 
     await expect(container.getFileEnv('env')).resolves.toEqual({ name: 'sobird', hello: 'world' });
+  });
+
+  it('visits every non-empty line of a file', async () => {
+    await container.putContent('readline-test', { name: 'lines.txt', mode: 0o644, body: 'hello\n\nworld\n' }).execute();
+
+    const lines: string[] = [];
+    await container.readline('readline-test/lines.txt', (line) => {
+      lines.push(line);
+    });
+
+    expect(lines).toEqual(['hello', 'world']);
+  });
+
+  it('takes an absolute path as-is when it is executable', () => {
+    expect(container.lookPath('/bin/bash', { PATH: process.env.PATH })).toBe('/bin/bash');
+  });
+
+  it('finds an executable on the path', () => {
+    expect(container.lookPath('bash', { PATH: process.env.PATH })).toBe('/bin/bash');
   });
 });

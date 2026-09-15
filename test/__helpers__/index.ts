@@ -1,52 +1,50 @@
 import { spawnSync } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const TMP_ROOT = path.join(os.tmpdir(), `${path.basename(process.cwd())}-test`);
+const TMPROOT = path.join(os.tmpdir(), `${path.basename(process.cwd())}-test`);
 
-/**
- * 获取一个唯一的临时路径，防止并行测试冲突
- */
-function getUniquePath(...name: string[]) {
-  return path.join(TMP_ROOT, randomUUID(), ...name);
+function createTmpPath(...name: string[]) {
+  const root = path.join(TMPROOT, randomBytes(8).toString('hex'));
+  return { root, dir: path.join(root, ...name) };
 }
 
 export function createAllDir(...name: string[]) {
-  const dir = getUniquePath(...name);
+  const { root, dir } = createTmpPath(...name);
 
   beforeAll(() => {
     fs.mkdirSync(dir, { recursive: true });
   });
   afterAll(() => {
-    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(root, { recursive: true, force: true });
   });
   return dir;
 }
 
 export function createEachDir(...name: string[]) {
-  const dir = getUniquePath(...name);
+  const { root, dir } = createTmpPath(...name);
 
   beforeEach(() => {
     fs.mkdirSync(dir, { recursive: true });
   });
   afterEach(() => {
-    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(root, { recursive: true, force: true });
   });
   return dir;
 }
 
+/** 只能在测试或钩子内部调用：清理挂在 onTestFinished 上。 */
 export function createTestFile(name: string = 'test-file', data: string = '') {
-  const file = getUniquePath(name);
-  const dir = path.dirname(file);
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(file, data);
+  const { root, dir } = createTmpPath(name);
+  fs.mkdirSync(root, { recursive: true });
+  fs.writeFileSync(dir, data);
 
   onTestFinished(() => {
-    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(root, { recursive: true, force: true });
   });
-  return file;
+  return dir;
 }
 
 let dockerAvailability: boolean | undefined;
