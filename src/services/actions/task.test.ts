@@ -79,8 +79,8 @@ describe('resolveBlockedJobs', () => {
       needs: JSON.stringify(needs),
       status,
       continueOnError,
-      started: null,
-      stopped: null,
+      startedAt: null,
+      stoppedAt: null,
     });
   }
 

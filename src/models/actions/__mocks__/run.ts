@@ -18,8 +18,8 @@ const seeds: ActionRunCreationAttributes[] = [
     approvedBy: 0n,
 
     status: Status.Unknown,
-    started: new Date(1683636528000),
-    stopped: new Date(1683636626000),
+    startedAt: new Date(1683636528000),
+    stoppedAt: new Date(1683636626000),
   },
   {
     id: 792n,
@@ -37,8 +37,8 @@ const seeds: ActionRunCreationAttributes[] = [
     approvedBy: 0n,
 
     status: Status.Waiting,
-    started: new Date(1683636528000),
-    stopped: new Date(1683636626000),
+    startedAt: new Date(1683636528000),
+    stoppedAt: new Date(1683636626000),
   },
 ];
 

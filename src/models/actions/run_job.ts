@@ -79,9 +79,9 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
 
   declare status: Status;
 
-  declare started: Date | null;
+  declare startedAt: Date | null;
 
-  declare stopped: Date | null;
+  declare stoppedAt: Date | null;
 
   declare run?: NonAttribute<ActionRun>;
 
@@ -211,6 +211,8 @@ ActionRunJob.init(
     },
     isForkPullRequest: {
       type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
     workflowSourceRepoId: {
       type: DataTypes.BIGINT,
@@ -224,6 +226,8 @@ ActionRunJob.init(
     },
     attempt: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1,
     },
     continueOnError: {
       type: DataTypes.BOOLEAN,
@@ -234,10 +238,12 @@ ActionRunJob.init(
       type: DataTypes.BLOB,
     },
     jobId: {
-      type: DataTypes.CHAR(255),
+      type: DataTypes.STRING,
     },
     taskId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
       comment: 'the latest task of the job',
     },
     needs: {
@@ -250,6 +256,7 @@ ActionRunJob.init(
       // https://github.com/sequelize/sequelize/issues/5765
       type: DataTypes.ENUM,
       values: Status.names(),
+      allowNull: false,
       defaultValue: Status.Unknown.toString(),
       get() {
         return Status.from(this.getDataValue('status') as unknown as string);
@@ -264,10 +271,25 @@ ActionRunJob.init(
         },
       },
     },
-    started: DataTypes.DATE,
-    stopped: DataTypes.DATE,
+    startedAt: DataTypes.DATE,
+    stoppedAt: DataTypes.DATE,
   },
   {
     sequelize,
+    indexes: [
+      {
+        name: 'action_run_jobs_run_id_index',
+        fields: ['run_id'],
+      },
+      {
+        name: 'action_run_jobs_status_index',
+        fields: ['status'],
+      },
+      {
+        // Serves the "is any waiting, unclaimed job left for this repo" check.
+        name: 'action_run_jobs_repo_status_task_index',
+        fields: ['repository_id', 'status', 'task_id'],
+      },
+    ],
   },
 );

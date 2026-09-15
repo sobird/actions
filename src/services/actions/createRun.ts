@@ -276,8 +276,8 @@ export async function createRunFromWorkflow(workflowPayload: string, options: Cr
             needs: JSON.stringify(needs),
             runsOn: JSON.stringify(normalizeRunsOn(job['runs-on']?.source)),
             status: shouldBlockJob ? Status.Blocked : Status.Waiting,
-            started: null,
-            stopped: null,
+            startedAt: null,
+            stoppedAt: null,
           },
           { transaction },
         );

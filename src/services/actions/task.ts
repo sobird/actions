@@ -175,10 +175,13 @@ export async function resolveBlockedJobs(runId: number, transaction?: Transactio
   const waiting = blockedJobs.filter((job) => job.status.isWaiting()).map((job) => Number(job.id));
 
   if (skipped.length > 0) {
-    await ActionRunJob.update({ status: Status.Skipped, stopped: new Date() }, { where: { id: skipped }, transaction });
+    await ActionRunJob.update(
+      { status: Status.Skipped, stoppedAt: new Date() },
+      { where: { id: skipped }, transaction },
+    );
   }
   if (waiting.length > 0) {
-    await ActionRunJob.update({ status: Status.Waiting, stopped: null }, { where: { id: waiting }, transaction });
+    await ActionRunJob.update({ status: Status.Waiting, stoppedAt: null }, { where: { id: waiting }, transaction });
   }
 
   return waiting.length > 0;
@@ -202,7 +205,7 @@ async function needsSatisfied(job: ActionRunJob): Promise<boolean> {
     return false;
   }
   if (verdict === 'failed') {
-    await job.update({ status: Status.Skipped, stopped: new Date() });
+    await job.update({ status: Status.Skipped, stoppedAt: new Date() });
     return false;
   }
 

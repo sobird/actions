@@ -44,8 +44,8 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
   declare runnerId: bigint;
   declare attempt: CreationOptional<number>;
   declare status: CreationOptional<Status>;
-  declare started: CreationOptional<Date | null>;
-  declare stopped: CreationOptional<Date | null>;
+  declare startedAt: CreationOptional<Date | null>;
+  declare stoppedAt: CreationOptional<Date | null>;
   declare repositoryId: number;
   declare ownerId: number;
   declare commitSha: string;
@@ -118,7 +118,7 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
             runnerId: runner.id!,
             attempt: job.attempt || 1,
             status: Status.Running,
-            started: now,
+            startedAt: now,
             repositoryId: job.repositoryId,
             ownerId: job.ownerId,
             commitSha: job.commitSha,
@@ -139,7 +139,7 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
         await this.createSteps(task, job, transaction);
 
         const [affectedCount] = await ActionRunJobModel.update(
-          { taskId: Number(task.id), status: Status.Running, started: now },
+          { taskId: Number(task.id), status: Status.Running, startedAt: now },
           {
             where: { id: job.id, taskId: 0, status: Status.Waiting.toString() },
             transaction,
@@ -169,7 +169,7 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
   public static async releaseTaskForRunner(task: ActionTask) {
     await sequelize.transaction(async (transaction) => {
       await ActionRunJobModel.update(
-        { taskId: 0, status: Status.Waiting, started: null },
+        { taskId: 0, status: Status.Waiting, startedAt: null },
         { where: { id: task.jobId, taskId: Number(task.id) }, transaction },
       );
       await ActionTaskStepModel.destroy({ where: { taskId: Number(task.id) }, transaction });
@@ -334,8 +334,8 @@ ActionTask.init(
         },
       },
     },
-    started: DataTypes.DATE,
-    stopped: DataTypes.DATE,
+    startedAt: DataTypes.DATE,
+    stoppedAt: DataTypes.DATE,
 
     ownerId: {
       type: DataTypes.BIGINT,
@@ -380,12 +380,12 @@ ActionTask.init(
     indexes: [
       { name: 'idx_action_task_runner_id', fields: ['runner_id'] },
       { name: 'idx_action_task_status', fields: ['status'] },
-      { name: 'idx_action_task_started', fields: ['started'] },
+      { name: 'idx_action_task_started', fields: ['started_at'] },
       { name: 'idx_action_task_repo_id', fields: ['repository_id'] },
       { name: 'idx_action_task_owner_id', fields: ['owner_id'] },
       { name: 'idx_action_task_commit_sha', fields: ['commit_sha'] },
       { name: 'idx_token_last_eight_status', fields: ['token_last_eight', 'status'] },
-      { name: 'stopped_log_expired', fields: ['stopped', 'log_expired'] },
+      { name: 'stopped_log_expired', fields: ['stopped_at', 'log_expired'] },
     ],
   },
 );

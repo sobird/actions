@@ -8,8 +8,8 @@ const seeds: ActionTaskCreationAttributes[] = [
     attempt: 3,
     runnerId: 1n,
     status: Status.Running, // 6 is the status code for "running", running task can upload artifacts
-    started: new Date(1683636528000),
-    stopped: new Date(1683636626000),
+    startedAt: new Date(1683636528000),
+    stoppedAt: new Date(1683636626000),
     repositoryId: 4,
     ownerId: 1,
     commitSha: 'c2d72f548424103f01ee1dc02889c1e2bff816b0',
@@ -26,8 +26,8 @@ const seeds: ActionTaskCreationAttributes[] = [
     attempt: 1,
     runnerId: 1n,
     status: Status.Running, // 6 is the status code for "running", running task can upload artifacts
-    started: new Date(1683636528000),
-    stopped: new Date(1683636626000),
+    startedAt: new Date(1683636528000),
+    stoppedAt: new Date(1683636626000),
     repositoryId: 4,
     ownerId: 1,
     commitSha: 'c2d72f548424103f01ee1dc02889c1e2bff816b0',

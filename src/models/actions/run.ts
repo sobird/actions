@@ -53,8 +53,8 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   declare workflowCommitSha: CreationOptional<string>;
   declare isScopedRun: CreationOptional<boolean>;
 
-  declare started: CreationOptional<Date | null>;
-  declare stopped: CreationOptional<Date | null>;
+  declare startedAt: CreationOptional<Date | null>;
+  declare stoppedAt: CreationOptional<Date | null>;
 
   declare previousDuration: CreationOptional<bigint>;
   declare duration: CreationOptional<number>;
@@ -209,8 +209,8 @@ ActionRun.init(
       allowNull: false,
       defaultValue: 0,
     },
-    started: DataTypes.DATE,
-    stopped: DataTypes.DATE,
+    startedAt: DataTypes.DATE,
+    stoppedAt: DataTypes.DATE,
   },
   {
     sequelize,

@@ -47,10 +47,10 @@ export const updateTask: MethodImpl<typeof RunnerService.method.updateTask> = as
     if (state.result !== Result.UNSPECIFIED) {
       // The runner may report SUCCESS/FAILURE for the cleanup phase; preserve user intent.
       const status = task.status === Status.Cancelling ? Status.Cancelled : Status.fromResult(state.result);
-      const stopped = convertTimestamp(state.stoppedAt) ?? null;
+      const stoppedAt = convertTimestamp(state.stoppedAt) ?? null;
 
       task.status = status;
-      task.stopped = stopped;
+      task.stoppedAt = stoppedAt;
       await task.save({ transaction });
 
       // A finished task releases its ephemeral runner.
@@ -58,7 +58,7 @@ export const updateTask: MethodImpl<typeof RunnerService.method.updateTask> = as
         await ActionRunner.deleteEphemeralRunner(task.runnerId, transaction);
       }
 
-      await ActionRunJob.update({ status, stopped }, { where: { id: task.jobId }, transaction });
+      await ActionRunJob.update({ status, stoppedAt }, { where: { id: task.jobId }, transaction });
 
       // Finishing a job decides the jobs waiting on it.
       const job = await ActionRunJob.findByPk(task.jobId, { transaction });
@@ -85,17 +85,17 @@ export const updateTask: MethodImpl<typeof RunnerService.method.updateTask> = as
 
     for (const step of steps) {
       const stepState = stepStates.get(step.index);
-      const started = stepState ? convertTimestamp(stepState.startedAt) : undefined;
+      const startedAt = stepState ? convertTimestamp(stepState.startedAt) : undefined;
 
       if (stepState) {
         step.logIndex = Number(stepState.logIndex);
         step.logLength = Number(stepState.logLength);
-        step.startedAt = started ?? null;
+        step.startedAt = startedAt ?? null;
         step.stoppedAt = convertTimestamp(stepState.stoppedAt) ?? null;
 
         if (stepState.result !== Result.UNSPECIFIED) {
           step.status = Status.fromResult(stepState.result).toString();
-        } else if (started) {
+        } else if (startedAt) {
           step.status = Status.Running.toString();
         }
       }

@@ -14,8 +14,8 @@ const seeds: ActionRunJobCreationAttributes[] = [
     jobId: 'job_2',
     taskId: 47,
     status: Status.Success,
-    started: new Date(1683636528000),
-    stopped: new Date(1683636626000),
+    startedAt: new Date(1683636528000),
+    stoppedAt: new Date(1683636626000),
   },
   {
     id: BigInt(193),
@@ -29,8 +29,8 @@ const seeds: ActionRunJobCreationAttributes[] = [
     jobId: 'job_2',
     taskId: 48,
     status: Status.Success,
-    started: new Date(1683636528000),
-    stopped: new Date(1683636626000),
+    startedAt: new Date(1683636528000),
+    stoppedAt: new Date(1683636626000),
   },
 ];
 

@@ -69,8 +69,8 @@ export default async function Home() {
                     {task.status.toString()}
                   </span>
                 </td>
-                <td className="py-2 pr-4">{formatTime(task.started)}</td>
-                <td className="py-2 pr-4">{formatTime(task.stopped)}</td>
+                <td className="py-2 pr-4">{formatTime(task.startedAt)}</td>
+                <td className="py-2 pr-4">{formatTime(task.stoppedAt)}</td>
               </tr>
             ))}
           </tbody>
