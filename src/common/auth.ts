@@ -4,17 +4,14 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'JWT_SECRET';
 
-// 定义 actionsClaims 结构
-// class ActionsClaims {
-//   constructor(registeredClaims, scp, taskID, runID, jobID, ac) {
-//     this.registeredClaims = registeredClaims;
-//     this.scp = scp;
-//     this.taskID = taskID;
-//     this.runID = runID;
-//     this.jobID = jobID;
-//     this.ac = ac;
-//   }
-// }
+// 授权令牌中的自定义 claims，与 actions/runner 侧签发的运行时令牌一致
+export interface ActionsClaims extends JwtPayload {
+  scp: string;
+  taskID: number;
+  runID: number;
+  jobID: number;
+  ac: string;
+}
 
 // 定义 actionsCacheScope 结构
 export class ActionsCacheScope {
@@ -38,7 +35,7 @@ export function createAuthorizationToken(taskID: number, runID: number, jobID: n
   const ac = JSON.stringify([new ActionsCacheScope('', ActionsCachePermission.Write)]);
 
   // 定义 claims
-  const claims = {
+  const claims: ActionsClaims = {
     exp: now + 24 * 60 * 60, // 24 小时后过期
     nbf: now, // 当前时间生效
     scp: `Actions.Results:${runID}:${jobID}`,
@@ -68,37 +65,17 @@ export function parseAuthorizationRequest(req: IncomingMessage) {
   return parseAuthorizationToken(parts[1]);
 }
 
-// 解析授权令牌
+// 解析授权令牌，返回签发时写入的 taskID
 export function parseAuthorizationToken(token: string) {
   try {
     // 验证并解析 JWT
-    const payload = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as JwtPayload;
-    if (!payload || !payload.taskID) {
+    const payload = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as ActionsClaims;
+    if (!payload || typeof payload.taskID !== 'number') {
       throw new Error('invalid token claim');
     }
 
-    return {
-      userId: payload.userId,
-      scope: payload.scope,
-      actionsUserTaskId: payload.actionsUserTaskId,
-    };
+    return payload.taskID;
   } catch (err) {
     throw new Error(`invalid token claim: ${(err as Error).message}`, { cause: err });
   }
 }
-
-// 示例使用
-// try {
-//   const token = createAuthorizationToken(123, 456, 789);
-//   console.log('Generated Token:', token);
-
-//   const req = {
-//     headers: {
-//       authorization: `Bearer ${token}`,
-//     },
-//   };
-//   const taskID = parseAuthorizationToken(req);
-//   console.log('Parsed Task ID:', taskID);
-// } catch (err) {
-//   console.error('Error:', err.message);
-// }
