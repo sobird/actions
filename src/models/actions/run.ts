@@ -59,7 +59,7 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   declare previousDuration: CreationOptional<bigint>;
   declare duration: CreationOptional<number>;
 
-  declare latestAttemptId: CreationOptional<bigint>;
+  declare latestAttemptId: CreationOptional<number>;
 
   static async add() {
     const t = await sequelize.transaction();
@@ -78,24 +78,15 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
   declare getActionRunJobs: HasManyGetAssociationsMixin<ActionRunJob>;
-
   /** Remove all previous associations and set the new ones */
   declare setActionRunJobs: HasManySetAssociationsMixin<ActionRunJob, bigint>;
-
   declare addActionRunJob: HasManyAddAssociationMixin<ActionRunJob, bigint>;
-
   declare addActionRunJobs: HasManyAddAssociationsMixin<ActionRunJob, bigint>;
-
   declare removeActionRunJob: HasManyRemoveAssociationMixin<ActionRunJob, bigint>;
-
   declare removeActionRunJobs: HasManyRemoveAssociationsMixin<ActionRunJob, bigint>;
-
   declare hasActionRunJob: HasManyHasAssociationMixin<ActionRunJob, bigint>;
-
   declare hasActionRunJobs: HasManyHasAssociationsMixin<ActionRunJob, bigint>;
-
   declare createActionRunJob: HasManyCreateAssociationMixin<ActionRunJob>;
-
   declare countActionRunJobs: HasManyCountAssociationsMixin;
 
   static validate() {

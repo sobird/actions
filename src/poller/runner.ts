@@ -34,7 +34,9 @@ export class Runner {
 
     withLoggerHook(reporter, async () => {
       try {
-        const workflow = Workflow.Load(task.workflowPayload?.toString() ?? '');
+        // The payload arrives as raw bytes over the wire, and a Uint8Array's own
+        // toString() is a list of byte values rather than the yaml.
+        const workflow = Workflow.Load(Buffer.from(task.workflowPayload ?? '').toString());
         const plan = workflow.plan();
         const runnerConfig = this.configure(task);
 

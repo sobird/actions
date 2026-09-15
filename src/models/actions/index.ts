@@ -1,4 +1,7 @@
 import { ActionRun } from './run';
+import { ActionRunAttempt } from './run_attempt';
+import { ActionRunAttemptJobIdIndex } from './run_attempt_job_id_index';
+import { ActionRunIndex } from './run_index';
 import { ActionRunJob } from './run_job';
 import { ActionRunner } from './runner';
 import { ActionRunnerToken } from './runner_token';
@@ -11,6 +14,9 @@ import { ActionTaskVersion } from './task_version';
 
 export const models = {
   ActionRun,
+  ActionRunAttempt,
+  ActionRunIndex,
+  ActionRunAttemptJobIdIndex,
   ActionRunJob,
   ActionRunner,
   ActionRunnerToken,
@@ -29,6 +35,9 @@ Object.values(models).forEach((model: any) => {
 });
 
 export * from './run';
+export * from './run_attempt';
+export * from './run_attempt_job_id_index';
+export * from './run_index';
 export * from './run_job';
 export * from './runner';
 export * from './task_version';

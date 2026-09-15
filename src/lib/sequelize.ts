@@ -10,7 +10,15 @@
  * sobird<i@sobird.me> at 2021/11/16 20:33:20 created.
  */
 
-import { Sequelize, Model, type ModelStatic, type InferAttributes, type FindAndCountOptions } from 'sequelize';
+import {
+  Sequelize,
+  Model,
+  QueryTypes,
+  type ModelStatic,
+  type InferAttributes,
+  type FindAndCountOptions,
+  type Transaction,
+} from 'sequelize';
 import sqlite3 from 'sqlite3';
 
 import logger from '@/common/logger';
@@ -181,4 +189,42 @@ export class BaseModel<T extends {} = any, P extends {} = T> extends Model<T, P>
       rows: [],
     };
   }
+}
+
+/**
+ * Allocate the next index for `groupId` and return it. The first allocation is 1.
+ *
+ * The counter is kept in a dedicated table rather than derived from a "max() + 1"
+ * read, which two concurrent callers could resolve to the same value and collide
+ * on the unique index. Port of gitea's `models/db/index.go` `GetNextResourceIndex`.
+ *
+ * The table and column names come from the model's own metadata, so the
+ * interpolation below can never be steered by caller input.
+ */
+export async function getNextResourceIndex<M extends BaseModel>(
+  model: ModelStatic<M>,
+  groupId: number,
+  transaction: Transaction,
+): Promise<number> {
+  const table = model.getTableName() as string;
+  const attributes = model.getAttributes();
+  const groupColumn = attributes.groupId.field ?? 'groupId';
+  const indexColumn = attributes.maxIndex.field ?? 'maxIndex';
+
+  // sqlite3 does not reliably report the rows a raw UPDATE touched, so upstream's
+  // UPDATE-else-INSERT-then-UPDATE retry cannot be transcribed. An upsert does the
+  // same job in one statement, and the read that follows sees this transaction's
+  // own write.
+  await sequelize.query(
+    `INSERT INTO ${table} (${groupColumn}, ${indexColumn}) VALUES (?, 1)
+     ON CONFLICT (${groupColumn}) DO UPDATE SET ${indexColumn} = ${indexColumn} + 1`,
+    { replacements: [groupId], transaction },
+  );
+
+  const [row] = await sequelize.query<{ maxIndex: number }>(
+    `SELECT ${indexColumn} AS maxIndex FROM ${table} WHERE ${groupColumn} = ?`,
+    { replacements: [groupId], type: QueryTypes.SELECT, transaction },
+  );
+
+  return Number(row.maxIndex);
 }

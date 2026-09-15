@@ -1,3 +1,4 @@
+import { Status } from '../status.ts';
 import { ActionTask, type ActionTaskCreationAttributes } from '../task';
 
 const seeds: ActionTaskCreationAttributes[] = [
@@ -5,8 +6,8 @@ const seeds: ActionTaskCreationAttributes[] = [
     id: 47n,
     jobId: 192,
     attempt: 3,
-    runnerId: 1,
-    status: 6, // 6 is the status code for "running", running task can upload artifacts
+    runnerId: 1n,
+    status: Status.Running, // 6 is the status code for "running", running task can upload artifacts
     started: new Date(1683636528000),
     stopped: new Date(1683636626000),
     repositoryId: 4,
@@ -23,8 +24,8 @@ const seeds: ActionTaskCreationAttributes[] = [
     id: 48n,
     jobId: 193,
     attempt: 1,
-    runnerId: 1,
-    status: 6, // 6 is the status code for "running", running task can upload artifacts
+    runnerId: 1n,
+    status: Status.Running, // 6 is the status code for "running", running task can upload artifacts
     started: new Date(1683636528000),
     stopped: new Date(1683636626000),
     repositoryId: 4,

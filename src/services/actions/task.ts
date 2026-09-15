@@ -1,4 +1,5 @@
 import { create } from '@bufbuild/protobuf';
+import type { Transaction } from 'sequelize';
 
 import { Task, TaskNeed, TaskNeedSchema, TaskSchema } from '@/gen/runner/v1/messages_pb';
 import { ActionRun, ActionRunJob, ActionRunner, ActionTask, ActionTaskOutput } from '@/models';
@@ -45,16 +46,23 @@ async function buildRunnerTask(task: ActionTask): Promise<Task> {
     repository_owner: '',
   };
 
+  // A needed job is one run job per matrix cell, so its result is the aggregate
+  // of its cells and its outputs are the merge of theirs.
   const needs: Record<string, TaskNeed> = {};
   for (const needId of parseStringList(job.needs)) {
     // eslint-disable-next-line no-await-in-loop
-    const needJob = await ActionRunJob.findOne({ where: { runId: job.runId, jobId: needId } });
-    if (!needJob) {
+    const needJobs = await ActionRunJob.findAll({ where: { runId: job.runId, jobId: needId } });
+    if (needJobs.length === 0) {
       continue;
     }
 
     const outputs: Record<string, string> = {};
-    if (needJob.taskId) {
+    for (const needJob of needJobs) {
+      if (!needJob.status.isDone() || !needJob.taskId) {
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+
       // eslint-disable-next-line no-await-in-loop
       const rows = await ActionTaskOutput.findAll({ where: { taskId: needJob.taskId } });
       rows.forEach((row) => {
@@ -63,7 +71,7 @@ async function buildRunnerTask(task: ActionTask): Promise<Task> {
     }
 
     needs[needId] = create(TaskNeedSchema, {
-      result: needJob.status.asResult(),
+      result: ActionRunJob.aggregateJobStatus(needJobs).asResult(),
       outputs,
     });
   }
@@ -76,6 +84,104 @@ async function buildRunnerTask(task: ActionTask): Promise<Task> {
     needs,
     vars: {},
   });
+}
+
+/** The dependency fields the resolution reads. */
+export interface DependencyJob {
+  jobId: string;
+  status: Status;
+  continueOnError: boolean;
+}
+
+/**
+ * A cell that failed for real, which is what its dependents react to.
+ *
+ * A failure with continue-on-error is treated as a success, matching AggregateJobStatus.
+ */
+function failedForReal(dependency: DependencyJob): boolean {
+  return !dependency.status.isSuccess() && !(dependency.continueOnError && dependency.status.isFailure());
+}
+
+/**
+ * Whether the jobs named by `needs` let the depending job start.
+ *
+ * A job expands into one run job per matrix cell, so a dependency only counts as
+ * done once every cell of it is done, and as failed only when a cell failed for
+ * real. Mirrors gitea's `jobStatusResolver.resolveCheckNeeds`.
+ */
+export function resolveNeeds(needs: string[], dependencies: DependencyJob[]): 'pending' | 'failed' | 'ready' {
+  const dependencyIds = new Set(dependencies.map((dependency) => dependency.jobId));
+  // A job that is not in the run at all can never finish, and neither can a cell
+  // that has not been inserted yet.
+  if (needs.some((needId) => !dependencyIds.has(needId))) {
+    return 'pending';
+  }
+  if (!dependencies.every((dependency) => dependency.status.isDone())) {
+    return 'pending';
+  }
+
+  return dependencies.some(failedForReal) ? 'failed' : 'ready';
+}
+
+/**
+ * Hand every blocked job of a run the state its dependencies leave it in.
+ *
+ * Mirrors the needs half of gitea's `job_emitter`: a blocked job whose dependency
+ * cells are all done and successful becomes waiting, and one that depends on a cell
+ * that failed for real is skipped, so it leaves the queue instead of staying blocked
+ * forever. Returns whether any of them is waiting now.
+ */
+export async function resolveBlockedJobs(runId: number, transaction?: Transaction): Promise<boolean> {
+  const jobs = await ActionRunJob.findAll({ where: { runId }, transaction });
+  const blockedJobs = jobs.filter((job) => job.status.isBlocked());
+  if (blockedJobs.length === 0) {
+    return false;
+  }
+
+  // A job can only be decided once the jobs it depends on are decided, and a
+  // workflow declares them in no particular order, so repeat until a pass settles
+  // nothing: each pass carries the statuses it wrote in memory into the next one.
+  const decided = new Set<number>();
+  while (decided.size < blockedJobs.length) {
+    let settled = 0;
+
+    for (const job of blockedJobs) {
+      if (decided.has(Number(job.id))) {
+        continue;
+      }
+
+      // Only the cells of the jobs named by `needs` are read: a blocked job is not a
+      // dependency of anything, and letting it into the pool would keep every
+      // dependent pending forever.
+      const needs = parseStringList(job.needs);
+      const dependencies = jobs.filter((candidate) => needs.includes(candidate.jobId));
+
+      const verdict = resolveNeeds(needs, dependencies);
+      if (verdict === 'pending') {
+        continue;
+      }
+
+      job.status = verdict === 'failed' ? Status.Skipped : Status.Waiting;
+      decided.add(Number(job.id));
+      settled += 1;
+    }
+
+    if (settled === 0) {
+      break;
+    }
+  }
+
+  const skipped = blockedJobs.filter((job) => job.status.isSkipped()).map((job) => Number(job.id));
+  const waiting = blockedJobs.filter((job) => job.status.isWaiting()).map((job) => Number(job.id));
+
+  if (skipped.length > 0) {
+    await ActionRunJob.update({ status: Status.Skipped, stopped: new Date() }, { where: { id: skipped }, transaction });
+  }
+  if (waiting.length > 0) {
+    await ActionRunJob.update({ status: Status.Waiting, stopped: null }, { where: { id: waiting }, transaction });
+  }
+
+  return waiting.length > 0;
 }
 
 /**
@@ -91,14 +197,11 @@ async function needsSatisfied(job: ActionRunJob): Promise<boolean> {
   }
 
   const dependencies = await ActionRunJob.findAll({ where: { runId: job.runId, jobId: needs } });
-  if (dependencies.length !== needs.length) {
+  const verdict = resolveNeeds(needs, dependencies);
+  if (verdict === 'pending') {
     return false;
   }
-  if (!dependencies.every((dependency) => dependency.status.isDone())) {
-    return false;
-  }
-
-  if (!dependencies.every((dependency) => dependency.status.isSuccess())) {
+  if (verdict === 'failed') {
     await job.update({ status: Status.Skipped, stopped: new Date() });
     return false;
   }

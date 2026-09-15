@@ -8,6 +8,7 @@ import type { RunnerService } from '@/gen/runner/v1/services_pb';
 import { sequelize } from '@/lib/sequelize';
 import { ActionRunJob, ActionRunner, ActionTask, ActionTaskOutput, ActionTaskStep, ActionTaskVersion } from '@/models';
 import { Status } from '@/models/actions/status';
+import { resolveBlockedJobs } from '@/services/actions/task';
 
 import { getRunnerModel } from './context';
 
@@ -58,6 +59,12 @@ export const updateTask: MethodImpl<typeof RunnerService.method.updateTask> = as
       }
 
       await ActionRunJob.update({ status, stopped }, { where: { id: task.jobId }, transaction });
+
+      // Finishing a job decides the jobs waiting on it.
+      const job = await ActionRunJob.findByPk(task.jobId, { transaction });
+      if (job) {
+        await resolveBlockedJobs(job.runId, transaction);
+      }
 
       // Finishing a job may have unblocked waiting jobs; bump the versions so idle
       // runners whose tasksVersion already equals latestVersion attempt a PickTask.

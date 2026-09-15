@@ -37,4 +37,4 @@ const seeds: ActionRunJobCreationAttributes[] = [
 await ActionRunJob.sync({ force: true });
 await ActionRunJob.bulkCreate(seeds, { individualHooks: true, validate: true });
 
-export default ActionRunJob;
+export * from '../run_job';

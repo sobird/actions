@@ -20,6 +20,7 @@ export { trimSuffix } from './trimSuffix';
 export { trimPrefix } from './trimPrefix';
 export { logFileName } from './logFileName';
 export { isExecutable } from './isExecutable';
+export { ellipsisDisplayString } from './ellipsisDisplayString';
 export { createSha1Hash, createFnv1aHash } from './hash';
 
 export function* cycle<T>(items: T[]): Generator<T, never, unknown> {

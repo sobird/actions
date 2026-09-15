@@ -9,6 +9,7 @@ import {
   Association,
   type InferAttributes,
   type InferCreationAttributes,
+  type CreationAttributes,
   type NonAttribute,
   type BelongsToGetAssociationMixin,
   type BelongsToSetAssociationMixin,
@@ -18,18 +19,17 @@ import {
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
 import type { Models, ActionRun } from '.';
-import { type Status } from './status.ts';
+import { Status } from './status';
 
-/** These are all the attributes in the ActionRunAttempt model */
-export type ActionRunAttemptAttributes = InferAttributes<ActionRunAttempt>;
-
-/** Some attributes are optional in `ActionRunAttempt.build` and `ActionRunAttempt.create` calls */
-export type ActionRunAttemptCreationAttributes = InferCreationAttributes<ActionRunAttempt>;
+export type ActionRunAttemptCreationAttributes = CreationAttributes<ActionRunAttempt>;
 
 /**
  * ActionRunAttempt represents a job of a run
  */
-class ActionRunAttempt extends BaseModel<ActionRunAttemptAttributes, ActionRunAttemptCreationAttributes> {
+export class ActionRunAttempt extends BaseModel<
+  InferAttributes<ActionRunAttempt>,
+  InferCreationAttributes<ActionRunAttempt>
+> {
   declare runId: number;
   declare repositoryId: number;
   declare attempt: number;
@@ -51,9 +51,7 @@ class ActionRunAttempt extends BaseModel<ActionRunAttemptAttributes, ActionRunAt
   };
 
   declare getActionRun: BelongsToGetAssociationMixin<ActionRun>;
-
   declare setActionRun: BelongsToSetAssociationMixin<ActionRun, bigint>;
-
   declare createActionRun: BelongsToCreateAssociationMixin<ActionRun>;
 }
 
@@ -88,8 +86,21 @@ ActionRunAttempt.init(
       defaultValue: false,
     },
     status: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.ENUM,
+      values: Status.names(),
       allowNull: false,
+      get() {
+        return Status.from(this.getDataValue('status') as unknown as string);
+      },
+      set(value: Status) {
+        this.setDataValue('status', value.toString() as unknown as Status);
+      },
+      validate: {
+        isIn: {
+          args: [Status.names()],
+          msg: `Must be in ${Status.names()}`,
+        },
+      },
     },
     startedAt: DataTypes.DATE,
     stoppedAt: DataTypes.DATE,
@@ -109,5 +120,3 @@ ActionRunAttempt.init(
     ],
   },
 );
-
-export default ActionRunAttempt;
