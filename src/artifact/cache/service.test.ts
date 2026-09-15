@@ -2,6 +2,7 @@ import type { Readable } from 'node:stream';
 
 import sqlite3, { Database, Statement } from 'sqlite3';
 
+import { ReserveStatus } from './contracts.ts';
 import { ArtifactCacheService } from './service.ts';
 import { Storage } from './storage.ts';
 
@@ -9,36 +10,30 @@ let db: Database;
 let service: ArtifactCacheService;
 let storage: Storage;
 
-beforeEach(() => {
+const schema = `
+  CREATE TABLE IF NOT EXISTS caches (
+    id INTEGER PRIMARY KEY,
+    key TEXT NOT NULL,
+    version TEXT NOT NULL,
+    size INTEGER DEFAULT (0),
+    complete INTEGER DEFAULT (0) NOT NULL,
+    updatedAt INTEGER DEFAULT (0) NOT NULL,
+    createdAt INTEGER DEFAULT (0) NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_key ON caches (key);
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_key_version ON caches (key, version);
+`;
+
+beforeEach(async () => {
   db = new sqlite3.Database(':memory:');
-  db.serialize(() => {
-    // 创建表和索引
-    db.run(
-      `CREATE TABLE IF NOT EXISTS caches (
-      id INTEGER PRIMARY KEY, 
-      key TEXT NOT NULL, 
-      version TEXT NOT NULL, 
-      size INTEGER DEFAULT (0), 
-      complete INTEGER DEFAULT (0) NOT NULL, 
-      updatedAt INTEGER DEFAULT (0) NOT NULL, 
-      createdAt INTEGER DEFAULT (0) NOT NULL
-    )`,
-      (err) => {
-        if (err) {
-          console.log(err);
-        }
-      },
-    );
-
-    db.run('CREATE INDEX IF NOT EXISTS idx_key ON caches (key)', (err) => {
+  // 建表要等完成再进用例：原先 fire-and-forget 的 DDL 会和 afterEach 的 close 抢同一个
+  // 连接，出错时也只是打到控制台，用例本身照样跑。
+  await new Promise<void>((resolve, reject) => {
+    db.exec(schema, (err) => {
       if (err) {
-        console.log(err);
-      }
-    });
-
-    db.run('CREATE UNIQUE INDEX IF NOT EXISTS idx_key_version ON caches (key, version)', (err) => {
-      if (err) {
-        console.log(err);
+        reject(err);
+      } else {
+        resolve();
       }
     });
   });
@@ -47,9 +42,17 @@ beforeEach(() => {
   service = new ArtifactCacheService(db, storage);
 });
 
-afterEach(() => {
+afterEach(async () => {
   // Close the database after each test to ensure clean state for the next one
-  db.close();
+  await new Promise<void>((resolve, reject) => {
+    db.close((err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
 });
 
 describe('findCacheEntry', () => {
@@ -117,7 +120,7 @@ describe('findCache', () => {
     vi.spyOn(storage, 'exist').mockImplementationOnce(() => false);
 
     const result = await service.findCache('primaryKey', 'version');
-    expect(result).toBeUndefined();
+    expect(result).toBeNull();
   });
 });
 
@@ -128,23 +131,36 @@ describe('reserveCache', () => {
       return db;
     });
 
-    // vi.spyOn(db, 'run').mockImplementationOnce(function (query, params, cb) {
-    //   cb(null); // Simulate successful insert
-    //   return db;
-    // });
-
     const result = await service.reserveCache('primaryKey', 'version');
-    expect(result).toEqual({ lastID: 1 });
+    expect(result).toEqual({ status: ReserveStatus.Created, cacheId: 1 });
   });
 
-  it('should return a reserved cache if found', async () => {
+  it('should report a reservation that never started uploading', async () => {
     vi.spyOn(db, 'get').mockImplementationOnce((query, params, cb) => {
       cb(null, { id: 1, key: 'primaryKey', version: 'version', complete: false });
       return db;
     });
 
     const result = await service.reserveCache('primaryKey', 'version');
-    expect(result).toBeUndefined();
+    expect(result).toEqual({
+      status: ReserveStatus.Exists,
+      cacheId: 1,
+      error: 'Cache id 1 already reserved, but did not start uploading',
+    });
+  });
+
+  it('should report a cache that was already uploaded', async () => {
+    vi.spyOn(db, 'get').mockImplementationOnce((query, params, cb) => {
+      cb(null, { id: 1, key: 'primaryKey', version: 'version', complete: true });
+      return db;
+    });
+
+    const result = await service.reserveCache('primaryKey', 'version');
+    expect(result).toEqual({
+      status: ReserveStatus.Completed,
+      cacheId: 1,
+      error: 'Cache id 1 was already uploaded',
+    });
   });
 });
 
