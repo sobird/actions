@@ -20,10 +20,10 @@ jobs:
     secrets: inherit
 
   reusable-workflow-with-on-string-notation:
-    uses: sobird/actions/test/workflows/workflow_call/no-inputs-string.yml
+    uses: sobird/actions/test/workflows/workflow_call/no-inputs-string.yml@master
 
   reusable-workflow-with-on-array-notation:
-    uses: sobird/actions/test/workflows/workflow_call/no-inputs-array.yml
+    uses: sobird/actions/test/workflows/workflow_call/no-inputs-array.yml@master
 
   output-test:
     runs-on: ubuntu-latest

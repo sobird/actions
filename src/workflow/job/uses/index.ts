@@ -44,7 +44,7 @@ class Uses extends Reusable {
     }
 
     const repositoryDir = path.join(runner.ActionCacheDir, this.repository, this.ref);
-    return Git.CloneExecutor(repositoryDir, this.url, this.ref).finally(
+    return Git.CloneExecutor(repositoryDir, this.repositoryUrl, this.ref).finally(
       Uses.ReusableWorkflowExecutor(path.join(repositoryDir, this.path)),
     );
   }
@@ -65,7 +65,7 @@ class Uses extends Reusable {
     return new Executor(async (runner) => {
       const { actionCache } = runner!.config;
       if (actionCache) {
-        await actionCache.fetch(reusable.url, reusable.repository, reusable.ref);
+        await actionCache.fetch(reusable.repositoryUrl, reusable.repository, reusable.ref);
         const archive = await actionCache.archive(reusable.repository, reusable.ref, reusable.path);
         const entry = await readEntry(archive);
         if (entry) {

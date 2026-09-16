@@ -30,7 +30,14 @@ export default class Reusable {
     const matches = /^(https?:\/\/[^/?#]+\/)?([^/@]+)(?:\/([^/@]+))?(?:\/([^@]*))?(?:@(.*))?$/.exec(uses);
 
     if (matches) {
-      const [, url, owner = '', repo = '', path = '', ref = ''] = matches;
+      const [, url, owner = '', repo = '', path = '', ref] = matches;
+
+      if (!ref) {
+        throw new Error(
+          `'uses' key references invalid workflow path '${this.uses}'. Must start with './' if it's a local workflow, or must start with '<org>/<repo>/' and include an '@' if it's a remote workflow`,
+        );
+      }
+
       this.url = url;
       this.owner = owner;
       this.repo = repo;
