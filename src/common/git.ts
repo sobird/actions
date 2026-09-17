@@ -81,10 +81,6 @@ class Git {
     return logUsername || gitUsername;
   }
 
-  async fileSha(filename: string) {
-    return (await this.git.log(['--pretty=%H', '-1', filename])).latest?.hash;
-  }
-
   /**
    * 确认 dir 里是一个能用的仓库，没有就克隆，返回 simple-git 实例。
    *

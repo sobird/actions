@@ -54,3 +54,20 @@ describe('workflow planner', () => {
     expect(events.length).toBe(2);
   });
 });
+
+describe('workflow planner sha', () => {
+  const dir = resolve(__dirname, './__mocks__/data/planner');
+
+  it('stamps the caller-known sha onto every collected workflow', async () => {
+    const planner = await WorkflowPlanner.Collect(dir, false, 'abc123');
+
+    expect(planner.workflows.map((workflow) => workflow.sha)).toEqual(['abc123', 'abc123']);
+  });
+
+  it('leaves the sha unset when the caller does not know it', async () => {
+    // planner 不再自己去猜：这些文件属于哪个仓库只有调用方知道
+    const planner = await WorkflowPlanner.Collect(dir);
+
+    expect(planner.workflows.map((workflow) => workflow.sha)).toEqual([undefined, undefined]);
+  });
+});

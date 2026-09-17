@@ -407,7 +407,7 @@ class Workflow extends Yaml {
     }
 
     if (typeof on === 'object') {
-      return new WorkflowCall(on.workflow_call);
+      return new WorkflowCall(on.workflow_call ?? {});
     }
   }
 

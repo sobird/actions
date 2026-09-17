@@ -8,13 +8,10 @@
 import fs from 'node:fs';
 import { resolve, parse, join, basename } from 'node:path';
 
-import Git from '@/common/git';
 import logger from '@/common/logger';
 import Workflow from '@/workflow';
 
 import Plan from './plan';
-
-const git = new Git('.');
 
 /** Planner contains methods for creating plans */
 class WorkflowPlanner {
@@ -85,8 +82,11 @@ class WorkflowPlanner {
 
   /**
    * will load a specific workflow, all workflows from a directory or all workflows from a directory and its subdirectories
+   *
+   * `sha` 是这些文件所在的那个提交（`github.workflow_sha` 的来源），由调用方给出：本模块不知道自己
+   * 被谁、从哪个目录调用，而 remote reusable workflow 的文件压根不在 caller 的仓库里（在 action 缓存里）。
    */
-  static async Collect(path: string, recursive: boolean = false) {
+  static async Collect(path: string, recursive: boolean = false, sha?: string) {
     const absPath = path || resolve(path);
     const stat = fs.statSync(absPath);
 
@@ -103,11 +103,7 @@ class WorkflowPlanner {
           const filename = join(file.parentPath, file.name);
           const workflow = Workflow.Read(filename);
           workflow.file = filename;
-          try {
-            workflow.sha = await git.fileSha(filename);
-          } catch (error) {
-            console.log(error);
-          }
+          workflow.sha = sha;
           workflows.push(workflow);
         }
       }
@@ -115,11 +111,7 @@ class WorkflowPlanner {
       logger.debug(`Loading workflow '${absPath}'`);
       const workflow = Workflow.Read(absPath);
       workflow.file = basename(absPath);
-      try {
-        workflow.sha = await git.fileSha(absPath);
-      } catch (error) {
-        console.log(error);
-      }
+      workflow.sha = sha;
       workflows.push(workflow);
     }
 

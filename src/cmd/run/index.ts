@@ -234,7 +234,11 @@ export const runCommand = new Command('run')
       return bugReportOption(version);
     }
 
-    const planner = await WorkflowPlanner.Collect(options.workflows, options.recursive);
+    // workflow_sha 和 github.sha 同源，都是触发这次运行的提交：被加载的文件属于哪个仓库只有这里知道
+    const git = new Git(options.workdir);
+    const sha = await git.revision();
+
+    const planner = await WorkflowPlanner.Collect(options.workflows, options.recursive, sha);
     // collect all events from loaded workflows
     const { events } = planner;
 
@@ -314,15 +318,12 @@ export const runCommand = new Command('run')
     // this.image = this.hosted ? SELF_HOSTED : this.image;
 
     // config
-    const git = new Git(options.workdir);
     const author = await git.author();
     const repoInfo = await git.repoInfo();
     const ref = (await git.ref()) || '';
 
     const actor = options.actor || author || 'actor';
     const actor_id = generateId(actor);
-
-    const sha = await git.revision();
 
     const repository_owner = repoInfo.owner || 'owner';
     const repository = `${repository_owner}/${repoInfo.name}`;
