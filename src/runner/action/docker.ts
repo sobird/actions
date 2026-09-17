@@ -70,8 +70,13 @@ class DockerAction extends Action {
           } catch (err) {
             logger.error((err as Error).message);
             if (runner.config.actionCache) {
-              await runner.config.actionCache.fetch(uses.repositoryUrl, uses.repository, uses.ref);
-              archive = await runner.config.actionCache.archive(uses.repository, uses.ref, uses.path);
+              const sha = await runner.config.actionCache.fetch(
+                uses.repositoryUrl,
+                uses.repository,
+                uses.ref,
+                uses.token,
+              );
+              archive = await runner.config.actionCache.archive(uses.repository, sha, uses.path);
               actionPath = uses.path;
             }
           }

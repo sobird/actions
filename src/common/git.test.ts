@@ -1,10 +1,11 @@
+import fs from 'node:fs';
 import path from 'node:path';
 
 import { SimpleGit } from 'simple-git';
 
 import { createEachDir } from '@/test/__helpers__';
 
-import Git from './git';
+import Git, { redactUrl } from './git';
 
 vi.setConfig({
   testTimeout: 20000,
@@ -94,11 +95,55 @@ describe('Test Git', () => {
 
   it('git clone with token test case', async () => {
     const dir = path.join(testTmp, 'git-clone-token-test');
-    const git = new Git(dir);
-    await git.clone('https://gitea.com/sobird/actions-test', 'main', 'thisistoken');
+    const git = new Git(dir, 'thisistoken');
+    await git.clone('https://gitea.com/sobird/actions-test', 'main');
 
     const isRepo = await git.git.checkIsRepo();
     expect(isRepo).toBe(true);
+    // 凭据交给 credential helper，公开仓库匿名就能拉，token 也不会落进工作区的 .git/config
+    expect(fs.readFileSync(path.join(dir, '.git/config'), 'utf8')).not.toContain('thisistoken');
+  });
+
+  it('re-clones a cached repository that came from another url', async () => {
+    const source = async (name: string) => {
+      const sourceDir = path.join(testTmp, `source-${name}`);
+      const git = new Git(sourceDir);
+      await git.git.init(['--initial-branch', 'master']);
+      fs.writeFileSync(path.join(sourceDir, `${name}.txt`), name);
+      await git.git.add('.');
+      await git.git.commit(`commit of ${name}`);
+      return sourceDir;
+    };
+
+    const first = await source('first');
+    const second = await source('second');
+    const dir = path.join(testTmp, 're-clone');
+    const git = new Git(dir);
+
+    await git.clone(first, 'master');
+    expect(await git.remoteURL()).toBe(first);
+
+    // 同一个目录换了来源：应当丢弃旧仓库重新克隆，而不是直接复用别的主机的内容
+    await git.clone(second, 'master');
+    expect(await git.remoteURL()).toBe(second);
+    expect(fs.existsSync(path.join(dir, 'second.txt'))).toBe(true);
+    expect(fs.existsSync(path.join(dir, 'first.txt'))).toBe(false);
+  });
+
+  it('throws when the clone fails', async () => {
+    const dir = path.join(testTmp, 'git-clone-failure');
+    const git = new Git(dir);
+
+    // 指向一个不存在的本地仓库，git 会立刻失败，不需要网络
+    await expect(git.clone(path.join(testTmp, 'not-a-repository'))).rejects.toThrow(/Unable to clone/);
+  });
+
+  it('redacts the credentials in a url before logging it', () => {
+    expect(redactUrl('https://token:s3cr3t@gitea.com/sobird/actions-test')).toBe(
+      'https://gitea.com/sobird/actions-test',
+    );
+    expect(redactUrl('https://gitea.com/sobird/actions-test')).toBe('https://gitea.com/sobird/actions-test');
+    expect(redactUrl('/tmp/actions-test')).toBe('/tmp/actions-test');
   });
 });
 

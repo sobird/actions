@@ -4,6 +4,12 @@
  * sobird<i@sobird.me> at 2024/05/07 18:10:39 created.
  */
 
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+import simpleGit from 'simple-git';
+
 import { createEachDir } from '@/test/__helpers__';
 import { readTar } from '@/utils/readTar';
 
@@ -59,5 +65,71 @@ describe('Action Cache Tests', () => {
         expect(header.size).not.equal(0);
       });
     });
+  });
+});
+
+/** 建一个本地 origin 仓库，作为 fetch 的远端，避免测试依赖网络。 */
+async function createOrigin() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'actions-origin-'));
+  const git = simpleGit(dir);
+  await git.init();
+
+  const branch = (await git.raw(['symbolic-ref', '--short', 'HEAD'])).trim();
+  const commit = async (message: string) => {
+    fs.writeFileSync(path.join(dir, 'a.txt'), `${message}\n`);
+    await git.add('a.txt');
+    await git.commit(message);
+    return (await git.revparse('HEAD')).trim();
+  };
+
+  return { dir, branch, commit };
+}
+
+describe('Action Cache Ref Resolution Tests', () => {
+  // its own temp dir, so that it does not race the cache tests above for `os.tmpdir()/actions`
+  const cacheDir = createEachDir('actions-ref');
+  const actionCache = new ActionCache(cacheDir);
+
+  it('resolves a reused cache to the latest commit of the ref', async () => {
+    const origin = await createOrigin();
+
+    try {
+      const first = await origin.commit('one');
+      expect(await actionCache.fetch(origin.dir, 'owner/repo', origin.branch)).toBe(first);
+
+      const sha = await origin.commit('two');
+      const second = await actionCache.fetch(origin.dir, 'owner/repo', origin.branch);
+      expect(second).not.toBe(first);
+      expect(second).toBe(sha);
+
+      let body = '';
+      await readTar(await actionCache.archive('owner/repo', second, 'a.txt'), (header, content) => {
+        if (header.path === 'a.txt') {
+          body = content.toString();
+        }
+      });
+      expect(body).toBe('two\n');
+
+      // the temporary branch each fetch creates is cleaned up, so the clone's own branch is the only one left
+      const repo = simpleGit(path.join(cacheDir, 'owner/repo.git'));
+      expect((await repo.branchLocal()).all).toEqual([origin.branch]);
+    } finally {
+      fs.rmSync(origin.dir, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps the token out of the bare repository config', async () => {
+    const origin = await createOrigin();
+
+    try {
+      await origin.commit('one');
+      await actionCache.fetch(origin.dir, 'owner/token-repo', origin.branch, 's3cr3t-token');
+
+      const repoPath = path.join(cacheDir, 'owner/token-repo.git');
+      expect((await simpleGit(repoPath).raw(['remote', 'get-url', 'origin'])).trim()).toBe(origin.dir);
+      expect(fs.readFileSync(path.join(repoPath, 'config'), 'utf8')).not.toContain('s3cr3t-token');
+    } finally {
+      fs.rmSync(origin.dir, { recursive: true, force: true });
+    }
   });
 });

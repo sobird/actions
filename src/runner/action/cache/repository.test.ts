@@ -10,6 +10,7 @@ import path from 'node:path';
 
 import Git from '@/common/git';
 import { readTar } from '@/utils/readTar';
+import { listEntry, readEntry } from '@/utils/tar';
 
 import ActionCacheRepository from './repository';
 
@@ -115,5 +116,38 @@ describe('ActionCacheRepository With repositories map Tests', async () => {
         assert.ok(content, 'content should not be empty');
       });
     });
+  });
+});
+
+describe('ActionCacheRepository with a local override', () => {
+  const localDir = fs.mkdtempSync(path.join(os.tmpdir(), 'actions-local-'));
+  const repository = 'sobird/actions-test';
+  const repoURL = 'https://gitea.com/sobird/actions-test';
+
+  beforeAll(() => {
+    fs.mkdirSync(path.join(localDir, 'test/workflows'), { recursive: true });
+    fs.writeFileSync(path.join(localDir, 'test/workflows/inputs.yml'), 'name: inputs\n');
+  });
+
+  afterAll(() => {
+    fs.rmSync(localDir, { recursive: true, force: true });
+  });
+
+  it('archives a workflow referenced by file path', async () => {
+    const actionCache = new ActionCacheRepository(testTmp, { [`${repoURL}@HEAD`]: localDir });
+    const ref = await actionCache.fetch(repoURL, repository);
+
+    const entry = await readEntry(await actionCache.archive(repository, ref, 'test/workflows/inputs.yml'));
+
+    expect(entry && entry.body).toBe('name: inputs\n');
+  });
+
+  it('archives a directory relative to the repository root', async () => {
+    const actionCache = new ActionCacheRepository(testTmp, { [`${repoURL}@HEAD`]: localDir });
+    const ref = await actionCache.fetch(repoURL, repository);
+
+    const names = await listEntry(await actionCache.archive(repository, ref, 'test'));
+
+    expect(names).toEqual(['test/workflows/inputs.yml']);
   });
 });

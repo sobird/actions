@@ -26,6 +26,11 @@ export default class Reusable {
       return;
     }
 
+    // a docker:// reference names a container image, so it has no repository, path or ref to parse
+    if (this.isDocker) {
+      return;
+    }
+
     // http(s)://host/{owner}/{repo}/{path}@{ref}
     const matches = /^(https?:\/\/[^/?#]+\/)?([^/@]+)(?:\/([^/@]+))?(?:\/([^@]*))?(?:@(.*))?$/.exec(uses);
 
@@ -58,14 +63,9 @@ export default class Reusable {
 
   get repositoryUrl() {
     try {
-      const url = new URL(this.repository, this.url);
-
-      if (this.token) {
-        url.username = 'token';
-        url.password = this.token;
-      }
-
-      return url.toString();
+      // 凭据不在这里拼进 URL：那会被 `git clone` 落进 `.git/config`，也会被打进日志。
+      // 需要认证时由调用方把 `token` 一并交给 Git / ActionCache。
+      return new URL(this.repository, this.url).toString();
     } catch {
       return '';
     }
@@ -80,6 +80,10 @@ export default class Reusable {
 
   get isLocal() {
     return this.uses.startsWith('./');
+  }
+
+  get isDocker() {
+    return this.uses.startsWith('docker://');
   }
 
   get isCheckout() {

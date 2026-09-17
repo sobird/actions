@@ -577,3 +577,23 @@ describe('workflow plan jobs', () => {
     expect(jobIds).toEqual([]);
   });
 });
+
+describe('docker:// step references', () => {
+  it('loads a workflow whose steps name a container image', () => {
+    const workflow = Workflow.Load(`
+name: docker steps
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker://alpine:latest
+      - uses: docker://nginx:1.25
+`);
+
+    expect(workflow.jobs.test.steps.toJSON().map((step) => step.uses)).toEqual([
+      'docker://alpine:latest',
+      'docker://nginx:1.25',
+    ]);
+  });
+});

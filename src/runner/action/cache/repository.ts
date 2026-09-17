@@ -39,9 +39,11 @@ class ActionCacheRepository extends ActionCache {
 
   async archive(repository: string, ref: string, subPath: string = '.') {
     const repositoryKey = `${repository}@${ref}`;
-    if (this.cacheDirCache[repositoryKey]) {
-      const file = path.join(this.cacheDirCache[repositoryKey], subPath);
-      return tar.create({ portable: true, cwd: file }, ['']) as unknown as Readable;
+    const localDir = this.cacheDirCache[repositoryKey];
+    if (localDir) {
+      // mirror `git archive --format=tar <ref> <subPath>`: pack from the repository root so the entries keep
+      // the sub path, which is what a single file path and a directory path are both expected to produce
+      return tar.create({ portable: true, cwd: localDir }, [path.normalize(subPath || '.')]) as unknown as Readable;
     }
     return super.archive(repository, ref, subPath);
   }

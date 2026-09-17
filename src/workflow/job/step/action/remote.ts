@@ -42,7 +42,9 @@ class StepActionRemote extends StepAction {
       }
 
       const repositoryDir = path.join(runner.ActionCacheDir, uses.repository, uses.ref);
-      return Git.CloneExecutor(repositoryDir, uses.repositoryUrl, uses.ref).finally(this.reusableAction(uses));
+      return Git.CloneExecutor(repositoryDir, uses.repositoryUrl, uses.ref, uses.token).finally(
+        this.reusableAction(uses),
+      );
     }).ifNot(this.SkipCheckoutSelf);
   }
 
@@ -109,8 +111,8 @@ class StepActionRemote extends StepAction {
 
       const { actionCache } = runner.config;
       if (actionCache) {
-        await actionCache.fetch(reusable.repositoryUrl, reusable.repository, reusable.ref);
-        const archive = await actionCache.archive(reusable.repository, reusable.ref, '.');
+        const sha = await actionCache.fetch(reusable.repositoryUrl, reusable.repository, reusable.ref, reusable.token);
+        const archive = await actionCache.archive(reusable.repository, sha, '.');
         const actionDir = path.join(WellKnownDirectory.Actions, reusable.repository, reusable.ref);
 
         return runner.container?.putArchive(actionDir, archive).next(this.LoadAction(actionDir));
