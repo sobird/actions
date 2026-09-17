@@ -342,10 +342,8 @@ describe('Compose Executor', () => {
     let count = 0;
     const executor = new Executor(async (ctx, next) => {
       count += 1;
-      console.log('pre', count);
       await next?.();
       count += 1;
-      console.log('post', count);
     });
 
     const composeExecutor = Executor.Compose(executor, executor);

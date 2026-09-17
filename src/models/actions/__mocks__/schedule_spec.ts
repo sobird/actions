@@ -21,4 +21,4 @@ const seeds: ActionScheduleSpecCreationAttributes[] = [
 await ActionScheduleSpec.sync({ force: true });
 await ActionScheduleSpec.bulkCreate(seeds, { individualHooks: true, validate: true });
 
-export default ActionScheduleSpec;
+export * from '../schedule_spec';

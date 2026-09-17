@@ -1,23 +1,27 @@
-import { Workflow } from '@/index.js';
 import { ActionSchedule } from '@/models/actions';
 
 vi.mock('@/lib/sequelize');
 vi.mock('./schedule');
+vi.mock('./schedule_spec');
 
-const scheduleWorkflow = Workflow.Read('./test/data/workflows/on.schedule.yml');
+describe('ActionSchedule', () => {
+  it('findAll returns the schedules the fixture seeds', async () => {
+    const schedules = await ActionSchedule.findAll({ order: [['id', 'ASC']] });
 
-console.log('scheduleWorkflow.on', scheduleWorkflow.events);
-const push = scheduleWorkflow.onEvent('push');
-console.log('push', push);
+    expect(schedules.map((schedule) => schedule.title)).toEqual(['schedule title 1111', 'schedule title 2']);
+  });
 
-if (typeof scheduleWorkflow.on === 'object') {
-  if (typeof scheduleWorkflow.on.push === 'object') {
-    console.log('first', scheduleWorkflow.on.push.branches);
-  }
-}
-console.log('scheduleWorkflow.onEvent', scheduleWorkflow.onEvent('push'));
+  it('findByIds returns only the rows asked for', async () => {
+    const schedules = await ActionSchedule.findByIds([2]);
 
-it('ddd', async () => {
-  const rows = await ActionSchedule.findOne();
-  console.log('rows', rows);
+    expect(schedules.map((schedule) => Number(schedule.id))).toEqual([2]);
+  });
+
+  it('lists the specs attached to a schedule', async () => {
+    const schedule = await ActionSchedule.findOne({ where: { title: 'schedule title 1111' } });
+    const specs = await schedule!.getActionScheduleSpecs();
+
+    // fixture 的两条 spec 都挂在第一条 schedule 上
+    expect(specs.map((spec) => spec.spec).toSorted()).toEqual(['30 5 * * 1,3', '30 5 * * 2,4']);
+  });
 });

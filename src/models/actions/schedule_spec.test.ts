@@ -1,13 +1,38 @@
 import { ActionSchedule, ActionScheduleSpec } from '@/models/actions';
 
-// needs mock
+vi.mock('@/lib/sequelize');
 vi.mock('./schedule');
 vi.mock('./schedule_spec');
 
-it('ddd', async () => {
-  // console.log('sequelize', sequelize);
-  console.log('ActionScheduleSpec', await ActionSchedule.findAll());
+describe('ActionScheduleSpec', () => {
+  it('returns every spec of a schedule with its cron expression', async () => {
+    const specs = await ActionScheduleSpec.findAll({ where: { scheduleId: 1 } });
 
-  const rows = await ActionScheduleSpec.findAll();
-  console.log('rows', rows);
+    expect(specs.map((spec) => spec.spec)).toEqual(['30 5 * * 1,3', '30 5 * * 2,4']);
+    expect(specs.map((spec) => Number(spec.repositoryId))).toEqual([4, 4]);
+  });
+
+  it('findByIds looks specs up by primary key', async () => {
+    const specs = await ActionScheduleSpec.findByIds([1]);
+
+    expect(specs.map((spec) => spec.spec)).toEqual(['30 5 * * 1,3']);
+  });
+
+  it('resolves the schedule a spec belongs to', async () => {
+    const spec = (await ActionScheduleSpec.findOne({ where: { spec: '30 5 * * 2,4' } }))!;
+
+    // associate 里没写 alias，sequelize 按模型名生成 getActionSchedule
+    const schedule = await spec.getActionSchedule();
+
+    expect(Number(schedule.id)).toBe(1);
+    expect(schedule.title).toBe('schedule title 1111');
+  });
+
+  it('lists the specs from the schedule side of the association', async () => {
+    const schedule = (await ActionSchedule.findOne({ where: { title: 'schedule title 1111' } }))!;
+
+    const specs = await schedule.getActionScheduleSpecs();
+
+    expect(specs.map((spec) => spec.spec)).toEqual(['30 5 * * 1,3', '30 5 * * 2,4']);
+  });
 });

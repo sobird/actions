@@ -26,7 +26,6 @@ describe('listFilesInDirectorySync', () => {
 
   test('includes all files in the directory in the summary', () => {
     const fileSummary = summarizeFilesInDirectorySync('/path/to');
-    console.log('fileSummary', fileSummary);
     expect(fileSummary.length).toBe(2);
   });
 });

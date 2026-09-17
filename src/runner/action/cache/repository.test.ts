@@ -1,5 +1,5 @@
 /**
- * cache.test.ts
+ * repository.test.ts
  *
  * sobird<i@sobird.me> at 2024/05/07 18:10:39 created.
  */
@@ -7,147 +7,104 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { Readable } from 'node:stream';
 
-import Git from '@/common/git';
-import { readTar } from '@/utils/readTar';
+import { createEachDir } from '@/test/__helpers__';
 import { listEntry, readEntry } from '@/utils/tar';
 
+import type ActionCache from '.';
 import ActionCacheRepository from './repository';
 
-vi.setConfig({
-  testTimeout: 20000,
-});
+const REPOSITORY = 'sobird/actions-test';
+const REPO_URL = 'https://gitea.com/sobird/actions-test';
 
-const testTmp = path.join(os.tmpdir(), 'actions');
-const repoTmp = path.join(os.tmpdir(), 'repositorys');
+// 自己的临时目录：这份缓存的目录原来是共享的 os.tmpdir()/actions，afterAll 里被整个删掉，
+// 会和同时在用它的测试文件互相拆台
+const cacheDir = createEachDir('action-cache-repository');
 
-beforeAll(() => {
-  fs.mkdirSync(testTmp, { recursive: true });
-});
-afterAll(() => {
-  fs.rmSync(testTmp, { recursive: true });
-  fs.rmSync(repoTmp, { recursive: true });
-});
+/** 映射指向的本地目录，内容按文件树给定，用完即删 */
+function createLocalDir(files: Record<string, string>) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'actions-repository-'));
+  onTestFinished(() => fs.rmSync(dir, { recursive: true, force: true }));
 
-describe('ActionCacheRepository Tests', () => {
-  const actionCache = new ActionCacheRepository(testTmp);
+  for (const [name, body] of Object.entries(files)) {
+    fs.mkdirSync(path.dirname(path.join(dir, name)), { recursive: true });
+    fs.writeFileSync(path.join(dir, name), body);
+  }
+  return dir;
+}
 
-  const repository = 'sobird/actions-test';
-  const repo = 'https://gitea.com/sobird/actions-test';
-  const refs = [
-    {
-      name: 'Fetch Branch Name',
-      repository,
-      repo,
-      ref: 'main',
-    },
-    {
-      name: 'Fetch Branch Name Absolutely',
-      repository,
-      repo,
-      ref: 'refs/heads/master',
-    },
-    {
-      name: 'Fetch HEAD',
-      repository,
-      repo,
-      ref: 'HEAD',
-    },
-    {
-      name: 'Fetch Sha',
-      repository,
-      repo,
-      ref: '62f365c5242878ab2a5ff76c047724548ea56664',
-    },
-  ];
+/** 不碰磁盘和网络的 parent，只记录调用，用来断言没命中映射时是否原样转发 */
+function createParent() {
+  return {
+    fetch: vi.fn().mockResolvedValue('parent-sha'),
+    archive: vi.fn().mockResolvedValue(Readable.from('')),
+  } as unknown as ActionCache;
+}
 
-  refs.forEach((ref) => {
-    it(ref.name, async () => {
-      const sha = await actionCache.fetch(ref.repo, ref.repository, ref.ref);
-      assert.notEqual(sha, '', 'SHA should not be empty');
+describe('ActionCacheRepository', () => {
+  it('serves a repository mapped by its exact url and ref', async () => {
+    const localDir = createLocalDir({ 'test/workflows/inputs.yml': 'name: inputs\n' });
+    const parent = createParent();
+    const actionCache = new ActionCacheRepository(cacheDir, { [`${REPO_URL}@HEAD`]: localDir }, parent);
 
-      const stream = await actionCache.archive(ref.repo, ref.repository, sha);
-      await readTar(stream, (header, content) => {
-        assert.ok(content, 'content should not be empty');
-        expect(header.size).not.equal(0);
-      });
-    });
-  });
-});
+    // 命中映射时 fetch 返回的就是当初请求的那个 ref，archive 再把它当 revision
+    await expect(actionCache.fetch(REPO_URL, REPOSITORY)).resolves.toBe('HEAD');
 
-describe('ActionCacheRepository With repositories map Tests', async () => {
-  const repoDir = path.join(repoTmp, 'gitea/runner-images');
-  Git.Clone(repoDir, 'https://gitea.com/gitea/runner-images');
-  const repositorys = {
-    'https://gitea.com/gitea/runner-images@HEAD': repoDir,
-  };
-  const actionCache = new ActionCacheRepository(testTmp, repositorys);
-
-  const repositoryTests = [
-    {
-      name: 'gitea/runner-images',
-      repository: 'gitea/runner-images',
-      repo: 'https://gitea.com/gitea/runner-images',
-    },
-    {
-      name: 'gitea/homebrew-gitea',
-      repository: 'gitea/homebrew-gitea',
-      repo: 'https://gitea.com/gitea/homebrew-gitea',
-    },
-    {
-      name: 'gitea/tea',
-      repository: 'gitea/tea',
-      repo: 'https://gitea.com/gitea/tea',
-    },
-    {
-      name: 'gitea/log',
-      repository: 'gitea/log',
-      repo: 'https://gitea.com/gitea/log',
-    },
-  ];
-
-  repositoryTests.forEach((repository) => {
-    it(repository.name, async () => {
-      const sha = await actionCache.fetch(repository.repo, repository.repository);
-      assert.notEqual(sha, '', 'SHA should not be empty');
-
-      const stream = await actionCache.archive(repository.repo, repository.repository, sha);
-      await readTar(stream, async (header, content) => {
-        assert.ok(content, 'content should not be empty');
-      });
-    });
-  });
-});
-
-describe('ActionCacheRepository with a local override', () => {
-  const localDir = fs.mkdtempSync(path.join(os.tmpdir(), 'actions-local-'));
-  const repository = 'sobird/actions-test';
-  const repoURL = 'https://gitea.com/sobird/actions-test';
-
-  beforeAll(() => {
-    fs.mkdirSync(path.join(localDir, 'test/workflows'), { recursive: true });
-    fs.writeFileSync(path.join(localDir, 'test/workflows/inputs.yml'), 'name: inputs\n');
-  });
-
-  afterAll(() => {
-    fs.rmSync(localDir, { recursive: true, force: true });
-  });
-
-  it('archives a workflow referenced by file path', async () => {
-    const actionCache = new ActionCacheRepository(testTmp, { [`${repoURL}@HEAD`]: localDir });
-    const ref = await actionCache.fetch(repoURL, repository);
-
-    const entry = await readEntry(await actionCache.archive(repoURL, repository, ref, 'test/workflows/inputs.yml'));
-
+    const entry = await readEntry(await actionCache.archive(REPO_URL, REPOSITORY, 'HEAD', 'test/workflows/inputs.yml'));
     expect(entry && entry.body).toBe('name: inputs\n');
+    expect(parent.fetch).not.toHaveBeenCalled();
   });
 
-  it('archives a directory relative to the repository root', async () => {
-    const actionCache = new ActionCacheRepository(testTmp, { [`${repoURL}@HEAD`]: localDir });
-    const ref = await actionCache.fetch(repoURL, repository);
+  it('serves a repository mapped by the path of its url', async () => {
+    const localDir = createLocalDir({ 'a.txt': 'mapped\n' });
+    const parent = createParent();
+    // 映射的键也可以只写 owner/repo，url 里的 path 用来匹配
+    const actionCache = new ActionCacheRepository(cacheDir, { [`${REPOSITORY}@HEAD`]: localDir }, parent);
 
-    const names = await listEntry(await actionCache.archive(repoURL, repository, ref, 'test'));
+    await expect(actionCache.fetch(REPO_URL, REPOSITORY)).resolves.toBe('HEAD');
 
-    expect(names).toEqual(['test/workflows/inputs.yml']);
+    const entry = await readEntry(await actionCache.archive(REPO_URL, REPOSITORY, 'HEAD', 'a.txt'));
+    expect(entry && entry.body).toBe('mapped\n');
+    expect(parent.fetch).not.toHaveBeenCalled();
+  });
+
+  it('archives a mapped directory from the repository root, keeping the sub path', async () => {
+    const localDir = createLocalDir({
+      'test/workflows/inputs.yml': 'name: inputs\n',
+      'test/actions/hello/action.yml': 'name: hello\n',
+    });
+    const parent = createParent();
+    const actionCache = new ActionCacheRepository(cacheDir, { [`${REPO_URL}@HEAD`]: localDir }, parent);
+
+    const ref = await actionCache.fetch(REPO_URL, REPOSITORY);
+    // 从仓库根打包，条目因此保留 test/ 这一层，跟 `git archive <ref> test` 的输出一致
+    const names = (await listEntry(await actionCache.archive(REPO_URL, REPOSITORY, ref, 'test'))) ?? [];
+
+    // tar 的条目顺序跟着 readdir 走，排序后比较
+    expect(names.toSorted()).toEqual(['test/actions/hello/action.yml', 'test/workflows/inputs.yml']);
+    expect(parent.archive).not.toHaveBeenCalled();
+  });
+
+  it('forwards to the parent when the repository is not mapped', async () => {
+    const parent = createParent();
+    // 映射里只有 main，下面的 HEAD 和本地路径都不该命中
+    const actionCache = new ActionCacheRepository(cacheDir, { [`${REPO_URL}@main`]: '/tmp/elsewhere' }, parent);
+
+    await expect(actionCache.fetch(REPO_URL, REPOSITORY)).resolves.toBe('parent-sha');
+    await expect(actionCache.fetch('/tmp/local-repo', REPOSITORY, 'main', 'the-token')).resolves.toBe('parent-sha');
+
+    expect(parent.fetch).toHaveBeenNthCalledWith(1, REPO_URL, REPOSITORY, 'HEAD', undefined);
+    expect(parent.fetch).toHaveBeenNthCalledWith(2, '/tmp/local-repo', REPOSITORY, 'main', 'the-token');
+  });
+
+  it('forwards archive to the parent for a repository it never fetched', async () => {
+    const parent = createParent();
+    // 映射里有这个仓库，但这次运行没 fetch 过它，cacheDirCache 里就没有它的目录
+    const actionCache = new ActionCacheRepository(cacheDir, { [`${REPO_URL}@HEAD`]: '/tmp/elsewhere' }, parent);
+
+    await actionCache.archive(REPO_URL, REPOSITORY, 'HEAD');
+
+    expect(parent.archive).toHaveBeenCalledWith(REPO_URL, REPOSITORY, 'HEAD', '.');
   });
 });

@@ -39,13 +39,13 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   declare scheduleId: CreationOptional<bigint>;
   declare ref: string;
   declare commitSha: string;
-  declare isForkPullRequest: boolean;
-  declare needApproval: boolean;
+  declare isForkPullRequest: CreationOptional<boolean>;
+  declare needApproval: CreationOptional<boolean>;
   declare approvedBy: CreationOptional<bigint | null>;
   declare eventName: string;
   declare eventPayload: CreationOptional<string>;
   declare triggerEvent: CreationOptional<string>;
-  declare status: Status;
+  declare status: CreationOptional<Status>;
   declare version: CreationOptional<string>;
 
   declare rawConcurrency: CreationOptional<string>;

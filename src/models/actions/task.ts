@@ -77,27 +77,28 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
   // Since TS cannot determine model association at compile time
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
-  declare getActionTaskSteps: HasManyGetAssociationsMixin<ActionTaskStep>;
+  // 名字跟着 associate 里的 alias 走：alias 是 'steps'，sequelize 生成的就是 getSteps 这一组
+  declare getSteps: HasManyGetAssociationsMixin<ActionTaskStep>;
   /** Remove all previous associations and set the new ones */
-  declare setActionTaskSteps: HasManySetAssociationsMixin<ActionTaskStep, bigint>;
-  declare addActionTaskStep: HasManyAddAssociationMixin<ActionTaskStep, bigint>;
-  declare addActionTaskSteps: HasManyAddAssociationsMixin<ActionTaskStep, bigint>;
-  declare removeActionTaskStep: HasManyRemoveAssociationMixin<ActionTaskStep, bigint>;
-  declare removeActionTaskSteps: HasManyRemoveAssociationsMixin<ActionTaskStep, bigint>;
-  declare hasActionTaskStep: HasManyHasAssociationMixin<ActionTaskStep, bigint>;
-  declare hasActionTaskSteps: HasManyHasAssociationsMixin<ActionTaskStep, bigint>;
-  declare createActionTaskStep: HasManyCreateAssociationMixin<ActionTaskStep>;
-  declare countActionTaskSteps: HasManyCountAssociationsMixin;
+  declare setSteps: HasManySetAssociationsMixin<ActionTaskStep, bigint>;
+  declare addStep: HasManyAddAssociationMixin<ActionTaskStep, bigint>;
+  declare addSteps: HasManyAddAssociationsMixin<ActionTaskStep, bigint>;
+  declare removeStep: HasManyRemoveAssociationMixin<ActionTaskStep, bigint>;
+  declare removeSteps: HasManyRemoveAssociationsMixin<ActionTaskStep, bigint>;
+  declare hasStep: HasManyHasAssociationMixin<ActionTaskStep, bigint>;
+  declare hasSteps: HasManyHasAssociationsMixin<ActionTaskStep, bigint>;
+  declare createStep: HasManyCreateAssociationMixin<ActionTaskStep>;
+  declare countSteps: HasManyCountAssociationsMixin;
 
-  // ActionRunJob
-  declare getActionRunJob: BelongsToGetAssociationMixin<ActionRunJob>;
-  declare setActionRunJob: BelongsToSetAssociationMixin<ActionRunJob, bigint>;
-  declare createActionRunJob: BelongsToCreateAssociationMixin<ActionRunJob>;
+  // ActionRunJob, alias 'job'
+  declare getJob: BelongsToGetAssociationMixin<ActionRunJob>;
+  declare setJob: BelongsToSetAssociationMixin<ActionRunJob, bigint>;
+  declare createJob: BelongsToCreateAssociationMixin<ActionRunJob>;
 
-  // ActionRunner
-  declare getActionRunner: BelongsToGetAssociationMixin<ActionRunner>;
-  declare setActionRunner: BelongsToSetAssociationMixin<ActionRunner, bigint>;
-  declare createActionRunner: BelongsToCreateAssociationMixin<ActionRunner>;
+  // ActionRunner, alias 'runner'
+  declare getRunner: BelongsToGetAssociationMixin<ActionRunner>;
+  declare setRunner: BelongsToSetAssociationMixin<ActionRunner, bigint>;
+  declare createRunner: BelongsToCreateAssociationMixin<ActionRunner>;
 
   /**
    * Claim a waiting job for the runner and materialize it as a task.
@@ -169,7 +170,8 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
   public static async releaseTaskForRunner(task: ActionTask) {
     await sequelize.transaction(async (transaction) => {
       await ActionRunJobModel.update(
-        { taskId: 0, status: Status.Waiting, startedAt: null },
+        // 连接层开了 omitNull，赋值 null 会被 UPDATE 整条丢掉，置空只能写 literal
+        { taskId: 0, status: Status.Waiting, startedAt: sequelize.literal('NULL') },
         { where: { id: task.jobId, taskId: Number(task.id) }, transaction },
       );
       await ActionTaskStepModel.destroy({ where: { taskId: Number(task.id) }, transaction });

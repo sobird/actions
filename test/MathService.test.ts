@@ -3,8 +3,6 @@ import { MathService } from './MathService';
 
 vi.mock('./MathService');
 
-console.log('MathService', new MathService());
-
 // 使用 vi.fn 创建一个模拟函数
 const mockSum = vi.fn();
 

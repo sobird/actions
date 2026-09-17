@@ -258,9 +258,7 @@ describe('::add-matcher:: Action Command Manager Test', async () => {
   await putContentExecutor?.execute();
 
   it('add matcher', async () => {
-    vi.spyOn(runner, 'addMatchers').mockImplementation(async (config) => {
-      console.log('config', config);
-    });
+    vi.spyOn(runner, 'addMatchers').mockImplementation(async () => {});
 
     const result = await commandManager.process('::add-matcher::my-matcher.json');
 

@@ -1,10 +1,12 @@
-import Index from './index';
+import { Index } from './index';
 
-// vi.mock('./index');
-vi.mock('./index');
+test('getName returns the default name', () => {
+  expect(new Index().getName()).toBe('foo');
+});
 
-console.log('index', Index);
+test('getName returns the current name', () => {
+  const index = new Index();
+  index.name = 'bar';
 
-test('test index', () => {
-  //
+  expect(index.getName()).toBe('bar');
 });
