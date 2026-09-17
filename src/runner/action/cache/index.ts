@@ -17,8 +17,7 @@ class ActionCache {
     await fs.mkdir(repoPath, { recursive: true });
 
     // 凭据不拼进 URL，否则 `git clone --bare` 会把它写进裸库的 config，日志也会带上
-    const credential = gitCredential(token);
-    const git = simpleGit(repoPath, credential?.options);
+    const git = simpleGit(repoPath, gitCredential(token));
 
     try {
       // the bare repository is reused across runs, so only clone when it is not there yet

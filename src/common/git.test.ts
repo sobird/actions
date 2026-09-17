@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -5,7 +6,7 @@ import { SimpleGit } from 'simple-git';
 
 import { createEachDir } from '@/test/__helpers__';
 
-import Git, { redactUrl } from './git';
+import Git, { gitCredential, redactUrl } from './git';
 
 vi.setConfig({
   testTimeout: 20000,
@@ -144,6 +145,20 @@ describe('Test Git', () => {
     );
     expect(redactUrl('https://gitea.com/sobird/actions-test')).toBe('https://gitea.com/sobird/actions-test');
     expect(redactUrl('/tmp/actions-test')).toBe('/tmp/actions-test');
+  });
+
+  it('answers the credential protocol with the token, without touching disk', () => {
+    // token 被拼进 helper 脚本，这里带个单引号跑一遍 git 自己的凭据协议，确认引用是对的
+    const config = gitCredential("tok'en")!.config;
+    // simple-git 给每个 config 条目各配一个 -c，这里照搬它的拼法
+    const read = spawnSync('git', [...config.flatMap((entry) => ['-c', entry]), 'credential', 'fill'], {
+      input: 'protocol=https\nhost=gitea.com\n\n',
+      encoding: 'utf8',
+    });
+
+    expect(read.status).toBe(0);
+    expect(read.stdout).toContain('username=token');
+    expect(read.stdout).toContain("password=tok'en");
   });
 });
 

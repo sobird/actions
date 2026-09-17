@@ -1,13 +1,11 @@
 /**
- * git.ts
+ * Git Client
  *
  * sobird<i@sobird.me> at 2024/05/11 1:46:13 created.
  */
 
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-// import tty from 'node:tty';
 
 import GitUrlParse from 'git-url-parse';
 import simpleGit, { SimpleGitOptions } from 'simple-git';
@@ -16,46 +14,31 @@ import logger from '@/common/logger';
 
 import Executor from './executor';
 
-export { GitError } from 'simple-git';
-
-// const isatty = tty.isatty(process.stdout.fd);
-
-const credentialDirs = new Set<string>();
-
-process.once('exit', () => {
-  credentialDirs.forEach((dir) => fs.rmSync(dir, { recursive: true, force: true }));
-});
-
 /**
  * 凭据只经 credential helper 交给 git，不写进 URL：URL 会被 `git clone` 落到 `.git/config`、
  * 被打进日志，git 自己的报错也会把它原样回显。git 只在服务端发起认证质询时才调用 helper，
  * 所以公开仓库仍旧是匿名拉取。
  *
- * 不走环境变量是因为 simple-git 会扫描我们传给 git 的环境，命中 `PAGER`、`GIT_*` 这类变量
- * 就直接拒发命令，而完整继承 `process.env`（PATH、代理、`SSH_AUTH_SOCK`）是必需的。
- * 于是把凭据写进一个 0600 的临时文件，脚本本身不含密钥。
+ * 这里的 `-c` 是命令行配置，simple-git 把它放在子命令之前，不会进新仓库的 `.git/config`。
+ * 代价是 token 出现在 git 进程的 argv 里，同机其他用户 `ps` 就能看到，适合单用户或容器内运行。
  */
 export function gitCredential(token?: string) {
   if (!token) {
     return undefined;
   }
 
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'actions-git-credential-'));
-  const tokenFile = path.join(dir, 'token');
-  fs.writeFileSync(tokenFile, token, { mode: 0o600 });
-  credentialDirs.add(dir);
+  // token 要拼进一段交给 shell 执行的脚本，带引号或 `$` 会破坏脚本甚至被执行，先做 shell 引用
+  const password = `'${token.replaceAll("'", `'\\''`)}'`;
 
   return {
-    options: {
-      config: [
-        // 先置空一次以清掉用户全局配置里的其它 helper，免得它们抢先应答同一个 host
-        'credential.helper=',
-        `credential.helper=!f() { test "$1" = get && { echo username=token; echo "password=$(cat ${tokenFile})"; }; }; f`,
-      ],
-      // simple-git 默认拦下 credential.helper：`!`-helper 等价于让 git 执行一段 shell 脚本。
-      // 这段脚本里没有外部输入，密钥只从上面那个 0600 文件读，所以显式开这个开关。
-      unsafe: { allowUnsafeCredentialHelper: true },
-    },
+    config: [
+      // 先置空一次以清掉用户全局配置里的其它 helper，免得它们抢先应答同一个 host
+      'credential.helper=',
+      `credential.helper=!f() { test "$1" = get && { echo username=token; printf 'password=%s\\n' ${password}; }; }; f`,
+    ],
+    // simple-git 默认拦下 credential.helper：`!`-helper 等价于让 git 执行一段 shell 脚本。
+    // 脚本结构固定，唯一插进去的 token 已做 shell 引用，所以显式开这个开关。
+    unsafe: { allowUnsafeCredentialHelper: true },
   };
 }
 
@@ -78,12 +61,11 @@ class Git {
     public dir: string,
     token: string = '',
   ) {
-    const credential = gitCredential(token);
     this.git = Git.SimpleGit(dir, {
       // progress({ method, stage, progress }) {
       //   console.log(`git ${method} ${stage} stage ${progress}% complete`);
       // },
-      ...credential?.options,
+      ...gitCredential(token),
     });
   }
 
