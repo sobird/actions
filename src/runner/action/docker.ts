@@ -76,7 +76,7 @@ class DockerAction extends Action {
                 uses.ref,
                 uses.token,
               );
-              archive = await runner.config.actionCache.archive(uses.repository, sha, uses.path);
+              archive = await runner.config.actionCache.archive(uses.repositoryUrl, uses.repository, sha, uses.path);
               actionPath = uses.path;
             }
           }

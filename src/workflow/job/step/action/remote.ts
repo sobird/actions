@@ -12,6 +12,7 @@ import { WellKnownDirectory } from '@/common/constants';
 import Executor, { Conditional } from '@/common/executor';
 import Git from '@/common/git';
 import logger from '@/common/logger';
+import { hostOf } from '@/utils';
 import Reusable from '@/workflow/reusable';
 
 import StepAction from '.';
@@ -41,7 +42,8 @@ class StepActionRemote extends StepAction {
         return this.reusableCacheAction(uses);
       }
 
-      const repositoryDir = path.join(runner.ActionCacheDir, uses.repository, uses.ref);
+      // checkout 目录也按 host 分片，跟裸库缓存对齐，同一仓库在不同主机上互不顶掉
+      const repositoryDir = path.join(runner.ActionCacheDir, hostOf(uses.repositoryUrl), uses.repository, uses.ref);
       return Git.CloneExecutor(repositoryDir, uses.repositoryUrl, uses.ref, uses.token).finally(
         this.reusableAction(uses),
       );
@@ -97,7 +99,12 @@ class StepActionRemote extends StepAction {
     return new Executor(async (ctx) => {
       const runner = ctx!;
 
-      const repositoryDir = path.join(runner.ActionCacheDir, reusable.repository, reusable.ref);
+      const repositoryDir = path.join(
+        runner.ActionCacheDir,
+        hostOf(reusable.repositoryUrl),
+        reusable.repository,
+        reusable.ref,
+      );
       const actionLocalDir = path.join(repositoryDir, reusable.path);
       const actionDir = path.join(WellKnownDirectory.Actions, reusable.repository, reusable.ref);
 
@@ -112,7 +119,7 @@ class StepActionRemote extends StepAction {
       const { actionCache } = runner.config;
       if (actionCache) {
         const sha = await actionCache.fetch(reusable.repositoryUrl, reusable.repository, reusable.ref, reusable.token);
-        const archive = await actionCache.archive(reusable.repository, sha, '.');
+        const archive = await actionCache.archive(reusable.repositoryUrl, reusable.repository, sha, '.');
         const actionDir = path.join(WellKnownDirectory.Actions, reusable.repository, reusable.ref);
 
         return runner.container?.putArchive(actionDir, archive).next(this.LoadAction(actionDir));

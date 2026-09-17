@@ -6,12 +6,17 @@ import * as tar from 'tar';
 
 import ActionCache from '.';
 
+/**
+ * 把 `--repositories` 映射到本地目录的仓库直接当缓存用：命中就返回 ref（fetch 的返回值在
+ * archive 里被当成 sha 用），没命中交给 parent。act 的 `LocalRepositoryCache` 同形。
+ */
 class ActionCacheRepository extends ActionCache {
   cacheDirCache: Record<string, string> = {};
 
   constructor(
     dir: string = path.join(os.tmpdir(), 'actions'),
     public repositories: Record<string, string> = {},
+    private parent: ActionCache = new ActionCache(dir),
   ) {
     super(dir);
   }
@@ -34,10 +39,10 @@ class ActionCacheRepository extends ActionCache {
       // Handle URL parsing error
     }
 
-    return super.fetch(url, repository, ref, token);
+    return this.parent.fetch(url, repository, ref, token);
   }
 
-  async archive(repository: string, ref: string, subPath: string = '.') {
+  async archive(url: string, repository: string, ref: string, subPath: string = '.') {
     const repositoryKey = `${repository}@${ref}`;
     const localDir = this.cacheDirCache[repositoryKey];
     if (localDir) {
@@ -45,7 +50,7 @@ class ActionCacheRepository extends ActionCache {
       // the sub path, which is what a single file path and a directory path are both expected to produce
       return tar.create({ portable: true, cwd: localDir }, [path.normalize(subPath || '.')]) as unknown as Readable;
     }
-    return super.archive(repository, ref, subPath);
+    return this.parent.archive(url, repository, ref, subPath);
   }
 }
 

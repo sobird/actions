@@ -105,32 +105,6 @@ describe('Test Git', () => {
     expect(fs.readFileSync(path.join(dir, '.git/config'), 'utf8')).not.toContain('thisistoken');
   });
 
-  it('re-clones a cached repository that came from another url', async () => {
-    const source = async (name: string) => {
-      const sourceDir = path.join(testTmp, `source-${name}`);
-      const git = new Git(sourceDir);
-      await git.git.init(['--initial-branch', 'master']);
-      fs.writeFileSync(path.join(sourceDir, `${name}.txt`), name);
-      await git.git.add('.');
-      await git.git.commit(`commit of ${name}`);
-      return sourceDir;
-    };
-
-    const first = await source('first');
-    const second = await source('second');
-    const dir = path.join(testTmp, 're-clone');
-    const git = new Git(dir);
-
-    await git.clone(first, 'master');
-    expect(await git.remoteURL()).toBe(first);
-
-    // 同一个目录换了来源：应当丢弃旧仓库重新克隆，而不是直接复用别的主机的内容
-    await git.clone(second, 'master');
-    expect(await git.remoteURL()).toBe(second);
-    expect(fs.existsSync(path.join(dir, 'second.txt'))).toBe(true);
-    expect(fs.existsSync(path.join(dir, 'first.txt'))).toBe(false);
-  });
-
   it('throws when the clone fails', async () => {
     const dir = path.join(testTmp, 'git-clone-failure');
     const git = new Git(dir);

@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import GitUrlParse from 'git-url-parse';
-import simpleGit, { SimpleGitOptions } from 'simple-git';
+import simpleGit, { SimpleGitOptions, CheckRepoActions } from 'simple-git';
 
 import logger from '@/common/logger';
 
@@ -85,34 +85,36 @@ class Git {
     return (await this.git.log(['--pretty=%H', '-1', filename])).latest?.hash;
   }
 
-  async clone(url: string, ref: string = 'HEAD') {
+  /**
+   * 确认 dir 里是一个能用的仓库，没有就克隆，返回 simple-git 实例。
+   *
+   * dir 已经按 host 分片（见 hostOf），同一个目录必然对应同一个来源，所以这里不再比对 origin。
+   */
+  private async ensureRepo(url: string, bare: boolean) {
     const { git, dir } = this;
 
-    if (await git.checkIsRepo()) {
-      /* 目录里有仓库不代表它就是我们想 clone 的那个：GHE 会把 uses.url 换成 github.com
-       * （见 action/remote.ts 里的 replaceGheActionWithGithubCom），而缓存目录只按
-       * repository/ref 分片，所以同一个目录可能是别的主机克隆出来的。对不上就删掉重来。
-       */
-      const origin = await this.remoteURL();
-      if (origin && origin !== url) {
-        logger.warn(`🍭 Re-cloning ${dir}, origin '${redactUrl(origin)}' is not '${redactUrl(url)}'`);
-        fs.rmSync(dir, { recursive: true, force: true });
-        // simple-git 的子进程以 dir 为工作目录，删掉之后必须先建回来
-        fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
-      }
-    }
-
-    if (!(await git.checkIsRepo())) {
+    // checkIsRepo() 默认查 `--is-inside-work-tree`，裸库里恒为 false，必须换成 `--is-bare-repository`
+    if (!(await git.checkIsRepo(bare ? CheckRepoActions.BARE : undefined))) {
       try {
-        await git.clone(url, dir);
+        await git.clone(url, dir, bare ? ['--bare'] : undefined);
       } catch (error) {
         // 不能只记日志：克隆失败后继续走到 checkout，只会抛出一个离现场很远的次生错误
-        throw new Error(`Unable to clone ${redactUrl(url)}@${ref}: ${(error as Error).message}`, { cause: error });
+        throw new Error(`Unable to clone ${redactUrl(url)}: ${(error as Error).message}`, { cause: error });
       }
     }
 
+    return git;
+  }
+
+  async clone(url: string, ref: string = 'HEAD') {
+    const git = await this.ensureRepo(url, false);
     await git.checkout(ref);
     return git;
+  }
+
+  /** 克隆或复用裸库，供 action 缓存按 ref 取提交用 */
+  async cloneBare(url: string) {
+    return this.ensureRepo(url, true);
   }
 
   /**

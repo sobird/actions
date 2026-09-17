@@ -6,30 +6,21 @@ import { Readable } from 'node:stream';
 
 import simpleGit from 'simple-git';
 
-import { gitCredential } from '@/common/git';
+import Git from '@/common/git';
 import logger from '@/common/logger';
+import { hostOf } from '@/utils';
+
+/** 裸库按 host 分片：同一个 owner/repo 在 GHE 和 github.com 上要能共存，不能互相顶掉 */
+export function repositoryPath(dir: string, url: string, repository: string) {
+  return path.join(dir, hostOf(url), `${repository}.git`);
+}
 
 class ActionCache {
   constructor(public dir: string = path.join(os.tmpdir(), 'actions')) {}
 
   async fetch(url: string, repository: string, ref: string, token?: string) {
-    const repoPath = path.join(this.dir, `${repository}.git`);
-    await fs.mkdir(repoPath, { recursive: true });
-
-    // 凭据不拼进 URL，否则 `git clone --bare` 会把它写进裸库的 config，日志也会带上
-    const git = simpleGit(repoPath, gitCredential(token));
-
-    try {
-      // the bare repository is reused across runs, so only clone when it is not there yet
-      await git.revparse('HEAD');
-    } catch {
-      try {
-        await git.clone(url, repoPath, ['--bare']);
-      } catch (error) {
-        logger.error(`Unable to clone ${repository} into ${repoPath}: ${(error as Error).message}`);
-        throw error;
-      }
-    }
+    // 建目录、存在性检查、克隆、错误包装都在 Git 里；凭据也由它带上，不拼进 URL
+    const git = await new Git(repositoryPath(this.dir, url, repository), token).cloneBare(url);
 
     const branchName = crypto.randomBytes(16).toString('hex');
     try {
@@ -49,11 +40,11 @@ class ActionCache {
   }
 
   /**
-   * Pack `subPath` as a tar stream. The second argument is the revision to pack: pass the value `fetch`
+   * Pack `subPath` as a tar stream. The third argument is the revision to pack: pass the value `fetch`
    * returned (a resolved revision, or a ref when a local folder overrides the repository), not the ref.
    */
-  async archive(repository: string, ref: string, subPath: string = '.') {
-    const repoPath = path.join(this.dir, `${repository}.git`);
+  async archive(url: string, repository: string, ref: string, subPath: string = '.') {
+    const repoPath = repositoryPath(this.dir, url, repository);
     await fs.mkdir(repoPath, { recursive: true });
 
     // `git.raw` decodes stdout as utf-8, which corrupts binary tar entries, so collect the raw bytes instead.

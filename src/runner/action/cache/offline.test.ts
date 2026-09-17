@@ -14,6 +14,7 @@ import { createEachDir } from '@/test/__helpers__';
 import { readTar } from '@/utils/readTar';
 
 import ActionCacheOffline from './offline';
+import ActionCacheRepository from './repository';
 
 vi.setConfig({
   testTimeout: 10000,
@@ -65,7 +66,7 @@ describe('ActionCache Tests', () => {
       const sha = await actionCache.fetch(ref.repo, ref.repository, ref.ref);
       assert.notEqual(sha, '', 'SHA should not be empty');
 
-      const stream = await actionCache.archive(ref.repository, sha, '');
+      const stream = await actionCache.archive(ref.repo, ref.repository, sha, '');
       await readTar(stream, (header, content) => {
         assert.ok(content, 'content should not be empty');
         expect(header.size).not.equal(0);
@@ -95,22 +96,26 @@ describe('ActionCacheOffline Tests', () => {
   // its own temp dir, so that it does not race the cache tests above for `os.tmpdir()/actions`
   const cacheDir = createEachDir('actions-offline');
   const actionCache = new ActionCacheOffline(cacheDir);
+  const mappedCacheDir = createEachDir('actions-offline-mapped-cache');
+  const mappedRepoDir = createEachDir('actions-offline-mapped-repo');
 
-  it('returns the newest commit of the ref while the remote is reachable', async () => {
+  it('keeps using the recorded commit instead of fetching a newer one', async () => {
     const origin = await createOrigin();
 
     try {
       const first = await origin.commit('one');
       expect(await actionCache.fetch(origin.dir, 'owner/repo', origin.branch)).toBe(first);
 
+      // 远端又动了一个提交：离线模式下不该再去拉，仍旧用记下的那个
       const second = await origin.commit('two');
-      expect(await actionCache.fetch(origin.dir, 'owner/repo', origin.branch)).toBe(second);
+      expect(second).not.toBe(first);
+      expect(await actionCache.fetch(origin.dir, 'owner/repo', origin.branch)).toBe(first);
     } finally {
       fs.rmSync(origin.dir, { recursive: true, force: true });
     }
   });
 
-  it('falls back to the recorded commit when the remote is gone', async () => {
+  it('serves the recorded commit with the remote gone', async () => {
     const origin = await createOrigin();
     const sha = await origin.commit('one');
 
@@ -125,5 +130,34 @@ describe('ActionCacheOffline Tests', () => {
     fs.rmSync(missing, { recursive: true, force: true });
 
     await expect(actionCache.fetch(missing, 'owner/other', 'main')).rejects.toThrow();
+  });
+
+  it('prefers the repository mapping over an existing offline record', async () => {
+    const origin = await createOrigin();
+    fs.writeFileSync(path.join(mappedRepoDir, 'a.txt'), 'mapped\n');
+
+    try {
+      const sha = await origin.commit('one');
+      // 先让离线缓存为这个 (host, repo, ref) 记下一份提交，模拟「以前从远端用过」
+      const cached = new ActionCacheOffline(mappedCacheDir);
+      expect(await cached.fetch(origin.dir, 'owner/repo', origin.branch)).toBe(sha);
+
+      // 同一个来源改成映射到本地目录：映射在最外层，必须压过那条离线记录
+      const mapped = new ActionCacheRepository(
+        mappedCacheDir,
+        { [`${origin.dir}@${origin.branch}`]: mappedRepoDir },
+        cached,
+      );
+      const ref = await mapped.fetch(origin.dir, 'owner/repo', origin.branch);
+      expect(ref).toBe(origin.branch);
+
+      const contents: string[] = [];
+      await readTar(await mapped.archive(origin.dir, 'owner/repo', ref, 'a.txt'), (_, content) =>
+        contents.push(content.toString()),
+      );
+      expect(contents).toEqual(['mapped\n']);
+    } finally {
+      fs.rmSync(origin.dir, { recursive: true, force: true });
+    }
   });
 });

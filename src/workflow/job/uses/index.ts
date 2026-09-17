@@ -9,6 +9,7 @@ import path from 'node:path';
 import Executor from '@/common/executor';
 import Git from '@/common/git';
 import type Runner from '@/runner';
+import { hostOf } from '@/utils';
 import { readEntry } from '@/utils/tar';
 import WorkflowPlanner from '@/workflow/planner';
 import Reusable from '@/workflow/reusable';
@@ -43,7 +44,8 @@ class Uses extends Reusable {
       return Uses.ActionCacheReusableWorkflowExecutor(this);
     }
 
-    const repositoryDir = path.join(runner.ActionCacheDir, this.repository, this.ref);
+    // checkout 目录也按 host 分片，跟裸库缓存对齐，同一仓库在不同主机上互不顶掉
+    const repositoryDir = path.join(runner.ActionCacheDir, hostOf(this.repositoryUrl), this.repository, this.ref);
     return Git.CloneExecutor(repositoryDir, this.repositoryUrl, this.ref, this.token).finally(
       Uses.ReusableWorkflowExecutor(path.join(repositoryDir, this.path)),
     );
@@ -66,7 +68,7 @@ class Uses extends Reusable {
       const { actionCache } = runner!.config;
       if (actionCache) {
         const sha = await actionCache.fetch(reusable.repositoryUrl, reusable.repository, reusable.ref, reusable.token);
-        const archive = await actionCache.archive(reusable.repository, sha, reusable.path);
+        const archive = await actionCache.archive(reusable.repositoryUrl, reusable.repository, sha, reusable.path);
         const entry = await readEntry(archive);
         if (entry) {
           const workflowPlanner = WorkflowPlanner.Single(entry.body);

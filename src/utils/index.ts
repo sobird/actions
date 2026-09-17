@@ -11,6 +11,7 @@ export { Pen } from './printer';
 export { appendEnvs } from './appendEnvs';
 export { generateId } from './generateId';
 export { createSafeName } from './createSafeName';
+export { hostOf } from './hostOf';
 export { sleep } from './sleep';
 export { readJsonSync } from './readJsonSync';
 export { readConfSync } from './readConfSync';

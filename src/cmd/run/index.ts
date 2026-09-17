@@ -412,13 +412,17 @@ export const runCommand = new Command('run')
     // Cache Actions
     let actionCache;
     if (runner.cacheActions) {
-      actionCache = runner.actionsOffline
-        ? new ActionCacheOffline(runner.actionsPath)
-        : new ActionCache(runner.actionsPath);
+      actionCache = new ActionCache(runner.actionsPath);
     }
 
+    if (actionCache && runner.actionsOffline) {
+      actionCache = new ActionCacheOffline(runner.actionsPath, actionCache);
+    }
+
+    // 映射放最外层（act 也是这个顺序）：命中本地目录的仓库在离线那层之前就短路了，
+    // 不会因为同一个 (host, repo, ref) 上留着旧的离线记录而被顶掉
     if (runner.repositories) {
-      actionCache = new ActionCacheRepository(runner.actionsPath, runner.repositories);
+      actionCache = new ActionCacheRepository(runner.actionsPath, runner.repositories, actionCache);
     }
 
     const { platforms } = new Labels(runner.labels);

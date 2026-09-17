@@ -13,7 +13,7 @@ import simpleGit from 'simple-git';
 import { createEachDir } from '@/test/__helpers__';
 import { readTar } from '@/utils/readTar';
 
-import ActionCache from '.';
+import ActionCache, { repositoryPath } from '.';
 
 vi.setConfig({
   testTimeout: 10000,
@@ -58,7 +58,7 @@ describe('Action Cache Tests', () => {
       const sha = await actionCache.fetch(ref.repo, ref.repository, ref.ref);
       assert.notEqual(sha, '', 'SHA should not be empty');
 
-      const stream = await actionCache.archive(ref.repository, sha, 'package.json');
+      const stream = await actionCache.archive(ref.repo, ref.repository, sha, 'package.json');
 
       await readTar(stream, (header, content) => {
         assert.ok(content, 'content should not be empty');
@@ -103,7 +103,7 @@ describe('Action Cache Ref Resolution Tests', () => {
       expect(second).toBe(sha);
 
       let body = '';
-      await readTar(await actionCache.archive('owner/repo', second, 'a.txt'), (header, content) => {
+      await readTar(await actionCache.archive(origin.dir, 'owner/repo', second, 'a.txt'), (header, content) => {
         if (header.path === 'a.txt') {
           body = content.toString();
         }
@@ -111,7 +111,7 @@ describe('Action Cache Ref Resolution Tests', () => {
       expect(body).toBe('two\n');
 
       // the temporary branch each fetch creates is cleaned up, so the clone's own branch is the only one left
-      const repo = simpleGit(path.join(cacheDir, 'owner/repo.git'));
+      const repo = simpleGit(repositoryPath(cacheDir, origin.dir, 'owner/repo'));
       expect((await repo.branchLocal()).all).toEqual([origin.branch]);
     } finally {
       fs.rmSync(origin.dir, { recursive: true, force: true });
@@ -125,11 +125,25 @@ describe('Action Cache Ref Resolution Tests', () => {
       await origin.commit('one');
       await actionCache.fetch(origin.dir, 'owner/token-repo', origin.branch, 's3cr3t-token');
 
-      const repoPath = path.join(cacheDir, 'owner/token-repo.git');
+      const repoPath = repositoryPath(cacheDir, origin.dir, 'owner/token-repo');
       expect((await simpleGit(repoPath).raw(['remote', 'get-url', 'origin'])).trim()).toBe(origin.dir);
       expect(fs.readFileSync(path.join(repoPath, 'config'), 'utf8')).not.toContain('s3cr3t-token');
     } finally {
       fs.rmSync(origin.dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('repositoryPath', () => {
+  it('keeps the same repository apart on two hosts', () => {
+    const cacheDir = '/cache';
+
+    expect(repositoryPath(cacheDir, 'https://github.com/owner/repo', 'owner/repo')).toBe(
+      path.join(cacheDir, 'github.com', 'owner/repo.git'),
+    );
+    // GHE 把仓库换到 github.com 之后仍要能拉到原来那份缓存，所以两个 host 必须是两个目录
+    expect(repositoryPath(cacheDir, 'https://ghe.example.com/owner/repo', 'owner/repo')).toBe(
+      path.join(cacheDir, 'ghe.example.com', 'owner/repo.git'),
+    );
   });
 });

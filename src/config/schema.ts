@@ -194,7 +194,7 @@ export const RunnerSchema = z
       .optional()
       .default(false)
       .describe(
-        'When enabled, the Runner will only use Actions already present in actionsPath and will not attempt to fetch or update them from the network.',
+        'When enabled, an Action already cached in actionsPath is used as-is and is not fetched or updated again. An Action that is not cached yet is still fetched once.',
       ),
     labels: LabelsSchema,
     // matrix: z.record(z.string(), z.array(z.unknown())).optional(),
