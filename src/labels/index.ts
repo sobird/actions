@@ -7,7 +7,7 @@
  * sobird<i@sobird.me> at 2024/04/24 18:59:14 created.
  */
 
-export const SELF_HOSTED = '-self-hosted';
+export const HOSTED = 'hosted';
 
 interface Platform {
   label: string;
@@ -26,7 +26,8 @@ class Labels {
 
   requireDocker() {
     return [...this.platforms.values()].some((image) => {
-      return image !== SELF_HOSTED;
+      // 不带 = 的标签（如 "ubuntu-latest"）没有镜像，不能直接对它调 toLowerCase
+      return image?.toLowerCase() !== HOSTED;
     });
   }
 
@@ -76,7 +77,7 @@ class Labels {
     const [label, image] = string.split('=');
     const platform: Platform = {
       label,
-      // schema: image === '-self-hosted' ? SCHEME_HOST : SCHEME_DOCKER,
+      // schema: image === 'hosted' ? SCHEME_HOST : SCHEME_DOCKER,
       image,
     };
     // if (platform.schema !== SCHEME_HOST && platform.schema !== SCHEME_DOCKER) {

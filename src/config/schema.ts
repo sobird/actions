@@ -10,7 +10,7 @@ export const LabelsSchema = z
   .array(z.string())
   .default(DEFAULT_LABELS)
   .describe(
-    'The labels of a runner are used to determine which jobs the runner can run, and how to run them.\n Like: "macos-arm64=host" or "ubuntu-latest=gitea/runner-images:ubuntu-latest"\n Find more images provided by Server at https://gitea.com/gitea/runner-images .\n If it\'s empty when registering, it will ask for inputting labels.\n If it\'s empty when execute `daemon`, will use labels in `.runner` file.',
+    'The labels of a runner are used to determine which jobs the runner can run, and how to run them.\n Like: "macos-arm64=hosted" (run the job directly on the host) or "ubuntu-latest=gitea/runner-images:ubuntu-latest"\n Find more images provided by Server at https://gitea.com/gitea/runner-images .\n If it\'s empty when registering, it will ask for inputting labels.\n If it\'s empty when execute `daemon`, will use labels in `.runner` file.',
   );
 
 export const LogSchema = z

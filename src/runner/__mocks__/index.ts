@@ -22,7 +22,7 @@ const labels = new Labels(registration.labels);
 // const config = getConfig();
 // use hosted container test
 // (config as any).platformPicker = () => {
-//   return '-self-hosted';
+//   return 'hosted';
 // };
 
 const container = new HostedContainer({} as any);

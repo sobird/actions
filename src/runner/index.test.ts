@@ -1,6 +1,7 @@
 import { create } from '@bufbuild/protobuf';
 
 import { IssueSchema, IssueType } from '@/gen/runner/v1/messages_pb';
+import { HOSTED } from '@/labels';
 import type Config from '@/runner/config';
 import Workflow from '@/workflow';
 import Run from '@/workflow/plan/run';
@@ -198,5 +199,25 @@ describe('runner clone', () => {
     expect(cloned.root).toBe(runner);
     expect(cloned.masks).toBe(runner.masks);
     expect(cloned.context).not.toBe(runner.context);
+  });
+});
+
+describe('runner hosted', () => {
+  it('runs on the host when the platform picker returns the hosted sentinel', () => {
+    const runner = createRunner({ platforms: new Map(), platformPicker: () => HOSTED });
+
+    expect(runner.IsHosted).toBe(true);
+  });
+
+  it('runs on the host when the label maps to the hosted sentinel', () => {
+    const runner = createRunner({ platforms: new Map([['ubuntu-latest', HOSTED]]) });
+
+    expect(runner.IsHosted).toBe(true);
+  });
+
+  it('runs in a container when the label maps to an image', () => {
+    const runner = createRunner({ platforms: new Map([['ubuntu-latest', 'gitea/runner-images:ubuntu-latest']]) });
+
+    expect(runner.IsHosted).toBe(false);
   });
 });

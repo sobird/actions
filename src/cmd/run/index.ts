@@ -16,7 +16,7 @@ import Git from '@/common/git';
 import logger from '@/common/logger';
 import { getConfig } from '@/config';
 import { Docker } from '@/docker';
-import Labels from '@/labels';
+import Labels, { HOSTED } from '@/labels';
 import Runner from '@/runner';
 import ActionCache from '@/runner/action/cache';
 import ActionCacheOffline from '@/runner/action/cache/offline';
@@ -186,7 +186,7 @@ export const runCommand = new Command('run')
     'custom image to use per platform (e.g. --labels ubuntu-latest=gitea/runner-images:ubuntu-latest)',
     collectArray,
   )
-  .option('--image <string>', 'docker image to use. Use "-self-hosted" to run directly on the host')
+  .option('--image <string>', 'docker image to use')
   .option('--hosted', 'run directly on the host')
   .option('--pull', 'pull docker image(s) even if already present')
   .option('--rebuild', 'rebuild local action docker image(s) even if already present')
@@ -315,7 +315,7 @@ export const runCommand = new Command('run')
       );
     }
 
-    // this.image = this.hosted ? SELF_HOSTED : this.image;
+    options.image = options.hosted ? HOSTED : options.image;
 
     // config
     const author = await git.author();

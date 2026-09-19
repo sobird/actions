@@ -23,6 +23,7 @@ import { Constants, WellKnownDirectory } from '@/common/constants';
 import logger, { getLogger, type LoggerChild } from '@/common/logger';
 import { Docker } from '@/docker';
 import { Issue, IssueType, IssueSchema, Result } from '@/gen/runner/v1/messages_pb';
+import { HOSTED } from '@/labels';
 import Config from '@/runner/config';
 import Context from '@/runner/context';
 import { createSafeName, assignIgnoreCase, createFnv1aHash } from '@/utils';
@@ -697,7 +698,7 @@ class Runner {
     const platform = this.RunsOnImage;
     const image = this.ContainerImage;
 
-    return image === '' && platform?.toLowerCase() === '-self-hosted';
+    return image === '' && platform?.toLowerCase() === HOSTED;
   }
 
   // job container image
