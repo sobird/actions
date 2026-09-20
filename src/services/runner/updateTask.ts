@@ -1,12 +1,11 @@
 import { create } from '@bufbuild/protobuf';
-import { timestampDate, type Timestamp } from '@bufbuild/protobuf/wkt';
 import { ConnectError, Code, type MethodImpl } from '@connectrpc/connect';
 
 import logger from '@/common/logger';
 import { Result, TaskStateSchema, UpdateTaskResponseSchema } from '@/gen/runner/v1/messages_pb';
 import type { RunnerService } from '@/gen/runner/v1/services_pb';
 import { sequelize } from '@/lib/sequelize';
-import { ActionRunJob, ActionRunner, ActionTask, ActionTaskOutput, ActionTaskStep, ActionTaskVersion } from '@/models';
+import { ActionRunJob, ActionTask, ActionTaskOutput, ActionTaskVersion } from '@/models';
 import { Status } from '@/models/actions/status';
 import { resolveBlockedJobs } from '@/services/actions/task';
 
@@ -15,96 +14,41 @@ import { getRunnerModel } from './context';
 const MaxOutputKeyLength = 255;
 const MaxOutputValueSize = 1024 * 1024;
 
-/** A zero or absent timestamp means "unset", mirroring upstream convertTimestamp */
-function convertTimestamp(timestamp?: Timestamp) {
-  if (!timestamp || (timestamp.seconds === 0n && timestamp.nanos === 0)) {
-    return undefined;
-  }
-  return timestampDate(timestamp);
-}
-
 export const updateTask: MethodImpl<typeof RunnerService.method.updateTask> = async (req, { values }) => {
   const runner = getRunnerModel(values)!;
 
   // Upstream tolerates a nil state: it has no id, so it falls through to the not-found path.
   const state = req.state ?? create(TaskStateSchema);
 
-  const updatedTask = await sequelize.transaction(async (transaction) => {
-    const task = await ActionTask.findByPk(state.id, { transaction });
-    if (!task) {
-      throw new ConnectError(`update task: task with id ${state.id}: not exist`, Code.Internal);
-    }
-    if (runner.id !== task.runnerId) {
-      throw new ConnectError('invalid runner for task', Code.Internal);
-    }
+  let updatedTask: ActionTask;
+  try {
+    updatedTask = await sequelize.transaction(async (transaction) => {
+      const task = await ActionTask.updateByState(runner.id!, state, transaction);
 
-    if (task.status.isDone()) {
-      // the state is final, do nothing
-      return task;
-    }
+      if (state.result !== Result.UNSPECIFIED) {
+        // Finishing a job decides the jobs waiting on it.
+        const job = await ActionRunJob.findByPk(task.jobId, { transaction });
+        if (job) {
+          await resolveBlockedJobs(job.runId, transaction);
+        }
 
-    // state.result is not unspecified means the task is finished
-    if (state.result !== Result.UNSPECIFIED) {
-      // The runner may report SUCCESS/FAILURE for the cleanup phase; preserve user intent.
-      const status = task.status === Status.Cancelling ? Status.Cancelled : Status.fromResult(state.result);
-      const stoppedAt = convertTimestamp(state.stoppedAt) ?? null;
-
-      task.status = status;
-      task.stoppedAt = stoppedAt;
-      await task.save({ transaction });
-
-      // A finished task releases its ephemeral runner.
-      if (status.isDone()) {
-        await ActionRunner.deleteEphemeralRunner(task.runnerId, transaction);
-      }
-
-      await ActionRunJob.update({ status, stoppedAt }, { where: { id: task.jobId }, transaction });
-
-      // Finishing a job decides the jobs waiting on it.
-      const job = await ActionRunJob.findByPk(task.jobId, { transaction });
-      if (job) {
-        await resolveBlockedJobs(job.runId, transaction);
-      }
-
-      // Finishing a job may have unblocked waiting jobs; bump the versions so idle
-      // runners whose tasksVersion already equals latestVersion attempt a PickTask.
-      const waiting = await ActionRunJob.findOne({
-        where: { repositoryId: task.repositoryId, taskId: 0, status: Status.Waiting.toString() },
-        transaction,
-      });
-      if (waiting) {
-        await ActionTaskVersion.increaseVersion(task.ownerId, task.repositoryId, transaction);
-      }
-    } else {
-      // Touch the updated timestamp so the task isn't judged as a zombie task.
-      await ActionTask.update({}, { where: { id: task.id }, transaction });
-    }
-
-    const stepStates = new Map(state.steps.map((stepState) => [Number(stepState.id), stepState]));
-    const steps = await ActionTaskStep.findAll({ where: { taskId: Number(task.id) }, transaction });
-
-    for (const step of steps) {
-      const stepState = stepStates.get(step.index);
-      const startedAt = stepState ? convertTimestamp(stepState.startedAt) : undefined;
-
-      if (stepState) {
-        step.logIndex = Number(stepState.logIndex);
-        step.logLength = Number(stepState.logLength);
-        step.startedAt = startedAt ?? null;
-        step.stoppedAt = convertTimestamp(stepState.stoppedAt) ?? null;
-
-        if (stepState.result !== Result.UNSPECIFIED) {
-          step.status = Status.fromResult(stepState.result).toString();
-        } else if (startedAt) {
-          step.status = Status.Running.toString();
+        // Finishing a job may have unblocked waiting jobs; bump the versions so idle
+        // runners whose tasksVersion already equals latestVersion attempt a PickTask.
+        const waiting = await ActionRunJob.findOne({
+          where: { repositoryId: task.repositoryId, taskId: 0, status: Status.Waiting.toString() },
+          transaction,
+        });
+        if (waiting) {
+          await ActionTaskVersion.increaseVersion(task.ownerId, task.repositoryId, transaction);
         }
       }
-      // eslint-disable-next-line no-await-in-loop
-      await step.save({ transaction });
-    }
 
-    return task;
-  });
+      return task;
+    });
+  } catch (error) {
+    // gitea's UpdateTask handler folds every failure of the state update into one error
+    throw new ConnectError(`update task: ${(error as Error).message}`, Code.Internal);
+  }
 
   for (const [key, value] of Object.entries(req.outputs)) {
     if (key.length > MaxOutputKeyLength) {

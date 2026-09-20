@@ -1,3 +1,7 @@
+import { create } from '@bufbuild/protobuf';
+import { timestampFromDate } from '@bufbuild/protobuf/wkt';
+
+import { Result, StepStateSchema, TaskStateSchema } from '@/gen/runner/v1/messages_pb';
 import { ActionRunJob, ActionRunner, ActionTask, ActionTaskStep } from '@/models/actions';
 
 import type { ActionRunJobCreationAttributes } from './run_job';
@@ -128,5 +132,108 @@ describe('ActionTask.releaseTaskForRunner', () => {
     expect(job.startedAt).toBeNull();
     expect(await ActionTask.findByPk(taskId)).toBeNull();
     expect(await ActionTaskStep.count({ where: { taskId } })).toBe(0);
+  });
+});
+
+describe('ActionTask.updateByState', () => {
+  /** 认领一个全新的 job，让每个用例独占自己的 task / job 行 */
+  async function runningTask() {
+    const job = await queueJob();
+    const runner = (await ActionRunner.findByPk(1))!;
+    return { job, runner, task: (await ActionTask.createForRunner(runner, job))! };
+  }
+
+  it('writes the final result onto the task and its job at once', async () => {
+    const { job, task } = await runningTask();
+    const stoppedAt = new Date(1683636700000);
+
+    const updated = await ActionTask.updateByState(
+      1n,
+      create(TaskStateSchema, {
+        id: task.id!,
+        result: Result.FAILURE,
+        stoppedAt: timestampFromDate(stoppedAt),
+      }),
+    );
+
+    expect(updated.status).toBe(Status.Failure);
+    expect(updated.stoppedAt).toEqual(stoppedAt);
+
+    await job.reload();
+    expect(job.status).toBe(Status.Failure);
+    expect(job.stoppedAt).toEqual(stoppedAt);
+  });
+
+  it('keeps the cancellation the user asked for when the runner reports a cleanup result', async () => {
+    const { task } = await runningTask();
+    task.status = Status.Cancelling;
+    await task.save();
+
+    const updated = await ActionTask.updateByState(
+      1n,
+      create(TaskStateSchema, { id: task.id!, result: Result.SUCCESS }),
+    );
+
+    expect(updated.status).toBe(Status.Cancelled);
+  });
+
+  it('ignores a report for a task that already reached a final state', async () => {
+    const { task } = await runningTask();
+    const stoppedAt = new Date(1683636700000);
+    task.status = Status.Success;
+    task.stoppedAt = stoppedAt;
+    await task.save();
+
+    const updated = await ActionTask.updateByState(
+      1n,
+      create(TaskStateSchema, {
+        id: task.id!,
+        result: Result.FAILURE,
+        stoppedAt: timestampFromDate(new Date()),
+      }),
+    );
+
+    expect(updated.status).toBe(Status.Success);
+    expect(updated.stoppedAt).toEqual(stoppedAt);
+  });
+
+  it('maps an in-flight report onto the step rows by index and leaves the others alone', async () => {
+    const { task } = await runningTask();
+    const startedAt = new Date(1683636528000);
+
+    const updated = await ActionTask.updateByState(
+      1n,
+      create(TaskStateSchema, {
+        id: task.id!,
+        steps: [
+          create(StepStateSchema, {
+            id: 1n,
+            logIndex: 12n,
+            logLength: 34n,
+            startedAt: timestampFromDate(startedAt),
+          }),
+        ],
+      }),
+    );
+
+    expect(updated.status).toBe(Status.Running);
+
+    const steps = await task.getSteps({ order: [['index', 'ASC']] });
+    expect(steps.map((step) => step.status)).toEqual(['waiting', 'running', 'waiting']);
+    expect(steps[1].logIndex).toBe(12);
+    expect(steps[1].logLength).toBe(34);
+    expect(steps[1].startedAt).toEqual(startedAt);
+  });
+
+  it('rejects a state reported by another runner', async () => {
+    const { task } = await runningTask();
+
+    await expect(ActionTask.updateByState(2n, create(TaskStateSchema, { id: task.id! }))).rejects.toThrow(
+      'invalid runner for task',
+    );
+  });
+
+  it('rejects a state for a task that does not exist', async () => {
+    await expect(ActionTask.updateByState(1n, create(TaskStateSchema, { id: 404n }))).rejects.toThrow('not exist');
   });
 });

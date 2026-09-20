@@ -4,6 +4,7 @@
  * sobird<i@sobird.me> at 2024/11/23 12:21:49 created.
  */
 
+import { timestampDate, type Timestamp } from '@bufbuild/protobuf/wkt';
 import {
   DataTypes,
   type Association,
@@ -28,17 +29,27 @@ import {
   type Transaction,
 } from 'sequelize';
 
+import { Result, type StepState, type TaskState } from '@/gen/runner/v1/messages_pb';
 import { sequelize, BaseModel } from '@/lib/sequelize';
 import { logFileName } from '@/utils';
 import Workflow from '@/workflow';
 
 import type { Models, ActionRunJob, ActionRunner, ActionTaskStep } from '.';
 import { ActionRunJob as ActionRunJobModel } from './run_job';
+import { ActionRunner as ActionRunnerModel } from './runner';
 import { Status } from './status';
 import { ActionTaskStep as ActionTaskStepModel } from './task_step';
 import { generateToken, generateTokenSalt, hashToken } from './token';
 
 export type ActionTaskCreationAttributes = CreationAttributes<ActionTask>;
+
+/** A zero or absent timestamp means "unset", mirroring upstream convertTimestamp */
+function convertTimestamp(timestamp?: Timestamp) {
+  if (!timestamp || (timestamp.seconds === 0n && timestamp.nanos === 0)) {
+    return undefined;
+  }
+  return timestampDate(timestamp);
+}
 
 export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCreationAttributes<ActionTask>> {
   declare jobId: number;
@@ -181,6 +192,94 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
       await ActionTaskStepModel.destroy({ where: { taskId: Number(task.id) }, transaction });
       await task.destroy({ transaction });
     });
+  }
+
+  /**
+   * Persist the TaskState a runner reports for one of its tasks.
+   *
+   * Mirrors gitea's UpdateTaskByState: a final result lands on the task and its
+   * job at once, the reported step states are matched to the step rows by index,
+   * and an in-flight report only refreshes `updated` so the task is not mistaken
+   * for a zombie. A caller may hand in its transaction to keep the update in one
+   * unit of work with what it does next, otherwise this opens its own.
+   */
+  public static async updateByState(
+    runnerId: bigint,
+    state: TaskState,
+    transaction?: Transaction,
+  ): Promise<ActionTask> {
+    if (transaction) {
+      return this.applyState(runnerId, state, transaction);
+    }
+    return sequelize.transaction((t) => this.applyState(runnerId, state, t));
+  }
+
+  private static async applyState(runnerId: bigint, state: TaskState, transaction: Transaction): Promise<ActionTask> {
+    const task = await this.findByPk(state.id, { transaction });
+    if (!task) {
+      throw new Error(`task with id ${state.id}: not exist`);
+    }
+    // Coerce before comparing: the column reads back as a number or a string depending on
+    // the dialect, so a strict bigint comparison would reject the task's own runner.
+    if (Number(runnerId) !== Number(task.runnerId)) {
+      throw new Error('invalid runner for task');
+    }
+
+    if (task.status.isDone()) {
+      // the state is final, do nothing
+      return task;
+    }
+
+    // state.result is not unspecified means the task is finished
+    if (state.result !== Result.UNSPECIFIED) {
+      // The runner may report SUCCESS/FAILURE for the cleanup phase; preserve user intent.
+      const status = task.status === Status.Cancelling ? Status.Cancelled : Status.fromResult(state.result);
+      const stoppedAt = convertTimestamp(state.stoppedAt) ?? null;
+
+      task.status = status;
+      task.stoppedAt = stoppedAt;
+      await task.save({ transaction });
+
+      // A finished task releases its ephemeral runner.
+      if (status.isDone()) {
+        await ActionRunnerModel.deleteEphemeralRunner(task.runnerId, transaction);
+      }
+
+      await ActionRunJobModel.update({ status, stoppedAt }, { where: { id: task.jobId }, transaction });
+    } else {
+      // Touch the updated timestamp so the task isn't judged as a zombie task.
+      await this.update({}, { where: { id: task.id }, transaction });
+    }
+
+    await this.updateSteps(task, state.steps, transaction);
+
+    return task;
+  }
+
+  /** Write the reported step states back onto the step rows, matching them by index. */
+  private static async updateSteps(task: ActionTask, stepStates: StepState[], transaction: Transaction) {
+    const states = new Map(stepStates.map((stepState) => [Number(stepState.id), stepState]));
+    const steps = await ActionTaskStepModel.findAll({ where: { taskId: Number(task.id) }, transaction });
+
+    for (const step of steps) {
+      const stepState = states.get(step.index);
+      const startedAt = stepState ? convertTimestamp(stepState.startedAt) : undefined;
+
+      if (stepState) {
+        step.logIndex = Number(stepState.logIndex);
+        step.logLength = Number(stepState.logLength);
+        step.startedAt = startedAt ?? null;
+        step.stoppedAt = convertTimestamp(stepState.stoppedAt) ?? null;
+
+        if (stepState.result !== Result.UNSPECIFIED) {
+          step.status = Status.fromResult(stepState.result).toString();
+        } else if (startedAt) {
+          step.status = Status.Running.toString();
+        }
+      }
+      // eslint-disable-next-line no-await-in-loop
+      await step.save({ transaction });
+    }
   }
 
   /** Create one step row per step in the job's workflow, in workflow order. */
