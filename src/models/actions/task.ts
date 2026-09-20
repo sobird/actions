@@ -230,8 +230,6 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
       return task;
     }
 
-    const now = new Date();
-
     // state.result is not unspecified means the task is finished
     if (state.result !== Result.UNSPECIFIED) {
       // The runner may report SUCCESS/FAILURE for the cleanup phase; preserve user intent.
@@ -253,7 +251,7 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
       await this.update({}, { where: { id: task.id }, transaction });
     }
 
-    await this.updateSteps(task, state.steps, now, transaction);
+    await this.updateSteps(task, state.steps, transaction);
 
     return task;
   }
@@ -265,7 +263,8 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
    * the stop when the step ends. A step the job never reached is marked finished by the
    * job-end sweep without a stop time, so one is filled in from `now`, as gitea does.
    */
-  private static async updateSteps(task: ActionTask, stepStates: StepState[], now: Date, transaction: Transaction) {
+  private static async updateSteps(task: ActionTask, stepStates: StepState[], transaction: Transaction) {
+    const now = new Date();
     const states = new Map(stepStates.map((stepState) => [Number(stepState.id), stepState]));
     const steps = await ActionTaskStepModel.findAll({ where: { taskId: Number(task.id) }, transaction });
 
