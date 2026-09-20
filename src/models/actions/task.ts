@@ -36,6 +36,7 @@ import type { Models, ActionRunJob, ActionRunner, ActionTaskStep } from '.';
 import { ActionRunJob as ActionRunJobModel } from './run_job';
 import { Status } from './status';
 import { ActionTaskStep as ActionTaskStepModel } from './task_step';
+import { generateToken, generateTokenSalt, hashToken } from './token';
 
 export type ActionTaskCreationAttributes = CreationAttributes<ActionTask>;
 
@@ -50,8 +51,9 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
   declare ownerId: number;
   declare commitSha: string;
   declare isForkPullRequest: CreationOptional<boolean>;
-  declare tokenHash: CreationOptional<string>;
+  declare token: CreationOptional<string>;
   declare tokenSalt: CreationOptional<string>;
+  declare tokenHash: CreationOptional<string>;
   declare tokenLastEight: CreationOptional<string>;
   declare logFilename: string;
   declare logInStorage: boolean;
@@ -356,16 +358,27 @@ ActionTask.init(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
-    tokenHash: {
-      type: DataTypes.STRING,
+    token: {
+      type: DataTypes.VIRTUAL,
+      allowNull: false,
+      defaultValue: generateToken,
+      comment: 'task token',
     },
     tokenSalt: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: generateTokenSalt,
+      comment: 'token salt',
+    },
+    tokenHash: {
       type: DataTypes.STRING,
     },
     tokenLastEight: {
       type: DataTypes.STRING,
     },
-    logFilename: DataTypes.STRING,
+    logFilename: {
+      type: DataTypes.STRING,
+    },
     logInStorage: {
       type: DataTypes.BOOLEAN,
     },
@@ -393,3 +406,8 @@ ActionTask.init(
     ],
   },
 );
+
+ActionTask.beforeCreate((model) => {
+  model.tokenHash = hashToken(model.token, model.tokenSalt);
+  model.tokenLastEight = model.token.slice(-8);
+});

@@ -14,6 +14,10 @@ const DIGEST = 'sha256';
 const ITERATIONS = 10000;
 const KEY_LENGTH = 50;
 
+export function generateToken(size = 20) {
+  return randomBytes(size).toString('hex');
+}
+
 /** generates a fresh salt for a token hash */
 export function generateTokenSalt() {
   return randomBytes(6).toString('base64url');
