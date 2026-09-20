@@ -9,7 +9,7 @@ import { DataTypes, type InferAttributes, type InferCreationAttributes } from 's
 import { sequelize, BaseModel } from '@/lib/sequelize';
 import { secret } from '@/utils';
 
-import type Task from './task';
+import type { ActionTask } from './task';
 
 /** These are all the attributes in the ActionsSecret model */
 export type ActionsSecretAttributes = InferAttributes<ActionsSecret>;
@@ -30,10 +30,10 @@ export class ActionsSecret extends BaseModel<ActionsSecretAttributes, ActionsSec
   //   this.belongsTo(User, { onDelete: 'cascade' });
   // }
 
-  public static async SecretsForTask(task: Task) {
+  public static async SecretsForTask(task: ActionTask) {
     const secrets: Record<string, string> = {};
 
-    if (task.Job?.Run?.isForkPullRequest && task.Job.Run.triggerEvent !== 'pull_request_target') {
+    if (task.job?.run?.isForkPullRequest && task.job.run.triggerEvent !== 'pull_request_target') {
       // ignore secrets for fork pull request, except GITHUB_TOKEN which are automatically generated.
       // for the tasks triggered by pull_request_target event, they could access the secrets because they will run in the context of the base branch
       // see the documentation: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target

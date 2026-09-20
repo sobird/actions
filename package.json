@@ -44,7 +44,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@actions/core": "^3.0.1",
     "@actions/expressions": "^0.3.61",
     "@actions/hashfiles": "workspace:*",
     "@actions/workflow-parser": "^0.3.61",
@@ -90,6 +89,8 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@actions/core": "^3.0.1",
+    "@actions/github": "^9.1.1",
     "@bufbuild/buf": "^1.72.0",
     "@commitlint/cli": "^20.5.3",
     "@commitlint/config-conventional": "^20.5.3",
