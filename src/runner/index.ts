@@ -27,6 +27,7 @@ import { HOSTED } from '@/labels';
 import Config from '@/runner/config';
 import Context from '@/runner/context';
 import { createSafeName, assignIgnoreCase, createFnv1aHash } from '@/utils';
+import type { Run as DefaultsRun } from '@/workflow/job/defaults';
 import StepAction from '@/workflow/job/step/action';
 import Strategy from '@/workflow/job/strategy';
 
@@ -650,11 +651,17 @@ class Runner {
   }
 
   /**
-   * ...workflow.defaults, ...job.defaults
+   * 生效的 defaults.run：workflow 级与 job 级按 key 合并，job 侧优先。
+   *
+   * 上游在 JobExtension 把求值结果写进 Global.JobDefaults["run"]，ScriptHandler
+   * 从那里读；这里等价于那份已求值的字典。
    */
-  get Defaults() {
+  get Defaults(): { run: Partial<DefaultsRun> } {
     const { job, workflow } = this.run;
-    return { ...workflow.defaults, ...job.defaults };
+    const workflowRun = workflow.defaults.run.evaluate(this) || {};
+    const jobRun = job.defaults.run.evaluate(this) || {};
+
+    return { run: { ...workflowRun, ...jobRun } };
   }
 
   ContainerName(id?: string) {

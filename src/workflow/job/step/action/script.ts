@@ -100,7 +100,7 @@ class StepActionScript extends StepAction {
   async setupShell(runner: Runner) {
     let { shell } = this;
     if (!shell) {
-      shell = runner.Defaults.run.evaluate(runner)?.shell || '';
+      shell = runner.Defaults.run.shell || '';
     }
 
     await runner.container?.applyPath(runner.prependPath, this.environment);
@@ -127,7 +127,7 @@ class StepActionScript extends StepAction {
   }
 
   WorkingDirectory(runner: Runner) {
-    return this['working-directory'].evaluate(runner) || runner.Defaults.run.evaluate(runner)?.['working-directory'];
+    return this['working-directory'].evaluate(runner) || runner.Defaults.run['working-directory'];
   }
 
   static FixUpScriptContent(scriptType: string, content: string) {

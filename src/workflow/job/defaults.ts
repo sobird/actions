@@ -1,6 +1,6 @@
 import Expression from '@/expression';
 
-type Run = {
+export type Run = {
   shell: 'unspecified' | 'bash' | 'pwsh' | 'python' | 'sh' | 'cmd' | 'powershell';
   'working-directory': string;
 };

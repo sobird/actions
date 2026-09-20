@@ -12,7 +12,7 @@ import Yaml from '@/common/yaml';
 import Expression from '@/expression';
 
 import Job, { JobProps } from './job';
-import Defaults from './job/defaults';
+import Defaults, { DefaultsProps } from './job/defaults';
 import Plan, { Stage, Run } from './plan';
 import {
   Concurrency,
@@ -22,12 +22,13 @@ import {
 } from './types';
 import WorkflowCall from './workflow_call';
 
-interface WorkflowProps extends Pick<Workflow, 'name' | 'on' | 'permissions' | 'defaults'> {
+interface WorkflowProps extends Pick<Workflow, 'name' | 'on' | 'permissions'> {
   file?: string;
   sha?: string;
   'run-name': string;
   concurrency: Concurrency;
   env: Record<string, string>;
+  defaults?: DefaultsProps;
   jobs: Record<string, JobProps>;
 }
 
@@ -157,7 +158,7 @@ class Workflow extends Yaml {
     this.on = workflow.on;
     this.permissions = workflow.permissions;
     this.env = new Expression(workflow.env, ['github', 'secrets', 'inputs', 'vars']);
-    this.defaults = workflow.defaults;
+    this.defaults = new Defaults(workflow.defaults);
     this.concurrency = new Expression(workflow.concurrency, ['github', 'inputs', 'vars']);
     this.jobs = this.setupJobs(workflow.jobs);
   }

@@ -53,6 +53,17 @@ Run a job directly on the host
 actions run -j job-name --hosted
 ```
 
+`--hosted` does not copy the repository: it materializes an empty sandbox rooted at
+`~/.actions/actions/<id>/` and mirrors absolute paths under it. Steps that read the
+checkout — anything under a `working-directory` that points inside the repo, or a
+local `uses: ./...` action — need the source to be linked in first, either with
+`--bind-workdir` or by keeping an `actions/checkout` step in the workflow. The two
+are mutually exclusive (`--no-skip-checkout` conflicts with `--bind-workdir`):
+
+```sh
+actions run -W test/workflows/defaults.yml --hosted --bind-workdir
+```
+
 ## Reference
 
 - [actions/runner](https://github.com/actions/runner)
