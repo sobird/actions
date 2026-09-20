@@ -1,0 +1,50 @@
+name: Legacy Commands
+run-name: legacy commands by ${{ github.actor }}
+
+on:
+  push:
+
+# set-env / add-path 默认是禁用的，必须显式开启 ACTIONS_ALLOW_UNSECURE_COMMANDS。
+# 这个值会经 runner.Env() 进入 context.env，命令扩展正是从那里读取开关状态。
+env:
+  ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+
+jobs:
+  legacy-commands:
+    runs-on: ubuntu-latest
+    steps:
+      - name: set-env is accepted while the flag is on
+        run: echo "::set-env name=LEGACY_VAR::from-set-env"
+
+      - name: the value set by set-env is visible to later steps
+        run: |
+          echo "LEGACY_VAR=$LEGACY_VAR"
+          [ "$LEGACY_VAR" = "from-set-env" ] || exit 1
+
+      - name: add-path is accepted while the flag is on
+        run: |
+          mkdir -p /tmp/legacy-bin
+          echo "::add-path::/tmp/legacy-bin"
+
+      - name: the added path is on PATH
+        run: |
+          case ":$PATH:" in
+            *:/tmp/legacy-bin:*) echo "path present" ;;
+            *)
+              echo "path missing: $PATH" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: echo on
+        run: echo "::echo::on"
+
+      - name: echo off
+        run: echo "::echo::off"
+
+      # state 只做 smoke 检查：本实现把 save-state 存进 root.IntraActionState，
+      # 并不像上游那样导出 STATE_<name> 环境变量，所以没法断言读取结果。
+      - name: save-state and GITHUB_STATE are accepted
+        run: |
+          echo "::save-state name=legacy_state::from-save-state"
+          echo "legacy_state_file=from-github-state" >> "$GITHUB_STATE"

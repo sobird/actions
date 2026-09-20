@@ -1,0 +1,43 @@
+name: Job Conditionals
+run-name: job conditionals by ${{ github.actor }}
+
+on:
+  push:
+
+jobs:
+  # 故意失败的作业，给下游的 needs.<job>.result 提供输入。
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: fail on purpose
+        run: exit 1
+
+  # 这里刻意全部使用显式的 needs.<job>.result 表达式，而不是依赖作业 if 的
+  # 默认值 success()：默认路径由 Expression.CreateJobSuccess 处理，其实现
+  # 与上游语义存在出入（详见方案文档的“待确认的源码疑点”）。
+  runs-on-failure:
+    needs: [setup]
+    if: ${{ needs.setup.result == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: runs because needs.setup.result is failure
+        run: |
+          echo "needs.setup.result=${{ needs.setup.result }}"
+          [ "${{ needs.setup.result }}" = "failure" ] || exit 1
+
+  runs-on-always:
+    needs: [setup]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: runs because always() is true
+        run: echo "always() evaluated to true"
+
+  skipped-on-success:
+    needs: [setup]
+    if: ${{ needs.setup.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      # setup 已经失败，这个作业本就不该运行；真的跑了就 exit 1。
+      - name: must never run
+        run: exit 1

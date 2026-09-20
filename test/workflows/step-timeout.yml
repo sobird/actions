@@ -1,0 +1,32 @@
+name: Step Timeout
+run-name: step timeout by ${{ github.actor }}
+
+on:
+  push:
+
+jobs:
+  step-timeout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: sleeps longer than its timeout
+        id: timeout
+        # 超时只影响本步骤的 outcome。加上 continue-on-error 后 conclusion 仍是
+        # success，作业不会被判失败，后面的断言步骤才有机会执行。
+        continue-on-error: true
+        # 上游的 timeout-minutes 是整数分钟。这里用小数把用例压到约 3 秒
+        # （实现里是 Number(timeout-minutes) * 60 * 1000），避免 60 秒的慢用例。
+        #
+        # 注意：实现是 withTimeout 竞速，超时只 reject promise 并把本步骤判为
+        # failure，并不会真正杀掉容器里的进程。所以 sleep 只取 5 秒，比超时略长，
+        # 让残留的 exec 很快自己结束。
+        timeout-minutes: 0.05
+        run: sleep 5
+
+      - name: assert the step timed out and was marked as a failure
+        run: |
+          echo "outcome=${{ steps.timeout.outcome }} conclusion=${{ steps.timeout.conclusion }}"
+          [ "${{ steps.timeout.outcome }}" = "failure" ] || exit 1
+          [ "${{ steps.timeout.conclusion }}" = "success" ] || exit 1
+
+      - name: the step after the timed out one still runs
+        run: echo "reached the step after the timed out one"

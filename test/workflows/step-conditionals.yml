@@ -1,0 +1,37 @@
+name: Step Conditionals
+run-name: step conditionals by ${{ github.actor }}
+
+on:
+  push:
+
+jobs:
+  step-conditionals:
+    runs-on: ubuntu-latest
+    steps:
+      - name: baseline step without an if
+        run: echo "baseline"
+
+      - name: runs when success() is true
+        if: success()
+        run: echo "success() evaluated to true"
+
+      - name: runs when always() is true
+        if: always()
+        run: echo "always() evaluated to true"
+
+      - name: runs when the raw expression is true
+        if: ${{ 1 == 1 }}
+        run: echo "expression evaluated to true"
+
+      # 下面两个条件都应为 false。要是被错误地判成 true，步骤就会执行并 exit 1，
+      # 从而把 job 判失败，断言就是靠这个生效的。
+      - name: must be skipped, cancelled() is false in a normal run
+        if: cancelled()
+        run: exit 1
+
+      - name: must be skipped, the raw expression is false
+        if: ${{ 1 == 2 }}
+        run: exit 1
+
+# failure() 需要作业里先有真实失败才能成立，已有用例覆盖：
+# test/workflows/uses-composite/with-error.yml

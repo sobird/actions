@@ -1,0 +1,50 @@
+name: Defaults
+run-name: defaults by ${{ github.actor }}
+
+on:
+  push:
+
+defaults:
+  run:
+    shell: bash
+    working-directory: test/workflows
+
+jobs:
+  workflow-defaults:
+    runs-on: ubuntu-latest
+    steps:
+      - name: inherits the workflow defaults
+        run: |
+          echo "pwd=$(pwd)"
+          printf '%s' "$(pwd)" | grep -q '/test/workflows$' || exit 1
+
+  job-defaults:
+    runs-on: ubuntu-latest
+    # job 级 defaults.run 会整体覆盖 workflow 级（不是按 key 逐项合并），
+    # 所以这里把 shell 也一并写上，否则会退回容器默认的 shell。
+    defaults:
+      run:
+        shell: bash
+        working-directory: test/actions
+    steps:
+      - name: inherits the job defaults
+        run: |
+          echo "pwd=$(pwd)"
+          printf '%s' "$(pwd)" | grep -q '/test/actions$' || exit 1
+
+  step-overrides:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: test/actions
+    steps:
+      - name: step working-directory overrides the job default
+        working-directory: test/workflows
+        run: |
+          echo "pwd=$(pwd)"
+          printf '%s' "$(pwd)" | grep -q '/test/workflows$' || exit 1
+
+      - name: step shell overrides the job default
+        shell: sh
+        run: echo "explicit sh shell works"

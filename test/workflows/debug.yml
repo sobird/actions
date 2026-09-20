@@ -30,7 +30,7 @@ jobs:
 
       - name: Hello world action step
         id: hello_javascript
-        uses: ./.github/actions/hello-world-javascript-action
+        uses: ./test/actions/hello-world-javascript-action
         with:
           who-to-greet: 'javascript action step'
       - name: Get the output time
@@ -38,7 +38,7 @@ jobs:
 
       - name: Hello world docker action step
         id: hello_docker
-        uses: ./.github/actions/hello-world-docker-action
+        uses: ./test/actions/hello-world-docker-action
         with:
           who-to-greet: 'docker action step'
       - name: Get the output time
@@ -46,7 +46,7 @@ jobs:
 
       - name: Hello world composite action step
         id: hello_composite
-        uses: ./.github/actions/hello-world-composite-action
+        uses: ./test/actions/hello-world-composite-action
         with:
           who-to-greet: 'composite action step'
       - run: echo random-number "$RANDOM_NUMBER"

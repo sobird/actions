@@ -1,0 +1,29 @@
+name: Step Continue On Error
+run-name: continue-on-error by ${{ github.actor }}
+
+on:
+  push:
+
+# 只覆盖 step 级 continue-on-error：它在本地运行时生效。
+# job 级 continue-on-error 目前只在服务端聚合路径（models/actions/run_job.ts）消费，
+# 本地 `actions run` 不生效，因此不在这里测。
+jobs:
+  step-continue-on-error:
+    runs-on: ubuntu-latest
+    steps:
+      - name: fails but is tolerated
+        id: tolerated
+        continue-on-error: true
+        run: exit 1
+
+      # 上一步的 outcome 是 failure、conclusion 是 success。
+      # 正因为 conclusion 是 success，job status 没有被判成 failure，
+      # 这个（隐式 success() 的）步骤才会执行。
+      - name: runs after the tolerated failure
+        run: echo "reached the step after a tolerated failure"
+
+      - name: assert outcome and conclusion of the tolerated step
+        run: |
+          echo "outcome=${{ steps.tolerated.outcome }} conclusion=${{ steps.tolerated.conclusion }}"
+          [ "${{ steps.tolerated.outcome }}" = "failure" ] || exit 1
+          [ "${{ steps.tolerated.conclusion }}" = "success" ] || exit 1

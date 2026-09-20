@@ -11,7 +11,10 @@ jobs:
           NODE_VERSION: ${{ matrix.node }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # 只保留 ubuntu：默认 labels 里没有 windows/macos，Labels.pickPlatform
+        # 对未知 label 会回退到 gitea/runner-images:ubuntu-latest，
+        # 列上它们只是看起来跨平台，实际全跑在 ubuntu 镜像上。
+        os: [ubuntu-latest]
         node: [6, 8, 10]
 
   test:
