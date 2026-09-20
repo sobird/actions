@@ -362,4 +362,25 @@ describe('Expression Functions', () => {
       });
     });
   });
+
+  describe('success() with needs', () => {
+    const testCases = [
+      { result: 'success', expected: true },
+      { result: 'failure', expected: false },
+      { result: 'skipped', expected: false },
+    ];
+
+    testCases.forEach(({ result, expected }) => {
+      it(`should return ${expected} when a needed job is ${result}`, () => {
+        runner.context.job = { status: null } as Job;
+        (runner as unknown as { run: unknown }).run = {
+          job: { Needs: ['setup'] },
+          workflow: { jobs: { setup: { Needs: [], Result: result } } },
+        };
+
+        const expression = new Expression('success()', [], ['success'], true, true);
+        expect(expression.evaluate(runner)).toBe(expected);
+      });
+    });
+  });
 });

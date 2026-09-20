@@ -154,7 +154,7 @@ class Expression<T> {
 
       for (const need of jobNeeds) {
         if (workflow.jobs[need].Result !== 'success') {
-          return true;
+          return false;
         }
       }
 

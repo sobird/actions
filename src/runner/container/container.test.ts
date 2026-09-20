@@ -268,6 +268,25 @@ describe('path helpers', () => {
     expect(found).toBe(process.execPath);
   });
 
+  it('searches prependPath before the path of the environment', () => {
+    const found = container.lookPath(path.basename(process.execPath), { PATH: '/nonexistent-dir' }, [
+      path.dirname(process.execPath),
+    ]);
+
+    expect(found).toBe(process.execPath);
+  });
+
+  it('falls back to the process path when the environment has none', () => {
+    // 步骤的 env 里通常没有 PATH，查找应当退回进程环境（对齐上游 WhichUtil.Which）
+    const original = process.env.PATH;
+    process.env.PATH = path.dirname(process.execPath);
+    try {
+      expect(container.lookPath(path.basename(process.execPath), {})).toBe(process.execPath);
+    } finally {
+      process.env.PATH = original;
+    }
+  });
+
   it('reports an empty string when nothing matches', () => {
     expect(container.lookPath('definitely-not-on-path-12345', { PATH: path.dirname(process.execPath) })).toBe('');
   });

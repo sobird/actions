@@ -75,16 +75,19 @@ class StepActionScript extends StepAction {
   }
 
   async setupShellCommand(runner: Runner) {
-    const shell = await this.setupShell(runner);
+    const { shell, shellPath } = await this.setupShell(runner);
     const script = StepActionScript.FixUpScriptContent(shell, this.run.evaluate(runner));
     const [cmd, ext] = StepActionScript.GetShellCommandAndExt(shell);
-    this.cmd = cmd;
+
+    // 上游把 shell 名字和实际执行的可执行文件分开：名字决定参数格式与脚本扩展名，
+    // 直接跑在宿主机上时执行的是解析出的绝对路径。cmd 的首个 token 就是 shell 名字。
+    this.cmd = shellPath ? `${shellPath}${cmd.slice(shell.length)}` : cmd;
     this.script = script;
 
     const scriptFilePath = path.join(WellKnownDirectory.Temp, `${this.uuid}${ext}`);
     const resolvedScriptPath = runner.container?.resolve(scriptFilePath);
 
-    this.command = util.format(cmd, resolvedScriptPath);
+    this.command = util.format(this.cmd, resolvedScriptPath);
 
     runner.container
       ?.putContent('.', {
@@ -97,7 +100,7 @@ class StepActionScript extends StepAction {
     return [resolvedScriptPath, script];
   }
 
-  async setupShell(runner: Runner) {
+  async setupShell(runner: Runner): Promise<{ shell: string; shellPath: string }> {
     let { shell } = this;
     if (!shell) {
       shell = runner.Defaults.run.shell || '';
@@ -105,25 +108,37 @@ class StepActionScript extends StepAction {
 
     await runner.container?.applyPath(runner.prependPath, this.environment);
 
-    if (!shell) {
-      //
-      if (runner.container && runner.IsHosted) {
-        let shellWithFallback = ['bash', 'sh'];
-        if (runner.container.OS === 'Windows') {
-          shellWithFallback = ['pwsh', 'powershell'];
-        }
-        [shell] = shellWithFallback;
-        const cmd = runner.container.lookPath(shellWithFallback[0], this.environment);
-        if (!cmd) {
-          [, shell] = shellWithFallback;
-        }
-      } else if (runner.ContainerImage) {
-        // Currently only linux containers are supported, use sh by default like actions/runner
-        shell = 'sh';
-      }
+    // 对齐上游 ScriptHandler 的 validateShellOnHost：只有直接跑在宿主机上
+    // （--hosted）才需要在宿主机 PATH 上解析出 shell 的绝对路径，容器内交给
+    // 容器自己按名字解析。
+    const { container } = runner;
+    const onHost = !!container && runner.IsHosted;
+    const which = (file: string) => container?.lookPath(file, this.environment, runner.prependPath) || '';
+
+    if (shell) {
+      return { shell, shellPath: onHost ? which(shell) : '' };
     }
 
-    return shell;
+    if (!onHost) {
+      if (runner.ContainerImage) {
+        // Currently only linux containers are supported, use sh by default like actions/runner
+        return { shell: 'sh', shellPath: '' };
+      }
+      return { shell: '', shellPath: '' };
+    }
+
+    if (container!.OS === 'Windows') {
+      // 上游 Windows 默认 pwsh，找不到才整体退回 powershell，名字也跟着变
+      const pwsh = which('pwsh');
+      if (pwsh) {
+        return { shell: 'pwsh', shellPath: pwsh };
+      }
+      return { shell: 'powershell', shellPath: which('powershell') };
+    }
+
+    // 上游非 Windows：名字固定为 sh（参数格式 -e、脚本扩展名 .sh），但执行的是
+    // 宿主机上的 bash，找不到 bash 才退回 sh。
+    return { shell: 'sh', shellPath: which('bash') || which('sh') };
   }
 
   WorkingDirectory(runner: Runner) {

@@ -5,6 +5,13 @@ on:
   push:
 
 jobs:
+  # 成功的作业，给 needs 提供 success 输入。
+  passes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: succeed on purpose
+        run: echo "passes"
+
   # 故意失败的作业，给下游的 needs.<job>.result 提供输入。
   setup:
     runs-on: ubuntu-latest
@@ -12,9 +19,26 @@ jobs:
       - name: fail on purpose
         run: exit 1
 
-  # 这里刻意全部使用显式的 needs.<job>.result 表达式，而不是依赖作业 if 的
-  # 默认值 success()：默认路径由 Expression.CreateJobSuccess 处理，其实现
-  # 与上游语义存在出入（详见方案文档的“待确认的源码疑点”）。
+  # 不写 if 时作业条件是默认值 success()（见 Job 构造里 Expression 的 defaultValue），
+  # 依赖的作业成功则运行。
+  runs-on-implicit-success:
+    needs: [passes]
+    runs-on: ubuntu-latest
+    steps:
+      - name: runs because passes succeeded
+        run: |
+          echo "needs.passes.result=${{ needs.passes.result }}"
+          [ "${{ needs.passes.result }}" = "success" ] || exit 1
+
+  # 同一个默认值在依赖作业失败时必须为 false，这个作业应被跳过。
+  skipped-by-implicit-success:
+    needs: [setup]
+    runs-on: ubuntu-latest
+    steps:
+      # setup 已经失败，这个作业本就不该运行；真的跑了就 exit 1。
+      - name: must never run
+        run: exit 1
+
   runs-on-failure:
     needs: [setup]
     if: ${{ needs.setup.result == 'failure' }}

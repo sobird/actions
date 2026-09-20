@@ -291,15 +291,17 @@ export default abstract class Container {
     return pathString.split(this.OS === 'Windows' ? ';' : ':');
   }
 
-  lookPath(file: string, env: Record<string, string | undefined>) {
+  lookPath(file: string, env: Record<string, string | undefined> = {}, prependPath: string[] = []) {
     if (file.includes(path.sep)) {
       if (Container.isExecutable(file)) {
         return file;
       }
       return '';
     }
-    const envPath = Container.GetEnv(env, this.pathVariableName) || '';
-    const dirs = this.splitPath(envPath).map((dir) => {
+    // 对齐上游 WhichUtil.Which：查找用的 PATH 来自进程环境（再前置 prependPath），
+    // 而不是步骤的 env —— 步骤 env 里通常没有 PATH，拿它查等于永远查不到。
+    const envPath = Container.GetEnv(env, this.pathVariableName) || this.defaultPathVariable || '';
+    const dirs = [...prependPath, ...this.splitPath(envPath)].map((dir) => {
       return dir.trim() === '' ? '.' : dir.trim();
     });
 
