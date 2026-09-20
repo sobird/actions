@@ -4,7 +4,7 @@
  * sobird<i@sobird.me> at 2024/11/16 23:31:19 created.
  */
 
-import { randomBytes, pbkdf2Sync, timingSafeEqual } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 
 import {
   DataTypes,
@@ -31,6 +31,7 @@ import { RunnerStatus } from '@/gen/runner/v1/messages_pb';
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
 import type { Models, ActionTask } from '.';
+import { generateTokenSalt, hashToken, verifyToken } from './token';
 
 export type ActionRunnerCreationAttributes = CreationAttributes<ActionRunner>;
 
@@ -73,15 +74,7 @@ export class ActionRunner extends BaseModel<InferAttributes<ActionRunner>, Infer
   declare hasCancellingSupport: CreationOptional<boolean>;
 
   public verifyToken(token: string) {
-    if (!token) {
-      return false;
-    }
-    const tokenHash = ActionRunner.hashToken(token, this.tokenSalt);
-    return timingSafeEqual(Buffer.from(tokenHash), Buffer.from(this.tokenHash));
-  }
-
-  public static hashToken(token: string, salt: string) {
-    return pbkdf2Sync(Buffer.from(token), Buffer.from(salt), 10000, 50, 'sha256').toString('hex');
+    return verifyToken(token, this.tokenSalt, this.tokenHash);
   }
 
   /** deletes an ephemeral runner by its id; a missing or non-ephemeral runner is a no-op */
@@ -166,7 +159,7 @@ ActionRunner.init(
     tokenSalt: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: () => randomBytes(6).toString('base64url'),
+      defaultValue: generateTokenSalt,
       comment: 'token salt',
     },
     tokenHash: {
@@ -238,5 +231,5 @@ ActionRunner.init(
 );
 
 ActionRunner.beforeCreate((model) => {
-  model.tokenHash = ActionRunner.hashToken(model.token, model.tokenSalt);
+  model.tokenHash = hashToken(model.token, model.tokenSalt);
 });

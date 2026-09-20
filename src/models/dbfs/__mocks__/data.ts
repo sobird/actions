@@ -5,4 +5,4 @@ const seeds: DbfsDataCreationAttributes[] = [];
 await DbfsData.sync({ force: true });
 await DbfsData.bulkCreate(seeds, { individualHooks: true, validate: true });
 
-export { DbfsData };
+export * from '../data';

@@ -61,7 +61,14 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
   declare logExpired: boolean;
 
   declare job?: NonAttribute<ActionRunJob>;
+  declare runner?: NonAttribute<ActionRunner>;
   declare steps?: NonAttribute<ActionTaskStep[]>;
+
+  declare static associations: {
+    job: Association<ActionTask, ActionRunJob>;
+    runner: Association<ActionTask, ActionRunner>;
+    steps: Association<ActionTask, ActionTaskStep>;
+  };
 
   static associate({ ActionRunJob, ActionRunner, ActionTaskStep }: Models) {
     this.belongsTo(ActionRunJob, { as: 'job', foreignKey: 'jobId' });
@@ -69,17 +76,12 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
     this.hasMany(ActionTaskStep, { as: 'steps', foreignKey: 'taskId' });
   }
 
-  declare static associations: {
-    Job: Association<ActionTask, ActionRunJob>;
-  };
-
   // associates method
   // Since TS cannot determine model association at compile time
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
   // 名字跟着 associate 里的 alias 走：alias 是 'steps'，sequelize 生成的就是 getSteps 这一组
   declare getSteps: HasManyGetAssociationsMixin<ActionTaskStep>;
-  /** Remove all previous associations and set the new ones */
   declare setSteps: HasManySetAssociationsMixin<ActionTaskStep, bigint>;
   declare addStep: HasManyAddAssociationMixin<ActionTaskStep, bigint>;
   declare addSteps: HasManyAddAssociationsMixin<ActionTaskStep, bigint>;
