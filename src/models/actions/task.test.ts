@@ -223,6 +223,50 @@ describe('ActionTask.updateByState', () => {
     expect(steps[1].logIndex).toBe(12);
     expect(steps[1].logLength).toBe(34);
     expect(steps[1].startedAt).toEqual(startedAt);
+    // 还在跑的步骤不该有结束时间
+    expect(steps[1].stoppedAt).toBeNull();
+  });
+
+  it('gives a finished step a stop time when the report leaves it out', async () => {
+    const { task } = await runningTask();
+
+    // job 结束时没跑到的步骤就是这样上报的：有终态，没有 stoppedAt
+    const updated = await ActionTask.updateByState(
+      1n,
+      create(TaskStateSchema, {
+        id: task.id!,
+        steps: [create(StepStateSchema, { id: 2n, result: Result.CANCELLED })],
+      }),
+    );
+
+    const steps = await updated.getSteps({ order: [['index', 'ASC']] });
+    expect(steps[2].status).toBe(Status.Cancelled.toString());
+    expect(steps[2].stoppedAt).toBeInstanceOf(Date);
+  });
+
+  it('keeps the stop time a step already carries', async () => {
+    const { task } = await runningTask();
+    const stoppedAt = new Date(1683636626000);
+    const step = (await ActionTaskStep.findOne({ where: { taskId: Number(task.id), index: 0 } }))!;
+    step.stoppedAt = stoppedAt;
+    await step.save();
+
+    await ActionTask.updateByState(
+      1n,
+      create(TaskStateSchema, {
+        id: task.id!,
+        steps: [
+          create(StepStateSchema, {
+            id: 0n,
+            result: Result.SUCCESS,
+            stoppedAt: timestampFromDate(new Date(1750000000000)),
+          }),
+        ],
+      }),
+    );
+
+    await step.reload();
+    expect(step.stoppedAt).toEqual(stoppedAt);
   });
 
   it('rejects a state reported by another runner', async () => {

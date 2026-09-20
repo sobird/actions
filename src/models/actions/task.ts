@@ -230,6 +230,8 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
       return task;
     }
 
+    const now = new Date();
+
     // state.result is not unspecified means the task is finished
     if (state.result !== Result.UNSPECIFIED) {
       // The runner may report SUCCESS/FAILURE for the cleanup phase; preserve user intent.
@@ -251,13 +253,19 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
       await this.update({}, { where: { id: task.id }, transaction });
     }
 
-    await this.updateSteps(task, state.steps, transaction);
+    await this.updateSteps(task, state.steps, now, transaction);
 
     return task;
   }
 
-  /** Write the reported step states back onto the step rows, matching them by index. */
-  private static async updateSteps(task: ActionTask, stepStates: StepState[], transaction: Transaction) {
+  /**
+   * Write the reported step states back onto the step rows, matching them by index.
+   *
+   * Timestamps are written once: the reporter stamps the start on the first log line and
+   * the stop when the step ends. A step the job never reached is marked finished by the
+   * job-end sweep without a stop time, so one is filled in from `now`, as gitea does.
+   */
+  private static async updateSteps(task: ActionTask, stepStates: StepState[], now: Date, transaction: Transaction) {
     const states = new Map(stepStates.map((stepState) => [Number(stepState.id), stepState]));
     const steps = await ActionTaskStepModel.findAll({ where: { taskId: Number(task.id) }, transaction });
 
@@ -268,11 +276,20 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
       if (stepState) {
         step.logIndex = Number(stepState.logIndex);
         step.logLength = Number(stepState.logLength);
-        step.startedAt = startedAt ?? null;
-        step.stoppedAt = convertTimestamp(stepState.stoppedAt) ?? null;
+
+        // Prefer the start time the runner stamped itself over the moment its report
+        // reached us. gitea records the server time here instead — a deliberate difference.
+        if (!step.startedAt && startedAt) {
+          step.startedAt = startedAt;
+        }
 
         if (stepState.result !== Result.UNSPECIFIED) {
           step.status = Status.fromResult(stepState.result).toString();
+
+          // A finished step should not be left without an end.
+          if (!step.stoppedAt) {
+            step.stoppedAt = convertTimestamp(stepState.stoppedAt) ?? now;
+          }
         } else if (startedAt) {
           step.status = Status.Running.toString();
         }
