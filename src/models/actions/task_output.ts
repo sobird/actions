@@ -33,19 +33,19 @@ export class ActionTaskOutput extends BaseModel<
   declare outputKey: string;
   declare outputValue: string;
 
-  static associate({ ActionTask }: Models) {
-    this.belongsTo(ActionTask, { foreignKey: 'taskId' });
-  }
+  declare task?: NonAttribute<ActionTask>;
 
   declare static associations: {
-    ActionTask: Association<ActionTaskOutput, ActionTask>;
+    task: Association<ActionTaskOutput, ActionTask>;
   };
 
-  declare Task?: NonAttribute<ActionTask>;
+  static associate({ ActionTask }: Models) {
+    this.belongsTo(ActionTask, { as: 'task', foreignKey: 'taskId' });
+  }
 
-  declare getActionTask: BelongsToGetAssociationMixin<ActionTask>;
-  declare setActionTask: BelongsToSetAssociationMixin<ActionTask, bigint>;
-  declare createActionTask: BelongsToCreateAssociationMixin<ActionTask>;
+  declare getTask: BelongsToGetAssociationMixin<ActionTask>;
+  declare setTask: BelongsToSetAssociationMixin<ActionTask, bigint>;
+  declare createTask: BelongsToCreateAssociationMixin<ActionTask>;
 
   /** returns the keys of the outputs of the task */
   public static async findKeysByTaskId(taskId: number) {
@@ -54,10 +54,10 @@ export class ActionTaskOutput extends BaseModel<
   }
 
   /** inserts a new task output if it does not exist */
-  public static async insertIfNotExist(taskId: number, key: string, value: string) {
+  public static async insertIfNotExist(taskId: number, outputKey: string, outputValue: string) {
     await this.findOrCreate({
-      where: { taskId, outputKey: key },
-      defaults: { taskId, outputKey: key, outputValue: value },
+      defaults: { taskId, outputKey, outputValue },
+      where: { taskId, outputKey },
     });
   }
 }

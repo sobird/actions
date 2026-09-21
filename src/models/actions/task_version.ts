@@ -10,17 +10,20 @@ import {
   type InferAttributes,
   type InferCreationAttributes,
   type CreationOptional,
+  type CreationAttributes,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-export type ActionTaskVersionAttributes = InferAttributes<ActionTaskVersion>;
-export type ActionTaskVersionCreationAttributes = InferCreationAttributes<ActionTaskVersion>;
+export type ActionTaskVersionCreationAttributes = CreationAttributes<ActionTaskVersion>;
 
 // If both ownerID and repoID is zero, its scope is global.
 // If ownerID is not zero and repoID is zero, its scope is org (there is no user-level runner currrently).
 // If ownerID is zero and repoID is not zero, its scope is repo.
-export class ActionTaskVersion extends BaseModel<ActionTaskVersionAttributes, ActionTaskVersionCreationAttributes> {
+export class ActionTaskVersion extends BaseModel<
+  InferAttributes<ActionTaskVersion>,
+  InferCreationAttributes<ActionTaskVersion>
+> {
   declare ownerId: number;
   declare repositoryId: number;
   declare version: CreationOptional<bigint>;

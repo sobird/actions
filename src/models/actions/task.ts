@@ -34,7 +34,7 @@ import { sequelize, BaseModel } from '@/lib/sequelize';
 import { logFileName } from '@/utils';
 import Workflow from '@/workflow';
 
-import type { Models, ActionRunJob, ActionRunner, ActionTaskStep } from '.';
+import type { Models, ActionRunJob, ActionRunner, ActionTaskOutput, ActionTaskStep } from '.';
 import { ActionRunJob as ActionRunJobModel } from './run_job';
 import { ActionRunner as ActionRunnerModel } from './runner';
 import { Status } from './status';
@@ -76,17 +76,20 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
   declare job?: NonAttribute<ActionRunJob>;
   declare runner?: NonAttribute<ActionRunner>;
   declare steps?: NonAttribute<ActionTaskStep[]>;
+  declare outputs?: NonAttribute<ActionTaskOutput[]>;
 
   declare static associations: {
     job: Association<ActionTask, ActionRunJob>;
     runner: Association<ActionTask, ActionRunner>;
     steps: Association<ActionTask, ActionTaskStep>;
+    outputs: Association<ActionTask, ActionTaskOutput>;
   };
 
-  static associate({ ActionRunJob, ActionRunner, ActionTaskStep }: Models) {
+  static associate({ ActionRunJob, ActionRunner, ActionTaskOutput, ActionTaskStep }: Models) {
     this.belongsTo(ActionRunJob, { as: 'job', foreignKey: 'jobId' });
     this.belongsTo(ActionRunner, { as: 'runner', foreignKey: 'runnerId' });
     this.hasMany(ActionTaskStep, { as: 'steps', foreignKey: 'taskId' });
+    this.hasMany(ActionTaskOutput, { as: 'outputs', foreignKey: 'taskId' });
   }
 
   // associates method
@@ -104,6 +107,18 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
   declare hasSteps: HasManyHasAssociationsMixin<ActionTaskStep, bigint>;
   declare createStep: HasManyCreateAssociationMixin<ActionTaskStep>;
   declare countSteps: HasManyCountAssociationsMixin;
+
+  // ActionTaskOutput, alias 'outputs'
+  declare getOutputs: HasManyGetAssociationsMixin<ActionTaskOutput>;
+  declare setOutputs: HasManySetAssociationsMixin<ActionTaskOutput, bigint>;
+  declare addOutput: HasManyAddAssociationMixin<ActionTaskOutput, bigint>;
+  declare addOutputs: HasManyAddAssociationsMixin<ActionTaskOutput, bigint>;
+  declare removeOutput: HasManyRemoveAssociationMixin<ActionTaskOutput, bigint>;
+  declare removeOutputs: HasManyRemoveAssociationsMixin<ActionTaskOutput, bigint>;
+  declare hasOutput: HasManyHasAssociationMixin<ActionTaskOutput, bigint>;
+  declare hasOutputs: HasManyHasAssociationsMixin<ActionTaskOutput, bigint>;
+  declare createOutput: HasManyCreateAssociationMixin<ActionTaskOutput>;
+  declare countOutputs: HasManyCountAssociationsMixin;
 
   // ActionRunJob, alias 'job'
   declare getJob: BelongsToGetAssociationMixin<ActionRunJob>;
