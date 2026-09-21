@@ -61,11 +61,14 @@ export class ActionRunner extends BaseModel<InferAttributes<ActionRunner>, Infer
   declare description: CreationOptional<string>;
   declare base: CreationOptional<number>;
   declare repoRange: CreationOptional<string>;
+
   declare token: CreationOptional<string>;
   declare tokenHash: CreationOptional<string>;
   declare tokenSalt: CreationOptional<string>;
+
   declare lastOnline: CreationOptional<Date>;
   declare lastActive: CreationOptional<Date>;
+
   declare ephemeral: CreationOptional<boolean>;
   declare isDisabled: CreationOptional<boolean>;
   declare isOnline: CreationOptional<boolean>;
@@ -96,25 +99,25 @@ export class ActionRunner extends BaseModel<InferAttributes<ActionRunner>, Infer
   }
 
   static associate({ ActionTask }: Models) {
-    this.hasMany(ActionTask, { foreignKey: 'runnerId' });
+    this.hasMany(ActionTask, { as: 'tasks', foreignKey: 'runnerId' });
   }
 
   declare static associations: {
-    ActionTasks: Association<ActionRunner, ActionTask>;
+    tasks: Association<ActionRunner, ActionTask>;
   };
 
-  declare Tasks?: NonAttribute<ActionTask[]>;
+  declare tasks?: NonAttribute<ActionTask[]>;
 
-  declare getActionTasks: HasManyGetAssociationsMixin<ActionTask>;
-  declare countActionTasks: HasManyCountAssociationsMixin;
-  declare hasActionTask: HasManyHasAssociationMixin<ActionTask, bigint>;
-  declare hasActionTasks: HasManyHasAssociationsMixin<ActionTask, bigint>;
-  declare setActionTasks: HasManySetAssociationsMixin<ActionTask, bigint>;
-  declare addActionTask: HasManyAddAssociationMixin<ActionTask, bigint>;
-  declare addActionTasks: HasManyAddAssociationsMixin<ActionTask, bigint>;
-  declare removeActionTask: HasManyRemoveAssociationMixin<ActionTask, bigint>;
-  declare removeActionTasks: HasManyRemoveAssociationsMixin<ActionTask, bigint>;
-  declare createActionTask: HasManyCreateAssociationMixin<ActionTask>;
+  declare getTasks: HasManyGetAssociationsMixin<ActionTask>;
+  declare countTasks: HasManyCountAssociationsMixin;
+  declare hasTask: HasManyHasAssociationMixin<ActionTask, bigint>;
+  declare hasTasks: HasManyHasAssociationsMixin<ActionTask, bigint>;
+  declare setTasks: HasManySetAssociationsMixin<ActionTask, bigint>;
+  declare addTask: HasManyAddAssociationMixin<ActionTask, bigint>;
+  declare addTasks: HasManyAddAssociationsMixin<ActionTask, bigint>;
+  declare removeTask: HasManyRemoveAssociationMixin<ActionTask, bigint>;
+  declare removeTasks: HasManyRemoveAssociationsMixin<ActionTask, bigint>;
+  declare createTask: HasManyCreateAssociationMixin<ActionTask>;
 }
 
 ActionRunner.init(

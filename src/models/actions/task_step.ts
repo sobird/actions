@@ -37,22 +37,22 @@ export class ActionTaskStep extends BaseModel<
   declare stoppedAt: Date | null;
 
   static associate({ ActionTask }: Models) {
-    this.belongsTo(ActionTask, { foreignKey: 'taskId' });
+    this.belongsTo(ActionTask, { as: 'task', foreignKey: 'taskId' });
   }
 
   declare static associations: {
-    ActionTask: Association<ActionTaskStep, ActionTask>;
+    task: Association<ActionTaskStep, ActionTask>;
   };
 
-  declare ActionTask?: NonAttribute<ActionTask>;
+  declare task?: NonAttribute<ActionTask>;
 
   // associates method
   // Since TS cannot determine model association at compile time
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
-  declare getActionTask: BelongsToGetAssociationMixin<ActionTask>;
-  declare setActionTask: BelongsToSetAssociationMixin<ActionTask, bigint>;
-  declare createActionTask: BelongsToCreateAssociationMixin<ActionTask>;
+  declare getTask: BelongsToGetAssociationMixin<ActionTask>;
+  declare setTask: BelongsToSetAssociationMixin<ActionTask, bigint>;
+  declare createTask: BelongsToCreateAssociationMixin<ActionTask>;
 }
 
 ActionTaskStep.init(

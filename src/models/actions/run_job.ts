@@ -39,33 +39,35 @@ export type ActionRunJobCreationAttributes = CreationAttributes<ActionRunJob>;
  */
 export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, InferCreationAttributes<ActionRunJob>> {
   declare runId: number;
-  /** the attempt this job belongs to; 0 marks a row from before attempts existed */
-  declare runAttemptId: CreationOptional<number>;
-  /** unique within one attempt; the same job keeps it across attempts */
-  declare attemptJobId: CreationOptional<number>;
   declare repositoryId: number;
   declare ownerId: number;
   declare name: string;
   declare commitSha: string;
   declare isForkPullRequest: boolean;
 
+  /** the attempt this job belongs to; 0 marks a row from before attempts existed */
+  declare runAttemptId: CreationOptional<number>;
+  /** unique within one attempt; the same job keeps it across attempts */
+  declare attemptJobId: CreationOptional<number>;
+  declare attempt: number;
+
   /** the (repo, commit) the containing workflow file came from */
   declare workflowSourceRepoId: CreationOptional<number>;
   declare workflowSourceCommitSha: CreationOptional<string>;
-  declare attempt: number;
-  /** a failure of this job does not fail the run */
-  declare continueOnError: CreationOptional<boolean>;
-  declare workflowPayload: CreationOptional<Buffer>;
 
   /** job id in workflow, not job's id */
   declare jobId: string;
   /** the latest task of the job */
   declare taskId: number;
-
   /** JSON-encoded list of job ids this job depends on */
   declare needs: CreationOptional<string>;
   /** JSON-encoded list of labels this job requires */
   declare runsOn: CreationOptional<string>;
+
+  declare workflowPayload: CreationOptional<Buffer>;
+  /** a failure of this job does not fail the run */
+  declare continueOnError: CreationOptional<boolean>;
+
   declare status: Status;
   declare startedAt: Date | null;
   declare stoppedAt: Date | null;

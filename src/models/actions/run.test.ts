@@ -80,7 +80,7 @@ describe('ActionRun', () => {
 
   it('lists the jobs belonging to the run', async () => {
     const run = await ActionRun.findByPk(SEEDED_RUN_ID);
-    const jobs = await run!.getActionRunJobs();
+    const jobs = await run!.getJobs();
 
     expect(jobs.map((job) => Number(job.id))).toEqual([192]);
   });

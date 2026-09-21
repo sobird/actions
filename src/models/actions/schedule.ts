@@ -37,25 +37,15 @@ export class ActionSchedule extends BaseModel<
   InferCreationAttributes<ActionSchedule>
 > {
   declare title: string;
-
   declare specs?: string[];
-
   declare ownerId: number;
-
   declare repositoryId: number;
-
   declare workflowId: string;
-
   declare triggerUserId: number;
-
   declare eventName: string;
-
   declare eventPayload: CreationOptional<Blob>;
-
   declare ref: string;
-
   declare commitSha: string;
-
   declare content: Blob;
 
   static async findByIds(ids: number[]) {
@@ -63,41 +53,31 @@ export class ActionSchedule extends BaseModel<
   }
 
   static associate({ ActionScheduleSpec }: Models) {
-    this.hasMany(ActionScheduleSpec, { foreignKey: 'scheduleId' });
+    this.hasMany(ActionScheduleSpec, { as: 'scheduleSpecs', foreignKey: 'scheduleId' });
   }
 
   // hasMany ActionScheduleSpec associate method
-
   // Since TS cannot determine model association at compile time
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
-  declare getActionScheduleSpecs: HasManyGetAssociationsMixin<ActionScheduleSpec>;
-
+  declare getScheduleSpecs: HasManyGetAssociationsMixin<ActionScheduleSpec>;
   /** Remove all previous associations and set the new ones */
-  declare setActionScheduleSpecs: HasManySetAssociationsMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
-
-  declare addActionScheduleSpec: HasManyAddAssociationMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
-
-  declare addActionScheduleSpecs: HasManyAddAssociationsMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
-
-  declare removeActionScheduleSpec: HasManyRemoveAssociationMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
-
-  declare removeActionScheduleSpecs: HasManyRemoveAssociationsMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
-
-  declare hasActionScheduleSpec: HasManyHasAssociationMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
-
-  declare hasActionScheduleSpecs: HasManyHasAssociationsMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
-
-  declare createActionScheduleSpec: HasManyCreateAssociationMixin<ActionScheduleSpec, 'scheduleId'>;
-
-  declare countActionScheduleSpecs: HasManyCountAssociationsMixin;
+  declare setScheduleSpecs: HasManySetAssociationsMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
+  declare addScheduleSpec: HasManyAddAssociationMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
+  declare addScheduleSpecs: HasManyAddAssociationsMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
+  declare removeScheduleSpec: HasManyRemoveAssociationMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
+  declare removeScheduleSpecs: HasManyRemoveAssociationsMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
+  declare hasScheduleSpec: HasManyHasAssociationMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
+  declare hasScheduleSpecs: HasManyHasAssociationsMixin<ActionScheduleSpec, ActionScheduleSpecPrimaryKey>;
+  declare createScheduleSpec: HasManyCreateAssociationMixin<ActionScheduleSpec, 'scheduleId'>;
+  declare countScheduleSpecs: HasManyCountAssociationsMixin;
 
   // You can also pre-declare possible inclusions, these will only be populated if you
   // actively include a relation.
-  declare ActionScheduleSpecs?: NonAttribute<ActionScheduleSpec[]>; // Note this is optional since it's only populated when explicitly requested in code
+  declare scheduleSpecs?: NonAttribute<ActionScheduleSpec[]>; // Note this is optional since it's only populated when explicitly requested in code
 
   declare static associations: {
-    ActionScheduleSpecs: Association<ActionSchedule, ActionScheduleSpec>;
+    scheduleSpecs: Association<ActionSchedule, ActionScheduleSpec>;
   };
 }
 

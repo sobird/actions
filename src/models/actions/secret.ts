@@ -21,9 +21,7 @@ export class ActionsSecret extends BaseModel<ActionsSecretAttributes, ActionsSec
   declare ownerId: number;
 
   declare repositoryId: number;
-
   declare label: string;
-
   declare value: string;
 
   // static associate({ User }) {

@@ -12,6 +12,7 @@ import {
   // type CreationOptional,
   type ForeignKey,
   type NonAttribute,
+  type Association,
   type BelongsToGetAssociationMixin,
   type BelongsToSetAssociationMixin,
   type BelongsToCreateAssociationMixin,
@@ -28,23 +29,18 @@ export class ActionScheduleSpec extends BaseModel<
   InferCreationAttributes<ActionScheduleSpec>
 > {
   declare repositoryId: bigint;
-
   // foreign keys are automatically added by associations methods (like ActionScheduleSpec.belongsTo)
   // by branding them using the `ForeignKey` type, `ActionScheduleSpec.init` will know it does not need to
   // display an error if scheduleId is missing.
   declare scheduleId: ForeignKey<ActionSchedule['id']>;
 
-  // `Schedule` is an eagerly-loaded association.
-  // We tag it as `NonAttribute`
-  declare Schedule: NonAttribute<ActionSchedule>;
+  declare schedule?: NonAttribute<ActionSchedule>;
 
   // Next time the job will run, or the zero time if Cron has not been
   // started or this entry's schedule is unsatisfiable
   declare next: Date;
-
   // Prev is the last time this job was run, or the zero time if never.
   declare prev: Date;
-
   declare spec: string;
 
   static async findByIds(ids: number[]) {
@@ -52,16 +48,17 @@ export class ActionScheduleSpec extends BaseModel<
   }
 
   static associate({ ActionSchedule }: Models) {
-    this.belongsTo(ActionSchedule, { foreignKey: 'scheduleId' });
+    this.belongsTo(ActionSchedule, { as: 'schedule', foreignKey: 'scheduleId' });
   }
 
+  declare static associations: {
+    schedule: Association<ActionScheduleSpec, ActionSchedule>;
+  };
+
   // belongsTo ActionSchedule associate methods
-
-  declare getActionSchedule: BelongsToGetAssociationMixin<ActionSchedule>;
-
-  declare setActionSchedule: BelongsToSetAssociationMixin<ActionSchedule, bigint>;
-
-  declare createActionSchedule: BelongsToCreateAssociationMixin<ActionSchedule>;
+  declare getSchedule: BelongsToGetAssociationMixin<ActionSchedule>;
+  declare setSchedule: BelongsToSetAssociationMixin<ActionSchedule, bigint>;
+  declare createSchedule: BelongsToCreateAssociationMixin<ActionSchedule>;
 }
 
 ActionScheduleSpec.init(

@@ -31,8 +31,8 @@ describe('ActionTaskStep', () => {
   it('resolves the task a step belongs to', async () => {
     const step = (await ActionTaskStep.findOne({ where: { name: 'run some' } }))!;
 
-    // associate 里没写 alias，sequelize 按模型名生成 getActionTask
-    const task = await step.getActionTask();
+    // associate 里写了 as: 'task'，sequelize 生成的就是 getTask
+    const task = await step.getTask();
 
     expect(Number(task.id)).toBe(47);
     expect(task.logFilename).toBe('artifact-test2/2f/47.log');

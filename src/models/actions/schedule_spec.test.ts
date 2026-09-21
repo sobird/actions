@@ -21,8 +21,8 @@ describe('ActionScheduleSpec', () => {
   it('resolves the schedule a spec belongs to', async () => {
     const spec = (await ActionScheduleSpec.findOne({ where: { spec: '30 5 * * 2,4' } }))!;
 
-    // associate 里没写 alias，sequelize 按模型名生成 getActionSchedule
-    const schedule = await spec.getActionSchedule();
+    // associate 里写了 as: 'schedule'，sequelize 生成的就是 getSchedule
+    const schedule = await spec.getSchedule();
 
     expect(Number(schedule.id)).toBe(1);
     expect(schedule.title).toBe('schedule title 1111');
@@ -31,7 +31,7 @@ describe('ActionScheduleSpec', () => {
   it('lists the specs from the schedule side of the association', async () => {
     const schedule = (await ActionSchedule.findOne({ where: { title: 'schedule title 1111' } }))!;
 
-    const specs = await schedule.getActionScheduleSpecs();
+    const specs = await schedule.getScheduleSpecs();
 
     expect(specs.map((spec) => spec.spec)).toEqual(['30 5 * * 1,3', '30 5 * * 2,4']);
   });

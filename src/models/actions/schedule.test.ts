@@ -19,7 +19,7 @@ describe('ActionSchedule', () => {
 
   it('lists the specs attached to a schedule', async () => {
     const schedule = await ActionSchedule.findOne({ where: { title: 'schedule title 1111' } });
-    const specs = await schedule!.getActionScheduleSpecs();
+    const specs = await schedule!.getScheduleSpecs();
 
     // fixture 的两条 spec 都挂在第一条 schedule 上
     expect(specs.map((spec) => spec.spec).toSorted()).toEqual(['30 5 * * 1,3', '30 5 * * 2,4']);

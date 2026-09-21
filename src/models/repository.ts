@@ -12,19 +12,12 @@ export type RepositoryCreationAttributes = CreationAttributes<Repository>;
 
 class Repository extends BaseModel<InferAttributes<Repository>, InferCreationAttributes<Repository>> {
   declare ownerId: bigint;
-
   declare name: string;
-
   declare description: string;
-
   declare website: number;
-
   declare originalURL: string;
-
   declare defaultBranch: string;
-
   declare defaultWikiBranch: string;
-
   declare topics: string[];
 
   // static associate({ User }) {

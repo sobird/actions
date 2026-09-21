@@ -10,6 +10,8 @@ import {
   type InferCreationAttributes,
   type CreationAttributes,
   type CreationOptional,
+  type Association,
+  type NonAttribute,
   type HasManyGetAssociationsMixin,
   type HasManySetAssociationsMixin,
   type HasManyAddAssociationMixin,
@@ -70,24 +72,30 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   }
 
   static associate({ ActionRunJob }: Models) {
-    this.hasMany(ActionRunJob, { foreignKey: 'runId' });
+    this.hasMany(ActionRunJob, { as: 'jobs', foreignKey: 'runId' });
   }
+
+  declare jobs?: NonAttribute<ActionRunJob[]>;
+
+  declare static associations: {
+    jobs: Association<ActionRun, ActionRunJob>;
+  };
 
   // associates method
   // Since TS cannot determine model association at compile time
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
-  declare getActionRunJobs: HasManyGetAssociationsMixin<ActionRunJob>;
+  declare getJobs: HasManyGetAssociationsMixin<ActionRunJob>;
   /** Remove all previous associations and set the new ones */
-  declare setActionRunJobs: HasManySetAssociationsMixin<ActionRunJob, bigint>;
-  declare addActionRunJob: HasManyAddAssociationMixin<ActionRunJob, bigint>;
-  declare addActionRunJobs: HasManyAddAssociationsMixin<ActionRunJob, bigint>;
-  declare removeActionRunJob: HasManyRemoveAssociationMixin<ActionRunJob, bigint>;
-  declare removeActionRunJobs: HasManyRemoveAssociationsMixin<ActionRunJob, bigint>;
-  declare hasActionRunJob: HasManyHasAssociationMixin<ActionRunJob, bigint>;
-  declare hasActionRunJobs: HasManyHasAssociationsMixin<ActionRunJob, bigint>;
-  declare createActionRunJob: HasManyCreateAssociationMixin<ActionRunJob>;
-  declare countActionRunJobs: HasManyCountAssociationsMixin;
+  declare setJobs: HasManySetAssociationsMixin<ActionRunJob, bigint>;
+  declare addJob: HasManyAddAssociationMixin<ActionRunJob, bigint>;
+  declare addJobs: HasManyAddAssociationsMixin<ActionRunJob, bigint>;
+  declare removeJob: HasManyRemoveAssociationMixin<ActionRunJob, bigint>;
+  declare removeJobs: HasManyRemoveAssociationsMixin<ActionRunJob, bigint>;
+  declare hasJob: HasManyHasAssociationMixin<ActionRunJob, bigint>;
+  declare hasJobs: HasManyHasAssociationsMixin<ActionRunJob, bigint>;
+  declare createJob: HasManyCreateAssociationMixin<ActionRunJob>;
+  declare countJobs: HasManyCountAssociationsMixin;
 
   static validate() {
     throw Error('dd');

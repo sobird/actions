@@ -58,14 +58,17 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
   declare status: CreationOptional<Status>;
   declare startedAt: CreationOptional<Date | null>;
   declare stoppedAt: CreationOptional<Date | null>;
+
   declare repositoryId: number;
   declare ownerId: number;
   declare commitSha: string;
   declare isForkPullRequest: CreationOptional<boolean>;
+
   declare token: CreationOptional<string>;
   declare tokenSalt: CreationOptional<string>;
   declare tokenHash: CreationOptional<string>;
   declare tokenLastEight: CreationOptional<string>;
+
   declare logFilename: string;
   declare logInStorage: boolean;
   declare logLength: number;

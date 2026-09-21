@@ -33,26 +33,29 @@ export class ActionRunAttempt extends BaseModel<
   declare runId: number;
   declare repositoryId: number;
   declare attempt: number;
+
   declare triggerUserId: number;
+
   declare concurrencyGroup: string;
   declare concurrencyCancel: boolean;
+
   declare status: Status;
   declare startedAt: Date | null;
   declare stoppedAt: Date | null;
 
-  declare ActionRun?: NonAttribute<ActionRun>;
+  declare run?: NonAttribute<ActionRun>;
 
   static associate({ ActionRun }: Models) {
-    this.belongsTo(ActionRun, { foreignKey: 'runId' });
+    this.belongsTo(ActionRun, { as: 'run', foreignKey: 'runId' });
   }
 
   declare static associations: {
-    ActionRun: Association<ActionRunAttempt, ActionRun>;
+    run: Association<ActionRunAttempt, ActionRun>;
   };
 
-  declare getActionRun: BelongsToGetAssociationMixin<ActionRun>;
-  declare setActionRun: BelongsToSetAssociationMixin<ActionRun, bigint>;
-  declare createActionRun: BelongsToCreateAssociationMixin<ActionRun>;
+  declare getRun: BelongsToGetAssociationMixin<ActionRun>;
+  declare setRun: BelongsToSetAssociationMixin<ActionRun, bigint>;
+  declare createRun: BelongsToCreateAssociationMixin<ActionRun>;
 }
 
 ActionRunAttempt.init(
