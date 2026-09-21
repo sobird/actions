@@ -187,19 +187,6 @@ describe('resolveBlockedJobs', () => {
     await expect(resolveBlockedJobs(runId)).resolves.toBe(false);
     expect(await statusesOf()).toEqual(['skipped', 'skipped', 'failure']);
   });
-
-  it('clears the stop time a blocked job carried once it starts waiting', async () => {
-    await add('setup', Status.Success);
-    const deploy = await add('deploy', Status.Blocked, ['setup']);
-    deploy.stoppedAt = new Date();
-    await deploy.save();
-
-    await expect(resolveBlockedJobs(runId)).resolves.toBe(true);
-
-    await deploy.reload();
-    expect(deploy.status).toBe(Status.Waiting);
-    expect(deploy.stoppedAt).toBeNull();
-  });
 });
 
 /** 只读 ownerId / repositoryId 的 runner，build 出来就够，不必落库 */

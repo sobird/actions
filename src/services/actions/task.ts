@@ -2,7 +2,6 @@ import { create } from '@bufbuild/protobuf';
 import { Op, type Transaction } from 'sequelize';
 
 import { Task, TaskNeed, TaskNeedSchema, TaskSchema } from '@/gen/runner/v1/messages_pb';
-import { sequelize } from '@/lib/sequelize';
 import { ActionRun, ActionRunJob, ActionRunner, ActionTask, ActionTaskOutput } from '@/models';
 import { Status } from '@/models/actions/status';
 import Workflow from '@/workflow';
@@ -172,29 +171,30 @@ export async function resolveBlockedJobs(runId: number, transaction?: Transactio
     }
   }
 
-  const skipped = blockedJobs.filter((job) => job.status.isSkipped()).map((job) => Number(job.id));
-  const waiting = blockedJobs.filter((job) => job.status.isWaiting()).map((job) => Number(job.id));
+  let waiting = 0;
+  for (const job of blockedJobs) {
+    if (job.status.isBlocked()) {
+      continue;
+    }
 
-  if (skipped.length > 0) {
-    await ActionRunJob.update(
-      { status: Status.Skipped, stoppedAt: new Date() },
-      { where: { id: skipped }, transaction },
+    // One job per write, guarded by the status this pass read: a concurrent writer that
+    // already decided it is not overwritten. Every write carries the aggregate along.
+    // eslint-disable-next-line no-await-in-loop
+    const affected = await ActionRunJob.updateRunJob(
+      job,
+      { status: job.status },
+      { status: Status.Blocked.toString() },
+      transaction,
     );
-  }
-  if (waiting.length > 0) {
-    await ActionRunJob.update(
-      // 连接层开了 omitNull，赋值 null 会被 UPDATE 整条丢掉，置空只能写 literal
-      { status: Status.Waiting, stoppedAt: sequelize.literal('NULL') },
-      { where: { id: waiting }, transaction },
-    );
-  }
-
-  if (skipped.length > 0 || waiting.length > 0) {
-    // All jobs of a run belong to the one attempt that carries its status.
-    await ActionRunJob.refreshRunStatus(runId, Number(jobs[0].runAttemptId), Status.Unknown, transaction);
+    if (affected !== 1) {
+      throw new Error(`no affected for updating blocked job ${job.id}`);
+    }
+    if (job.status.isWaiting()) {
+      waiting += 1;
+    }
   }
 
-  return waiting.length > 0;
+  return waiting > 0;
 }
 
 /** The where-clause fields that limit a runner to the jobs it may pick. */

@@ -26,6 +26,7 @@ import {
   type BelongsToSetAssociationMixin,
   type BelongsToCreateAssociationMixin,
   type Transaction,
+  type WhereOptions,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
@@ -39,6 +40,13 @@ import { ActionRunAttempt } from './run_attempt';
 import { Status } from './status';
 
 export type ActionRunJobCreationAttributes = CreationAttributes<ActionRunJob>;
+
+/** The columns an update may write, including the SQL fragment that clears one. */
+export type ActionRunJobUpdateValues = {
+  [key in keyof InferAttributes<ActionRunJob>]?:
+    | InferAttributes<ActionRunJob>[key]
+    | ReturnType<typeof sequelize.literal>;
+};
 
 /**
  * ActionRunJob represents a job of a run
@@ -171,6 +179,30 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   }
 
   /**
+   * Write a job's changed columns and let the aggregate state follow.
+   *
+   * Every status change of a job goes through here, the way gitea routes them all through
+   * `UpdateRunJob`, so the attempt and the run can never drift from the jobs they hold.
+   * `cond` carries the guard a transition needs to stay correct under concurrent claims,
+   * and a write the guard rejects leaves the aggregate alone. Port of gitea's
+   * `models/actions/run_job.go` `UpdateRunJob`, without the task-version bump it also
+   * performs: this port bumps the version where a task finishes and where a run is created.
+   */
+  static async updateRunJob(
+    job: ActionRunJob,
+    values: ActionRunJobUpdateValues,
+    cond: WhereOptions<InferAttributes<ActionRunJob>> = {},
+    transaction?: Transaction,
+  ): Promise<number> {
+    const [affected] = await ActionRunJob.update(values, { where: { id: job.id, ...cond }, transaction });
+    if (affected > 0) {
+      await ActionRunJob.refreshRunStatus(job.runId, Number(job.runAttemptId), Status.Unknown, transaction);
+    }
+
+    return affected;
+  }
+
+  /**
    * Recompute the status of a run attempt from the jobs it holds and persist it.
    *
    * The latest attempt carries its status, start and stop onto its run; an older one
@@ -179,7 +211,7 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
    * conclude on its own. Port of gitea's `models/actions/run_job.go` `refreshRunStatus`,
    * with `UpdateRunAttempt`'s propagation folded in.
    */
-  static async refreshRunStatus(
+  private static async refreshRunStatus(
     runId: number,
     runAttemptId: number,
     noJobsStatus: Status,

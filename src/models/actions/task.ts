@@ -200,19 +200,15 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
 
         await this.createSteps(task, job, transaction);
 
-        const [affectedCount] = await ActionRunJob.update(
+        const affectedCount = await ActionRunJob.updateRunJob(
+          job,
           { taskId: Number(task.id), status: Status.Running, startedAt: now },
-          {
-            where: { id: job.id, taskId: 0, status: Status.Waiting.toString() },
-            transaction,
-          },
+          { taskId: 0, status: Status.Waiting.toString() },
+          transaction,
         );
         if (affectedCount !== 1) {
           throw new JobAlreadyClaimedError('job already claimed by another runner');
         }
-
-        // The job runs now, so its attempt and its run do too.
-        await ActionRunJob.refreshRunStatus(job.runId, Number(job.runAttemptId), Status.Unknown, transaction);
 
         task.job = job;
         created = task;
@@ -234,19 +230,19 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
   public static async releaseTaskForRunner(task: ActionTask) {
     await sequelize.transaction(async (transaction) => {
       const job = await ActionRunJob.findByPk(task.jobId, { transaction });
+      if (!job) {
+        throw new Error(`task ${task.id}: job ${task.jobId} not found`);
+      }
 
-      await ActionRunJob.update(
+      await ActionRunJob.updateRunJob(
+        job,
         // 连接层开了 omitNull，赋值 null 会被 UPDATE 整条丢掉，置空只能写 literal
         { taskId: 0, status: Status.Waiting, startedAt: sequelize.literal('NULL') },
-        { where: { id: task.jobId, taskId: Number(task.id) }, transaction },
+        { taskId: Number(task.id) },
+        transaction,
       );
       await ActionTaskStep.destroy({ where: { taskId: Number(task.id) }, transaction });
       await task.destroy({ transaction });
-
-      // The job is back in the queue, so the attempt that ran it is waiting again.
-      if (job) {
-        await ActionRunJob.refreshRunStatus(job.runId, Number(job.runAttemptId), Status.Unknown, transaction);
-      }
     });
   }
 
@@ -302,10 +298,10 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
       }
 
       const job = await ActionRunJob.findByPk(task.jobId, { transaction });
-      await ActionRunJob.update({ status, stoppedAt }, { where: { id: task.jobId }, transaction });
-      if (job) {
-        await ActionRunJob.refreshRunStatus(job.runId, Number(job.runAttemptId), Status.Unknown, transaction);
+      if (!job) {
+        throw new Error(`task ${task.id}: job ${task.jobId} not found`);
       }
+      await ActionRunJob.updateRunJob(job, { status, stoppedAt }, {}, transaction);
     } else {
       // Touch the updated timestamp so the task isn't judged as a zombie task.
       await this.update({}, { where: { id: task.id }, transaction });
