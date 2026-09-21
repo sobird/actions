@@ -136,7 +136,7 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
    * continues on error counts as a success. Port of gitea's `models/actions/run_job.go`
    * `AggregateJobStatus`.
    */
-  static aggregateJobStatus(jobs: ActionRunJob[]): Status {
+  static aggregateStatus(jobs: ActionRunJob[]): Status {
     if (jobs.length === 0) {
       return Status.Unknown;
     }
@@ -200,7 +200,7 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
    *
    * The latest attempt carries its status, start and stop onto its run; an older one
    * only updates itself, because a later attempt already drives the run. `noJobsStatus`
-   * settles an attempt that holds no job at all, which `aggregateJobStatus` cannot
+   * settles an attempt that holds no job at all, which `aggregateStatus` cannot
    * conclude on its own. Port of gitea's `models/actions/run_job.go` `refreshRunStatus`,
    * with `UpdateRunAttempt`'s propagation folded in.
    */
@@ -217,7 +217,7 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
       }
 
       const jobs = await ActionRunJob.findAll({ where: { runId, runAttemptId }, transaction });
-      attempt.status = jobs.length > 0 ? ActionRunJob.aggregateJobStatus(jobs) : noJobsStatus;
+      attempt.status = jobs.length > 0 ? ActionRunJob.aggregateStatus(jobs) : noJobsStatus;
       // Both times are written once: a re-aggregate that is still pending must not clear them.
       attempt.startedAt = attempt.startedAt ?? (attempt.status.isRunning() ? new Date() : null);
       attempt.stoppedAt = attempt.stoppedAt ?? (attempt.status.isDone() ? new Date() : null);
@@ -242,7 +242,7 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
     }
 
     const jobs = await ActionRunJob.findAll({ where: { runId, runAttemptId: run.latestAttemptId }, transaction });
-    run.status = jobs.length > 0 ? ActionRunJob.aggregateJobStatus(jobs) : noJobsStatus;
+    run.status = jobs.length > 0 ? ActionRunJob.aggregateStatus(jobs) : noJobsStatus;
     run.startedAt = run.startedAt ?? (run.status.isRunning() ? new Date() : null);
     run.stoppedAt = run.stoppedAt ?? (run.status.isDone() ? new Date() : null);
     await run.save({ fields: ['status', 'startedAt', 'stoppedAt'], transaction });

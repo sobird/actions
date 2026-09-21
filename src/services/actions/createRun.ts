@@ -287,7 +287,7 @@ export async function createRunFromWorkflow(workflowPayload: string, options: Cr
       }
     }
 
-    runAttempt.status = ActionRunJob.aggregateJobStatus(runJobs);
+    runAttempt.status = ActionRunJob.aggregateStatus(runJobs);
     await runAttempt.save({ transaction });
 
     // Idle runners compare their cached version against the latest one; without a

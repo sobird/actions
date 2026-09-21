@@ -13,7 +13,7 @@ function createJob(status: Status, continueOnError: boolean): ActionRunJob {
   return { status, continueOnError } as unknown as ActionRunJob;
 }
 
-describe('aggregateJobStatus', () => {
+describe('aggregateStatus', () => {
   const testCases = [
     {
       name: 'no job leaves the status unknown',
@@ -84,7 +84,7 @@ describe('aggregateJobStatus', () => {
 
   testCases.forEach(({ name, jobs, want }) => {
     it(name, () => {
-      expect(ActionRunJob.aggregateJobStatus(jobs)).toBe(want);
+      expect(ActionRunJob.aggregateStatus(jobs)).toBe(want);
     });
   });
 });
