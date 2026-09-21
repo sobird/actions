@@ -1,5 +1,5 @@
 import { create } from '@bufbuild/protobuf';
-import type { Transaction } from 'sequelize';
+import { Op, type Transaction } from 'sequelize';
 
 import { Task, TaskNeed, TaskNeedSchema, TaskSchema } from '@/gen/runner/v1/messages_pb';
 import { ActionRun, ActionRunJob, ActionRunner, ActionTask, ActionTaskOutput } from '@/models';
@@ -187,29 +187,64 @@ export async function resolveBlockedJobs(runId: number, transaction?: Transactio
   return waiting.length > 0;
 }
 
+/** The where-clause fields that limit a runner to the jobs it may pick. */
+type JobScope = { repositoryId?: number; ownerId?: number };
+
+/** Where the previous page of the waiting-job scan stopped. */
+interface PickCursor {
+  updatedAt: Date;
+  id: number;
+}
+
+/** How many waiting jobs one scan page loads, so a large backlog is not read into memory per poll. */
+const PickTaskBatchSize = 100;
+
 /**
- * Whether every job this one depends on has finished successfully.
+ * The jobs a runner may pick, scoped the way gitea scopes them in `CreateTaskForRunner`:
+ * a repo runner only its own repository, an owner runner everything the owner has, and a
+ * global runner anything at all.
  *
- * A failed dependency is terminal: the job is marked skipped so it leaves the
- * queue instead of being retried forever.
+ * gitea resolves the owner tier through `repository` joined to `repo_unit`; this codebase
+ * has neither table, but every job carries the owner of its repository, which is what the
+ * join filters on.
  */
-async function needsSatisfied(job: ActionRunJob): Promise<boolean> {
-  const needs = parseStringList(job.needs);
-  if (needs.length === 0) {
-    return true;
+export function runnerJobScope(runner: ActionRunner): JobScope {
+  if (runner.repositoryId > 0) {
+    return { repositoryId: runner.repositoryId };
   }
+  if (runner.ownerId > 0) {
+    return { ownerId: runner.ownerId };
+  }
+  return {};
+}
 
-  const dependencies = await ActionRunJob.findAll({ where: { runId: job.runId, jobId: needs } });
-  const verdict = resolveNeeds(needs, dependencies);
-  if (verdict === 'pending') {
-    return false;
-  }
-  if (verdict === 'failed') {
-    await job.update({ status: Status.Skipped, stoppedAt: new Date() });
-    return false;
-  }
+/**
+ * One page of the waiting, unclaimed jobs a runner may pick, oldest first.
+ *
+ * Keyset pagination on (updatedAt, id) stays correct while other runners claim jobs
+ * concurrently: `updatedAt` only moves forward, so the advancing cursor never steps over
+ * a job that is still waiting even as claimed jobs drop out of the result.
+ */
+export async function findWaitingJobs(scope: JobScope, cursor?: PickCursor, limit = PickTaskBatchSize) {
+  const base = { ...scope, taskId: 0, status: Status.Waiting.toString() };
+  const where = cursor
+    ? {
+        ...base,
+        [Op.or]: [
+          { updatedAt: { [Op.gt]: cursor.updatedAt } },
+          { updatedAt: cursor.updatedAt, id: { [Op.gt]: cursor.id } },
+        ],
+      }
+    : base;
 
-  return true;
+  return ActionRunJob.findAll({
+    where,
+    order: [
+      ['updatedAt', 'ASC'],
+      ['id', 'ASC'],
+    ],
+    limit,
+  });
 }
 
 /**
@@ -246,49 +281,63 @@ export async function pickTask(runner: ActionRunner) {
     }
   }
 
-  // 2. 按标签与依赖挑一个已入队但尚未被认领的 job
-  const jobs = await ActionRunJob.findAll({
-    where: { taskId: 0, status: Status.Waiting.toString() },
-    order: [['id', 'ASC']],
-  });
+  // 2. 翻页扫过该 runner 能领的 waiting job，逐页认领，直到翻完或认领成功
+  const scope = runnerJobScope(runner);
+  let cursor: PickCursor | undefined;
 
-  for (const job of jobs) {
-    if (!runner.canMatchLabels(parseStringList(job.runsOn))) {
-      // eslint-disable-next-line no-continue
-      continue;
-    }
+  for (;;) {
     // eslint-disable-next-line no-await-in-loop
-    if (!(await needsSatisfied(job))) {
-      // eslint-disable-next-line no-continue
-      continue;
+    const jobs = await findWaitingJobs(scope, cursor);
+    if (jobs.length === 0) {
+      return null;
     }
 
-    // 3. 抢占 job 并落库 task
-    // eslint-disable-next-line no-await-in-loop
-    const task = await ActionTask.createForRunner(runner, job);
-    if (!task) {
-      // 被其他 runner 抢占了，继续尝试下一个 job
-      // eslint-disable-next-line no-continue
-      continue;
-    }
-
-    // 4. 装配 Task 载荷
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      return { task: await buildRunnerTask(task) };
-    } catch (err) {
-      // 【核心补偿逻辑】：Job 已经被抢占锁定，但组装 Payload 失败了。
-      // 必须立刻释放锁定，让 Job 回到等待队列，否则该 Job 将死锁在 running 状态。
-      try {
-        // eslint-disable-next-line no-await-in-loop
-        await ActionTask.releaseTaskForRunner(task);
-      } catch (relErr) {
-        const relMsg = relErr instanceof Error ? relErr.message : String(relErr);
-        console.error(`ReleaseTaskForRunner [task_id: ${task.id}]: ${relMsg}`);
+    for (const job of jobs) {
+      if (!runner.canMatchLabels(parseStringList(job.runsOn))) {
+        // eslint-disable-next-line no-continue
+        continue;
       }
-      throw err; // 继续向上抛出组装失败的原始错误
-    }
-  }
 
-  return null;
+      let task: ActionTask | null = null;
+      try {
+        // 3. 抢占 job 并落库 task
+        // eslint-disable-next-line no-await-in-loop
+        task = await ActionTask.createForRunner(runner, job);
+        if (!task) {
+          // 被其他 runner 抢占了，继续尝试下一个 job
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+
+        // 4. 装配 Task 载荷
+        // eslint-disable-next-line no-await-in-loop
+        return { task: await buildRunnerTask(task) };
+      } catch (err) {
+        // 【核心补偿逻辑】：Job 已经被抢占锁定，但组装 Payload 失败了。
+        // 必须立刻释放锁定，让 Job 回到等待队列，否则该 Job 将死锁在 running 状态。
+        if (task) {
+          try {
+            // eslint-disable-next-line no-await-in-loop
+            await ActionTask.releaseTaskForRunner(task);
+          } catch (relErr) {
+            const relMsg = relErr instanceof Error ? relErr.message : String(relErr);
+            console.error(`ReleaseTaskForRunner [task_id: ${task.id}]: ${relMsg}`);
+          }
+        }
+
+        // 单个坏 job 不该让整个 runner 队列失效：记日志后换下一个候选。
+        // 代价是数据库级故障也只会表现为「这次没任务」，下一轮轮询会重试。
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`[pickTask] job ${job.id}: ${message}`);
+      }
+    }
+
+    // 翻不满一页说明后面没有 waiting job 了。
+    if (jobs.length < PickTaskBatchSize) {
+      return null;
+    }
+
+    const last = jobs[jobs.length - 1];
+    cursor = { updatedAt: last.updatedAt, id: Number(last.id) };
+  }
 }

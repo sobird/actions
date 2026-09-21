@@ -71,6 +71,8 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   declare status: Status;
   declare startedAt: Date | null;
   declare stoppedAt: Date | null;
+  /** maintained by sequelize; typed so the pick cursor can page on it */
+  declare updatedAt: CreationOptional<Date>;
 
   declare run?: NonAttribute<ActionRun>;
   declare tasks?: NonAttribute<ActionTask[]>;
@@ -261,6 +263,7 @@ ActionRunJob.init(
     },
     startedAt: DataTypes.DATE,
     stoppedAt: DataTypes.DATE,
+    updatedAt: DataTypes.DATE,
   },
   {
     sequelize,

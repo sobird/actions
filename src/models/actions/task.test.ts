@@ -85,8 +85,8 @@ describe('ActionTask.createForRunner', () => {
     const task = await ActionTask.createForRunner(runner, job);
     const steps = await task!.getSteps({ order: [['index', 'ASC']] });
 
-    // step 名取 name，没有才退到 uses / run
-    expect(steps.map((step) => step.name)).toEqual(['say hello', 'actions/checkout@v4', 'echo from run']);
+    // 有 name 用 name，没有的按 gitea 的规则取 "Run " + 第一条命令（没有命令就是 uses）
+    expect(steps.map((step) => step.name)).toEqual(['say hello', 'Run actions/checkout@v4', 'Run echo from run']);
     expect(steps.map((step) => step.index)).toEqual([0, 1, 2]);
     expect(steps.map((step) => step.status)).toEqual(['waiting', 'waiting', 'waiting']);
     expect(steps.map((step) => Number(step.taskId))).toEqual(Array(3).fill(Number(task!.id)));

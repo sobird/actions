@@ -31,7 +31,7 @@ import {
 
 import { Result, type StepState, type TaskState } from '@/gen/runner/v1/messages_pb';
 import { sequelize, BaseModel } from '@/lib/sequelize';
-import { logFileName } from '@/utils';
+import { ellipsisDisplayString, logFileName } from '@/utils';
 import Workflow from '@/workflow';
 
 // The three classes below are used as values, so they come from their own modules rather than
@@ -46,12 +46,37 @@ import { generateToken, generateTokenSalt, hashToken } from './token';
 
 export type ActionTaskCreationAttributes = CreationAttributes<ActionTask>;
 
+/**
+ * A job claimed by another runner that won the optimistic-lock race.
+ *
+ * It only marks the lose inside `createForRunner`, which turns it into a `null`
+ * result; it never reaches the caller.
+ */
+export class JobAlreadyClaimedError extends Error {}
+
 /** A zero or absent timestamp means "unset", mirroring upstream convertTimestamp */
 function convertTimestamp(timestamp?: Timestamp) {
   if (!timestamp || (timestamp.seconds === 0n && timestamp.nanos === 0)) {
     return undefined;
   }
   return timestampDate(timestamp);
+}
+
+/**
+ * The display name of a step, truncated to fit its column.
+ *
+ * A named step keeps its name; an unnamed one is labelled by the first line of its
+ * script, and a step without a script falls back to what identifies it. Mirrors
+ * gitea's `makeTaskStepDisplayName` (`models/actions/task.go`).
+ */
+function makeTaskStepDisplayName(step: { name?: string; uses?: string; run?: string; id?: string }, limit: number) {
+  if (step.name) {
+    return ellipsisDisplayString(step.name, limit);
+  }
+
+  // Multi-line scripts are cut to their first line, as the runner shows them.
+  const firstLine = (step.run ?? '').trim().split('\n')[0].trim();
+  return ellipsisDisplayString(`Run ${firstLine || step.uses || step.run || step.id || ''}`, limit);
 }
 
 export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCreationAttributes<ActionTask>> {
@@ -153,7 +178,7 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
           {
             jobId: Number(job.id!),
             runnerId: runner.id!,
-            attempt: job.attempt || 1,
+            attempt: job.attempt,
             status: Status.Running,
             startedAt: now,
             repositoryId: job.repositoryId,
@@ -183,14 +208,14 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
           },
         );
         if (affectedCount !== 1) {
-          throw new Error('job already claimed by another runner');
+          throw new JobAlreadyClaimedError('job already claimed by another runner');
         }
 
         task.job = job;
         created = task;
       });
     } catch (error) {
-      if (error instanceof Error && error.message === 'job already claimed by another runner') {
+      if (error instanceof JobAlreadyClaimedError) {
         return null;
       }
       throw error;
@@ -326,6 +351,7 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
       name?: string;
       uses?: string;
       run?: string;
+      id?: string;
     }[];
 
     if (steps.length === 0) {
@@ -334,7 +360,7 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
 
     await ActionTaskStep.bulkCreate(
       steps.map((step, index) => ({
-        name: (step.name || step.uses || step.run || `step-${index}`).slice(0, 255),
+        name: makeTaskStepDisplayName(step, 255),
         taskId: Number(task.id),
         index,
         repositoryId: task.repositoryId,
