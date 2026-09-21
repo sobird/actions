@@ -16,6 +16,11 @@ function createJob(status: Status, continueOnError: boolean): ActionRunJob {
 describe('aggregateJobStatus', () => {
   const testCases = [
     {
+      name: 'no job leaves the status unknown',
+      jobs: [],
+      want: Status.Unknown,
+    },
+    {
       name: 'all success',
       jobs: [createJob(Status.Success, false), createJob(Status.Success, false)],
       want: Status.Success,
