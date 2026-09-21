@@ -211,6 +211,9 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
           throw new JobAlreadyClaimedError('job already claimed by another runner');
         }
 
+        // The job runs now, so its attempt and its run do too.
+        await ActionRunJob.refreshRunStatus(job.runId, Number(job.runAttemptId), Status.Unknown, transaction);
+
         task.job = job;
         created = task;
       });
@@ -230,6 +233,8 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
    */
   public static async releaseTaskForRunner(task: ActionTask) {
     await sequelize.transaction(async (transaction) => {
+      const job = await ActionRunJob.findByPk(task.jobId, { transaction });
+
       await ActionRunJob.update(
         // 连接层开了 omitNull，赋值 null 会被 UPDATE 整条丢掉，置空只能写 literal
         { taskId: 0, status: Status.Waiting, startedAt: sequelize.literal('NULL') },
@@ -237,6 +242,11 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
       );
       await ActionTaskStep.destroy({ where: { taskId: Number(task.id) }, transaction });
       await task.destroy({ transaction });
+
+      // The job is back in the queue, so the attempt that ran it is waiting again.
+      if (job) {
+        await ActionRunJob.refreshRunStatus(job.runId, Number(job.runAttemptId), Status.Unknown, transaction);
+      }
     });
   }
 
@@ -291,7 +301,11 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
         await ActionRunner.deleteEphemeralRunner(task.runnerId, transaction);
       }
 
+      const job = await ActionRunJob.findByPk(task.jobId, { transaction });
       await ActionRunJob.update({ status, stoppedAt }, { where: { id: task.jobId }, transaction });
+      if (job) {
+        await ActionRunJob.refreshRunStatus(job.runId, Number(job.runAttemptId), Status.Unknown, transaction);
+      }
     } else {
       // Touch the updated timestamp so the task isn't judged as a zombie task.
       await this.update({}, { where: { id: task.id }, transaction });

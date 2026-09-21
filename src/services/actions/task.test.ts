@@ -1,5 +1,7 @@
+import { create } from '@bufbuild/protobuf';
 import { Op } from 'sequelize';
 
+import { Result, TaskStateSchema } from '@/gen/runner/v1/messages_pb';
 import { ActionRun, ActionRunAttempt, ActionRunJob, ActionRunner, ActionTask, ActionTaskStep } from '@/models';
 import type { ActionRunJobCreationAttributes } from '@/models/actions/run_job';
 import { Status } from '@/models/actions/status';
@@ -184,6 +186,19 @@ describe('resolveBlockedJobs', () => {
 
     await expect(resolveBlockedJobs(runId)).resolves.toBe(false);
     expect(await statusesOf()).toEqual(['skipped', 'skipped', 'failure']);
+  });
+
+  it('clears the stop time a blocked job carried once it starts waiting', async () => {
+    await add('setup', Status.Success);
+    const deploy = await add('deploy', Status.Blocked, ['setup']);
+    deploy.stoppedAt = new Date();
+    await deploy.save();
+
+    await expect(resolveBlockedJobs(runId)).resolves.toBe(true);
+
+    await deploy.reload();
+    expect(deploy.status).toBe(Status.Waiting);
+    expect(deploy.stoppedAt).toBeNull();
   });
 });
 
@@ -375,6 +390,29 @@ describe('pickTask', () => {
     });
   }
 
+  /** 一个带 attempt 的 job，用来验证状态是沿 attempt 冒泡到 run 上的 */
+  async function queueJobWithAttempt() {
+    const attempt = await ActionRunAttempt.create({
+      runId,
+      repositoryId: PICK_REPOSITORY_ID,
+      attempt: 1,
+      triggerUserId: 0,
+      status: Status.Waiting,
+      concurrencyGroup: '',
+      concurrencyCancel: false,
+    });
+    await ActionRun.update({ latestAttemptId: Number(attempt.id) }, { where: { id: runId } });
+
+    const job = await queueJob('healthy', { runAttemptId: Number(attempt.id) });
+
+    return { attempt, job };
+  }
+
+  async function finish(job: ActionRunJob, result: Result) {
+    const task = (await claimedTaskOf(job))!;
+    return ActionTask.updateByState(BigInt(runner.id!), create(TaskStateSchema, { id: task.id!, result }));
+  }
+
   beforeAll(async () => {
     runner = await ActionRunner.create({
       name: 'pickTask runner',
@@ -405,7 +443,7 @@ describe('pickTask', () => {
     await ActionRunner.destroy({ where: { repositoryId: PICK_REPOSITORY_ID } });
   });
 
-  it('claims the waiting job and assembles its payload', async () => {
+  it('claims the waiting job, assembles its payload and flips the run to running', async () => {
     const job = await queueJob('healthy');
 
     const picked = await pickTask(runner);
@@ -420,6 +458,10 @@ describe('pickTask', () => {
     expect(job.status).toBe(Status.Running);
     expect(Number(job.taskId)).toBe(Number(task.id));
     expect(job.startedAt).not.toBeNull();
+
+    const run = (await ActionRun.findByPk(runId))!;
+    expect(run.status).toBe(Status.Running);
+    expect(run.startedAt).not.toBeNull();
   });
 
   it('returns nothing when the queue is empty', async () => {
@@ -448,5 +490,37 @@ describe('pickTask', () => {
     expect(await claimedTaskOf(broken)).toBeNull();
 
     logged.mockRestore();
+  });
+
+  it('settles the run attempt alongside the run when a job succeeds', async () => {
+    const { attempt, job } = await queueJobWithAttempt();
+
+    await expect(pickTask(runner)).resolves.not.toBeNull();
+
+    await attempt.reload();
+    expect(attempt.status).toBe(Status.Running);
+    expect(attempt.startedAt).not.toBeNull();
+
+    await finish(job, Result.SUCCESS);
+
+    await attempt.reload();
+    expect(attempt.status).toBe(Status.Success);
+    expect(attempt.stoppedAt).not.toBeNull();
+
+    const run = (await ActionRun.findByPk(runId))!;
+    expect(Number(run.latestAttemptId)).toBe(Number(attempt.id));
+    expect(run.status).toBe(Status.Success);
+    expect(run.stoppedAt).not.toBeNull();
+  });
+
+  it('propagates a failed job onto the run as a failure', async () => {
+    const { job } = await queueJobWithAttempt();
+
+    await expect(pickTask(runner)).resolves.not.toBeNull();
+    await finish(job, Result.FAILURE);
+
+    const run = (await ActionRun.findByPk(runId))!;
+    expect(run.status).toBe(Status.Failure);
+    expect(run.stoppedAt).not.toBeNull();
   });
 });

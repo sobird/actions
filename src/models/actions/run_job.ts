@@ -25,11 +25,17 @@ import {
   type BelongsToGetAssociationMixin,
   type BelongsToSetAssociationMixin,
   type BelongsToCreateAssociationMixin,
+  type Transaction,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import type { Models, ActionTask, ActionRun } from '.';
+import type { Models, ActionTask } from '.';
+// The two classes below are used as values, so they come from their own modules rather than
+// the barrel: importing a value from '.' would close the index -> run_job -> index cycle.
+// A class import supplies the type as well, so no separate type-only import is needed.
+import { ActionRun } from './run';
+import { ActionRunAttempt } from './run_attempt';
 import { Status } from './status';
 
 export type ActionRunJobCreationAttributes = CreationAttributes<ActionRunJob>;
@@ -82,7 +88,8 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
     tasks: Association<ActionRunJob, ActionTask>;
   };
 
-  static associate({ ActionRun, ActionTask }: Models) {
+  // ActionRun comes from its own module above, so it is not taken from the models map.
+  static associate({ ActionTask }: Models) {
     this.belongsTo(ActionRun, { as: 'run', foreignKey: 'runId' });
     this.hasMany(ActionTask, { as: 'tasks', foreignKey: 'jobId' });
   }
@@ -161,6 +168,59 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
       return Status.Failure;
     }
     return Status.Unknown;
+  }
+
+  /**
+   * Recompute the status of a run attempt from the jobs it holds and persist it.
+   *
+   * The latest attempt carries its status, start and stop onto its run; an older one
+   * only updates itself, because a later attempt already drives the run. `noJobsStatus`
+   * settles an attempt that holds no job at all, which `aggregateJobStatus` cannot
+   * conclude on its own. Port of gitea's `models/actions/run_job.go` `refreshRunStatus`,
+   * with `UpdateRunAttempt`'s propagation folded in.
+   */
+  static async refreshRunStatus(
+    runId: number,
+    runAttemptId: number,
+    noJobsStatus: Status,
+    transaction?: Transaction,
+  ): Promise<void> {
+    if (runAttemptId > 0) {
+      const attempt = await ActionRunAttempt.findByPk(runAttemptId, { transaction });
+      if (!attempt) {
+        throw new Error(`run attempt with id ${runAttemptId}: not exist`);
+      }
+
+      const jobs = await ActionRunJob.findAll({ where: { runId, runAttemptId }, transaction });
+      attempt.status = jobs.length > 0 ? ActionRunJob.aggregateJobStatus(jobs) : noJobsStatus;
+      // Both times are written once: a re-aggregate that is still pending must not clear them.
+      attempt.startedAt = attempt.startedAt ?? (attempt.status.isRunning() ? new Date() : null);
+      attempt.stoppedAt = attempt.stoppedAt ?? (attempt.status.isDone() ? new Date() : null);
+      await attempt.save({ fields: ['status', 'startedAt', 'stoppedAt'], transaction });
+
+      const run = await ActionRun.findByPk(runId, { transaction });
+      if (!run || Number(run.latestAttemptId) !== Number(attempt.id)) {
+        return;
+      }
+      run.status = attempt.status;
+      run.startedAt = attempt.startedAt;
+      run.stoppedAt = attempt.stoppedAt;
+      await run.save({ fields: ['status', 'startedAt', 'stoppedAt'], transaction });
+      return;
+    }
+
+    // Legacy fallback: jobs of runs that predate attempts carry attempt 0, and their run
+    // has no attempt of its own to aggregate through.
+    const run = await ActionRun.findByPk(runId, { transaction });
+    if (!run) {
+      throw new Error(`run with id ${runId}: not exist`);
+    }
+
+    const jobs = await ActionRunJob.findAll({ where: { runId, runAttemptId: run.latestAttemptId }, transaction });
+    run.status = jobs.length > 0 ? ActionRunJob.aggregateJobStatus(jobs) : noJobsStatus;
+    run.startedAt = run.startedAt ?? (run.status.isRunning() ? new Date() : null);
+    run.stoppedAt = run.stoppedAt ?? (run.status.isDone() ? new Date() : null);
+    await run.save({ fields: ['status', 'startedAt', 'stoppedAt'], transaction });
   }
 }
 

@@ -2,16 +2,35 @@ import { create } from '@bufbuild/protobuf';
 import { timestampFromDate } from '@bufbuild/protobuf/wkt';
 
 import { Result, StepStateSchema, TaskStateSchema } from '@/gen/runner/v1/messages_pb';
-import { ActionRunJob, ActionRunner, ActionTask, ActionTaskStep } from '@/models/actions';
+import { ActionRun, ActionRunJob, ActionRunner, ActionTask, ActionTaskStep } from '@/models/actions';
 
 import type { ActionRunJobCreationAttributes } from './run_job';
 import { Status } from './status';
 
 vi.mock('@/lib/sequelize');
+vi.mock('./run');
 vi.mock('./task');
 vi.mock('./task_step');
 vi.mock('./runner');
 vi.mock('./run_job');
+
+/** queueJob 把 job 都挂在 800 号 run 下；认领要顺手刷新 run 的状态，所以这行 run 得在 */
+const RUN_ID = 800;
+
+beforeAll(async () => {
+  await ActionRun.create({
+    id: BigInt(RUN_ID),
+    title: 'createForRunner',
+    ownerId: 1,
+    repositoryId: 4,
+    workflowId: 'test',
+    index: 800,
+    ref: 'refs/heads/master',
+    commitSha: '',
+    eventName: 'workflow_dispatch',
+    status: Status.Waiting,
+  });
+});
 
 /** 一个 job 的 workflow：分别只有 name / uses / run 的三个 step */
 const WORKFLOW_PAYLOAD = `
@@ -28,7 +47,7 @@ jobs:
 /** 入队一个还没被认领的 job：`taskId: 0` + waiting 就是它在队列里的标志 */
 function queueJob(overrides: Partial<ActionRunJobCreationAttributes> = {}) {
   return ActionRunJob.create({
-    runId: 800,
+    runId: RUN_ID,
     repositoryId: 4,
     ownerId: 1,
     name: 'job_2',

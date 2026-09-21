@@ -2,6 +2,7 @@ import { create } from '@bufbuild/protobuf';
 import { Op, type Transaction } from 'sequelize';
 
 import { Task, TaskNeed, TaskNeedSchema, TaskSchema } from '@/gen/runner/v1/messages_pb';
+import { sequelize } from '@/lib/sequelize';
 import { ActionRun, ActionRunJob, ActionRunner, ActionTask, ActionTaskOutput } from '@/models';
 import { Status } from '@/models/actions/status';
 import Workflow from '@/workflow';
@@ -181,7 +182,16 @@ export async function resolveBlockedJobs(runId: number, transaction?: Transactio
     );
   }
   if (waiting.length > 0) {
-    await ActionRunJob.update({ status: Status.Waiting, stoppedAt: null }, { where: { id: waiting }, transaction });
+    await ActionRunJob.update(
+      // 连接层开了 omitNull，赋值 null 会被 UPDATE 整条丢掉，置空只能写 literal
+      { status: Status.Waiting, stoppedAt: sequelize.literal('NULL') },
+      { where: { id: waiting }, transaction },
+    );
+  }
+
+  if (skipped.length > 0 || waiting.length > 0) {
+    // All jobs of a run belong to the one attempt that carries its status.
+    await ActionRunJob.refreshRunStatus(runId, Number(jobs[0].runAttemptId), Status.Unknown, transaction);
   }
 
   return waiting.length > 0;
