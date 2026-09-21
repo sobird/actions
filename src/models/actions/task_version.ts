@@ -84,6 +84,11 @@ export class ActionTaskVersion extends BaseModel<
 
 ActionTaskVersion.init(
   {
+    id: {
+      type: DataTypes.BIGINT,
+      primaryKey: true,
+      autoIncrement: true,
+    },
     ownerId: {
       type: DataTypes.BIGINT,
       comment: 'owner id',

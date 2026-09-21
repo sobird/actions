@@ -74,6 +74,11 @@ export class ActionRunnerToken extends BaseModel<
 
 ActionRunnerToken.init(
   {
+    id: {
+      type: DataTypes.BIGINT,
+      primaryKey: true,
+      autoIncrement: true,
+    },
     token: {
       type: DataTypes.STRING(40),
       defaultValue: () => randomBytes(30).toString('base64url'),
@@ -82,11 +87,11 @@ ActionRunnerToken.init(
       comment: 'runner token',
     },
     ownerId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       comment: 'owner id',
     },
     repositoryId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       comment: 'repository id',
     },
     enabled: {

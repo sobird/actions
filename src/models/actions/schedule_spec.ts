@@ -66,6 +66,11 @@ export class ActionScheduleSpec extends BaseModel<
 
 ActionScheduleSpec.init(
   {
+    id: {
+      type: DataTypes.BIGINT,
+      primaryKey: true,
+      autoIncrement: true,
+    },
     repositoryId: {
       type: DataTypes.BIGINT,
       allowNull: false,

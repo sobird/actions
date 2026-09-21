@@ -40,14 +40,14 @@ export class ActionRunAttempt extends BaseModel<
   declare startedAt: Date | null;
   declare stoppedAt: Date | null;
 
-  declare Run?: NonAttribute<ActionRun>;
+  declare ActionRun?: NonAttribute<ActionRun>;
 
   static associate({ ActionRun }: Models) {
     this.belongsTo(ActionRun, { foreignKey: 'runId' });
   }
 
   declare static associations: {
-    Run: Association<ActionRunAttempt, ActionRun>;
+    ActionRun: Association<ActionRunAttempt, ActionRun>;
   };
 
   declare getActionRun: BelongsToGetAssociationMixin<ActionRun>;

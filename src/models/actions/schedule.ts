@@ -94,15 +94,20 @@ export class ActionSchedule extends BaseModel<
 
   // You can also pre-declare possible inclusions, these will only be populated if you
   // actively include a relation.
-  declare ScheduleSpecs?: NonAttribute<ActionScheduleSpec[]>; // Note this is optional since it's only populated when explicitly requested in code
+  declare ActionScheduleSpecs?: NonAttribute<ActionScheduleSpec[]>; // Note this is optional since it's only populated when explicitly requested in code
 
   declare static associations: {
-    projects: Association<ActionSchedule, ActionScheduleSpec>;
+    ActionScheduleSpecs: Association<ActionSchedule, ActionScheduleSpec>;
   };
 }
 
 ActionSchedule.init(
   {
+    id: {
+      type: DataTypes.BIGINT,
+      primaryKey: true,
+      autoIncrement: true,
+    },
     title: {
       type: DataTypes.STRING,
     },
@@ -121,7 +126,7 @@ ActionSchedule.init(
       type: DataTypes.STRING,
     },
     triggerUserId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
     },
     eventName: {
       type: DataTypes.STRING,

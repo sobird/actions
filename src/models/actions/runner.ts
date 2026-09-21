@@ -119,6 +119,11 @@ export class ActionRunner extends BaseModel<InferAttributes<ActionRunner>, Infer
 
 ActionRunner.init(
   {
+    id: {
+      type: DataTypes.BIGINT,
+      primaryKey: true,
+      autoIncrement: true,
+    },
     uuid: {
       type: DataTypes.UUIDV4,
       unique: true,

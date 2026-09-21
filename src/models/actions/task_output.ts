@@ -64,6 +64,11 @@ export class ActionTaskOutput extends BaseModel<
 
 ActionTaskOutput.init(
   {
+    id: {
+      type: DataTypes.BIGINT,
+      primaryKey: true,
+      autoIncrement: true,
+    },
     taskId: {
       type: DataTypes.BIGINT,
       comment: 'task id',

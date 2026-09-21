@@ -44,7 +44,7 @@ export class ActionTaskStep extends BaseModel<
     ActionTask: Association<ActionTaskStep, ActionTask>;
   };
 
-  declare Task?: NonAttribute<ActionTask[]>;
+  declare ActionTask?: NonAttribute<ActionTask>;
 
   // associates method
   // Since TS cannot determine model association at compile time
@@ -57,12 +57,17 @@ export class ActionTaskStep extends BaseModel<
 
 ActionTaskStep.init(
   {
+    id: {
+      type: DataTypes.BIGINT,
+      primaryKey: true,
+      autoIncrement: true,
+    },
     name: {
       type: DataTypes.STRING,
       comment: 'step name',
     },
     taskId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       comment: 'task id',
     },
     index: {
@@ -70,7 +75,7 @@ ActionTaskStep.init(
       comment: 'task index',
     },
     repositoryId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       comment: 'repository id',
     },
     logIndex: {

@@ -39,81 +39,67 @@ export type ActionRunJobCreationAttributes = CreationAttributes<ActionRunJob>;
  */
 export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, InferCreationAttributes<ActionRunJob>> {
   declare runId: number;
-
   /** the attempt this job belongs to; 0 marks a row from before attempts existed */
   declare runAttemptId: CreationOptional<number>;
-
   /** unique within one attempt; the same job keeps it across attempts */
   declare attemptJobId: CreationOptional<number>;
-
   declare repositoryId: number;
   declare ownerId: number;
-
   declare name: string;
   declare commitSha: string;
   declare isForkPullRequest: boolean;
 
   /** the (repo, commit) the containing workflow file came from */
   declare workflowSourceRepoId: CreationOptional<number>;
-
   declare workflowSourceCommitSha: CreationOptional<string>;
-
   declare attempt: number;
-
   /** a failure of this job does not fail the run */
   declare continueOnError: CreationOptional<boolean>;
-
   declare workflowPayload: CreationOptional<Buffer>;
 
   /** job id in workflow, not job's id */
   declare jobId: string;
-
   /** the latest task of the job */
   declare taskId: number;
 
   /** JSON-encoded list of job ids this job depends on */
   declare needs: CreationOptional<string>;
-
   /** JSON-encoded list of labels this job requires */
   declare runsOn: CreationOptional<string>;
-
   declare status: Status;
-
   declare startedAt: Date | null;
-
   declare stoppedAt: Date | null;
 
   declare run?: NonAttribute<ActionRun>;
+  declare tasks?: NonAttribute<ActionTask[]>;
+
+  declare static associations: {
+    run: Association<ActionRunJob, ActionRun>;
+    tasks: Association<ActionRunJob, ActionTask>;
+  };
 
   static associate({ ActionRun, ActionTask }: Models) {
     this.belongsTo(ActionRun, { as: 'run', foreignKey: 'runId' });
-    this.hasMany(ActionTask, { foreignKey: 'jobId' });
+    this.hasMany(ActionTask, { as: 'tasks', foreignKey: 'jobId' });
   }
 
-  declare static associations: {
-    Run: Association<ActionRunJob, ActionRun>;
-  };
-
   // associates method
-  // Since TS cannot determine model association at compile time
-  // we have to declare them here purely virtually
-  // these will not exist until `Model.init` was called.
-  declare getActionTasks: HasManyGetAssociationsMixin<ActionTask>;
-  /** Remove all previous associations and set the new ones */
-  declare setActionTasks: HasManySetAssociationsMixin<ActionTask, bigint>;
-  declare addActionTask: HasManyAddAssociationMixin<ActionTask, bigint>;
-  declare addActionTasks: HasManyAddAssociationsMixin<ActionTask, bigint>;
-  declare removeActionTask: HasManyRemoveAssociationMixin<ActionTask, bigint>;
-  declare removeActionTasks: HasManyRemoveAssociationsMixin<ActionTask, bigint>;
-  declare hasActionTask: HasManyHasAssociationMixin<ActionTask, bigint>;
-  declare hasActionTasks: HasManyHasAssociationsMixin<ActionTask, bigint>;
-  declare createActionTask: HasManyCreateAssociationMixin<ActionTask>;
-  declare countActionTasks: HasManyCountAssociationsMixin;
+  // ActionTask, alias 'tasks'
+  declare getTasks: HasManyGetAssociationsMixin<ActionTask>;
+  declare setTasks: HasManySetAssociationsMixin<ActionTask, bigint>;
+  declare addTask: HasManyAddAssociationMixin<ActionTask, bigint>;
+  declare addTasks: HasManyAddAssociationsMixin<ActionTask, bigint>;
+  declare removeTask: HasManyRemoveAssociationMixin<ActionTask, bigint>;
+  declare removeTasks: HasManyRemoveAssociationsMixin<ActionTask, bigint>;
+  declare hasTask: HasManyHasAssociationMixin<ActionTask, bigint>;
+  declare hasTasks: HasManyHasAssociationsMixin<ActionTask, bigint>;
+  declare createTask: HasManyCreateAssociationMixin<ActionTask>;
+  declare countTasks: HasManyCountAssociationsMixin;
 
-  // ActionRun
-  declare getActionRun: BelongsToGetAssociationMixin<ActionRun>;
-  declare setActionRun: BelongsToSetAssociationMixin<ActionRun, bigint>;
-  declare createActionRun: BelongsToCreateAssociationMixin<ActionRun>;
+  // ActionRun, alias 'run'
+  declare getRun: BelongsToGetAssociationMixin<ActionRun>;
+  declare setRun: BelongsToSetAssociationMixin<ActionRun, bigint>;
+  declare createRun: BelongsToCreateAssociationMixin<ActionRun>;
 
   /**
    * Aggregate the jobs of a run into the status of its attempt.
@@ -177,12 +163,12 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
 ActionRunJob.init(
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       primaryKey: true,
       autoIncrement: true,
     },
     runId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
     },
     runAttemptId: {
       type: DataTypes.BIGINT,
@@ -241,7 +227,7 @@ ActionRunJob.init(
       type: DataTypes.STRING,
     },
     taskId: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
       defaultValue: 0,
       comment: 'the latest task of the job',
