@@ -38,7 +38,7 @@ export class ActionTaskVersion extends BaseModel<ActionTaskVersionAttributes, Ac
     return taskVersion ? BigInt(taskVersion.version) : 0n;
   }
 
-  public static async increaseVersionByScope(ownerId: number, repositoryId: number, transaction?: Transaction) {
+  private static async increaseVersionByScope(ownerId: number, repositoryId: number, transaction?: Transaction) {
     const where = { ownerId, repositoryId };
     const existing = await this.findOne({ where, transaction });
 

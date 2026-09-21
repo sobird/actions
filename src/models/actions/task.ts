@@ -266,7 +266,7 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
   private static async updateSteps(task: ActionTask, stepStates: StepState[], transaction: Transaction) {
     const now = new Date();
     const states = new Map(stepStates.map((stepState) => [Number(stepState.id), stepState]));
-    const steps = await ActionTaskStepModel.findAll({ where: { taskId: Number(task.id) }, transaction });
+    const steps = await task.getSteps({ transaction });
 
     for (const step of steps) {
       const stepState = states.get(step.index);
