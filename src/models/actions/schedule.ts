@@ -48,9 +48,13 @@ export class ActionSchedule extends BaseModel<
   declare commitSha: string;
   declare content: Blob;
 
-  static async findByIds(ids: number[]) {
-    return this.findAll({ where: { id: ids } });
-  }
+  // You can also pre-declare possible inclusions, these will only be populated if you
+  // actively include a relation.
+  declare scheduleSpecs?: NonAttribute<ActionScheduleSpec[]>; // Note this is optional since it's only populated when explicitly requested in code
+
+  declare static associations: {
+    scheduleSpecs: Association<ActionSchedule, ActionScheduleSpec>;
+  };
 
   static associate({ ActionScheduleSpec }: Models) {
     this.hasMany(ActionScheduleSpec, { as: 'scheduleSpecs', foreignKey: 'scheduleId' });
@@ -72,13 +76,9 @@ export class ActionSchedule extends BaseModel<
   declare createScheduleSpec: HasManyCreateAssociationMixin<ActionScheduleSpec, 'scheduleId'>;
   declare countScheduleSpecs: HasManyCountAssociationsMixin;
 
-  // You can also pre-declare possible inclusions, these will only be populated if you
-  // actively include a relation.
-  declare scheduleSpecs?: NonAttribute<ActionScheduleSpec[]>; // Note this is optional since it's only populated when explicitly requested in code
-
-  declare static associations: {
-    scheduleSpecs: Association<ActionSchedule, ActionScheduleSpec>;
-  };
+  static async findByIds(ids: number[]) {
+    return this.findAll({ where: { id: ids } });
+  }
 }
 
 ActionSchedule.init(

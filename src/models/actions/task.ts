@@ -34,11 +34,14 @@ import { sequelize, BaseModel } from '@/lib/sequelize';
 import { logFileName } from '@/utils';
 import Workflow from '@/workflow';
 
-import type { Models, ActionRunJob, ActionRunner, ActionTaskOutput, ActionTaskStep } from '.';
-import { ActionRunJob as ActionRunJobModel } from './run_job';
-import { ActionRunner as ActionRunnerModel } from './runner';
+// The three classes below are used as values, so they come from their own modules rather than
+// the barrel: importing a value from '.' would close the index -> task -> index cycle. A class
+// import supplies the type as well, so no separate type-only import is needed.
+import type { Models, ActionTaskOutput } from '.';
+import { ActionRunJob } from './run_job';
+import { ActionRunner } from './runner';
 import { Status } from './status';
-import { ActionTaskStep as ActionTaskStepModel } from './task_step';
+import { ActionTaskStep } from './task_step';
 import { generateToken, generateTokenSalt, hashToken } from './token';
 
 export type ActionTaskCreationAttributes = CreationAttributes<ActionTask>;
@@ -88,7 +91,7 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
     outputs: Association<ActionTask, ActionTaskOutput>;
   };
 
-  static associate({ ActionRunJob, ActionRunner, ActionTaskOutput, ActionTaskStep }: Models) {
+  static associate({ ActionTaskOutput }: Models) {
     this.belongsTo(ActionRunJob, { as: 'job', foreignKey: 'jobId' });
     this.belongsTo(ActionRunner, { as: 'runner', foreignKey: 'runnerId' });
     this.hasMany(ActionTaskStep, { as: 'steps', foreignKey: 'taskId' });
@@ -172,7 +175,7 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
 
         await this.createSteps(task, job, transaction);
 
-        const [affectedCount] = await ActionRunJobModel.update(
+        const [affectedCount] = await ActionRunJob.update(
           { taskId: Number(task.id), status: Status.Running, startedAt: now },
           {
             where: { id: job.id, taskId: 0, status: Status.Waiting.toString() },
@@ -202,12 +205,12 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
    */
   public static async releaseTaskForRunner(task: ActionTask) {
     await sequelize.transaction(async (transaction) => {
-      await ActionRunJobModel.update(
+      await ActionRunJob.update(
         // 连接层开了 omitNull，赋值 null 会被 UPDATE 整条丢掉，置空只能写 literal
         { taskId: 0, status: Status.Waiting, startedAt: sequelize.literal('NULL') },
         { where: { id: task.jobId, taskId: Number(task.id) }, transaction },
       );
-      await ActionTaskStepModel.destroy({ where: { taskId: Number(task.id) }, transaction });
+      await ActionTaskStep.destroy({ where: { taskId: Number(task.id) }, transaction });
       await task.destroy({ transaction });
     });
   }
@@ -260,10 +263,10 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
 
       // A finished task releases its ephemeral runner.
       if (status.isDone()) {
-        await ActionRunnerModel.deleteEphemeralRunner(task.runnerId, transaction);
+        await ActionRunner.deleteEphemeralRunner(task.runnerId, transaction);
       }
 
-      await ActionRunJobModel.update({ status, stoppedAt }, { where: { id: task.jobId }, transaction });
+      await ActionRunJob.update({ status, stoppedAt }, { where: { id: task.jobId }, transaction });
     } else {
       // Touch the updated timestamp so the task isn't judged as a zombie task.
       await this.update({}, { where: { id: task.id }, transaction });
@@ -329,7 +332,7 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
       return;
     }
 
-    await ActionTaskStepModel.bulkCreate(
+    await ActionTaskStep.bulkCreate(
       steps.map((step, index) => ({
         name: (step.name || step.uses || step.run || `step-${index}`).slice(0, 255),
         taskId: Number(task.id),
