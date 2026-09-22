@@ -1,12 +1,13 @@
 import { UniqueConstraintError } from 'sequelize';
 
-import { ActionRun } from '@/models/actions';
+import { ActionRun, ActionRunJob } from '@/models/actions';
 
 import { Status } from './status';
 
 vi.mock('@/lib/sequelize');
 vi.mock('./run');
 vi.mock('./run_job');
+vi.mock('./run_attempt');
 
 /** fixture 把 run 791/792 和 job 192/193 配成一对，这里顺着这条链断言 */
 const SEEDED_RUN_ID = 791;
@@ -83,5 +84,54 @@ describe('ActionRun', () => {
     const jobs = await run!.getJobs();
 
     expect(jobs.map((job) => Number(job.id))).toEqual([192]);
+  });
+
+  it('lists only the attempts of the run, and reads back the latest as a pointer', async () => {
+    const run = await ActionRun.findByPk(SEEDED_RUN_ID);
+
+    const attempts = await run!.getAttempts();
+    expect(attempts.map((attempt) => Number(attempt.id))).toEqual([2001]);
+
+    const latest = await run!.getLatestAttempt();
+    expect(Number(latest!.id)).toBe(2001);
+  });
+
+  it('resolves the attempt a job belongs to', async () => {
+    const job = await ActionRunJob.findByPk(192);
+    const attempt = await job!.getRunAttempt();
+
+    expect(Number(attempt!.id)).toBe(2001);
+  });
+
+  describe('refreshStatus', () => {
+    it('recomputes the run from the jobs of the attempt it reports as latest', async () => {
+      const run = (await ActionRun.findByPk(SEEDED_RUN_ID))!;
+
+      await run.refreshStatus(Status.Unknown);
+
+      expect(run.status).toBe(Status.Success);
+      const stored = (await ActionRun.findByPk(SEEDED_RUN_ID))!;
+      expect(stored.status).toBe(Status.Success);
+    });
+
+    it('settles a run whose latest attempt holds no job as the given status', async () => {
+      const run = (await ActionRun.findByPk(SEEDED_RUN_ID))!;
+      // 2002 挂的是 run 792，791 名下没有它的 job，所以这次聚合为空集
+      run.latestAttemptId = 2002n;
+
+      await run.refreshStatus(Status.Skipped);
+
+      expect(run.status).toBe(Status.Skipped);
+    });
+
+    it('keeps the times a run already has instead of clearing them', async () => {
+      const run = (await ActionRun.findByPk(SEEDED_RUN_ID))!;
+      run.latestAttemptId = 2002n;
+
+      await run.refreshStatus(Status.Waiting);
+
+      expect(run.startedAt).toEqual(new Date(1683636528000));
+      expect(run.stoppedAt).toEqual(new Date(1683636626000));
+    });
   });
 });

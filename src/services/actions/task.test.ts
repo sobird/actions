@@ -388,7 +388,7 @@ describe('pickTask', () => {
       concurrencyGroup: '',
       concurrencyCancel: false,
     });
-    await ActionRun.update({ latestAttemptId: Number(attempt.id) }, { where: { id: runId } });
+    await ActionRun.update({ latestAttemptId: attempt.id! }, { where: { id: runId } });
 
     const job = await queueJob('healthy', { runAttemptId: Number(attempt.id) });
 

@@ -16,6 +16,8 @@ const seeds: ActionRunCreationAttributes[] = [
     isForkPullRequest: false,
     needApproval: false,
     approvedBy: 0n,
+    // 指向 `__mocks__/run_attempt.ts` 里挂在本 run 上的那次 attempt
+    latestAttemptId: 2001n,
 
     status: Status.Unknown,
     startedAt: new Date(1683636528000),

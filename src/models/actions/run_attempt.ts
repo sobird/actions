@@ -11,6 +11,16 @@ import {
   type InferCreationAttributes,
   type CreationAttributes,
   type NonAttribute,
+  type HasManyGetAssociationsMixin,
+  type HasManySetAssociationsMixin,
+  type HasManyAddAssociationMixin,
+  type HasManyAddAssociationsMixin,
+  type HasManyRemoveAssociationMixin,
+  type HasManyRemoveAssociationsMixin,
+  type HasManyHasAssociationMixin,
+  type HasManyHasAssociationsMixin,
+  type HasManyCreateAssociationMixin,
+  type HasManyCountAssociationsMixin,
   type BelongsToGetAssociationMixin,
   type BelongsToSetAssociationMixin,
   type BelongsToCreateAssociationMixin,
@@ -18,13 +28,13 @@ import {
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import type { Models, ActionRun } from '.';
+import type { Models, ActionRun, ActionRunJob } from '.';
 import { Status } from './status';
 
 export type ActionRunAttemptCreationAttributes = CreationAttributes<ActionRunAttempt>;
 
 /**
- * ActionRunAttempt represents a job of a run
+ * ActionRunAttempt represents a single execution attempt of a run
  */
 export class ActionRunAttempt extends BaseModel<
   InferAttributes<ActionRunAttempt>,
@@ -44,18 +54,34 @@ export class ActionRunAttempt extends BaseModel<
   declare stoppedAt: Date | null;
 
   declare run?: NonAttribute<ActionRun>;
+  declare jobs?: NonAttribute<ActionRunJob[]>;
 
-  static associate({ ActionRun }: Models) {
+  static associate({ ActionRun, ActionRunJob }: Models) {
     this.belongsTo(ActionRun, { as: 'run', foreignKey: 'runId' });
+    // Declared for querying only: `run_attempt_id` holds 0 on a job from before attempts
+    // existed, which a foreign key constraint would reject.
+    this.hasMany(ActionRunJob, { as: 'jobs', foreignKey: 'runAttemptId', constraints: false });
   }
 
   declare static associations: {
     run: Association<ActionRunAttempt, ActionRun>;
+    jobs: Association<ActionRunAttempt, ActionRunJob>;
   };
 
   declare getRun: BelongsToGetAssociationMixin<ActionRun>;
   declare setRun: BelongsToSetAssociationMixin<ActionRun, bigint>;
   declare createRun: BelongsToCreateAssociationMixin<ActionRun>;
+
+  declare getJobs: HasManyGetAssociationsMixin<ActionRunJob>;
+  declare setJobs: HasManySetAssociationsMixin<ActionRunJob, bigint>;
+  declare addJob: HasManyAddAssociationMixin<ActionRunJob, bigint>;
+  declare addJobs: HasManyAddAssociationsMixin<ActionRunJob, bigint>;
+  declare removeJob: HasManyRemoveAssociationMixin<ActionRunJob, bigint>;
+  declare removeJobs: HasManyRemoveAssociationsMixin<ActionRunJob, bigint>;
+  declare hasJob: HasManyHasAssociationMixin<ActionRunJob, bigint>;
+  declare hasJobs: HasManyHasAssociationsMixin<ActionRunJob, bigint>;
+  declare createJob: HasManyCreateAssociationMixin<ActionRunJob>;
+  declare countJobs: HasManyCountAssociationsMixin;
 }
 
 ActionRunAttempt.init(

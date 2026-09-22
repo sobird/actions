@@ -22,14 +22,18 @@ import {
   type HasManyHasAssociationsMixin,
   type HasManyCreateAssociationMixin,
   type HasManyCountAssociationsMixin,
+  type BelongsToGetAssociationMixin,
+  type BelongsToSetAssociationMixin,
+  type BelongsToCreateAssociationMixin,
   type Transaction,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-// Like run_job's own import of this class, ActionRunJob comes from its module rather
-// than the barrel, which would close an index -> run -> index cycle. It is only
-// dereferenced inside a method body, so the two modules may load in either order.
+// Like run_job's own import of them, the two classes come from their own modules
+// rather than the barrel, which would close an index -> run -> index cycle. They are
+// only dereferenced inside a method body, so the modules may load in either order.
+import { ActionRunAttempt } from './run_attempt';
 import { ActionRunJob } from './run_job';
 import { Status } from './status';
 
@@ -65,7 +69,7 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   declare previousDuration: CreationOptional<bigint>;
   declare duration: CreationOptional<number>;
 
-  declare latestAttemptId: CreationOptional<number>;
+  declare latestAttemptId: CreationOptional<bigint>;
 
   /**
    * Recompute the status of this run from the jobs of its latest attempt and persist it.
@@ -98,15 +102,25 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
     return t.commit();
   }
 
-  // ActionRunJob comes from its own module above, so it is not taken from the models map.
+  // The two classes come from their own modules above, so they are not taken from the
+  // models map.
   static associate() {
     this.hasMany(ActionRunJob, { as: 'jobs', foreignKey: 'runId' });
+    // The two attempt associations are declared for querying only, without a foreign key
+    // constraint: `latest_attempt_id` holds 0 until the run has an attempt, and the run is
+    // inserted that way before its first attempt exists.
+    this.hasMany(ActionRunAttempt, { as: 'attempts', foreignKey: 'runId', constraints: false });
+    this.belongsTo(ActionRunAttempt, { as: 'latestAttempt', foreignKey: 'latestAttemptId', constraints: false });
   }
 
   declare jobs?: NonAttribute<ActionRunJob[]>;
+  declare attempts?: NonAttribute<ActionRunAttempt[]>;
+  declare latestAttempt?: NonAttribute<ActionRunAttempt>;
 
   declare static associations: {
     jobs: Association<ActionRun, ActionRunJob>;
+    attempts: Association<ActionRun, ActionRunAttempt>;
+    latestAttempt: Association<ActionRun, ActionRunAttempt>;
   };
 
   // associates method
@@ -123,6 +137,21 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   declare hasJobs: HasManyHasAssociationsMixin<ActionRunJob, bigint>;
   declare createJob: HasManyCreateAssociationMixin<ActionRunJob>;
   declare countJobs: HasManyCountAssociationsMixin;
+
+  declare getAttempts: HasManyGetAssociationsMixin<ActionRunAttempt>;
+  declare setAttempts: HasManySetAssociationsMixin<ActionRunAttempt, bigint>;
+  declare addAttempt: HasManyAddAssociationMixin<ActionRunAttempt, bigint>;
+  declare addAttempts: HasManyAddAssociationsMixin<ActionRunAttempt, bigint>;
+  declare removeAttempt: HasManyRemoveAssociationMixin<ActionRunAttempt, bigint>;
+  declare removeAttempts: HasManyRemoveAssociationsMixin<ActionRunAttempt, bigint>;
+  declare hasAttempt: HasManyHasAssociationMixin<ActionRunAttempt, bigint>;
+  declare hasAttempts: HasManyHasAssociationsMixin<ActionRunAttempt, bigint>;
+  declare createAttempt: HasManyCreateAssociationMixin<ActionRunAttempt>;
+  declare countAttempts: HasManyCountAssociationsMixin;
+
+  declare getLatestAttempt: BelongsToGetAssociationMixin<ActionRunAttempt>;
+  declare setLatestAttempt: BelongsToSetAssociationMixin<ActionRunAttempt, bigint>;
+  declare createLatestAttempt: BelongsToCreateAssociationMixin<ActionRunAttempt>;
 
   static validate() {
     throw Error('dd');

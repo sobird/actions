@@ -5,6 +5,8 @@ const seeds: ActionRunJobCreationAttributes[] = [
   {
     id: BigInt(192),
     runId: 791,
+    // 指向 `__mocks__/run_attempt.ts` 里 791 的那次 attempt
+    runAttemptId: 2001,
     ownerId: 1,
     repositoryId: 4,
     commitSha: 'c2d72f548424103f01ee1dc02889c1e2bff816b0',

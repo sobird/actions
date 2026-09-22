@@ -97,16 +97,24 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   declare updatedAt: CreationOptional<Date>;
 
   declare run?: NonAttribute<ActionRun>;
+  declare runAttempt?: NonAttribute<ActionRunAttempt>;
   declare tasks?: NonAttribute<ActionTask[]>;
 
   declare static associations: {
     run: Association<ActionRunJob, ActionRun>;
+    runAttempt: Association<ActionRunJob, ActionRunAttempt>;
     tasks: Association<ActionRunJob, ActionTask>;
   };
 
-  // ActionRun comes from its own module above, so it is not taken from the models map.
+  // ActionRun and ActionRunAttempt come from their own modules above, so they are not
+  // taken from the models map.
   static associate({ ActionTask }: Models) {
     this.belongsTo(ActionRun, { as: 'run', foreignKey: 'runId' });
+    // The column `attempt` already names the attempt number, so the association that
+    // points at the row takes the longer name. Declared for querying only: `run_attempt_id`
+    // holds 0 on a job from before attempts existed, which a foreign key constraint would
+    // reject.
+    this.belongsTo(ActionRunAttempt, { as: 'runAttempt', foreignKey: 'runAttemptId', constraints: false });
     this.hasMany(ActionTask, { as: 'tasks', foreignKey: 'jobId' });
   }
 
@@ -127,6 +135,11 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   declare getRun: BelongsToGetAssociationMixin<ActionRun>;
   declare setRun: BelongsToSetAssociationMixin<ActionRun, bigint>;
   declare createRun: BelongsToCreateAssociationMixin<ActionRun>;
+
+  // ActionRunAttempt, alias 'runAttempt'
+  declare getRunAttempt: BelongsToGetAssociationMixin<ActionRunAttempt>;
+  declare setRunAttempt: BelongsToSetAssociationMixin<ActionRunAttempt, bigint>;
+  declare createRunAttempt: BelongsToCreateAssociationMixin<ActionRunAttempt>;
 
   /**
    * Aggregate the jobs of a run into the status of its attempt.
@@ -217,7 +230,7 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
         throw new Error(`run attempt with id ${runAttemptId}: not exist`);
       }
 
-      const jobs = await ActionRunJob.findAll({ where: { runId, runAttemptId }, transaction });
+      const jobs = await attempt.getJobs({ where: { runId }, transaction });
       attempt.status = jobs.length > 0 ? this.aggregateStatus(jobs) : noJobsStatus;
       // Both times are written once: a re-aggregate that is still pending must not clear them.
       attempt.startedAt = attempt.startedAt ?? (attempt.status.isRunning() ? new Date() : null);
