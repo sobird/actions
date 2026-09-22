@@ -30,7 +30,7 @@ describe('ActionTaskOutput', () => {
     // associate 里写了 as: 'task'，sequelize 生成的就是 getTask
     const task = await output.getTask();
 
-    expect(Number(task.id)).toBe(47);
+    expect(task.id).toBe(47);
     expect(task.logFilename).toBe('artifact-test2/2f/47.log');
   });
 
@@ -67,7 +67,7 @@ describe('ActionTaskOutput', () => {
   it('allows the same key in a different task', async () => {
     const output = await createOutput({ taskId: 48, outputKey: 'alpha' });
 
-    expect(Number(output.taskId)).toBe(48);
+    expect(output.taskId).toBe(48);
     expect(await ActionTaskOutput.count({ where: { taskId: 48, outputKey: 'alpha' } })).toBe(1);
   });
 });

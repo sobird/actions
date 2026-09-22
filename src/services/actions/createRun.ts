@@ -224,10 +224,10 @@ export async function createRunFromWorkflow(workflowPayload: string, options: Cr
       { transaction },
     );
 
-    run.latestAttemptId = runAttempt.id!;
+    run.latestAttemptId = runAttempt.id;
     await run.save({ transaction });
 
-    const workflowSourceRepoId = Number(run.workflowRepoId ?? 0);
+    const workflowSourceRepoId = run.workflowRepoId ?? 0;
     const workflowSourceCommitSha = run.workflowCommitSha ?? '';
 
     const runJobs: ActionRunJob[] = [];

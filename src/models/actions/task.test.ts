@@ -73,8 +73,8 @@ describe('ActionTask.createForRunner', () => {
 
     expect(task).not.toBeNull();
     // task 复制了 job 的身份信息，而不是自己另取一份
-    expect(Number(task!.jobId)).toBe(Number(job.id));
-    expect(Number(task!.runnerId)).toBe(Number(runner.id));
+    expect(task!.jobId).toBe(job.id);
+    expect(task!.runnerId).toBe(runner.id);
     expect(task!.attempt).toBe(2);
     expect(task!.isForkPullRequest).toBe(true);
     expect(task!.commitSha).toBe(job.commitSha);
@@ -85,12 +85,12 @@ describe('ActionTask.createForRunner', () => {
 
     // logFilename 里嵌的是插入之后才拿到的真实 id
     const [, shard, logId] = task!.logFilename.match(/^artifact-repo_4\/([0-9a-f]{2})\/(\d+)\.log$/)!;
-    expect(Number(logId)).toBe(Number(task!.id));
-    expect(Number.parseInt(shard, 16)).toBe(Number(task!.id) & 0xff);
+    expect(Number(logId)).toBe(task!.id);
+    expect(Number.parseInt(shard, 16)).toBe(task!.id & 0xff);
 
     // job 被乐观更新：认领后指向新 task 并进入 running
     await job.reload();
-    expect(Number(job.taskId)).toBe(Number(task!.id));
+    expect(job.taskId).toBe(task!.id);
     expect(job.status).toBe(Status.Running);
     expect(job.startedAt).not.toBeNull();
 
@@ -108,7 +108,7 @@ describe('ActionTask.createForRunner', () => {
     expect(steps.map((step) => step.name)).toEqual(['say hello', 'Run actions/checkout@v4', 'Run echo from run']);
     expect(steps.map((step) => step.index)).toEqual([0, 1, 2]);
     expect(steps.map((step) => step.status)).toEqual(['waiting', 'waiting', 'waiting']);
-    expect(steps.map((step) => Number(step.taskId))).toEqual(Array(3).fill(Number(task!.id)));
+    expect(steps.map((step) => step.taskId)).toEqual(Array(3).fill(task!.id));
   });
 
   it('returns null and leaves no orphan task when another runner already claimed the job', async () => {
@@ -118,9 +118,9 @@ describe('ActionTask.createForRunner', () => {
     expect(await ActionTask.createForRunner(runner, job)).toBeNull();
 
     // 抢输了的那次事务整体回滚，不留下半成品
-    expect(await ActionTask.count({ where: { jobId: Number(job.id) } })).toBe(0);
+    expect(await ActionTask.count({ where: { jobId: job.id } })).toBe(0);
     await job.reload();
-    expect(Number(job.taskId)).toBe(47);
+    expect(job.taskId).toBe(47);
   });
 
   it('rolls the claim back when the workflow payload cannot be loaded', async () => {
@@ -129,9 +129,9 @@ describe('ActionTask.createForRunner', () => {
 
     await expect(ActionTask.createForRunner(runner, job)).rejects.toThrow();
 
-    expect(await ActionTask.count({ where: { jobId: Number(job.id) } })).toBe(0);
+    expect(await ActionTask.count({ where: { jobId: job.id } })).toBe(0);
     await job.reload();
-    expect(Number(job.taskId)).toBe(0);
+    expect(job.taskId).toBe(0);
     expect(job.status).toBe(Status.Waiting);
   });
 });
@@ -141,12 +141,12 @@ describe('ActionTask.releaseTaskForRunner', () => {
     const runner = (await ActionRunner.findByPk(1))!;
     const job = await queueJob();
     const task = (await ActionTask.createForRunner(runner, job))!;
-    const taskId = Number(task.id);
+    const taskId = task.id;
 
     await ActionTask.releaseTaskForRunner(task);
 
     await job.reload();
-    expect(Number(job.taskId)).toBe(0);
+    expect(job.taskId).toBe(0);
     expect(job.status).toBe(Status.Waiting);
     expect(job.startedAt).toBeNull();
     expect(await ActionTask.findByPk(taskId)).toBeNull();
@@ -266,7 +266,7 @@ describe('ActionTask.updateByState', () => {
   it('keeps the stop time a step already carries', async () => {
     const { task } = await runningTask();
     const stoppedAt = new Date(1683636626000);
-    const step = (await ActionTaskStep.findOne({ where: { taskId: Number(task.id), index: 0 } }))!;
+    const step = (await ActionTaskStep.findOne({ where: { taskId: task.id, index: 0 } }))!;
     step.stoppedAt = stoppedAt;
     await step.save();
 

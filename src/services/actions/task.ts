@@ -77,7 +77,7 @@ async function buildRunnerTask(task: ActionTask): Promise<Task> {
   }
 
   return create(TaskSchema, {
-    id: BigInt(task.id!),
+    id: BigInt(task.id),
     workflowPayload: Buffer.from(workflowPayload),
     context,
     secrets: {},

@@ -9,7 +9,7 @@ describe('ActionScheduleSpec', () => {
     const specs = await ActionScheduleSpec.findAll({ where: { scheduleId: 1 } });
 
     expect(specs.map((spec) => spec.spec)).toEqual(['30 5 * * 1,3', '30 5 * * 2,4']);
-    expect(specs.map((spec) => Number(spec.repositoryId))).toEqual([4, 4]);
+    expect(specs.map((spec) => spec.repositoryId)).toEqual([4, 4]);
   });
 
   it('findByIds looks specs up by primary key', async () => {
@@ -24,7 +24,7 @@ describe('ActionScheduleSpec', () => {
     // associate 里写了 as: 'schedule'，sequelize 生成的就是 getSchedule
     const schedule = await spec.getSchedule();
 
-    expect(Number(schedule.id)).toBe(1);
+    expect(schedule.id).toBe(1);
     expect(schedule.title).toBe('schedule title 1111');
   });
 

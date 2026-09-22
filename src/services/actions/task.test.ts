@@ -117,7 +117,7 @@ describe('resolveBlockedJobs', () => {
       needApproval: false,
     });
 
-    runId = Number(run.id);
+    runId = run.id;
   });
 
   it('reports nothing to do when no job is blocked', async () => {
@@ -232,7 +232,7 @@ describe('findWaitingJobs', () => {
       needApproval: false,
     });
 
-    return { repositoryId, runId: Number(run.id) };
+    return { repositoryId, runId: run.id };
   }
 
   function add(
@@ -285,9 +285,9 @@ describe('findWaitingJobs', () => {
     expect(byRepository.map((job) => job.jobId)).toEqual(['first']);
 
     // 同一个 owner 名下的两个仓库都在，global 更是全都看得到
-    const expected = expect.arrayContaining([Number(firstJob.id), Number(secondJob.id)]);
-    expect((await findWaitingJobs({ ownerId })).map((job) => Number(job.id))).toEqual(expected);
-    expect((await findWaitingJobs({})).map((job) => Number(job.id))).toEqual(expected);
+    const expected = expect.arrayContaining([firstJob.id, secondJob.id]);
+    expect((await findWaitingJobs({ ownerId })).map((job) => job.id)).toEqual(expected);
+    expect((await findWaitingJobs({})).map((job) => job.id)).toEqual(expected);
   });
 
   it('pages through the waiting jobs without skipping one', async () => {
@@ -300,14 +300,10 @@ describe('findWaitingJobs', () => {
     expect(pageOne.map((job) => job.jobId)).toEqual(['a', 'b']);
 
     const last = pageOne[pageOne.length - 1];
-    const pageTwo = await findWaitingJobs({ repositoryId }, { updatedAt: last.updatedAt, id: Number(last.id) }, 2);
+    const pageTwo = await findWaitingJobs({ repositoryId }, { updatedAt: last.updatedAt, id: last.id }, 2);
     expect(pageTwo.map((job) => job.jobId)).toEqual(['c']);
 
-    expect([...pageOne, ...pageTwo].map((job) => Number(job.id))).toEqual([
-      Number(first.id),
-      Number(second.id),
-      Number(third.id),
-    ]);
+    expect([...pageOne, ...pageTwo].map((job) => job.id)).toEqual([first.id, second.id, third.id]);
   });
 });
 
@@ -329,7 +325,7 @@ jobs:
 `;
 
 function claimedTaskOf(job: ActionRunJob) {
-  return ActionTask.findOne({ where: { jobId: Number(job.id) } });
+  return ActionTask.findOne({ where: { jobId: job.id } });
 }
 
 describe('pickTask', () => {
@@ -354,7 +350,7 @@ describe('pickTask', () => {
       needApproval: false,
     });
 
-    return Number(run.id);
+    return run.id;
   }
 
   function queueJob(jobId: string, overrides: Partial<ActionRunJobCreationAttributes> = {}) {
@@ -388,9 +384,9 @@ describe('pickTask', () => {
       concurrencyGroup: '',
       concurrencyCancel: false,
     });
-    await ActionRun.update({ latestAttemptId: attempt.id! }, { where: { id: runId } });
+    await ActionRun.update({ latestAttemptId: attempt.id }, { where: { id: runId } });
 
-    const job = await queueJob('healthy', { runAttemptId: Number(attempt.id) });
+    const job = await queueJob('healthy', { runAttemptId: attempt.id });
 
     return { attempt, job };
   }
@@ -422,7 +418,7 @@ describe('pickTask', () => {
   afterAll(async () => {
     // steps 的外键是 NO ACTION，得先清 steps 才能删 task
     const tasks = await ActionTask.findAll({ where: { repositoryId: PICK_REPOSITORY_ID }, attributes: ['id'] });
-    await ActionTaskStep.destroy({ where: { taskId: tasks.map((task) => Number(task.id)) } });
+    await ActionTaskStep.destroy({ where: { taskId: tasks.map((task) => task.id) } });
     await ActionTask.destroy({ where: { repositoryId: PICK_REPOSITORY_ID } });
     await ActionRunJob.destroy({ where: { repositoryId: PICK_REPOSITORY_ID } });
     await ActionRunAttempt.destroy({ where: { repositoryId: PICK_REPOSITORY_ID } });
@@ -437,13 +433,13 @@ describe('pickTask', () => {
 
     const task = (await claimedTaskOf(job))!;
     expect(picked).not.toBeNull();
-    expect(Number(picked!.task.id)).toBe(Number(task.id));
+    expect(Number(picked!.task.id)).toBe(task.id);
     expect(picked!.task.context?.job).toBe('healthy');
     expect(picked!.task.workflowPayload).toBeInstanceOf(Uint8Array);
 
     await job.reload();
     expect(job.status).toBe(Status.Running);
-    expect(Number(job.taskId)).toBe(Number(task.id));
+    expect(job.taskId).toBe(task.id);
     expect(job.startedAt).not.toBeNull();
 
     const run = (await ActionRun.findByPk(runId))!;
@@ -472,7 +468,7 @@ describe('pickTask', () => {
     // 坏 job 被放回队列，也没留下半成品 task
     await broken.reload();
     expect(broken.status).toBe(Status.Waiting);
-    expect(Number(broken.taskId)).toBe(0);
+    expect(broken.taskId).toBe(0);
     expect(broken.startedAt).toBeNull();
     expect(await claimedTaskOf(broken)).toBeNull();
 
@@ -495,7 +491,7 @@ describe('pickTask', () => {
     expect(attempt.stoppedAt).not.toBeNull();
 
     const run = (await ActionRun.findByPk(runId))!;
-    expect(Number(run.latestAttemptId)).toBe(Number(attempt.id));
+    expect(run.latestAttemptId).toBe(attempt.id);
     expect(run.status).toBe(Status.Success);
     expect(run.stoppedAt).not.toBeNull();
   });

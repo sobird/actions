@@ -34,7 +34,7 @@ describe('ActionTaskStep', () => {
     // associate 里写了 as: 'task'，sequelize 生成的就是 getTask
     const task = await step.getTask();
 
-    expect(Number(task.id)).toBe(47);
+    expect(task.id).toBe(47);
     expect(task.logFilename).toBe('artifact-test2/2f/47.log');
   });
 
@@ -46,7 +46,7 @@ describe('ActionTaskStep', () => {
   it('allows the same index in a different task', async () => {
     const step = await createStep({ taskId: 48, index: 2 });
 
-    expect(Number(step.taskId)).toBe(48);
+    expect(step.taskId).toBe(48);
     expect(await ActionTaskStep.count({ where: { taskId: 48 } })).toBe(1);
   });
 });

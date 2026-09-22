@@ -14,7 +14,7 @@ describe('ActionSchedule', () => {
   it('findByIds returns only the rows asked for', async () => {
     const schedules = await ActionSchedule.findByIds([2]);
 
-    expect(schedules.map((schedule) => Number(schedule.id))).toEqual([2]);
+    expect(schedules.map((schedule) => schedule.id)).toEqual([2]);
   });
 
   it('lists the specs attached to a schedule', async () => {

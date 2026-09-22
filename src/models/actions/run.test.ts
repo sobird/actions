@@ -83,24 +83,24 @@ describe('ActionRun', () => {
     const run = await ActionRun.findByPk(SEEDED_RUN_ID);
     const jobs = await run!.getJobs();
 
-    expect(jobs.map((job) => Number(job.id))).toEqual([192]);
+    expect(jobs.map((job) => job.id)).toEqual([192]);
   });
 
   it('lists only the attempts of the run, and reads back the latest as a pointer', async () => {
     const run = await ActionRun.findByPk(SEEDED_RUN_ID);
 
     const attempts = await run!.getAttempts();
-    expect(attempts.map((attempt) => Number(attempt.id))).toEqual([2001]);
+    expect(attempts.map((attempt) => attempt.id)).toEqual([2001]);
 
     const latest = await run!.getLatestAttempt();
-    expect(Number(latest!.id)).toBe(2001);
+    expect(latest!.id).toBe(2001);
   });
 
   it('resolves the attempt a job belongs to', async () => {
     const job = await ActionRunJob.findByPk(192);
     const attempt = await job!.getRunAttempt();
 
-    expect(Number(attempt!.id)).toBe(2001);
+    expect(attempt!.id).toBe(2001);
   });
 
   describe('refreshStatus', () => {

@@ -272,9 +272,7 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
     if (!task) {
       throw new Error(`task with id ${state.id}: not exist`);
     }
-    // Coerce before comparing: the column reads back as a number or a string depending on
-    // the dialect, so a strict comparison would reject the task's own runner.
-    if (Number(runnerId) !== Number(task.runnerId)) {
+    if (runnerId !== task.runnerId) {
       throw new Error('invalid runner for task');
     }
 

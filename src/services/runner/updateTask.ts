@@ -23,7 +23,7 @@ export const updateTask: MethodImpl<typeof RunnerService.method.updateTask> = as
   let updatedTask: ActionTask;
   try {
     updatedTask = await sequelize.transaction(async (transaction) => {
-      const task = await ActionTask.updateByState(runner.id!, state, transaction);
+      const task = await ActionTask.updateByState(runner.id, state, transaction);
 
       if (state.result !== Result.UNSPECIFIED) {
         // Finishing a job decides the jobs waiting on it.
@@ -60,10 +60,10 @@ export const updateTask: MethodImpl<typeof RunnerService.method.updateTask> = as
       continue;
     }
     // eslint-disable-next-line no-await-in-loop
-    await ActionTaskOutput.insertIfNotExist(Number(updatedTask.id), key, value);
+    await ActionTaskOutput.insertIfNotExist(updatedTask.id, key, value);
   }
 
-  const sentOutputs = await ActionTaskOutput.findKeysByTaskId(Number(updatedTask.id));
+  const sentOutputs = await ActionTaskOutput.findKeysByTaskId(updatedTask.id);
 
   // TODO(upstream routers/api/actions/runner/runner.go UpdateTask): the commit status
   // (CreateCommitStatusForRunJobs), the job/run notifications (NotifyWorkflowJobStatusUpdateWithTask,

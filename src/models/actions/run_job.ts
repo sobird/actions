@@ -203,7 +203,7 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   ): Promise<number> {
     const [affected] = await ActionRunJob.update(values, { where: { id: job.id, ...cond }, transaction });
     if (affected > 0) {
-      await ActionRunJob.refreshRunStatus(job.runId, Number(job.runAttemptId), Status.Unknown, transaction);
+      await ActionRunJob.refreshRunStatus(job.runId, job.runAttemptId, Status.Unknown, transaction);
     }
 
     return affected;
