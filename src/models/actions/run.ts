@@ -25,7 +25,6 @@ import {
   type BelongsToGetAssociationMixin,
   type BelongsToSetAssociationMixin,
   type BelongsToCreateAssociationMixin,
-  type Transaction,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
@@ -70,30 +69,8 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   declare previousDuration: CreationOptional<bigint>;
   declare duration: CreationOptional<number>;
 
-  declare latestAttemptId: CreationOptional<number>;
-
-  /**
-   * Recompute the status of this run from the jobs of its latest attempt and persist it.
-   *
-   * The fallback half of `ActionRunJob.refreshRunStatus`: jobs created before attempts
-   * existed carry `runAttemptId` 0, and their run has no attempt of its own to
-   * aggregate through. `noJobsStatus` settles a run that holds no job at all, which
-   * `aggregateStatus` cannot conclude on its own. Port of the fallback branch of
-   * gitea's `models/actions/run_job.go` `refreshRunStatus`, whose write that file
-   * hands to `run.go`'s `UpdateRun`; here the run writes its own row.
-   */
-  async refreshStatus(noJobsStatus: Status, transaction?: Transaction): Promise<void> {
-    const jobs = await this.getJobs({
-      where: { runAttemptId: this.latestAttemptId },
-      transaction,
-    });
-
-    this.status = jobs.length > 0 ? ActionRunJob.aggregateStatus(jobs) : noJobsStatus;
-    // Both times are written once: a re-aggregate that is still pending must not clear them.
-    this.startedAt = this.startedAt ?? (this.status.isRunning() ? new Date() : null);
-    this.stoppedAt = this.stoppedAt ?? (this.status.isDone() ? new Date() : null);
-    await this.save({ fields: ['status', 'startedAt', 'stoppedAt'], transaction });
-  }
+  /** the attempt that drives this run's status; null until the run has one */
+  declare latestAttemptId: CreationOptional<number | null>;
 
   static async add() {
     const t = await sequelize.transaction();
@@ -107,11 +84,11 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   // models map.
   static associate() {
     this.hasMany(ActionRunJob, { as: 'jobs', foreignKey: 'runId' });
-    // The two attempt associations are declared for querying only, without a foreign key
-    // constraint: `latest_attempt_id` holds 0 until the run has an attempt, and the run is
-    // inserted that way before its first attempt exists.
-    this.hasMany(ActionRunAttempt, { as: 'attempts', foreignKey: 'runId', constraints: false });
-    this.belongsTo(ActionRunAttempt, { as: 'latestAttempt', foreignKey: 'latestAttemptId', constraints: false });
+    this.hasMany(ActionRunAttempt, { as: 'attempts', foreignKey: 'runId' });
+    // A run is inserted before its first attempt exists, so the pointer is null until
+    // createRun writes it. Deleting the attempt it points at leaves the run without a
+    // latest attempt rather than deleting the run with it.
+    this.belongsTo(ActionRunAttempt, { as: 'latestAttempt', foreignKey: 'latestAttemptId', onDelete: 'SET NULL' });
   }
 
   declare jobs?: NonAttribute<ActionRunJob[]>;
@@ -271,8 +248,7 @@ ActionRun.init(
     duration: DataTypes.BIGINT,
     latestAttemptId: {
       type: DataTypes.BIGINT,
-      allowNull: false,
-      defaultValue: 0,
+      allowNull: true,
     },
     startedAt: DataTypes.DATE,
     stoppedAt: DataTypes.DATE,

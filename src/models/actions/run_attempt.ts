@@ -60,9 +60,7 @@ export class ActionRunAttempt extends BaseModel<
 
   static associate({ ActionRun, ActionRunJob }: Models) {
     this.belongsTo(ActionRun, { as: 'run', foreignKey: 'runId' });
-    // Declared for querying only: `run_attempt_id` holds 0 on a job from before attempts
-    // existed, which a foreign key constraint would reject.
-    this.hasMany(ActionRunJob, { as: 'jobs', foreignKey: 'runAttemptId', constraints: false });
+    this.hasMany(ActionRunJob, { as: 'jobs', foreignKey: 'runAttemptId' });
   }
 
   declare static associations: {

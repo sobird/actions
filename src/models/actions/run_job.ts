@@ -68,10 +68,10 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   declare commitSha: string;
   declare isForkPullRequest: boolean;
 
-  /** the attempt this job belongs to; 0 marks a row from before attempts existed */
-  declare runAttemptId: CreationOptional<number>;
+  /** the attempt this job belongs to */
+  declare runAttemptId: number;
   /** unique within one attempt; the same job keeps it across attempts */
-  declare attemptJobId: CreationOptional<number>;
+  declare attemptJobId: number;
   declare attempt: number;
 
   /** the (repo, commit) the containing workflow file came from */
@@ -112,10 +112,8 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   static associate({ ActionTask }: Models) {
     this.belongsTo(ActionRun, { as: 'run', foreignKey: 'runId' });
     // The column `attempt` already names the attempt number, so the association that
-    // points at the row takes the longer name. Declared for querying only: `run_attempt_id`
-    // holds 0 on a job from before attempts existed, which a foreign key constraint would
-    // reject.
-    this.belongsTo(ActionRunAttempt, { as: 'runAttempt', foreignKey: 'runAttemptId', constraints: false });
+    // points at the row takes the longer name.
+    this.belongsTo(ActionRunAttempt, { as: 'runAttempt', foreignKey: 'runAttemptId' });
     this.hasMany(ActionTask, { as: 'tasks', foreignKey: 'jobId' });
   }
 
@@ -203,7 +201,7 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   ): Promise<number> {
     const [affected] = await ActionRunJob.update(values, { where: { id: job.id, ...cond }, transaction });
     if (affected > 0) {
-      await ActionRunJob.refreshRunStatus(job.runId, job.runAttemptId, Status.Unknown, transaction);
+      await ActionRunJob.refreshRunStatus(job.runAttemptId, Status.Unknown, transaction);
     }
 
     return affected;
@@ -216,47 +214,33 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
    * only updates itself, because a later attempt already drives the run. `noJobsStatus`
    * settles an attempt that holds no job at all, which `aggregateStatus` cannot
    * conclude on its own. Port of gitea's `models/actions/run_job.go` `refreshRunStatus`,
-   * with `UpdateRunAttempt`'s propagation folded in; a run that has no attempt of its
-   * own is `ActionRun.refreshStatus`.
+   * with `UpdateRunAttempt`'s propagation folded in.
    */
   private static async refreshRunStatus(
-    runId: number,
     runAttemptId: number,
     noJobsStatus: Status,
     transaction?: Transaction,
   ): Promise<void> {
-    if (runAttemptId > 0) {
-      const attempt = await ActionRunAttempt.findByPk(runAttemptId, { transaction });
-      if (!attempt) {
-        throw new Error(`run attempt with id ${runAttemptId}: not exist`);
-      }
+    const attempt = await ActionRunAttempt.findByPk(runAttemptId, { transaction });
+    if (!attempt) {
+      throw new Error(`run attempt with id ${runAttemptId}: not exist`);
+    }
 
-      const jobs = await attempt.getJobs({ where: { runId }, transaction });
-      attempt.status = jobs.length > 0 ? this.aggregateStatus(jobs) : noJobsStatus;
-      // Both times are written once: a re-aggregate that is still pending must not clear them.
-      attempt.startedAt = attempt.startedAt ?? (attempt.status.isRunning() ? new Date() : null);
-      attempt.stoppedAt = attempt.stoppedAt ?? (attempt.status.isDone() ? new Date() : null);
-      await attempt.save({ fields: ['status', 'startedAt', 'stoppedAt'], transaction });
+    const jobs = await attempt.getJobs({ transaction });
+    attempt.status = jobs.length > 0 ? this.aggregateStatus(jobs) : noJobsStatus;
+    // Both times are written once: a re-aggregate that is still pending must not clear them.
+    attempt.startedAt = attempt.startedAt ?? (attempt.status.isRunning() ? new Date() : null);
+    attempt.stoppedAt = attempt.stoppedAt ?? (attempt.status.isDone() ? new Date() : null);
+    await attempt.save({ fields: ['status', 'startedAt', 'stoppedAt'], transaction });
 
-      const run = await ActionRun.findByPk(runId, { transaction });
-      if (!run || run.latestAttemptId !== attempt.id) {
-        return;
-      }
-      run.status = attempt.status;
-      run.startedAt = attempt.startedAt;
-      run.stoppedAt = attempt.stoppedAt;
-      await run.save({ fields: ['status', 'startedAt', 'stoppedAt'], transaction });
+    const run = await ActionRun.findByPk(attempt.runId, { transaction });
+    if (!run || run.latestAttemptId !== attempt.id) {
       return;
     }
-
-    // Legacy fallback: jobs of runs that predate attempts carry attempt 0, and their run
-    // has no attempt of its own to aggregate through.
-    const run = await ActionRun.findByPk(runId, { transaction });
-    if (!run) {
-      throw new Error(`run with id ${runId}: not exist`);
-    }
-
-    return run.refreshStatus(noJobsStatus, transaction);
+    run.status = attempt.status;
+    run.startedAt = attempt.startedAt;
+    run.stoppedAt = attempt.stoppedAt;
+    await run.save({ fields: ['status', 'startedAt', 'stoppedAt'], transaction });
   }
 }
 
@@ -273,12 +257,10 @@ ActionRunJob.init(
     runAttemptId: {
       type: DataTypes.BIGINT,
       allowNull: false,
-      defaultValue: 0,
     },
     attemptJobId: {
       type: DataTypes.BIGINT,
       allowNull: false,
-      defaultValue: 0,
     },
 
     name: {

@@ -19,6 +19,13 @@ function dep(jobId: string, status: Status, continueOnError = false): Dependency
   return { jobId, status, continueOnError };
 }
 
+/** 每个 job 在它那次 attempt 里领一个序号，口径同 createRun */
+let nextAttemptJobId = 0;
+
+function newAttemptJobId() {
+  return (nextAttemptJobId += 1);
+}
+
 describe('resolveNeeds', () => {
   it('is ready when there is nothing to wait for', () => {
     expect(resolveNeeds([], [])).toBe('ready');
@@ -68,16 +75,21 @@ describe('resolveBlockedJobs', () => {
   // Every case gets its own run and repository so the rows cannot see each other.
   const firstRepositoryId = 9100;
   let runId: number;
+  let runAttemptId: number;
   let repositoryId: number;
 
   afterAll(async () => {
-    // Jobs go with the run: their foreign key cascades.
+    // 从下往上清（job → attempt → run）：不是每条外键都带级联，顺序反了会删不动
+    await ActionRunJob.destroy({ where: { repositoryId: { [Op.gte]: firstRepositoryId } } });
+    await ActionRunAttempt.destroy({ where: { repositoryId: { [Op.gte]: firstRepositoryId } } });
     await ActionRun.destroy({ where: { repositoryId: { [Op.gte]: firstRepositoryId } } });
   });
 
   function add(jobId: string, status: Status, needs: string[] = [], continueOnError = false) {
     return ActionRunJob.create({
       runId,
+      runAttemptId,
+      attemptJobId: newAttemptJobId(),
       ownerId: 1,
       repositoryId,
       name: jobId,
@@ -117,7 +129,18 @@ describe('resolveBlockedJobs', () => {
       needApproval: false,
     });
 
+    const attempt = await ActionRunAttempt.create({
+      runId: run.id,
+      repositoryId,
+      attempt: 1,
+      triggerUserId: 0,
+      status: Status.Waiting,
+      concurrencyGroup: '',
+      concurrencyCancel: false,
+    });
+
     runId = run.id;
+    runAttemptId = attempt.id;
   });
 
   it('reports nothing to do when no job is blocked', async () => {
@@ -214,6 +237,9 @@ describe('findWaitingJobs', () => {
   const ownerId = 9200;
   let nextRepositoryId = firstRepositoryId;
 
+  /** run 到它那次 attempt 的映射：add() 据此给 job 填归属 */
+  const attemptIds = new Map<number, number>();
+
   async function addRepository() {
     const repositoryId = nextRepositoryId;
     nextRepositoryId += 1;
@@ -232,6 +258,17 @@ describe('findWaitingJobs', () => {
       needApproval: false,
     });
 
+    const attempt = await ActionRunAttempt.create({
+      runId: run.id,
+      repositoryId,
+      attempt: 1,
+      triggerUserId: 0,
+      status: Status.Waiting,
+      concurrencyGroup: '',
+      concurrencyCancel: false,
+    });
+    attemptIds.set(run.id, attempt.id);
+
     return { repositoryId, runId: run.id };
   }
 
@@ -243,6 +280,8 @@ describe('findWaitingJobs', () => {
   ) {
     return ActionRunJob.create({
       runId,
+      runAttemptId: attemptIds.get(runId)!,
+      attemptJobId: newAttemptJobId(),
       ownerId,
       repositoryId,
       name: jobId,
@@ -260,7 +299,9 @@ describe('findWaitingJobs', () => {
   }
 
   afterAll(async () => {
-    // Jobs go with the run: their foreign key cascades.
+    // 从下往上清（job → attempt → run）：不是每条外键都带级联，顺序反了会删不动
+    await ActionRunJob.destroy({ where: { repositoryId: { [Op.gte]: firstRepositoryId } } });
+    await ActionRunAttempt.destroy({ where: { repositoryId: { [Op.gte]: firstRepositoryId } } });
     await ActionRun.destroy({ where: { repositoryId: { [Op.gte]: firstRepositoryId } } });
   });
 
@@ -331,6 +372,7 @@ function claimedTaskOf(job: ActionRunJob) {
 describe('pickTask', () => {
   let runner: ActionRunner;
   let runId: number;
+  let attempt: ActionRunAttempt;
   let nextRunIndex = 0;
 
   async function addRun() {
@@ -350,12 +392,26 @@ describe('pickTask', () => {
       needApproval: false,
     });
 
-    return run.id;
+    const created = await ActionRunAttempt.create({
+      runId: run.id,
+      repositoryId: PICK_REPOSITORY_ID,
+      attempt: 1,
+      triggerUserId: 0,
+      status: Status.Waiting,
+      concurrencyGroup: '',
+      concurrencyCancel: false,
+    });
+    run.latestAttemptId = created.id;
+    await run.save();
+
+    return { runId: run.id, attempt: created };
   }
 
   function queueJob(jobId: string, overrides: Partial<ActionRunJobCreationAttributes> = {}) {
     return ActionRunJob.create({
       runId,
+      runAttemptId: attempt.id,
+      attemptJobId: newAttemptJobId(),
       ownerId: PICK_OWNER_ID,
       repositoryId: PICK_REPOSITORY_ID,
       name: jobId,
@@ -371,24 +427,6 @@ describe('pickTask', () => {
       stoppedAt: null,
       ...overrides,
     });
-  }
-
-  /** 一个带 attempt 的 job，用来验证状态是沿 attempt 冒泡到 run 上的 */
-  async function queueJobWithAttempt() {
-    const attempt = await ActionRunAttempt.create({
-      runId,
-      repositoryId: PICK_REPOSITORY_ID,
-      attempt: 1,
-      triggerUserId: 0,
-      status: Status.Waiting,
-      concurrencyGroup: '',
-      concurrencyCancel: false,
-    });
-    await ActionRun.update({ latestAttemptId: attempt.id }, { where: { id: runId } });
-
-    const job = await queueJob('healthy', { runAttemptId: attempt.id });
-
-    return { attempt, job };
   }
 
   async function finish(job: ActionRunJob, result: Result) {
@@ -407,7 +445,9 @@ describe('pickTask', () => {
   });
 
   beforeEach(async () => {
-    runId = await addRun();
+    const created = await addRun();
+    runId = created.runId;
+    attempt = created.attempt;
   });
 
   afterEach(async () => {
@@ -476,7 +516,7 @@ describe('pickTask', () => {
   });
 
   it('settles the run attempt alongside the run when a job succeeds', async () => {
-    const { attempt, job } = await queueJobWithAttempt();
+    const job = await queueJob('healthy');
 
     await expect(pickTask(runner)).resolves.not.toBeNull();
 
@@ -497,7 +537,7 @@ describe('pickTask', () => {
   });
 
   it('propagates a failed job onto the run as a failure', async () => {
-    const { job } = await queueJobWithAttempt();
+    const job = await queueJob('healthy');
 
     await expect(pickTask(runner)).resolves.not.toBeNull();
     await finish(job, Result.FAILURE);

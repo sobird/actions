@@ -1,10 +1,11 @@
-import { ActionRunJob } from '@/models/actions';
+import { ActionRun, ActionRunAttempt, ActionRunJob } from '@/models/actions';
 
 import { Status } from './status';
 
 vi.mock('@/lib/sequelize');
 vi.mock('./run_job');
 vi.mock('./run');
+vi.mock('./run_attempt');
 vi.mock('./task');
 
 // The aggregation reads only the status and the continue-on-error flag, so a bare
@@ -86,5 +87,46 @@ describe('aggregateStatus', () => {
     it(name, () => {
       expect(ActionRunJob.aggregateStatus(jobs)).toBe(want);
     });
+  });
+});
+
+describe('updateRunJob', () => {
+  it('carries a job status onto its attempt and onto its run', async () => {
+    const job = (await ActionRunJob.findByPk(192))!;
+
+    await ActionRunJob.updateRunJob(job, { status: Status.Failure });
+
+    const attempt = (await ActionRunAttempt.findByPk(2001))!;
+    expect(attempt.status).toBe(Status.Failure);
+
+    const run = (await ActionRun.findByPk(791))!;
+    expect(run.status).toBe(Status.Failure);
+  });
+
+  it('keeps the times the attempt and the run already have instead of clearing them', async () => {
+    const job = (await ActionRunJob.findByPk(192))!;
+
+    await ActionRunJob.updateRunJob(job, { status: Status.Success });
+
+    const attempt = (await ActionRunAttempt.findByPk(2001))!;
+    expect(attempt.startedAt).toEqual(new Date(1683636528000));
+    expect(attempt.stoppedAt).toEqual(new Date(1683636626000));
+
+    const run = (await ActionRun.findByPk(791))!;
+    expect(run.startedAt).toEqual(new Date(1683636528000));
+    expect(run.stoppedAt).toEqual(new Date(1683636626000));
+  });
+
+  it('updates only the attempt when the run has a later one', async () => {
+    // job 193 挂在 run 792 的 attempt 2002 上，而 792 没有指向它的 latestAttempt
+    const job = (await ActionRunJob.findByPk(193))!;
+
+    await ActionRunJob.updateRunJob(job, { status: Status.Failure });
+
+    const attempt = (await ActionRunAttempt.findByPk(2002))!;
+    expect(attempt.status).toBe(Status.Failure);
+
+    const run = (await ActionRun.findByPk(792))!;
+    expect(run.status).toBe(Status.Waiting);
   });
 });

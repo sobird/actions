@@ -2,7 +2,7 @@ import { create } from '@bufbuild/protobuf';
 import { timestampFromDate } from '@bufbuild/protobuf/wkt';
 
 import { Result, StepStateSchema, TaskStateSchema } from '@/gen/runner/v1/messages_pb';
-import { ActionRun, ActionRunJob, ActionRunner, ActionTask, ActionTaskStep } from '@/models/actions';
+import { ActionRun, ActionRunAttempt, ActionRunJob, ActionRunner, ActionTask, ActionTaskStep } from '@/models/actions';
 
 import type { ActionRunJobCreationAttributes } from './run_job';
 import { Status } from './status';
@@ -13,9 +13,16 @@ vi.mock('./task');
 vi.mock('./task_step');
 vi.mock('./runner');
 vi.mock('./run_job');
+vi.mock('./run_attempt');
 
 /** queueJob 把 job 都挂在 800 号 run 下；认领要顺手刷新 run 的状态，所以这行 run 得在 */
 const RUN_ID = 800;
+
+/** 800 号 run 的那次 attempt：job 必填归属，状态也沿它冒泡 */
+let ATTEMPT_ID: number;
+
+/** 每个 job 在它那次 attempt 里领一个序号，口径同 createRun */
+let nextAttemptJobId = 1;
 
 beforeAll(async () => {
   await ActionRun.create({
@@ -30,6 +37,18 @@ beforeAll(async () => {
     eventName: 'workflow_dispatch',
     status: Status.Waiting,
   });
+
+  const attempt = await ActionRunAttempt.create({
+    runId: RUN_ID,
+    repositoryId: 4,
+    attempt: 1,
+    triggerUserId: 0,
+    status: Status.Waiting,
+    concurrencyGroup: '',
+    concurrencyCancel: false,
+  });
+  ATTEMPT_ID = attempt.id;
+  await ActionRun.update({ latestAttemptId: attempt.id }, { where: { id: RUN_ID } });
 });
 
 /** 一个 job 的 workflow：分别只有 name / uses / run 的三个 step */
@@ -48,6 +67,8 @@ jobs:
 function queueJob(overrides: Partial<ActionRunJobCreationAttributes> = {}) {
   return ActionRunJob.create({
     runId: RUN_ID,
+    runAttemptId: ATTEMPT_ID,
+    attemptJobId: nextAttemptJobId++,
     repositoryId: 4,
     ownerId: 1,
     name: 'job_2',
