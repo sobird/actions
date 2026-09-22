@@ -27,6 +27,7 @@ import {
   type BelongsToCreateAssociationMixin,
   type Transaction,
   type WhereOptions,
+  Op,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
@@ -90,6 +91,20 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   declare workflowPayload: CreationOptional<Buffer>;
   /** a failure of this job does not fail the run */
   declare continueOnError: CreationOptional<boolean>;
+
+  /** raw `concurrency` from the job's YAML, as written; empty when it declares none */
+  declare rawConcurrency: CreationOptional<string>;
+  /**
+   * Whether `rawConcurrency` has been resolved into the two columns below.
+   *
+   * A job whose group reads `needs` is created unresolved too, and stays blocked until the
+   * emitter resolves it — so a false flag alone only ever means "not resolved yet".
+   */
+  declare isConcurrencyEvaluated: CreationOptional<boolean>;
+  /** the resolved `concurrency.group` */
+  declare concurrencyGroup: CreationOptional<string>;
+  /** the resolved `concurrency.cancel-in-progress` */
+  declare concurrencyCancel: CreationOptional<boolean>;
 
   declare status: Status;
   declare startedAt: Date | null;
@@ -201,39 +216,22 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   ): Promise<number> {
     const [affected] = await ActionRunJob.update(values, { where: { id: job.id, ...cond }, transaction });
     if (affected > 0) {
-      await ActionRunJob.refreshRunStatus(job.runAttemptId, Status.Unknown, transaction);
+      await job.refreshRunStatus(Status.Unknown, transaction);
     }
 
     return affected;
   }
 
-  /**
-   * Recompute the status of a run attempt from the jobs it holds and persist it.
-   *
-   * The latest attempt carries its status, start and stop onto its run; an older one
-   * only updates itself, because a later attempt already drives the run. `noJobsStatus`
-   * settles an attempt that holds no job at all, which `aggregateStatus` cannot
-   * conclude on its own. Port of gitea's `models/actions/run_job.go` `refreshRunStatus`,
-   * with `UpdateRunAttempt`'s propagation folded in.
-   */
-  private static async refreshRunStatus(
-    runAttemptId: number,
-    noJobsStatus: Status,
-    transaction?: Transaction,
-  ): Promise<void> {
-    const attempt = await ActionRunAttempt.findByPk(runAttemptId, { transaction });
-    if (!attempt) {
-      throw new Error(`run attempt with id ${runAttemptId}: not exist`);
-    }
+  private async refreshRunStatus(noJobsStatus: Status, transaction?: Transaction): Promise<void> {
+    const attempt = await this.getRunAttempt({ transaction });
 
     const jobs = await attempt.getJobs({ transaction });
-    attempt.status = jobs.length > 0 ? this.aggregateStatus(jobs) : noJobsStatus;
-    // Both times are written once: a re-aggregate that is still pending must not clear them.
+    attempt.status = jobs.length > 0 ? ActionRunJob.aggregateStatus(jobs) : noJobsStatus;
     attempt.startedAt = attempt.startedAt ?? (attempt.status.isRunning() ? new Date() : null);
     attempt.stoppedAt = attempt.stoppedAt ?? (attempt.status.isDone() ? new Date() : null);
     await attempt.save({ fields: ['status', 'startedAt', 'stoppedAt'], transaction });
 
-    const run = await ActionRun.findByPk(attempt.runId, { transaction });
+    const run = await attempt.getRun({ transaction });
     if (!run || run.latestAttemptId !== attempt.id) {
       return;
     }
@@ -241,6 +239,135 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
     run.startedAt = attempt.startedAt;
     run.stoppedAt = attempt.stoppedAt;
     await run.save({ fields: ['status', 'startedAt', 'stoppedAt'], transaction });
+  }
+
+  /**
+   * The attempts and jobs of one repository that sit in a concurrency group and are in
+   * the given statuses.
+   *
+   * Port of gitea's `models/actions/run.go` `GetConcurrentRunAttemptsAndJobs`, kept beside
+   * the job-side half it is mostly made of; the attempt-side query lives on
+   * `ActionRunAttempt`, as it does upstream.
+   */
+  static async getConcurrentRunAttemptsAndJobs(
+    repositoryId: number,
+    concurrencyGroup: string,
+    statuses: Status[],
+    transaction?: Transaction,
+  ): Promise<[ActionRunAttempt[], ActionRunJob[]]> {
+    const attempts = await ActionRunAttempt.findConcurrentAttempts(
+      repositoryId,
+      concurrencyGroup,
+      statuses,
+      transaction,
+    );
+    const jobs = await ActionRunJob.findAll({
+      where: {
+        repositoryId,
+        concurrencyGroup,
+        status: { [Op.in]: statuses.map((status) => status.toString()) },
+      },
+      transaction,
+    });
+
+    return [attempts, jobs];
+  }
+
+  /**
+   * Cancel the jobs the group leaves behind once this job is about to start.
+   *
+   * Port of gitea's `models/actions/run_job.go` `CancelPreviousJobsByJobConcurrency`. The
+   * group's own pending jobs go first, and a job that cancels in progress takes the running
+   * ones with it; the jobs of every other attempt in the group follow. Jobs of the same
+   * attempt as this one are caught by the group query too, so this job is filtered back out.
+   */
+  static async cancelPreviousJobsByJobConcurrency(
+    job: ActionRunJob,
+    transaction?: Transaction,
+  ): Promise<ActionRunJob[]> {
+    if (job.rawConcurrency === '' || !job.isConcurrencyEvaluated || job.concurrencyGroup === '') {
+      return [];
+    }
+
+    const statuses = [Status.Waiting, Status.Blocked];
+    if (job.concurrencyCancel) {
+      statuses.push(Status.Running, Status.Cancelling);
+    }
+
+    const [attempts, concurrentJobs] = await ActionRunJob.getConcurrentRunAttemptsAndJobs(
+      job.repositoryId,
+      job.concurrencyGroup,
+      statuses,
+      transaction,
+    );
+    const jobsToCancel = concurrentJobs.filter((candidate) => candidate.id !== job.id);
+
+    for (const attempt of attempts) {
+      if (attempt.id === job.runAttemptId) {
+        continue;
+      }
+      // eslint-disable-next-line no-await-in-loop
+      const attemptJobs = await ActionRunJob.findAll({
+        where: { runId: attempt.runId, runAttemptId: attempt.id },
+        transaction,
+      });
+      jobsToCancel.push(...attemptJobs);
+    }
+
+    return ActionRunJob.cancelJobs(jobsToCancel, transaction);
+  }
+
+  /**
+   * Cancel every job of the list that nothing has claimed, and return the rows cancelled.
+   *
+   * Port of gitea's `models/actions/run_job.go` `CancelJobs`, minus the reusable-caller
+   * branch this codebase has no reusables for. Each cancellation goes through `updateRunJob`,
+   * so the attempt and the run it belongs to follow their job into the cancelled state.
+   */
+  static async cancelJobs(jobs: ActionRunJob[], transaction?: Transaction): Promise<ActionRunJob[]> {
+    const cancelled: ActionRunJob[] = [];
+
+    for (const job of jobs) {
+      // eslint-disable-next-line no-await-in-loop
+      const cancelledJob = await ActionRunJob.cancelOneJob(job, transaction);
+      if (cancelledJob) {
+        cancelled.push(cancelledJob);
+      }
+    }
+
+    return cancelled;
+  }
+
+  /**
+   * Cancel one unclaimed job and return it; a job that is already done, or one a runner has
+   * picked up, is left alone.
+   *
+   * Port of the `taskId == 0` branch of gitea's `models/actions/run_job.go` `cancelOneJob`.
+   * The other branch stops the job's task through `StopTask`, which this codebase has no
+   * server-side path to: nothing here can cancel a task a runner is already executing, so a
+   * claimed job stays where it is rather than being marked cancelled behind the runner's back.
+   */
+  static async cancelOneJob(job: ActionRunJob, transaction?: Transaction): Promise<ActionRunJob | null> {
+    if (job.status.isDone() || job.taskId !== 0) {
+      return null;
+    }
+
+    job.status = Status.Cancelled;
+    job.stoppedAt = new Date();
+
+    // The guard on the task id is the one a concurrent `pickTask` would have broken, so a
+    // job a runner claimed in the meantime is not overwritten.
+    const affected = await ActionRunJob.updateRunJob(
+      job,
+      { status: job.status, stoppedAt: job.stoppedAt },
+      { taskId: 0 },
+      transaction,
+    );
+    if (affected !== 1) {
+      return null;
+    }
+
+    return job;
   }
 }
 
@@ -320,6 +447,26 @@ ActionRunJob.init(
     runsOn: {
       type: DataTypes.STRING,
     },
+    rawConcurrency: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: '',
+    },
+    isConcurrencyEvaluated: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    concurrencyGroup: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: '',
+    },
+    concurrencyCancel: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
     status: {
       // https://github.com/sequelize/sequelize/issues/5765
       type: DataTypes.ENUM,
@@ -358,6 +505,13 @@ ActionRunJob.init(
         // Serves the "is any waiting, unclaimed job left for this repo" check.
         name: 'action_run_jobs_repo_status_task_index',
         fields: ['repository_id', 'status', 'task_id'],
+      },
+      {
+        // Serves the "who else is in this concurrency group" check. Named as gitea names
+        // it: sqlite index names are database-wide, so this cannot share the name the
+        // attempt table's same-shaped index already uses.
+        name: 'repo_concurrency',
+        fields: ['repository_id', 'concurrency_group', 'status'],
       },
     ],
   },

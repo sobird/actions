@@ -6,18 +6,7 @@ import { ActionRun, ActionRunAttempt, ActionRunJob, ActionRunner, ActionTask, Ac
 import type { ActionRunJobCreationAttributes } from '@/models/actions/run_job';
 import { Status } from '@/models/actions/status';
 
-import {
-  findWaitingJobs,
-  pickTask,
-  resolveBlockedJobs,
-  resolveNeeds,
-  runnerJobScope,
-  type DependencyJob,
-} from './task';
-
-function dep(jobId: string, status: Status, continueOnError = false): DependencyJob {
-  return { jobId, status, continueOnError };
-}
+import { findWaitingJobs, pickTask, runnerJobScope } from './task';
 
 /** 每个 job 在它那次 attempt 里领一个序号，口径同 createRun */
 let nextAttemptJobId = 0;
@@ -25,192 +14,6 @@ let nextAttemptJobId = 0;
 function newAttemptJobId() {
   return (nextAttemptJobId += 1);
 }
-
-describe('resolveNeeds', () => {
-  it('is ready when there is nothing to wait for', () => {
-    expect(resolveNeeds([], [])).toBe('ready');
-  });
-
-  it('is ready once every cell of every dependency is done', () => {
-    const dependencies = [dep('build', Status.Success), dep('build', Status.Success), dep('setup', Status.Success)];
-
-    expect(resolveNeeds(['build', 'setup'], dependencies)).toBe('ready');
-  });
-
-  it('waits while any cell of a dependency is unfinished', () => {
-    const dependencies = [dep('build', Status.Success), dep('build', Status.Running)];
-
-    expect(resolveNeeds(['build'], dependencies)).toBe('pending');
-  });
-
-  it('waits for a dependency the run does not carry', () => {
-    expect(resolveNeeds(['build', 'setup'], [dep('build', Status.Success)])).toBe('pending');
-  });
-
-  it('waits rather than failing while a later cell could still finish', () => {
-    const dependencies = [dep('build', Status.Failure), dep('build', Status.Running)];
-
-    expect(resolveNeeds(['build'], dependencies)).toBe('pending');
-  });
-
-  it('fails when a cell failed', () => {
-    const dependencies = [dep('build', Status.Success), dep('build', Status.Failure)];
-
-    expect(resolveNeeds(['build'], dependencies)).toBe('failed');
-  });
-
-  it('fails when a cell was cancelled or skipped', () => {
-    expect(resolveNeeds(['build'], [dep('build', Status.Cancelled)])).toBe('failed');
-    expect(resolveNeeds(['build'], [dep('build', Status.Skipped)])).toBe('failed');
-  });
-
-  it('ignores a failure the cell continues on error', () => {
-    const dependencies = [dep('build', Status.Success), dep('build', Status.Failure, true)];
-
-    expect(resolveNeeds(['build'], dependencies)).toBe('ready');
-  });
-});
-
-describe('resolveBlockedJobs', () => {
-  // Every case gets its own run and repository so the rows cannot see each other.
-  const firstRepositoryId = 9100;
-  let runId: number;
-  let runAttemptId: number;
-  let repositoryId: number;
-
-  afterAll(async () => {
-    // 从下往上清（job → attempt → run）：不是每条外键都带级联，顺序反了会删不动
-    await ActionRunJob.destroy({ where: { repositoryId: { [Op.gte]: firstRepositoryId } } });
-    await ActionRunAttempt.destroy({ where: { repositoryId: { [Op.gte]: firstRepositoryId } } });
-    await ActionRun.destroy({ where: { repositoryId: { [Op.gte]: firstRepositoryId } } });
-  });
-
-  function add(jobId: string, status: Status, needs: string[] = [], continueOnError = false) {
-    return ActionRunJob.create({
-      runId,
-      runAttemptId,
-      attemptJobId: newAttemptJobId(),
-      ownerId: 1,
-      repositoryId,
-      name: jobId,
-      commitSha: '',
-      isForkPullRequest: false,
-      attempt: 1,
-      jobId,
-      taskId: 0,
-      needs: JSON.stringify(needs),
-      status,
-      continueOnError,
-      startedAt: null,
-      stoppedAt: null,
-    });
-  }
-
-  async function statusesOf() {
-    const jobs = await ActionRunJob.findAll({ where: { runId }, order: [['id', 'ASC']] });
-    return jobs.map((job) => job.status.toString());
-  }
-
-  beforeEach(async () => {
-    const index = repositoryId ? repositoryId - firstRepositoryId + 2 : 1;
-    repositoryId = firstRepositoryId + index - 1;
-
-    const run = await ActionRun.create({
-      title: 'resolveBlockedJobs',
-      ownerId: 1,
-      repositoryId,
-      workflowId: 'test',
-      index,
-      ref: 'refs/heads/master',
-      commitSha: '',
-      eventName: 'workflow_dispatch',
-      status: Status.Waiting,
-      isForkPullRequest: false,
-      needApproval: false,
-    });
-
-    const attempt = await ActionRunAttempt.create({
-      runId: run.id,
-      repositoryId,
-      attempt: 1,
-      triggerUserId: 0,
-      status: Status.Waiting,
-      concurrencyGroup: '',
-      concurrencyCancel: false,
-    });
-
-    runId = run.id;
-    runAttemptId = attempt.id;
-  });
-
-  it('reports nothing to do when no job is blocked', async () => {
-    await add('setup', Status.Success);
-
-    await expect(resolveBlockedJobs(runId)).resolves.toBe(false);
-    expect(await statusesOf()).toEqual(['success']);
-  });
-
-  it('starts a job whose dependency succeeded', async () => {
-    await add('setup', Status.Success);
-    await add('build', Status.Blocked, ['setup']);
-
-    await expect(resolveBlockedJobs(runId)).resolves.toBe(true);
-    expect(await statusesOf()).toEqual(['success', 'waiting']);
-  });
-
-  it('skips a job whose dependency failed', async () => {
-    await add('setup', Status.Failure);
-    await add('build', Status.Blocked, ['setup']);
-
-    await expect(resolveBlockedJobs(runId)).resolves.toBe(false);
-    expect(await statusesOf()).toEqual(['failure', 'skipped']);
-  });
-
-  it('leaves a job blocked while a dependency is unfinished', async () => {
-    await add('setup', Status.Running);
-    await add('build', Status.Blocked, ['setup']);
-
-    await expect(resolveBlockedJobs(runId)).resolves.toBe(false);
-    expect(await statusesOf()).toEqual(['running', 'blocked']);
-  });
-
-  it('leaves a job blocked while only some of its dependency cells are done', async () => {
-    await add('build', Status.Success);
-    await add('build', Status.Running);
-    await add('deploy', Status.Blocked, ['build']);
-
-    await expect(resolveBlockedJobs(runId)).resolves.toBe(false);
-    expect(await statusesOf()).toEqual(['success', 'running', 'blocked']);
-  });
-
-  it('holds a job back when one of its dependency cells failed', async () => {
-    await add('build', Status.Success);
-    await add('build', Status.Failure);
-    await add('deploy', Status.Blocked, ['build']);
-
-    await expect(resolveBlockedJobs(runId)).resolves.toBe(false);
-    expect(await statusesOf()).toEqual(['success', 'failure', 'skipped']);
-  });
-
-  it('starts a job when the only failed cell continues on error', async () => {
-    await add('build', Status.Success);
-    await add('build', Status.Failure, [], true);
-    await add('deploy', Status.Blocked, ['build']);
-
-    await expect(resolveBlockedJobs(runId)).resolves.toBe(true);
-    expect(await statusesOf()).toEqual(['success', 'failure', 'waiting']);
-  });
-
-  it('skips a whole chain behind a failure, however it is ordered', async () => {
-    // declared furthest-first, so the chain can only resolve over several passes
-    await add('deploy', Status.Blocked, ['build']);
-    await add('build', Status.Blocked, ['setup']);
-    await add('setup', Status.Failure);
-
-    await expect(resolveBlockedJobs(runId)).resolves.toBe(false);
-    expect(await statusesOf()).toEqual(['skipped', 'skipped', 'failure']);
-  });
-});
 
 /** 只读 ownerId / repositoryId 的 runner，build 出来就够，不必落库 */
 function scopeRunner(ownerId: number, repositoryId: number) {
@@ -234,6 +37,9 @@ describe('runnerJobScope', () => {
 describe('findWaitingJobs', () => {
   // 每个用例独占一个仓库，断言就不必再排除别的行
   const firstRepositoryId = 9200;
+  // 上界封死：清理不能让别处（pickTask 的 9250、job_emitter 的 9300）受牵连，
+  // 这些文件与它并发跑着同一个库
+  const repositoryIds = { [Op.between]: [firstRepositoryId, firstRepositoryId + 49] } as const;
   const ownerId = 9200;
   let nextRepositoryId = firstRepositoryId;
 
@@ -300,9 +106,9 @@ describe('findWaitingJobs', () => {
 
   afterAll(async () => {
     // 从下往上清（job → attempt → run）：不是每条外键都带级联，顺序反了会删不动
-    await ActionRunJob.destroy({ where: { repositoryId: { [Op.gte]: firstRepositoryId } } });
-    await ActionRunAttempt.destroy({ where: { repositoryId: { [Op.gte]: firstRepositoryId } } });
-    await ActionRun.destroy({ where: { repositoryId: { [Op.gte]: firstRepositoryId } } });
+    await ActionRunJob.destroy({ where: { repositoryId: repositoryIds } });
+    await ActionRunAttempt.destroy({ where: { repositoryId: repositoryIds } });
+    await ActionRun.destroy({ where: { repositoryId: repositoryIds } });
   });
 
   it('returns only the waiting jobs no runner has claimed', async () => {

@@ -6,6 +6,9 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    // 每个进程各自连 ./database.sqlite，并发写会互相锁成 SQLITE_BUSY。串行跑换确定性，
+    // 代价是全量从 26s 变成约 100s。
+    fileParallelism: false,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],

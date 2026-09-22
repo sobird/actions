@@ -7,7 +7,7 @@ import type { RunnerService } from '@/gen/runner/v1/services_pb';
 import { sequelize } from '@/lib/sequelize';
 import { ActionRunJob, ActionTask, ActionTaskOutput, ActionTaskVersion } from '@/models';
 import { Status } from '@/models/actions/status';
-import { resolveBlockedJobs } from '@/services/actions/task';
+import { resolveBlockedJobs } from '@/services/actions/job_emitter';
 
 import { getRunnerModel } from './context';
 
@@ -66,9 +66,10 @@ export const updateTask: MethodImpl<typeof RunnerService.method.updateTask> = as
   const sentOutputs = await ActionTaskOutput.findKeysByTaskId(updatedTask.id);
 
   // TODO(upstream routers/api/actions/runner/runner.go UpdateTask): the commit status
-  // (CreateCommitStatusForRunJobs), the job/run notifications (NotifyWorkflowJobStatusUpdateWithTask,
-  // NotifyWorkflowRunStatusUpdateWithReload) and the job emitter (EmitJobsIfReadyByRun) are not
-  // ported yet; this repo has no repo/user models, notify service or job queue to hang them on.
+  // (CreateCommitStatusForRunJobs) and the job/run notifications (NotifyWorkflowJobStatusUpdateWithTask,
+  // NotifyWorkflowRunStatusUpdateWithReload) are not ported yet; this repo has no repo/user
+  // models or notify service to hang them on. The job emitter runs inline above instead of
+  // through upstream's queue, so nothing here waits for a re-emit.
 
   return create(UpdateTaskResponseSchema, {
     state: create(TaskStateSchema, { id: state.id, result: updatedTask.status.asResult() }),

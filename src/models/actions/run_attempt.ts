@@ -25,6 +25,8 @@ import {
   type BelongsToGetAssociationMixin,
   type BelongsToSetAssociationMixin,
   type BelongsToCreateAssociationMixin,
+  type Transaction,
+  Op,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
@@ -82,6 +84,27 @@ export class ActionRunAttempt extends BaseModel<
   declare hasJobs: HasManyHasAssociationsMixin<ActionRunJob, number>;
   declare createJob: HasManyCreateAssociationMixin<ActionRunJob>;
   declare countJobs: HasManyCountAssociationsMixin;
+
+  /**
+   * The attempts of one repository that sit in a concurrency group and are in the given
+   * statuses; every attempt when `statuses` is empty. Port of gitea's
+   * `models/actions/run_attempt.go` `FindConcurrentRunAttempts`.
+   */
+  static async findConcurrentAttempts(
+    repositoryId: number,
+    concurrencyGroup: string,
+    statuses: Status[],
+    transaction?: Transaction,
+  ): Promise<ActionRunAttempt[]> {
+    return ActionRunAttempt.findAll({
+      where: {
+        repositoryId,
+        concurrencyGroup,
+        ...(statuses.length > 0 ? { status: { [Op.in]: statuses.map((status) => status.toString()) } } : {}),
+      },
+      transaction,
+    });
+  }
 }
 
 ActionRunAttempt.init(

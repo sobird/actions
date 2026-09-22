@@ -1,5 +1,5 @@
 import { create } from '@bufbuild/protobuf';
-import { Op, type Transaction } from 'sequelize';
+import { Op } from 'sequelize';
 
 import { Task, TaskNeed, TaskNeedSchema, TaskSchema } from '@/gen/runner/v1/messages_pb';
 import { ActionRun, ActionRunJob, ActionRunner, ActionTask, ActionTaskOutput } from '@/models';
@@ -84,117 +84,6 @@ async function buildRunnerTask(task: ActionTask): Promise<Task> {
     needs,
     vars: {},
   });
-}
-
-/** The dependency fields the resolution reads. */
-export interface DependencyJob {
-  jobId: string;
-  status: Status;
-  continueOnError: boolean;
-}
-
-/**
- * A cell that failed for real, which is what its dependents react to.
- *
- * A failure with continue-on-error is treated as a success, matching AggregateJobStatus.
- */
-function failedForReal(dependency: DependencyJob): boolean {
-  return !dependency.status.isSuccess() && !(dependency.continueOnError && dependency.status.isFailure());
-}
-
-/**
- * Whether the jobs named by `needs` let the depending job start.
- *
- * A job expands into one run job per matrix cell, so a dependency only counts as
- * done once every cell of it is done, and as failed only when a cell failed for
- * real. Mirrors gitea's `jobStatusResolver.resolveCheckNeeds`.
- */
-export function resolveNeeds(needs: string[], dependencies: DependencyJob[]): 'pending' | 'failed' | 'ready' {
-  const dependencyIds = new Set(dependencies.map((dependency) => dependency.jobId));
-  // A job that is not in the run at all can never finish, and neither can a cell
-  // that has not been inserted yet.
-  if (needs.some((needId) => !dependencyIds.has(needId))) {
-    return 'pending';
-  }
-  if (!dependencies.every((dependency) => dependency.status.isDone())) {
-    return 'pending';
-  }
-
-  return dependencies.some(failedForReal) ? 'failed' : 'ready';
-}
-
-/**
- * Hand every blocked job of a run the state its dependencies leave it in.
- *
- * Mirrors the needs half of gitea's `job_emitter`: a blocked job whose dependency
- * cells are all done and successful becomes waiting, and one that depends on a cell
- * that failed for real is skipped, so it leaves the queue instead of staying blocked
- * forever. Returns whether any of them is waiting now.
- */
-export async function resolveBlockedJobs(runId: number, transaction?: Transaction): Promise<boolean> {
-  const jobs = await ActionRunJob.findAll({ where: { runId }, transaction });
-  const blockedJobs = jobs.filter((job) => job.status.isBlocked());
-  if (blockedJobs.length === 0) {
-    return false;
-  }
-
-  // A job can only be decided once the jobs it depends on are decided, and a
-  // workflow declares them in no particular order, so repeat until a pass settles
-  // nothing: each pass carries the statuses it wrote in memory into the next one.
-  const decided = new Set<number>();
-  while (decided.size < blockedJobs.length) {
-    let settled = 0;
-
-    for (const job of blockedJobs) {
-      if (decided.has(job.id)) {
-        continue;
-      }
-
-      // Only the cells of the jobs named by `needs` are read: a blocked job is not a
-      // dependency of anything, and letting it into the pool would keep every
-      // dependent pending forever.
-      const needs = parseStringList(job.needs);
-      const dependencies = jobs.filter((candidate) => needs.includes(candidate.jobId));
-
-      const verdict = resolveNeeds(needs, dependencies);
-      if (verdict === 'pending') {
-        continue;
-      }
-
-      job.status = verdict === 'failed' ? Status.Skipped : Status.Waiting;
-      decided.add(job.id);
-      settled += 1;
-    }
-
-    if (settled === 0) {
-      break;
-    }
-  }
-
-  let waiting = 0;
-  for (const job of blockedJobs) {
-    if (job.status.isBlocked()) {
-      continue;
-    }
-
-    // One job per write, guarded by the status this pass read: a concurrent writer that
-    // already decided it is not overwritten. Every write carries the aggregate along.
-    // eslint-disable-next-line no-await-in-loop
-    const affected = await ActionRunJob.updateRunJob(
-      job,
-      { status: job.status },
-      { status: Status.Blocked.toString() },
-      transaction,
-    );
-    if (affected !== 1) {
-      throw new Error(`no affected for updating blocked job ${job.id}`);
-    }
-    if (job.status.isWaiting()) {
-      waiting += 1;
-    }
-  }
-
-  return waiting > 0;
 }
 
 /** The where-clause fields that limit a runner to the jobs it may pick. */

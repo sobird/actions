@@ -130,3 +130,68 @@ describe('updateRunJob', () => {
     expect(run.status).toBe(Status.Waiting);
   });
 });
+
+describe('cancelOneJob', () => {
+  it('leaves a job that has already finished alone', async () => {
+    const job = (await ActionRunJob.findByPk(192))!;
+
+    await expect(ActionRunJob.cancelOneJob(job)).resolves.toBeNull();
+
+    const stored = (await ActionRunJob.findByPk(192))!;
+    expect(stored.status).toBe(Status.Success);
+  });
+
+  it('cancels an unclaimed job and settles its attempt and run', async () => {
+    const run = await ActionRun.create({
+      title: '',
+      ownerId: 1,
+      repositoryId: 4,
+      workflowId: 'ci.yaml',
+      index: 900,
+      ref: 'refs/heads/master',
+      commitSha: 'a'.repeat(40),
+      eventName: 'push',
+      status: Status.Waiting,
+    });
+    const attempt = await ActionRunAttempt.create({
+      runId: run.id,
+      repositoryId: 4,
+      attempt: 1,
+      triggerUserId: 0,
+      status: Status.Waiting,
+      concurrencyGroup: '',
+      concurrencyCancel: false,
+    });
+    run.latestAttemptId = attempt.id;
+    await run.save();
+
+    const job = await ActionRunJob.create({
+      runId: run.id,
+      runAttemptId: attempt.id,
+      attemptJobId: 1,
+      ownerId: 1,
+      repositoryId: 4,
+      name: 'job_2',
+      commitSha: '',
+      isForkPullRequest: false,
+      attempt: 1,
+      jobId: 'job_2',
+      taskId: 0,
+      status: Status.Waiting,
+      startedAt: null,
+      stoppedAt: null,
+    });
+
+    await expect(ActionRunJob.cancelOneJob(job)).resolves.not.toBeNull();
+
+    await job.reload();
+    expect(job.status).toBe(Status.Cancelled);
+    expect(job.stoppedAt).not.toBeNull();
+
+    const cancelledAttempt = (await ActionRunAttempt.findByPk(attempt.id))!;
+    expect(cancelledAttempt.status).toBe(Status.Cancelled);
+
+    const cancelledRun = (await ActionRun.findByPk(run.id))!;
+    expect(cancelledRun.status).toBe(Status.Cancelled);
+  });
+});
