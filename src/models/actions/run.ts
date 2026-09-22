@@ -77,9 +77,9 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
    * gitea's `models/actions/run_job.go` `refreshRunStatus`, whose write that file
    * hands to `run.go`'s `UpdateRun`; here the run writes its own row.
    */
-  async refreshStatusFromJobs(noJobsStatus: Status, transaction?: Transaction): Promise<void> {
-    const jobs = await ActionRunJob.findAll({
-      where: { runId: Number(this.id), runAttemptId: this.latestAttemptId },
+  async refreshStatus(noJobsStatus: Status, transaction?: Transaction): Promise<void> {
+    const jobs = await this.getJobs({
+      where: { runAttemptId: this.latestAttemptId },
       transaction,
     });
 

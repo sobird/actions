@@ -203,7 +203,7 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
    * settles an attempt that holds no job at all, which `aggregateStatus` cannot
    * conclude on its own. Port of gitea's `models/actions/run_job.go` `refreshRunStatus`,
    * with `UpdateRunAttempt`'s propagation folded in; a run that has no attempt of its
-   * own is `ActionRun.refreshStatusFromJobs`.
+   * own is `ActionRun.refreshStatus`.
    */
   private static async refreshRunStatus(
     runId: number,
@@ -242,7 +242,7 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
       throw new Error(`run with id ${runId}: not exist`);
     }
 
-    return run.refreshStatusFromJobs(noJobsStatus, transaction);
+    return run.refreshStatus(noJobsStatus, transaction);
   }
 }
 
