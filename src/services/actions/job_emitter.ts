@@ -226,11 +226,27 @@ async function resolveJobsOfRunAttempt(run: ActionRun, transaction?: Transaction
         continue;
       }
 
+      // A caller whose children are already in place is decided by them, not by its own
+      // needs: resolving it here would run it as a job of its own.
+      if (job.isReusableCaller && job.isExpanded) {
+        continue;
+      }
+
+      // A child of a caller can only be decided once that caller has expanded. A parent the
+      // run does not carry is not waited for, which is how upstream reads the same lookup.
+      const parent = job.parentJobId === 0 ? undefined : jobs.find((candidate) => candidate.id === job.parentJobId);
+      if (parent && !parent.isExpanded) {
+        continue;
+      }
+
       // Only the cells of the jobs named by `needs` are read: a blocked job is not a
       // dependency of anything, and letting it into the pool would keep every
-      // dependent pending forever.
+      // dependent pending forever. Needs are resolved within the caller a job was expanded
+      // under, so the same job id under two callers does not cross-link.
       const needs = parseStringList(job.needs);
-      const dependencies = jobs.filter((candidate) => needs.includes(candidate.jobId));
+      const dependencies = jobs.filter(
+        (candidate) => candidate.parentJobId === job.parentJobId && needs.includes(candidate.jobId),
+      );
 
       const verdict = resolveNeeds(needs, dependencies);
       if (verdict === 'pending') {

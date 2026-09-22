@@ -431,3 +431,112 @@ describe('resolveBlockedJobs and concurrency groups', () => {
     expect(job.status).toBe(Status.Blocked);
   });
 });
+
+describe('resolveBlockedJobs and reusable workflow callers', () => {
+  // 每个用例独占一个仓库，理由同上
+  const firstRepositoryId = 9500;
+  // Bounded for the same reason as the describes above.
+  const repositoryIds = { [Op.between]: [firstRepositoryId, firstRepositoryId + 99] } as const;
+  let repositoryId: number;
+  let nextRepositoryId = firstRepositoryId;
+
+  beforeEach(() => {
+    repositoryId = nextRepositoryId;
+    nextRepositoryId += 1;
+  });
+
+  afterAll(async () => {
+    await ActionRunJob.destroy({ where: { repositoryId: repositoryIds } });
+    await ActionRunAttempt.destroy({ where: { repositoryId: repositoryIds } });
+    await ActionRun.destroy({ where: { repositoryId: repositoryIds } });
+  });
+
+  async function addRun(index: number) {
+    const run = await ActionRun.create({
+      title: 'reusable callers',
+      ownerId: 1,
+      repositoryId,
+      workflowId: 'test',
+      index,
+      ref: 'refs/heads/master',
+      commitSha: '',
+      eventName: 'workflow_dispatch',
+      status: Status.Waiting,
+      isForkPullRequest: false,
+      needApproval: false,
+    });
+
+    const attempt = await ActionRunAttempt.create({
+      runId: run.id,
+      repositoryId,
+      attempt: 1,
+      triggerUserId: 0,
+      status: Status.Waiting,
+      concurrencyGroup: '',
+      concurrencyCancel: false,
+    });
+
+    return { runId: run.id, attemptId: attempt.id };
+  }
+
+  function add(
+    run: { runId: number; attemptId: number },
+    jobId: string,
+    overrides: Partial<ActionRunJobCreationAttributes> = {},
+  ) {
+    return ActionRunJob.create({
+      runId: run.runId,
+      runAttemptId: run.attemptId,
+      attemptJobId: newAttemptJobId(),
+      ownerId: 1,
+      repositoryId,
+      name: jobId,
+      commitSha: '',
+      isForkPullRequest: false,
+      attempt: 1,
+      jobId,
+      taskId: 0,
+      status: Status.Blocked,
+      startedAt: null,
+      stoppedAt: null,
+      ...overrides,
+    });
+  }
+
+  it('resolves needs within the caller a job was expanded under', async () => {
+    const run = await addRun(1);
+    const callerA = await add(run, 'caller-a', { isReusableCaller: true, isExpanded: true });
+    const callerB = await add(run, 'caller-b', { isReusableCaller: true, isExpanded: true });
+    await add(run, 'setup', { status: Status.Failure, parentJobId: callerA.id });
+    const build = await add(run, 'build', { needs: JSON.stringify(['setup']), parentJobId: callerB.id });
+
+    await expect(resolveBlockedJobs(run.runId)).resolves.toBe(false);
+
+    // A 里的 setup 失败了跟 B 无关，B 的 build 只是还在等自己那个 setup
+    await build.reload();
+    expect(build.status).toBe(Status.Blocked);
+  });
+
+  it('holds a child back until the caller it sits under has expanded', async () => {
+    const run = await addRun(1);
+    const caller = await add(run, 'caller', { isReusableCaller: true, status: Status.Running });
+    const child = await add(run, 'child', { parentJobId: caller.id });
+
+    await expect(resolveBlockedJobs(run.runId)).resolves.toBe(false);
+
+    // 子行要等 caller 展开之后才轮到它
+    await child.reload();
+    expect(child.status).toBe(Status.Blocked);
+  });
+
+  it('does not resolve an expanded caller as a job of its own', async () => {
+    const run = await addRun(1);
+    const caller = await add(run, 'caller', { isReusableCaller: true, isExpanded: true });
+
+    await expect(resolveBlockedJobs(run.runId)).resolves.toBe(false);
+
+    // 它的状态由子行聚合而来，不该照着 needs 自己去跑
+    await caller.reload();
+    expect(caller.status).toBe(Status.Blocked);
+  });
+});

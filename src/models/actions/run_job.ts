@@ -39,6 +39,7 @@ import type { Models, ActionTask } from '.';
 import { ActionRun } from './run';
 import { ActionRunAttempt } from './run_attempt';
 import { Status } from './status';
+import { ActionTaskVersion } from './task_version';
 
 export type ActionRunJobCreationAttributes = CreationAttributes<ActionRunJob>;
 
@@ -105,6 +106,18 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   declare concurrencyGroup: CreationOptional<string>;
   /** the resolved `concurrency.cancel-in-progress` */
   declare concurrencyCancel: CreationOptional<boolean>;
+
+  /**
+   * Whether this job only calls a reusable workflow.
+   *
+   * A caller never reaches a runner: its status is aggregated from the child jobs the call
+   * expands into, which sit in the same run and attempt.
+   */
+  declare isReusableCaller: CreationOptional<boolean>;
+  /** the caller row this job was expanded under; 0 for a top-level job */
+  declare parentJobId: CreationOptional<number>;
+  /** whether a caller's children have been inserted yet; a child waits for its caller to be */
+  declare isExpanded: CreationOptional<boolean>;
 
   declare status: Status;
   declare startedAt: Date | null;
@@ -199,14 +212,30 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   }
 
   /**
-   * Write a job's changed columns and let the aggregate state follow.
+   * Whether the repository still holds work an idle runner could pick up: a waiting job
+   * nobody has claimed, that is not a reusable caller — a caller never runs on a runner.
+   *
+   * Port of gitea's `models/actions/run_job.go` `hasWaitingJobsToPick`.
+   */
+  static async hasWaitingJobsToPick(repositoryId: number, transaction?: Transaction): Promise<boolean> {
+    const waiting = await ActionRunJob.findOne({
+      where: { repositoryId, taskId: 0, status: Status.Waiting.toString(), isReusableCaller: false },
+      transaction,
+    });
+
+    return waiting !== null;
+  }
+
+  /**
+   * Write a job's changed columns, let the caller above it follow, and let the aggregate
+   * state follow.
    *
    * Every status change of a job goes through here, the way gitea routes them all through
    * `UpdateRunJob`, so the attempt and the run can never drift from the jobs they hold.
    * `cond` carries the guard a transition needs to stay correct under concurrent claims,
-   * and a write the guard rejects leaves the aggregate alone. Port of gitea's
-   * `models/actions/run_job.go` `UpdateRunJob`, without the task-version bump it also
-   * performs: this port bumps the version where a task finishes and where a run is created.
+   * and a write the guard rejects leaves the aggregate alone.
+   *
+   * Port of gitea's `models/actions/run_job.go` `UpdateRunJob`.
    */
   static async updateRunJob(
     job: ActionRunJob,
@@ -215,9 +244,39 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
     transaction?: Transaction,
   ): Promise<number> {
     const [affected] = await ActionRunJob.update(values, { where: { id: job.id, ...cond }, transaction });
-    if (affected > 0) {
-      await job.refreshRunStatus(Status.Unknown, transaction);
+
+    // Anything the aggregates are made of has to have changed for them to be recomputed.
+    // Upstream reads the same thing off its column list: a write carrying no status column,
+    // or a status that reads back as unknown, is not a status change.
+    const status = values.status === undefined ? undefined : Status.from(String(values.status));
+    if (affected === 0 || status === undefined || status.isUnknown()) {
+      return affected;
     }
+
+    // A job returning to the queue is work to pick up again, and a job finishing may have
+    // left some behind. Either way an idle runner whose cached version already matches has
+    // to be told to look, or it never will.
+    if (!job.isReusableCaller) {
+      if (status.isWaiting()) {
+        await ActionTaskVersion.increaseVersion(job.ownerId, job.repositoryId, transaction);
+      } else if (status.isDone() && (await ActionRunJob.hasWaitingJobsToPick(job.repositoryId, transaction))) {
+        await ActionTaskVersion.increaseVersion(job.ownerId, job.repositoryId, transaction);
+      }
+    }
+
+    // A child's status feeds the caller it was expanded under, and a nested caller feeds its
+    // own. That chain refreshes the run wherever it ends, so this write leaves the run to it.
+    if (job.parentJobId > 0) {
+      const parent = await ActionRunJob.findByPk(job.parentJobId, { transaction });
+      if (!parent) {
+        throw new Error(`job ${job.id}: parent job ${job.parentJobId} not found`);
+      }
+      await ActionRunJob.refreshReusableCallerStatus(parent, transaction);
+
+      return affected;
+    }
+
+    await job.refreshRunStatus(Status.Unknown, transaction);
 
     return affected;
   }
@@ -239,6 +298,91 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
     run.startedAt = attempt.startedAt;
     run.stoppedAt = attempt.stoppedAt;
     await run.save({ fields: ['status', 'startedAt', 'stoppedAt'], transaction });
+  }
+
+  /**
+   * Recompute a reusable workflow caller from the children it was expanded into.
+   *
+   * Port of gitea's `models/actions/run_job.go` `RefreshReusableCallerStatus`. Two siblings
+   * finishing at once may both get here; no lock is needed, because the aggregate is a
+   * function of the children's statuses and both writers therefore reach the same one.
+   *
+   * The write goes back through `updateRunJob` rather than a bare save: that is what carries
+   * the status up a nested caller chain, and refreshes the run at the end of it.
+   */
+  static async refreshReusableCallerStatus(caller: ActionRunJob, transaction?: Transaction): Promise<void> {
+    if (!caller.isReusableCaller) {
+      return;
+    }
+
+    const children = await ActionRunJob.getDirectChildJobsByParent(caller, transaction);
+    const status = ActionRunJob.aggregateStatus(children);
+    const values: ActionRunJobUpdateValues = {};
+
+    if (caller.status !== status) {
+      caller.status = status;
+      values.status = status;
+    }
+    // A caller skipped outright has nothing that ran under it, so it has no window to stamp.
+    if (!status.isSkipped()) {
+      if (!caller.startedAt && status.isRunning()) {
+        caller.startedAt = new Date();
+        values.startedAt = caller.startedAt;
+      }
+      if (!caller.stoppedAt && status.isDone()) {
+        caller.stoppedAt = new Date();
+        values.stoppedAt = caller.stoppedAt;
+      }
+    }
+
+    if (Object.keys(values).length === 0) {
+      return;
+    }
+
+    await ActionRunJob.updateRunJob(caller, values, {}, transaction);
+  }
+
+  /** The jobs sitting one level under `parent`, oldest first. */
+  static async getDirectChildJobsByParent(parent: ActionRunJob, transaction?: Transaction): Promise<ActionRunJob[]> {
+    return ActionRunJob.findAll({
+      where: { runId: parent.runId, parentJobId: parent.id },
+      order: [['id', 'ASC']],
+      transaction,
+    });
+  }
+
+  /** Every job of one attempt, which is where a caller's subtree is drawn from. */
+  static async getRunJobsByRunAndAttemptId(
+    runId: number,
+    runAttemptId: number,
+    transaction?: Transaction,
+  ): Promise<ActionRunJob[]> {
+    return ActionRunJob.findAll({ where: { runId, runAttemptId }, transaction });
+  }
+
+  /**
+   * Every job of `allJobs` sitting under `parent`'s subtree, however deep, minus `parent`.
+   *
+   * Port of gitea's `models/actions/run_job.go` `CollectAllDescendantJobs`: the tree is
+   * walked to a fixpoint rather than by depth, so a row declared before its own parent in
+   * the list is still reached.
+   */
+  static collectAllDescendantJobs(parent: ActionRunJob, allJobs: ActionRunJob[]): ActionRunJob[] {
+    const subtree = new Set<number>([parent.id]);
+
+    let grew = true;
+    while (grew) {
+      grew = false;
+      for (const job of allJobs) {
+        if (job.parentJobId === 0 || subtree.has(job.id) || !subtree.has(job.parentJobId)) {
+          continue;
+        }
+        subtree.add(job.id);
+        grew = true;
+      }
+    }
+
+    return allJobs.filter((job) => job.id !== parent.id && subtree.has(job.id));
   }
 
   /**
@@ -320,19 +464,57 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   /**
    * Cancel every job of the list that nothing has claimed, and return the rows cancelled.
    *
-   * Port of gitea's `models/actions/run_job.go` `CancelJobs`, minus the reusable-caller
-   * branch this codebase has no reusables for. Each cancellation goes through `updateRunJob`,
-   * so the attempt and the run it belongs to follow their job into the cancelled state.
+   * Port of gitea's `models/actions/run_job.go` `CancelJobs`. A caller is a stand-in for the
+   * children it was expanded into, so cancelling one means taking the whole subtree with it.
+   * Each cancellation goes through `updateRunJob`, so the attempt and the run it belongs to
+   * follow their job into the cancelled state.
    */
   static async cancelJobs(jobs: ActionRunJob[], transaction?: Transaction): Promise<ActionRunJob[]> {
     const cancelled: ActionRunJob[] = [];
 
     for (const job of jobs) {
+      if (job.isReusableCaller) {
+        // eslint-disable-next-line no-await-in-loop
+        cancelled.push(...(await ActionRunJob.cancelReusableCaller(job, transaction)));
+        continue;
+      }
+
       // eslint-disable-next-line no-await-in-loop
       const cancelledJob = await ActionRunJob.cancelOneJob(job, transaction);
       if (cancelledJob) {
         cancelled.push(cancelledJob);
       }
+    }
+
+    return cancelled;
+  }
+
+  /**
+   * Cancel a reusable workflow caller together with everything under it, deepest first.
+   *
+   * Port of gitea's `models/actions/run_job.go` `cancelReusableCaller`. A caller's status is
+   * aggregated from its children, so each of them has to reach its final state before its
+   * parent is re-aggregated; a child's id always exceeds its parent's, which makes
+   * id-descending a deepest-first order.
+   */
+  static async cancelReusableCaller(caller: ActionRunJob, transaction?: Transaction): Promise<ActionRunJob[]> {
+    const cancelled: ActionRunJob[] = [];
+
+    const attemptJobs = await ActionRunJob.getRunJobsByRunAndAttemptId(caller.runId, caller.runAttemptId, transaction);
+    const descendants = ActionRunJob.collectAllDescendantJobs(caller, attemptJobs);
+    descendants.sort((left, right) => right.id - left.id);
+
+    for (const descendant of descendants) {
+      // eslint-disable-next-line no-await-in-loop
+      const cancelledJob = await ActionRunJob.cancelOneJob(descendant, transaction);
+      if (cancelledJob) {
+        cancelled.push(cancelledJob);
+      }
+    }
+
+    const cancelledCaller = await ActionRunJob.cancelOneJob(caller, transaction);
+    if (cancelledCaller) {
+      cancelled.push(cancelledCaller);
     }
 
     return cancelled;
@@ -467,6 +649,21 @@ ActionRunJob.init(
       allowNull: false,
       defaultValue: false,
     },
+    isReusableCaller: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    parentJobId: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    isExpanded: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
     status: {
       // https://github.com/sequelize/sequelize/issues/5765
       type: DataTypes.ENUM,
@@ -512,6 +709,17 @@ ActionRunJob.init(
         // attempt table's same-shaped index already uses.
         name: 'repo_concurrency',
         fields: ['repository_id', 'concurrency_group', 'status'],
+      },
+      {
+        // Serves the "is any of this a job a runner could pick up" scan, which a caller
+        // must never satisfy.
+        name: 'action_run_jobs_reusable_caller_index',
+        fields: ['is_reusable_caller'],
+      },
+      {
+        // Serves collecting the subtree of a caller.
+        name: 'action_run_jobs_parent_job_id_index',
+        fields: ['parent_job_id'],
       },
     ],
   },

@@ -125,7 +125,9 @@ export function runnerJobScope(runner: ActionRunner): JobScope {
  * a job that is still waiting even as claimed jobs drop out of the result.
  */
 export async function findWaitingJobs(scope: JobScope, cursor?: PickCursor, limit = PickTaskBatchSize) {
-  const base = { ...scope, taskId: 0, status: Status.Waiting.toString() };
+  // A reusable workflow caller only stands in for the children it expands into; it never
+  // runs on a runner, so it is never picked.
+  const base = { ...scope, taskId: 0, status: Status.Waiting.toString(), isReusableCaller: false };
   const where = cursor
     ? {
         ...base,

@@ -2,7 +2,15 @@ import { create } from '@bufbuild/protobuf';
 import { timestampFromDate } from '@bufbuild/protobuf/wkt';
 
 import { Result, StepStateSchema, TaskStateSchema } from '@/gen/runner/v1/messages_pb';
-import { ActionRun, ActionRunAttempt, ActionRunJob, ActionRunner, ActionTask, ActionTaskStep } from '@/models/actions';
+import {
+  ActionRun,
+  ActionRunAttempt,
+  ActionRunJob,
+  ActionRunner,
+  ActionTask,
+  ActionTaskStep,
+  ActionTaskVersion,
+} from '@/models/actions';
 
 import type { ActionRunJobCreationAttributes } from './run_job';
 import { Status } from './status';
@@ -25,6 +33,9 @@ let ATTEMPT_ID: number;
 let nextAttemptJobId = 1;
 
 beforeAll(async () => {
+  // 每次状态写入都会顺手 bump 任务版本，这套 mock 库得先有那张表
+  await ActionTaskVersion.sync({ force: true });
+
   await ActionRun.create({
     id: RUN_ID,
     title: 'createForRunner',
@@ -163,6 +174,7 @@ describe('ActionTask.releaseTaskForRunner', () => {
     const job = await queueJob();
     const task = (await ActionTask.createForRunner(runner, job))!;
     const taskId = task.id;
+    const versionBefore = await ActionTaskVersion.findOneVersionByScope(0, 4);
 
     await ActionTask.releaseTaskForRunner(task);
 
@@ -172,6 +184,8 @@ describe('ActionTask.releaseTaskForRunner', () => {
     expect(job.startedAt).toBeNull();
     expect(await ActionTask.findByPk(taskId)).toBeNull();
     expect(await ActionTaskStep.count({ where: { taskId } })).toBe(0);
+    // 放回队列就是又有活可领，空闲 runner 缓存的版本号得跟着往前走
+    expect(await ActionTaskVersion.findOneVersionByScope(0, 4)).toBe(versionBefore + 1n);
   });
 });
 

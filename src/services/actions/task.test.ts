@@ -352,4 +352,20 @@ describe('pickTask', () => {
     expect(run.status).toBe(Status.Failure);
     expect(run.stoppedAt).not.toBeNull();
   });
+
+  it('passes over a reusable caller, which no runner could run', async () => {
+    // caller 排在前面，不被跳过的话第一个领走的就是它
+    const caller = await queueJob('caller', { isReusableCaller: true });
+    const healthy = await queueJob('healthy');
+
+    const picked = await pickTask(runner);
+
+    expect(picked!.task.context?.job).toBe('healthy');
+    await healthy.reload();
+    expect(healthy.status).toBe(Status.Running);
+
+    await caller.reload();
+    expect(caller.taskId).toBe(0);
+    expect(caller.status).toBe(Status.Waiting);
+  });
 });

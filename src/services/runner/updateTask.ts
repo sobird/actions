@@ -5,8 +5,7 @@ import logger from '@/common/logger';
 import { Result, TaskStateSchema, UpdateTaskResponseSchema } from '@/gen/runner/v1/messages_pb';
 import type { RunnerService } from '@/gen/runner/v1/services_pb';
 import { sequelize } from '@/lib/sequelize';
-import { ActionRunJob, ActionTask, ActionTaskOutput, ActionTaskVersion } from '@/models';
-import { Status } from '@/models/actions/status';
+import { ActionRunJob, ActionTask, ActionTaskOutput } from '@/models';
 import { resolveBlockedJobs } from '@/services/actions/job_emitter';
 
 import { getRunnerModel } from './context';
@@ -26,20 +25,11 @@ export const updateTask: MethodImpl<typeof RunnerService.method.updateTask> = as
       const task = await ActionTask.updateByState(runner.id, state, transaction);
 
       if (state.result !== Result.UNSPECIFIED) {
-        // Finishing a job decides the jobs waiting on it.
+        // Finishing a job decides the jobs waiting on it. Waking them writes their status
+        // through `updateRunJob`, which is what tells idle runners there is work again.
         const job = await ActionRunJob.findByPk(task.jobId, { transaction });
         if (job) {
           await resolveBlockedJobs(job.runId, transaction);
-        }
-
-        // Finishing a job may have unblocked waiting jobs; bump the versions so idle
-        // runners whose tasksVersion already equals latestVersion attempt a PickTask.
-        const waiting = await ActionRunJob.findOne({
-          where: { repositoryId: task.repositoryId, taskId: 0, status: Status.Waiting.toString() },
-          transaction,
-        });
-        if (waiting) {
-          await ActionTaskVersion.increaseVersion(task.ownerId, task.repositoryId, transaction);
         }
       }
 
