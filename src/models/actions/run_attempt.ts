@@ -31,8 +31,8 @@ export class ActionRunAttempt extends BaseModel<
   InferCreationAttributes<ActionRunAttempt>
 > {
   declare runId: number;
-  declare repositoryId: number;
   declare attempt: number;
+  declare repositoryId: number;
 
   declare triggerUserId: number;
 

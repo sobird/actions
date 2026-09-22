@@ -202,7 +202,8 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
    * only updates itself, because a later attempt already drives the run. `noJobsStatus`
    * settles an attempt that holds no job at all, which `aggregateStatus` cannot
    * conclude on its own. Port of gitea's `models/actions/run_job.go` `refreshRunStatus`,
-   * with `UpdateRunAttempt`'s propagation folded in.
+   * with `UpdateRunAttempt`'s propagation folded in; a run that has no attempt of its
+   * own is `ActionRun.refreshStatusFromJobs`.
    */
   private static async refreshRunStatus(
     runId: number,
@@ -217,7 +218,7 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
       }
 
       const jobs = await ActionRunJob.findAll({ where: { runId, runAttemptId }, transaction });
-      attempt.status = jobs.length > 0 ? ActionRunJob.aggregateStatus(jobs) : noJobsStatus;
+      attempt.status = jobs.length > 0 ? this.aggregateStatus(jobs) : noJobsStatus;
       // Both times are written once: a re-aggregate that is still pending must not clear them.
       attempt.startedAt = attempt.startedAt ?? (attempt.status.isRunning() ? new Date() : null);
       attempt.stoppedAt = attempt.stoppedAt ?? (attempt.status.isDone() ? new Date() : null);
@@ -241,11 +242,7 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
       throw new Error(`run with id ${runId}: not exist`);
     }
 
-    const jobs = await ActionRunJob.findAll({ where: { runId, runAttemptId: run.latestAttemptId }, transaction });
-    run.status = jobs.length > 0 ? ActionRunJob.aggregateStatus(jobs) : noJobsStatus;
-    run.startedAt = run.startedAt ?? (run.status.isRunning() ? new Date() : null);
-    run.stoppedAt = run.stoppedAt ?? (run.status.isDone() ? new Date() : null);
-    await run.save({ fields: ['status', 'startedAt', 'stoppedAt'], transaction });
+    return run.refreshStatusFromJobs(noJobsStatus, transaction);
   }
 }
 

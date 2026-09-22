@@ -22,11 +22,15 @@ import {
   type HasManyHasAssociationsMixin,
   type HasManyCreateAssociationMixin,
   type HasManyCountAssociationsMixin,
+  type Transaction,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-import type { Models, ActionRunJob } from '.';
+// Like run_job's own import of this class, ActionRunJob comes from its module rather
+// than the barrel, which would close an index -> run -> index cycle. It is only
+// dereferenced inside a method body, so the two modules may load in either order.
+import { ActionRunJob } from './run_job';
 import { Status } from './status';
 
 export type ActionRunCreationAttributes = CreationAttributes<ActionRun>;
@@ -63,6 +67,29 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
 
   declare latestAttemptId: CreationOptional<number>;
 
+  /**
+   * Recompute the status of this run from the jobs of its latest attempt and persist it.
+   *
+   * The fallback half of `ActionRunJob.refreshRunStatus`: jobs created before attempts
+   * existed carry `runAttemptId` 0, and their run has no attempt of its own to
+   * aggregate through. `noJobsStatus` settles a run that holds no job at all, which
+   * `aggregateStatus` cannot conclude on its own. Port of the fallback branch of
+   * gitea's `models/actions/run_job.go` `refreshRunStatus`, whose write that file
+   * hands to `run.go`'s `UpdateRun`; here the run writes its own row.
+   */
+  async refreshStatusFromJobs(noJobsStatus: Status, transaction?: Transaction): Promise<void> {
+    const jobs = await ActionRunJob.findAll({
+      where: { runId: Number(this.id), runAttemptId: this.latestAttemptId },
+      transaction,
+    });
+
+    this.status = jobs.length > 0 ? ActionRunJob.aggregateStatus(jobs) : noJobsStatus;
+    // Both times are written once: a re-aggregate that is still pending must not clear them.
+    this.startedAt = this.startedAt ?? (this.status.isRunning() ? new Date() : null);
+    this.stoppedAt = this.stoppedAt ?? (this.status.isDone() ? new Date() : null);
+    await this.save({ fields: ['status', 'startedAt', 'stoppedAt'], transaction });
+  }
+
   static async add() {
     const t = await sequelize.transaction();
 
@@ -71,7 +98,8 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
     return t.commit();
   }
 
-  static associate({ ActionRunJob }: Models) {
+  // ActionRunJob comes from its own module above, so it is not taken from the models map.
+  static associate() {
     this.hasMany(ActionRunJob, { as: 'jobs', foreignKey: 'runId' });
   }
 
@@ -86,7 +114,6 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
   declare getJobs: HasManyGetAssociationsMixin<ActionRunJob>;
-  /** Remove all previous associations and set the new ones */
   declare setJobs: HasManySetAssociationsMixin<ActionRunJob, bigint>;
   declare addJob: HasManyAddAssociationMixin<ActionRunJob, bigint>;
   declare addJobs: HasManyAddAssociationsMixin<ActionRunJob, bigint>;
