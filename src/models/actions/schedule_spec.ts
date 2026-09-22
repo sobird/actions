@@ -9,7 +9,7 @@ import {
   type InferAttributes,
   type InferCreationAttributes,
   type CreationAttributes,
-  // type CreationOptional,
+  type CreationOptional,
   type ForeignKey,
   type NonAttribute,
   type Association,
@@ -28,7 +28,8 @@ export class ActionScheduleSpec extends BaseModel<
   InferAttributes<ActionScheduleSpec>,
   InferCreationAttributes<ActionScheduleSpec>
 > {
-  declare repositoryId: bigint;
+  declare id: CreationOptional<number>;
+  declare repositoryId: number;
   // foreign keys are automatically added by associations methods (like ActionScheduleSpec.belongsTo)
   // by branding them using the `ForeignKey` type, `ActionScheduleSpec.init` will know it does not need to
   // display an error if scheduleId is missing.
@@ -57,7 +58,7 @@ export class ActionScheduleSpec extends BaseModel<
 
   // belongsTo ActionSchedule associate methods
   declare getSchedule: BelongsToGetAssociationMixin<ActionSchedule>;
-  declare setSchedule: BelongsToSetAssociationMixin<ActionSchedule, bigint>;
+  declare setSchedule: BelongsToSetAssociationMixin<ActionSchedule, number>;
   declare createSchedule: BelongsToCreateAssociationMixin<ActionSchedule>;
 }
 

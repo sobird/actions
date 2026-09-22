@@ -397,7 +397,7 @@ describe('pickTask', () => {
 
   async function finish(job: ActionRunJob, result: Result) {
     const task = (await claimedTaskOf(job))!;
-    return ActionTask.updateByState(BigInt(runner.id!), create(TaskStateSchema, { id: task.id!, result }));
+    return ActionTask.updateByState(runner.id, create(TaskStateSchema, { id: BigInt(task.id), result }));
   }
 
   beforeAll(async () => {

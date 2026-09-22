@@ -9,6 +9,7 @@ import {
   type InferAttributes,
   type InferCreationAttributes,
   type CreationAttributes,
+  type CreationOptional,
   type NonAttribute,
   type Association,
   type BelongsToGetAssociationMixin,
@@ -26,6 +27,7 @@ export class ActionTaskStep extends BaseModel<
   InferAttributes<ActionTaskStep>,
   InferCreationAttributes<ActionTaskStep>
 > {
+  declare id: CreationOptional<number>;
   declare name: string;
   declare taskId: number;
   declare index: number;
@@ -51,7 +53,7 @@ export class ActionTaskStep extends BaseModel<
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
   declare getTask: BelongsToGetAssociationMixin<ActionTask>;
-  declare setTask: BelongsToSetAssociationMixin<ActionTask, bigint>;
+  declare setTask: BelongsToSetAssociationMixin<ActionTask, number>;
   declare createTask: BelongsToCreateAssociationMixin<ActionTask>;
 }
 

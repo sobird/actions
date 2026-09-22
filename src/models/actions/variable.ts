@@ -32,7 +32,7 @@ export const VARIABLE_DESCRIPTION_MAX_LENGTH = 4096;
  * To avoid this, make it clear with {OwnerID: 0, RepoID: 1} for repo level variables.
  */
 export class ActionVariable extends BaseModel<ActionVariableAttributes, ActionVariableCreationAttributes> {
-  declare id: bigint;
+  declare id: number;
   declare ownerId: number;
   declare repositoryId: number;
   declare name: string;

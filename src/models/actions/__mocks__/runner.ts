@@ -2,7 +2,7 @@ import { ActionRunner, type ActionRunnerCreationAttributes } from '../runner';
 
 const seeds: ActionRunnerCreationAttributes[] = [
   {
-    id: 1n,
+    id: 1,
     name: 'test runner name',
     ownerId: 1,
     repositoryId: 4,

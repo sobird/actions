@@ -19,7 +19,7 @@ const RUN_ID = 800;
 
 beforeAll(async () => {
   await ActionRun.create({
-    id: BigInt(RUN_ID),
+    id: RUN_ID,
     title: 'createForRunner',
     ownerId: 1,
     repositoryId: 4,
@@ -167,9 +167,9 @@ describe('ActionTask.updateByState', () => {
     const stoppedAt = new Date(1683636700000);
 
     const updated = await ActionTask.updateByState(
-      1n,
+      1,
       create(TaskStateSchema, {
-        id: task.id!,
+        id: BigInt(task.id),
         result: Result.FAILURE,
         stoppedAt: timestampFromDate(stoppedAt),
       }),
@@ -189,8 +189,8 @@ describe('ActionTask.updateByState', () => {
     await task.save();
 
     const updated = await ActionTask.updateByState(
-      1n,
-      create(TaskStateSchema, { id: task.id!, result: Result.SUCCESS }),
+      1,
+      create(TaskStateSchema, { id: BigInt(task.id), result: Result.SUCCESS }),
     );
 
     expect(updated.status).toBe(Status.Cancelled);
@@ -204,9 +204,9 @@ describe('ActionTask.updateByState', () => {
     await task.save();
 
     const updated = await ActionTask.updateByState(
-      1n,
+      1,
       create(TaskStateSchema, {
-        id: task.id!,
+        id: BigInt(task.id),
         result: Result.FAILURE,
         stoppedAt: timestampFromDate(new Date()),
       }),
@@ -221,14 +221,14 @@ describe('ActionTask.updateByState', () => {
     const startedAt = new Date(1683636528000);
 
     const updated = await ActionTask.updateByState(
-      1n,
+      1,
       create(TaskStateSchema, {
-        id: task.id!,
+        id: BigInt(task.id),
         steps: [
           create(StepStateSchema, {
-            id: 1n,
-            logIndex: 12n,
-            logLength: 34n,
+            id: BigInt(1),
+            logIndex: BigInt(12),
+            logLength: BigInt(34),
             startedAt: timestampFromDate(startedAt),
           }),
         ],
@@ -251,10 +251,10 @@ describe('ActionTask.updateByState', () => {
 
     // job 结束时没跑到的步骤就是这样上报的：有终态，没有 stoppedAt
     const updated = await ActionTask.updateByState(
-      1n,
+      1,
       create(TaskStateSchema, {
-        id: task.id!,
-        steps: [create(StepStateSchema, { id: 2n, result: Result.CANCELLED })],
+        id: BigInt(task.id),
+        steps: [create(StepStateSchema, { id: BigInt(2), result: Result.CANCELLED })],
       }),
     );
 
@@ -271,12 +271,12 @@ describe('ActionTask.updateByState', () => {
     await step.save();
 
     await ActionTask.updateByState(
-      1n,
+      1,
       create(TaskStateSchema, {
-        id: task.id!,
+        id: BigInt(task.id),
         steps: [
           create(StepStateSchema, {
-            id: 0n,
+            id: BigInt(0),
             result: Result.SUCCESS,
             stoppedAt: timestampFromDate(new Date(1750000000000)),
           }),
@@ -291,12 +291,14 @@ describe('ActionTask.updateByState', () => {
   it('rejects a state reported by another runner', async () => {
     const { task } = await runningTask();
 
-    await expect(ActionTask.updateByState(2n, create(TaskStateSchema, { id: task.id! }))).rejects.toThrow(
+    await expect(ActionTask.updateByState(2, create(TaskStateSchema, { id: BigInt(task.id) }))).rejects.toThrow(
       'invalid runner for task',
     );
   });
 
   it('rejects a state for a task that does not exist', async () => {
-    await expect(ActionTask.updateByState(1n, create(TaskStateSchema, { id: 404n }))).rejects.toThrow('not exist');
+    await expect(ActionTask.updateByState(1, create(TaskStateSchema, { id: BigInt(404) }))).rejects.toThrow(
+      'not exist',
+    );
   });
 });

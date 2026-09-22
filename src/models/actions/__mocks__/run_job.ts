@@ -3,7 +3,7 @@ import { Status } from '../status';
 
 const seeds: ActionRunJobCreationAttributes[] = [
   {
-    id: BigInt(192),
+    id: 192,
     runId: 791,
     // 指向 `__mocks__/run_attempt.ts` 里 791 的那次 attempt
     runAttemptId: 2001,
@@ -20,7 +20,7 @@ const seeds: ActionRunJobCreationAttributes[] = [
     stoppedAt: new Date(1683636626000),
   },
   {
-    id: BigInt(193),
+    id: 193,
     runId: 792,
     ownerId: 1,
     repositoryId: 4,

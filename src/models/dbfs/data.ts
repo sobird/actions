@@ -17,7 +17,8 @@ import { sequelize, BaseModel } from '@/lib/sequelize';
 export type DbfsDataCreationAttributes = CreationAttributes<DbfsData>;
 
 export class DbfsData extends BaseModel<InferAttributes<DbfsData>, InferCreationAttributes<DbfsData>> {
-  declare metaId: bigint;
+  declare id: CreationOptional<number>;
+  declare metaId: number;
   declare revision: CreationOptional<number>;
   declare blobOffset: number;
   declare blobSize: CreationOptional<number>;

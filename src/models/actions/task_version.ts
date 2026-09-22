@@ -24,6 +24,7 @@ export class ActionTaskVersion extends BaseModel<
   InferAttributes<ActionTaskVersion>,
   InferCreationAttributes<ActionTaskVersion>
 > {
+  declare id: CreationOptional<number>;
   declare ownerId: number;
   declare repositoryId: number;
   declare version: CreationOptional<bigint>;

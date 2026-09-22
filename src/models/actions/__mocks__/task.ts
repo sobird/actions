@@ -3,10 +3,10 @@ import { ActionTask, type ActionTaskCreationAttributes } from '../task';
 
 const seeds: ActionTaskCreationAttributes[] = [
   {
-    id: 47n,
+    id: 47,
     jobId: 192,
     attempt: 3,
-    runnerId: 1n,
+    runnerId: 1,
     status: Status.Running, // 6 is the status code for "running", running task can upload artifacts
     startedAt: new Date(1683636528000),
     stoppedAt: new Date(1683636626000),
@@ -21,10 +21,10 @@ const seeds: ActionTaskCreationAttributes[] = [
     logExpired: false,
   },
   {
-    id: 48n,
+    id: 48,
     jobId: 193,
     attempt: 1,
-    runnerId: 1n,
+    runnerId: 1,
     status: Status.Running, // 6 is the status code for "running", running task can upload artifacts
     startedAt: new Date(1683636528000),
     stoppedAt: new Date(1683636626000),

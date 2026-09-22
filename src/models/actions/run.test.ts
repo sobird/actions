@@ -117,7 +117,7 @@ describe('ActionRun', () => {
     it('settles a run whose latest attempt holds no job as the given status', async () => {
       const run = (await ActionRun.findByPk(SEEDED_RUN_ID))!;
       // 2002 挂的是 run 792，791 名下没有它的 job，所以这次聚合为空集
-      run.latestAttemptId = 2002n;
+      run.latestAttemptId = 2002;
 
       await run.refreshStatus(Status.Skipped);
 
@@ -126,7 +126,7 @@ describe('ActionRun', () => {
 
     it('keeps the times a run already has instead of clearing them', async () => {
       const run = (await ActionRun.findByPk(SEEDED_RUN_ID))!;
-      run.latestAttemptId = 2002n;
+      run.latestAttemptId = 2002;
 
       await run.refreshStatus(Status.Waiting);
 

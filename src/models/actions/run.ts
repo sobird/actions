@@ -40,18 +40,19 @@ import { Status } from './status';
 export type ActionRunCreationAttributes = CreationAttributes<ActionRun>;
 
 export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreationAttributes<ActionRun>> {
+  declare id: CreationOptional<number>;
   declare title: string;
   declare repositoryId: number;
   declare ownerId: number;
   declare workflowId: string;
   declare index: number;
-  declare triggerUserId: CreationOptional<bigint | null>;
-  declare scheduleId: CreationOptional<bigint>;
+  declare triggerUserId: CreationOptional<number | null>;
+  declare scheduleId: CreationOptional<number>;
   declare ref: string;
   declare commitSha: string;
   declare isForkPullRequest: CreationOptional<boolean>;
   declare needApproval: CreationOptional<boolean>;
-  declare approvedBy: CreationOptional<bigint | null>;
+  declare approvedBy: CreationOptional<number | null>;
   declare eventName: string;
   declare eventPayload: CreationOptional<string>;
   declare triggerEvent: CreationOptional<string>;
@@ -59,7 +60,7 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   declare version: CreationOptional<string>;
 
   declare rawConcurrency: CreationOptional<string>;
-  declare workflowRepoId: CreationOptional<bigint>;
+  declare workflowRepoId: CreationOptional<number>;
   declare workflowCommitSha: CreationOptional<string>;
   declare isScopedRun: CreationOptional<boolean>;
 
@@ -69,7 +70,7 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   declare previousDuration: CreationOptional<bigint>;
   declare duration: CreationOptional<number>;
 
-  declare latestAttemptId: CreationOptional<bigint>;
+  declare latestAttemptId: CreationOptional<number>;
 
   /**
    * Recompute the status of this run from the jobs of its latest attempt and persist it.
@@ -128,29 +129,29 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   // we have to declare them here purely virtually
   // these will not exist until `Model.init` was called.
   declare getJobs: HasManyGetAssociationsMixin<ActionRunJob>;
-  declare setJobs: HasManySetAssociationsMixin<ActionRunJob, bigint>;
-  declare addJob: HasManyAddAssociationMixin<ActionRunJob, bigint>;
-  declare addJobs: HasManyAddAssociationsMixin<ActionRunJob, bigint>;
-  declare removeJob: HasManyRemoveAssociationMixin<ActionRunJob, bigint>;
-  declare removeJobs: HasManyRemoveAssociationsMixin<ActionRunJob, bigint>;
-  declare hasJob: HasManyHasAssociationMixin<ActionRunJob, bigint>;
-  declare hasJobs: HasManyHasAssociationsMixin<ActionRunJob, bigint>;
+  declare setJobs: HasManySetAssociationsMixin<ActionRunJob, number>;
+  declare addJob: HasManyAddAssociationMixin<ActionRunJob, number>;
+  declare addJobs: HasManyAddAssociationsMixin<ActionRunJob, number>;
+  declare removeJob: HasManyRemoveAssociationMixin<ActionRunJob, number>;
+  declare removeJobs: HasManyRemoveAssociationsMixin<ActionRunJob, number>;
+  declare hasJob: HasManyHasAssociationMixin<ActionRunJob, number>;
+  declare hasJobs: HasManyHasAssociationsMixin<ActionRunJob, number>;
   declare createJob: HasManyCreateAssociationMixin<ActionRunJob>;
   declare countJobs: HasManyCountAssociationsMixin;
 
   declare getAttempts: HasManyGetAssociationsMixin<ActionRunAttempt>;
-  declare setAttempts: HasManySetAssociationsMixin<ActionRunAttempt, bigint>;
-  declare addAttempt: HasManyAddAssociationMixin<ActionRunAttempt, bigint>;
-  declare addAttempts: HasManyAddAssociationsMixin<ActionRunAttempt, bigint>;
-  declare removeAttempt: HasManyRemoveAssociationMixin<ActionRunAttempt, bigint>;
-  declare removeAttempts: HasManyRemoveAssociationsMixin<ActionRunAttempt, bigint>;
-  declare hasAttempt: HasManyHasAssociationMixin<ActionRunAttempt, bigint>;
-  declare hasAttempts: HasManyHasAssociationsMixin<ActionRunAttempt, bigint>;
+  declare setAttempts: HasManySetAssociationsMixin<ActionRunAttempt, number>;
+  declare addAttempt: HasManyAddAssociationMixin<ActionRunAttempt, number>;
+  declare addAttempts: HasManyAddAssociationsMixin<ActionRunAttempt, number>;
+  declare removeAttempt: HasManyRemoveAssociationMixin<ActionRunAttempt, number>;
+  declare removeAttempts: HasManyRemoveAssociationsMixin<ActionRunAttempt, number>;
+  declare hasAttempt: HasManyHasAssociationMixin<ActionRunAttempt, number>;
+  declare hasAttempts: HasManyHasAssociationsMixin<ActionRunAttempt, number>;
   declare createAttempt: HasManyCreateAssociationMixin<ActionRunAttempt>;
   declare countAttempts: HasManyCountAssociationsMixin;
 
   declare getLatestAttempt: BelongsToGetAssociationMixin<ActionRunAttempt>;
-  declare setLatestAttempt: BelongsToSetAssociationMixin<ActionRunAttempt, bigint>;
+  declare setLatestAttempt: BelongsToSetAssociationMixin<ActionRunAttempt, number>;
   declare createLatestAttempt: BelongsToCreateAssociationMixin<ActionRunAttempt>;
 
   static validate() {

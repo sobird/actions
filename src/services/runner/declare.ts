@@ -17,7 +17,7 @@ export const declare: MethodImpl<typeof RunnerService.method.declare> = async (r
 
   return {
     runner: {
-      id: runner.id,
+      id: BigInt(runner.id),
       uuid: runner.uuid,
       token: runner.token,
       name: runner.name,

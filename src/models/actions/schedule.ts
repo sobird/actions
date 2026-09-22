@@ -36,6 +36,7 @@ export class ActionSchedule extends BaseModel<
   InferAttributes<ActionSchedule>,
   InferCreationAttributes<ActionSchedule>
 > {
+  declare id: CreationOptional<number>;
   declare title: string;
   declare specs?: string[];
   declare ownerId: number;

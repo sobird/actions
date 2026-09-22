@@ -4,7 +4,7 @@ import { Status } from '../status';
 // 791/792 是 `__mocks__/run.ts` 里的 run，2001/2002 各挂一个，用来验证关联只取自己那一份。
 const seeds: ActionRunAttemptCreationAttributes[] = [
   {
-    id: 2001n,
+    id: 2001,
     runId: 791,
     repositoryId: 4,
     attempt: 1,
@@ -16,7 +16,7 @@ const seeds: ActionRunAttemptCreationAttributes[] = [
     stoppedAt: new Date(1683636626000),
   },
   {
-    id: 2002n,
+    id: 2002,
     runId: 792,
     repositoryId: 4,
     attempt: 1,

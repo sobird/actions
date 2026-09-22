@@ -2,7 +2,7 @@ import { ActionTaskStep, type ActionTaskStepCreationAttributes } from '../task_s
 
 const seeds: ActionTaskStepCreationAttributes[] = [
   {
-    id: 1n,
+    id: 1,
     name: 'run some',
     taskId: 47,
     index: 2,
@@ -14,7 +14,7 @@ const seeds: ActionTaskStepCreationAttributes[] = [
     stoppedAt: new Date(1683636626000),
   },
   {
-    id: 2n,
+    id: 2,
     name: 'echo some',
     taskId: 47,
     index: 3,

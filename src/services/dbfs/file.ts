@@ -8,7 +8,7 @@ import { trimSuffix } from '@/utils';
 export const DEFAULT_FILE_BLOCK_SIZE: number = 32 * 1024; // 32KB
 
 class DbFile {
-  public metaId: bigint = 0n;
+  public metaId: number = 0;
 
   public blockSize: number = DEFAULT_FILE_BLOCK_SIZE;
 
@@ -39,7 +39,7 @@ class DbFile {
     if (this.allowWrite) {
       if (flags & fs.constants.O_CREAT) {
         if (flags & fs.constants.O_EXCL) {
-          if (this.metaId !== 0n) {
+          if (this.metaId !== 0) {
             throw new Error('EEXIST: file already exists');
           }
         } else {
@@ -48,7 +48,7 @@ class DbFile {
         }
       }
 
-      if (this.metaId === 0n) {
+      if (this.metaId === 0) {
         throw new Error('ENOENT: no such file or directory');
       }
 
@@ -63,7 +63,7 @@ class DbFile {
     }
 
     // Read-only mode
-    if (this.metaId === 0n) {
+    if (this.metaId === 0) {
       throw new Error('ENOENT: no such file or directory');
     }
   }
@@ -205,7 +205,7 @@ class DbFile {
   }
 
   async seek(offset: number, whence: 'SeekStart' | 'SeekCurrent' | 'SeekEnd') {
-    if (this.metaId === 0n) {
+    if (this.metaId === 0) {
       throw new Error('Invalid file handle');
     }
 
@@ -235,7 +235,7 @@ class DbFile {
   }
 
   async createEmpty() {
-    if (this.metaId !== 0n) {
+    if (this.metaId !== 0) {
       throw new Error('File already exists');
     }
 
@@ -248,7 +248,7 @@ class DbFile {
   }
 
   async truncate() {
-    if (this.metaId === 0n) {
+    if (this.metaId === 0) {
       throw new Error('File does not exist');
     }
 
@@ -259,7 +259,7 @@ class DbFile {
   }
 
   async rename(newPath: string) {
-    if (this.metaId === 0n) {
+    if (this.metaId === 0) {
       throw new Error('File does not exist');
     }
 
@@ -276,7 +276,7 @@ class DbFile {
   }
 
   async delete() {
-    if (this.metaId === 0n) {
+    if (this.metaId === 0) {
       throw new Error('File does not exist');
     }
     return sequelize.transaction(async () => {
@@ -311,7 +311,7 @@ class DbFile {
     return fileMeta;
   }
 
-  static async findFileMetaById(metaId: bigint) {
+  static async findFileMetaById(metaId: number) {
     const fileMeta = await DbfsMeta.findOne({ where: { id: metaId } });
     if (fileMeta) {
       return fileMeta;

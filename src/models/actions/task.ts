@@ -80,8 +80,9 @@ function makeTaskStepDisplayName(step: { name?: string; uses?: string; run?: str
 }
 
 export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCreationAttributes<ActionTask>> {
+  declare id: CreationOptional<number>;
   declare jobId: number;
-  declare runnerId: bigint;
+  declare runnerId: number;
   declare attempt: CreationOptional<number>;
   declare status: CreationOptional<Status>;
   declare startedAt: CreationOptional<Date | null>;
@@ -129,36 +130,36 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
   // these will not exist until `Model.init` was called.
   // 名字跟着 associate 里的 alias 走：alias 是 'steps'，sequelize 生成的就是 getSteps 这一组
   declare getSteps: HasManyGetAssociationsMixin<ActionTaskStep>;
-  declare setSteps: HasManySetAssociationsMixin<ActionTaskStep, bigint>;
-  declare addStep: HasManyAddAssociationMixin<ActionTaskStep, bigint>;
-  declare addSteps: HasManyAddAssociationsMixin<ActionTaskStep, bigint>;
-  declare removeStep: HasManyRemoveAssociationMixin<ActionTaskStep, bigint>;
-  declare removeSteps: HasManyRemoveAssociationsMixin<ActionTaskStep, bigint>;
-  declare hasStep: HasManyHasAssociationMixin<ActionTaskStep, bigint>;
-  declare hasSteps: HasManyHasAssociationsMixin<ActionTaskStep, bigint>;
+  declare setSteps: HasManySetAssociationsMixin<ActionTaskStep, number>;
+  declare addStep: HasManyAddAssociationMixin<ActionTaskStep, number>;
+  declare addSteps: HasManyAddAssociationsMixin<ActionTaskStep, number>;
+  declare removeStep: HasManyRemoveAssociationMixin<ActionTaskStep, number>;
+  declare removeSteps: HasManyRemoveAssociationsMixin<ActionTaskStep, number>;
+  declare hasStep: HasManyHasAssociationMixin<ActionTaskStep, number>;
+  declare hasSteps: HasManyHasAssociationsMixin<ActionTaskStep, number>;
   declare createStep: HasManyCreateAssociationMixin<ActionTaskStep>;
   declare countSteps: HasManyCountAssociationsMixin;
 
   // ActionTaskOutput, alias 'outputs'
   declare getOutputs: HasManyGetAssociationsMixin<ActionTaskOutput>;
-  declare setOutputs: HasManySetAssociationsMixin<ActionTaskOutput, bigint>;
-  declare addOutput: HasManyAddAssociationMixin<ActionTaskOutput, bigint>;
-  declare addOutputs: HasManyAddAssociationsMixin<ActionTaskOutput, bigint>;
-  declare removeOutput: HasManyRemoveAssociationMixin<ActionTaskOutput, bigint>;
-  declare removeOutputs: HasManyRemoveAssociationsMixin<ActionTaskOutput, bigint>;
-  declare hasOutput: HasManyHasAssociationMixin<ActionTaskOutput, bigint>;
-  declare hasOutputs: HasManyHasAssociationsMixin<ActionTaskOutput, bigint>;
+  declare setOutputs: HasManySetAssociationsMixin<ActionTaskOutput, number>;
+  declare addOutput: HasManyAddAssociationMixin<ActionTaskOutput, number>;
+  declare addOutputs: HasManyAddAssociationsMixin<ActionTaskOutput, number>;
+  declare removeOutput: HasManyRemoveAssociationMixin<ActionTaskOutput, number>;
+  declare removeOutputs: HasManyRemoveAssociationsMixin<ActionTaskOutput, number>;
+  declare hasOutput: HasManyHasAssociationMixin<ActionTaskOutput, number>;
+  declare hasOutputs: HasManyHasAssociationsMixin<ActionTaskOutput, number>;
   declare createOutput: HasManyCreateAssociationMixin<ActionTaskOutput>;
   declare countOutputs: HasManyCountAssociationsMixin;
 
   // ActionRunJob, alias 'job'
   declare getJob: BelongsToGetAssociationMixin<ActionRunJob>;
-  declare setJob: BelongsToSetAssociationMixin<ActionRunJob, bigint>;
+  declare setJob: BelongsToSetAssociationMixin<ActionRunJob, number>;
   declare createJob: BelongsToCreateAssociationMixin<ActionRunJob>;
 
   // ActionRunner, alias 'runner'
   declare getRunner: BelongsToGetAssociationMixin<ActionRunner>;
-  declare setRunner: BelongsToSetAssociationMixin<ActionRunner, bigint>;
+  declare setRunner: BelongsToSetAssociationMixin<ActionRunner, number>;
   declare createRunner: BelongsToCreateAssociationMixin<ActionRunner>;
 
   /**
@@ -176,8 +177,8 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
       await sequelize.transaction(async (transaction) => {
         const task = await this.create(
           {
-            jobId: Number(job.id!),
-            runnerId: runner.id!,
+            jobId: job.id,
+            runnerId: runner.id,
             attempt: job.attempt,
             status: Status.Running,
             startedAt: now,
@@ -195,14 +196,14 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
         );
 
         // logFilename embeds the task id, which only exists after the insert.
-        task.logFilename = logFileName(repoFullName, task.id!);
+        task.logFilename = logFileName(repoFullName, task.id);
         await task.save({ fields: ['logFilename'], transaction });
 
         await this.createSteps(task, job, transaction);
 
         const affectedCount = await ActionRunJob.updateRunJob(
           job,
-          { taskId: Number(task.id), status: Status.Running, startedAt: now },
+          { taskId: task.id, status: Status.Running, startedAt: now },
           { taskId: 0, status: Status.Waiting.toString() },
           transaction,
         );
@@ -238,10 +239,10 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
         job,
         // 连接层开了 omitNull，赋值 null 会被 UPDATE 整条丢掉，置空只能写 literal
         { taskId: 0, status: Status.Waiting, startedAt: sequelize.literal('NULL') },
-        { taskId: Number(task.id) },
+        { taskId: task.id },
         transaction,
       );
-      await ActionTaskStep.destroy({ where: { taskId: Number(task.id) }, transaction });
+      await ActionTaskStep.destroy({ where: { taskId: task.id }, transaction });
       await task.destroy({ transaction });
     });
   }
@@ -256,7 +257,7 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
    * unit of work with what it does next, otherwise this opens its own.
    */
   public static async updateByState(
-    runnerId: bigint,
+    runnerId: number,
     state: TaskState,
     transaction?: Transaction,
   ): Promise<ActionTask> {
@@ -266,13 +267,13 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
     return sequelize.transaction((t) => this.applyState(runnerId, state, t));
   }
 
-  private static async applyState(runnerId: bigint, state: TaskState, transaction: Transaction): Promise<ActionTask> {
+  private static async applyState(runnerId: number, state: TaskState, transaction: Transaction): Promise<ActionTask> {
     const task = await this.findByPk(state.id, { transaction });
     if (!task) {
       throw new Error(`task with id ${state.id}: not exist`);
     }
     // Coerce before comparing: the column reads back as a number or a string depending on
-    // the dialect, so a strict bigint comparison would reject the task's own runner.
+    // the dialect, so a strict comparison would reject the task's own runner.
     if (Number(runnerId) !== Number(task.runnerId)) {
       throw new Error('invalid runner for task');
     }
@@ -371,7 +372,7 @@ export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCrea
     await ActionTaskStep.bulkCreate(
       steps.map((step, index) => ({
         name: makeTaskStepDisplayName(step, 255),
-        taskId: Number(task.id),
+        taskId: task.id,
         index,
         repositoryId: task.repositoryId,
         logIndex: 0,

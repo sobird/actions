@@ -22,6 +22,7 @@ export class ActionRunnerToken extends BaseModel<
   InferAttributes<ActionRunnerToken>,
   InferCreationAttributes<ActionRunnerToken>
 > {
+  declare id: CreationOptional<number>;
   declare token: CreationOptional<string>;
   declare ownerId: number;
   declare repositoryId: number;

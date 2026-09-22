@@ -53,6 +53,7 @@ const RUNNER_IDLE_TIME = 10 * 1000;
  * To avoid this, make it clear with {OwnerID: 0, RepoID: 1} for repo level runners.
  */
 export class ActionRunner extends BaseModel<InferAttributes<ActionRunner>, InferCreationAttributes<ActionRunner>> {
+  declare id: CreationOptional<number>;
   declare uuid: CreationOptional<string>;
   declare name: string;
   declare version: string;
@@ -81,7 +82,7 @@ export class ActionRunner extends BaseModel<InferAttributes<ActionRunner>, Infer
   }
 
   /** deletes an ephemeral runner by its id; a missing or non-ephemeral runner is a no-op */
-  public static async deleteEphemeralRunner(id: bigint, transaction?: Transaction) {
+  public static async deleteEphemeralRunner(id: number, transaction?: Transaction) {
     const runner = await this.findByPk(id, { transaction });
     if (!runner?.ephemeral) {
       return;
@@ -110,13 +111,13 @@ export class ActionRunner extends BaseModel<InferAttributes<ActionRunner>, Infer
 
   declare getTasks: HasManyGetAssociationsMixin<ActionTask>;
   declare countTasks: HasManyCountAssociationsMixin;
-  declare hasTask: HasManyHasAssociationMixin<ActionTask, bigint>;
-  declare hasTasks: HasManyHasAssociationsMixin<ActionTask, bigint>;
-  declare setTasks: HasManySetAssociationsMixin<ActionTask, bigint>;
-  declare addTask: HasManyAddAssociationMixin<ActionTask, bigint>;
-  declare addTasks: HasManyAddAssociationsMixin<ActionTask, bigint>;
-  declare removeTask: HasManyRemoveAssociationMixin<ActionTask, bigint>;
-  declare removeTasks: HasManyRemoveAssociationsMixin<ActionTask, bigint>;
+  declare hasTask: HasManyHasAssociationMixin<ActionTask, number>;
+  declare hasTasks: HasManyHasAssociationsMixin<ActionTask, number>;
+  declare setTasks: HasManySetAssociationsMixin<ActionTask, number>;
+  declare addTask: HasManyAddAssociationMixin<ActionTask, number>;
+  declare addTasks: HasManyAddAssociationsMixin<ActionTask, number>;
+  declare removeTask: HasManyRemoveAssociationMixin<ActionTask, number>;
+  declare removeTasks: HasManyRemoveAssociationsMixin<ActionTask, number>;
   declare createTask: HasManyCreateAssociationMixin<ActionTask>;
 }
 

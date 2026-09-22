@@ -146,7 +146,7 @@ export async function resolveBlockedJobs(runId: number, transaction?: Transactio
     let settled = 0;
 
     for (const job of blockedJobs) {
-      if (decided.has(Number(job.id))) {
+      if (decided.has(job.id)) {
         continue;
       }
 
@@ -162,7 +162,7 @@ export async function resolveBlockedJobs(runId: number, transaction?: Transactio
       }
 
       job.status = verdict === 'failed' ? Status.Skipped : Status.Waiting;
-      decided.add(Number(job.id));
+      decided.add(job.id);
       settled += 1;
     }
 
@@ -348,6 +348,6 @@ export async function pickTask(runner: ActionRunner) {
     }
 
     const last = jobs[jobs.length - 1];
-    cursor = { updatedAt: last.updatedAt, id: Number(last.id) };
+    cursor = { updatedAt: last.updatedAt, id: last.id };
   }
 }

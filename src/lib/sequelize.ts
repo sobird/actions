@@ -142,8 +142,6 @@ export const sequelize = new Sequelize({
  * sobird<i@sobird.me> at 2023/12/05 21:08:43 created.
  */
 export class BaseModel<T extends {} = any, P extends {} = T> extends Model<T, P> {
-  declare id?: bigint;
-
   /**
    * Helper method for defining associations.
    * This method is not a part of Sequelize lifecycle.

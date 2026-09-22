@@ -60,6 +60,7 @@ function isSettled(job: ActionRunJob): boolean {
  * ActionRunJob represents a job of a run
  */
 export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, InferCreationAttributes<ActionRunJob>> {
+  declare id: CreationOptional<number>;
   declare runId: number;
   declare repositoryId: number;
   declare ownerId: number;
@@ -121,24 +122,24 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   // associates method
   // ActionTask, alias 'tasks'
   declare getTasks: HasManyGetAssociationsMixin<ActionTask>;
-  declare setTasks: HasManySetAssociationsMixin<ActionTask, bigint>;
-  declare addTask: HasManyAddAssociationMixin<ActionTask, bigint>;
-  declare addTasks: HasManyAddAssociationsMixin<ActionTask, bigint>;
-  declare removeTask: HasManyRemoveAssociationMixin<ActionTask, bigint>;
-  declare removeTasks: HasManyRemoveAssociationsMixin<ActionTask, bigint>;
-  declare hasTask: HasManyHasAssociationMixin<ActionTask, bigint>;
-  declare hasTasks: HasManyHasAssociationsMixin<ActionTask, bigint>;
+  declare setTasks: HasManySetAssociationsMixin<ActionTask, number>;
+  declare addTask: HasManyAddAssociationMixin<ActionTask, number>;
+  declare addTasks: HasManyAddAssociationsMixin<ActionTask, number>;
+  declare removeTask: HasManyRemoveAssociationMixin<ActionTask, number>;
+  declare removeTasks: HasManyRemoveAssociationsMixin<ActionTask, number>;
+  declare hasTask: HasManyHasAssociationMixin<ActionTask, number>;
+  declare hasTasks: HasManyHasAssociationsMixin<ActionTask, number>;
   declare createTask: HasManyCreateAssociationMixin<ActionTask>;
   declare countTasks: HasManyCountAssociationsMixin;
 
   // ActionRun, alias 'run'
   declare getRun: BelongsToGetAssociationMixin<ActionRun>;
-  declare setRun: BelongsToSetAssociationMixin<ActionRun, bigint>;
+  declare setRun: BelongsToSetAssociationMixin<ActionRun, number>;
   declare createRun: BelongsToCreateAssociationMixin<ActionRun>;
 
   // ActionRunAttempt, alias 'runAttempt'
   declare getRunAttempt: BelongsToGetAssociationMixin<ActionRunAttempt>;
-  declare setRunAttempt: BelongsToSetAssociationMixin<ActionRunAttempt, bigint>;
+  declare setRunAttempt: BelongsToSetAssociationMixin<ActionRunAttempt, number>;
   declare createRunAttempt: BelongsToCreateAssociationMixin<ActionRunAttempt>;
 
   /**
@@ -238,7 +239,7 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
       await attempt.save({ fields: ['status', 'startedAt', 'stoppedAt'], transaction });
 
       const run = await ActionRun.findByPk(runId, { transaction });
-      if (!run || Number(run.latestAttemptId) !== Number(attempt.id)) {
+      if (!run || run.latestAttemptId !== attempt.id) {
         return;
       }
       run.status = attempt.status;

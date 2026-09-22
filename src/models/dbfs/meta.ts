@@ -17,7 +17,7 @@ import { sequelize, BaseModel } from '@/lib/sequelize';
 export type DbfsMetaCreationAttributes = CreationAttributes<DbfsMeta>;
 
 export class DbfsMeta extends BaseModel<InferAttributes<DbfsMeta>, InferCreationAttributes<DbfsMeta>> {
-  declare id: CreationOptional<bigint>;
+  declare id: CreationOptional<number>;
   declare fullPath: string;
   declare blockSize: number;
   declare fileSize: CreationOptional<number>;

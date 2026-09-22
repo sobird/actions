@@ -213,7 +213,7 @@ export async function createRunFromWorkflow(workflowPayload: string, options: Cr
 
     const runAttempt = await ActionRunAttempt.create(
       {
-        runId: Number(run.id),
+        runId: run.id,
         repositoryId,
         attempt: 1,
         triggerUserId: 0,
@@ -253,13 +253,13 @@ export async function createRunFromWorkflow(workflowPayload: string, options: Cr
         // Cells are handed out in dispatch order, so the first one keeps the lower
         // attempt job id; both awaits here are ordered on purpose.
         // eslint-disable-next-line no-await-in-loop
-        const attemptJobId = await ActionRunAttemptJobIdIndex.getNext(Number(run.id), transaction);
+        const attemptJobId = await ActionRunAttemptJobIdIndex.getNext(run.id, transaction);
 
         // eslint-disable-next-line no-await-in-loop
         const runJob = await ActionRunJob.create(
           {
-            runId: Number(run.id),
-            runAttemptId: Number(runAttempt.id),
+            runId: run.id,
+            runAttemptId: runAttempt.id,
             attemptJobId,
             ownerId,
             repositoryId,

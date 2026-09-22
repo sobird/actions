@@ -10,6 +10,7 @@ import {
   type InferAttributes,
   type InferCreationAttributes,
   type CreationAttributes,
+  type CreationOptional,
   type NonAttribute,
   type HasManyGetAssociationsMixin,
   type HasManySetAssociationsMixin,
@@ -40,6 +41,7 @@ export class ActionRunAttempt extends BaseModel<
   InferAttributes<ActionRunAttempt>,
   InferCreationAttributes<ActionRunAttempt>
 > {
+  declare id: CreationOptional<number>;
   declare runId: number;
   declare attempt: number;
   declare repositoryId: number;
@@ -69,17 +71,17 @@ export class ActionRunAttempt extends BaseModel<
   };
 
   declare getRun: BelongsToGetAssociationMixin<ActionRun>;
-  declare setRun: BelongsToSetAssociationMixin<ActionRun, bigint>;
+  declare setRun: BelongsToSetAssociationMixin<ActionRun, number>;
   declare createRun: BelongsToCreateAssociationMixin<ActionRun>;
 
   declare getJobs: HasManyGetAssociationsMixin<ActionRunJob>;
-  declare setJobs: HasManySetAssociationsMixin<ActionRunJob, bigint>;
-  declare addJob: HasManyAddAssociationMixin<ActionRunJob, bigint>;
-  declare addJobs: HasManyAddAssociationsMixin<ActionRunJob, bigint>;
-  declare removeJob: HasManyRemoveAssociationMixin<ActionRunJob, bigint>;
-  declare removeJobs: HasManyRemoveAssociationsMixin<ActionRunJob, bigint>;
-  declare hasJob: HasManyHasAssociationMixin<ActionRunJob, bigint>;
-  declare hasJobs: HasManyHasAssociationsMixin<ActionRunJob, bigint>;
+  declare setJobs: HasManySetAssociationsMixin<ActionRunJob, number>;
+  declare addJob: HasManyAddAssociationMixin<ActionRunJob, number>;
+  declare addJobs: HasManyAddAssociationsMixin<ActionRunJob, number>;
+  declare removeJob: HasManyRemoveAssociationMixin<ActionRunJob, number>;
+  declare removeJobs: HasManyRemoveAssociationsMixin<ActionRunJob, number>;
+  declare hasJob: HasManyHasAssociationMixin<ActionRunJob, number>;
+  declare hasJobs: HasManyHasAssociationsMixin<ActionRunJob, number>;
   declare createJob: HasManyCreateAssociationMixin<ActionRunJob>;
   declare countJobs: HasManyCountAssociationsMixin;
 }

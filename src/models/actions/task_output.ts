@@ -13,6 +13,7 @@ import {
   type InferAttributes,
   type InferCreationAttributes,
   type CreationAttributes,
+  type CreationOptional,
   type NonAttribute,
   type BelongsToGetAssociationMixin,
   type BelongsToSetAssociationMixin,
@@ -29,6 +30,7 @@ export class ActionTaskOutput extends BaseModel<
   InferAttributes<ActionTaskOutput>,
   InferCreationAttributes<ActionTaskOutput>
 > {
+  declare id: CreationOptional<number>;
   declare taskId: number;
   declare outputKey: string;
   declare outputValue: string;
@@ -44,7 +46,7 @@ export class ActionTaskOutput extends BaseModel<
   }
 
   declare getTask: BelongsToGetAssociationMixin<ActionTask>;
-  declare setTask: BelongsToSetAssociationMixin<ActionTask, bigint>;
+  declare setTask: BelongsToSetAssociationMixin<ActionTask, number>;
   declare createTask: BelongsToCreateAssociationMixin<ActionTask>;
 
   /** returns the keys of the outputs of the task */

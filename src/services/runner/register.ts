@@ -57,7 +57,7 @@ export const register: MethodImpl<typeof RunnerService.method.register> = async 
 
   return {
     runner: {
-      id: runner.id,
+      id: BigInt(runner.id),
       uuid: runner.uuid,
       token: runner.token,
       name: runner.name,
