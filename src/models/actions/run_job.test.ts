@@ -413,6 +413,25 @@ describe('refreshReusableCallerStatus', () => {
     expect(caller.startedAt).toEqual(startedAt);
   });
 
+  it('writes nothing when the children leave the caller as it is', async () => {
+    const update = vi.spyOn(ActionRunJob, 'update');
+    const repositoryId = nextRepositoryId++;
+    const { run, attempt } = await addRun(repositoryId);
+    const caller = await addJob(run, attempt, {
+      isReusableCaller: true,
+      isExpanded: true,
+      status: Status.Success,
+      startedAt: new Date(1700000000000),
+      stoppedAt: new Date(1700000060000),
+    });
+    await addJob(run, attempt, { parentJobId: caller.id, status: Status.Success });
+
+    await ActionRunJob.refreshReusableCallerStatus(caller);
+
+    expect(update).not.toHaveBeenCalled();
+    update.mockRestore();
+  });
+
   it('carries a child status up through the callers above it', async () => {
     const repositoryId = nextRepositoryId++;
     const { run, attempt } = await addRun(repositoryId);
