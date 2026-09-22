@@ -14,6 +14,9 @@ import { Status } from '@/models/actions/status';
 import { ellipsisDisplayString } from '@/utils';
 import WorkflowPlanner from '@/workflow/planner';
 
+import { prepareToStartJobWithConcurrency, prepareToStartRunWithConcurrency } from './clear_tasks';
+import { evaluateJobConcurrencyFillModel, evaluateRunConcurrencyFillModel } from './concurrency';
+
 /**
  * A run created from a local workflow has no repository or user behind it, but
  * the models declare both as non-null. They exist only so a run can be scoped
@@ -192,6 +195,10 @@ export async function createRunFromWorkflow(workflowPayload: string, options: Cr
   const created = await sequelize.transaction(async (transaction) => {
     const index = await ActionRunIndex.getNext(repositoryId, transaction);
 
+    // `concurrency:` with no value parses to null, and upstream's nil check skips it.
+    const runConcurrency: unknown = source.concurrency;
+    const declaresRunConcurrency = runConcurrency !== undefined && runConcurrency !== null;
+
     const run = await ActionRun.create(
       {
         title: ellipsisDisplayString(title || workflowId, 255),
@@ -207,22 +214,32 @@ export async function createRunFromWorkflow(workflowPayload: string, options: Cr
         status: Status.Waiting,
         isForkPullRequest: false,
         needApproval: false,
+        rawConcurrency: declaresRunConcurrency ? JSON.stringify(runConcurrency) : '',
       },
       { transaction },
     );
 
-    const runAttempt = await ActionRunAttempt.create(
-      {
-        runId: run.id,
-        repositoryId,
-        attempt: 1,
-        triggerUserId: 0,
-        status: Status.Waiting,
-        concurrencyGroup: '',
-        concurrencyCancel: false,
-      },
-      { transaction },
-    );
+    const runAttempt = ActionRunAttempt.build({
+      runId: run.id,
+      repositoryId,
+      attempt: 1,
+      triggerUserId: 0,
+      status: Status.Waiting,
+      concurrencyGroup: '',
+      concurrencyCancel: false,
+    });
+
+    // The workflow level never reads `needs`, so its group resolves here and now; a node
+    // that cannot be read at all fails the run, which is where upstream lets it land.
+    if (declaresRunConcurrency) {
+      if (!evaluateRunConcurrencyFillModel(runAttempt, run.rawConcurrency)) {
+        throw new Error(`run ${run.id}: workflow concurrency cannot be read`);
+      }
+      // A group another run already holds leaves every job of this run blocked with it.
+      runAttempt.status = await prepareToStartRunWithConcurrency(runAttempt, transaction);
+    }
+
+    await runAttempt.save({ transaction });
 
     run.latestAttemptId = runAttempt.id;
     await run.save({ transaction });
@@ -235,6 +252,8 @@ export async function createRunFromWorkflow(workflowPayload: string, options: Cr
 
     for (const [jobId, job] of jobEntries) {
       const needs = job.Needs;
+      const jobConcurrency: unknown = source.jobs?.[jobId]?.concurrency;
+      const declaresJobConcurrency = jobConcurrency !== undefined && jobConcurrency !== null;
       const cells: Record<string, unknown>[] = job.strategy.Matrices;
       // act always yields at least one cell: a job without a matrix runs once.
       const matrixes = (cells.length > 0 ? cells : [{}]).map((matrix) => ({ matrix, name: matrixName(matrix) }));
@@ -246,43 +265,63 @@ export async function createRunFromWorkflow(workflowPayload: string, options: Cr
       for (const { matrix } of matrixes) {
         const { payload, name } = buildJobPayload(source, jobId, matrix);
 
-        // A job waiting on another job, or a run awaiting approval, must not reach
-        // a runner yet; upstream calls the same state blocked.
-        const shouldBlockJob = needs.length > 0 || run.needApproval;
+        // A job waiting on another job, a run awaiting approval, or a run held back by its
+        // own concurrency group must not reach a runner yet; upstream calls the same state
+        // blocked, and the job emitter resolves it later.
+        const shouldBlockJob = runAttempt.status.isBlocked() || needs.length > 0 || run.needApproval;
 
         // Cells are handed out in dispatch order, so the first one keeps the lower
         // attempt job id; both awaits here are ordered on purpose.
         // eslint-disable-next-line no-await-in-loop
         const attemptJobId = await ActionRunAttemptJobIdIndex.getNext(run.id, transaction);
 
-        // eslint-disable-next-line no-await-in-loop
-        const runJob = await ActionRunJob.create(
-          {
-            runId: run.id,
-            runAttemptId: runAttempt.id,
-            attemptJobId,
-            ownerId,
-            repositoryId,
-            name: ellipsisDisplayString(name, 255),
-            commitSha,
-            isForkPullRequest: false,
-            workflowSourceRepoId,
-            workflowSourceCommitSha,
-            attempt: 1,
-            continueOnError,
-            workflowPayload: payload,
-            jobId,
-            taskId: 0,
-            needs: JSON.stringify(needs),
-            runsOn: JSON.stringify(normalizeRunsOn(job['runs-on']?.source)),
-            status: shouldBlockJob ? Status.Blocked : Status.Waiting,
-            startedAt: null,
-            stoppedAt: null,
-          },
-          { transaction },
-        );
+        // Built rather than created: a job held to its own group must decide its status
+        // before it lands, so that the peers it cancels and the row itself agree.
+        const runJob = ActionRunJob.build({
+          runId: run.id,
+          runAttemptId: runAttempt.id,
+          attemptJobId,
+          ownerId,
+          repositoryId,
+          name: ellipsisDisplayString(name, 255),
+          commitSha,
+          isForkPullRequest: false,
+          workflowSourceRepoId,
+          workflowSourceCommitSha,
+          attempt: 1,
+          continueOnError,
+          workflowPayload: payload,
+          jobId,
+          taskId: 0,
+          needs: JSON.stringify(needs),
+          runsOn: JSON.stringify(normalizeRunsOn(job['runs-on']?.source)),
+          status: shouldBlockJob ? Status.Blocked : Status.Waiting,
+          startedAt: null,
+          stoppedAt: null,
+        });
 
-        hasWaitingJobs ||= !shouldBlockJob;
+        if (declaresJobConcurrency) {
+          runJob.rawConcurrency = JSON.stringify(jobConcurrency);
+
+          // A group that reads other jobs' outputs stays unresolved until those jobs are
+          // done, which is the job emitter's job; a node that cannot be read at all fails
+          // the run here, as it does upstream.
+          if (needs.length === 0 && !evaluateJobConcurrencyFillModel(runJob)) {
+            throw new Error(`run ${run.id} job ${jobId}: concurrency cannot be read`);
+          }
+
+          // Only a job that would start is held to its group; a blocked one is left to the
+          // emitter, which resolves it once its needs are done.
+          if (runJob.status.isWaiting()) {
+            // eslint-disable-next-line no-await-in-loop
+            runJob.status = await prepareToStartJobWithConcurrency(runJob, transaction);
+          }
+        }
+
+        // eslint-disable-next-line no-await-in-loop
+        await runJob.save({ transaction });
+
+        hasWaitingJobs ||= runJob.status.isWaiting();
         runJobs.push(runJob);
       }
     }

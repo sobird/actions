@@ -1,9 +1,9 @@
 import type { Transaction } from 'sequelize';
 
-import { ActionRunJob } from '@/models';
+import { ActionRun, ActionRunJob } from '@/models';
 import { Status } from '@/models/actions/status';
 
-import { prepareToStartJobWithConcurrency } from './clear_tasks';
+import { prepareToStartJobWithConcurrency, shouldBlockRunByConcurrency } from './clear_tasks';
 import { evaluateJobConcurrencyFillModel } from './concurrency';
 import { parseStringList } from './createRun';
 
@@ -80,20 +80,137 @@ async function updateConcurrencyEvaluationForJobWithNeeds(
 }
 
 /**
+ * A run that is blocked on a concurrency group and could be let through now.
+ *
+ * Port of gitea's `services/actions/job_emitter.go` `findConcurrencyWaiterToWake`: the slot
+ * has to be free before any waiter can proceed, so a group still holding a running attempt or
+ * job has no waiter; otherwise the first blocked run of the group is the one to wake, oldest
+ * by whatever order the group query returns. Returns 0 when there is nobody to wake.
+ */
+async function findConcurrencyWaiterToWake(
+  repositoryId: number,
+  excludeRunId: number,
+  concurrencyGroup: string,
+  transaction?: Transaction,
+): Promise<number> {
+  if (concurrencyGroup === '') {
+    return 0;
+  }
+
+  const [holderAttempts, holderJobs] = await ActionRunJob.getConcurrentRunAttemptsAndJobs(
+    repositoryId,
+    concurrencyGroup,
+    [Status.Running, Status.Cancelling],
+    transaction,
+  );
+  if (holderAttempts.length > 0 || holderJobs.length > 0) {
+    return 0;
+  }
+
+  const [blockedAttempts, blockedJobs] = await ActionRunJob.getConcurrentRunAttemptsAndJobs(
+    repositoryId,
+    concurrencyGroup,
+    [Status.Blocked],
+    transaction,
+  );
+  for (const attempt of blockedAttempts) {
+    if (attempt.runId !== excludeRunId) {
+      return attempt.runId;
+    }
+  }
+  for (const job of blockedJobs) {
+    if (job.runId !== excludeRunId) {
+      return job.runId;
+    }
+  }
+
+  return 0;
+}
+
+/**
+ * Re-resolve the runs blocked on the groups this run was holding.
+ *
+ * Port of gitea's `services/actions/job_emitter.go` `checkRunConcurrency`, which returns the
+ * runs to re-emit and lets the queue do the rest. The groups checked are the run's own
+ * (workflow-level) group and the group of each of its jobs that has finished: those are the
+ * slots this run's activity could have just freed.
+ *
+ * `visited` keeps a wake from coming back around to a run already being resolved, which a
+ * pair of runs each blocked on a group the other held could otherwise do.
+ */
+async function wakeConcurrencyWaiters(
+  run: ActionRun,
+  transaction: Transaction | undefined,
+  visited: Set<number>,
+): Promise<void> {
+  const groups = new Set<string>();
+
+  const attempt = await run.getLatestAttempt({ transaction });
+  if (attempt && attempt.concurrencyGroup !== '') {
+    groups.add(attempt.concurrencyGroup);
+  }
+
+  const jobs = await ActionRunJob.findAll({ where: { runId: run.id }, transaction });
+  for (const job of jobs) {
+    if (job.status.isDone() && job.concurrencyGroup !== '') {
+      groups.add(job.concurrencyGroup);
+    }
+  }
+
+  for (const group of groups) {
+    // eslint-disable-next-line no-await-in-loop
+    const waiterRunId = await findConcurrencyWaiterToWake(run.repositoryId, run.id, group, transaction);
+    if (waiterRunId === 0 || visited.has(waiterRunId)) {
+      continue;
+    }
+    // eslint-disable-next-line no-await-in-loop
+    await resolveBlockedJobs(waiterRunId, transaction, visited);
+  }
+}
+
+/**
  * Hand every blocked job of a run the state its dependencies leave it in.
  *
- * Mirrors gitea's `services/actions/job_emitter.go` `checkJobsOfCurrentRunAttempt`: a blocked
- * job whose dependency cells are all done and successful becomes waiting, and one that
- * depends on a cell that failed for real is skipped, so it leaves the queue instead of
- * staying blocked forever. A job that reaches waiting is then held to its own concurrency
- * group, which may keep it blocked after all and cancel the peers it supersedes.
+ * Mirrors gitea's `services/actions/job_emitter.go` `checkJobsOfCurrentRunAttempt`, then the
+ * `checkRunConcurrency` that follows it in `EmitJobsIfReadyByRun`: resolving this run may have
+ * freed a concurrency group, and the runs waiting on it have to be resolved for their jobs to
+ * leave the blocked state.
  *
- * Returns whether any of them is waiting now.
+ * Returns whether any job of this run is waiting now.
  */
-export async function resolveBlockedJobs(runId: number, transaction?: Transaction): Promise<boolean> {
-  const jobs = await ActionRunJob.findAll({ where: { runId }, transaction });
+export async function resolveBlockedJobs(
+  runId: number,
+  transaction?: Transaction,
+  visited = new Set<number>(),
+): Promise<boolean> {
+  visited.add(runId);
+
+  const run = await ActionRun.findByPk(runId, { transaction });
+  if (!run) {
+    throw new Error(`run with id ${runId}: not exist`);
+  }
+
+  const waiting = await resolveJobsOfRunAttempt(run, transaction);
+  await wakeConcurrencyWaiters(run, transaction, visited);
+
+  return waiting;
+}
+
+/**
+ * Settle the blocked jobs of a run's latest attempt against their needs and their own
+ * concurrency groups. Returns whether any of them is waiting now.
+ */
+async function resolveJobsOfRunAttempt(run: ActionRun, transaction?: Transaction): Promise<boolean> {
+  const jobs = await ActionRunJob.findAll({ where: { runId: run.id }, transaction });
   const blockedJobs = jobs.filter((job) => job.status.isBlocked());
   if (blockedJobs.length === 0) {
+    return false;
+  }
+
+  // A run held back by its own concurrency group stays that way, jobs and all. The group is
+  // only re-checked when the run holding it finishes, through `wakeConcurrencyWaiters`.
+  const attempt = await run.getLatestAttempt({ transaction });
+  if (run.status.isBlocked() && attempt && (await shouldBlockRunByConcurrency(attempt, transaction))) {
     return false;
   }
 

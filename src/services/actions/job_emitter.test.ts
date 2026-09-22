@@ -225,7 +225,10 @@ describe('resolveBlockedJobs and concurrency groups', () => {
     await ActionRun.destroy({ where: { repositoryId: repositoryIds } });
   });
 
-  async function addRun(index: number, concurrencyGroup = '', concurrencyCancel = false) {
+  async function addRun(
+    index: number,
+    attempt: { status?: Status; concurrencyGroup?: string; concurrencyCancel?: boolean } = {},
+  ) {
     const run = await ActionRun.create({
       title: 'concurrency',
       ownerId: 1,
@@ -240,20 +243,21 @@ describe('resolveBlockedJobs and concurrency groups', () => {
       needApproval: false,
     });
 
-    const attempt = await ActionRunAttempt.create({
+    const created = await ActionRunAttempt.create({
       runId: run.id,
       repositoryId,
       attempt: 1,
       triggerUserId: 0,
       status: Status.Waiting,
-      concurrencyGroup,
-      concurrencyCancel,
+      concurrencyGroup: '',
+      concurrencyCancel: false,
+      ...attempt,
     });
 
-    run.latestAttemptId = attempt.id;
+    run.latestAttemptId = created.id;
     await run.save();
 
-    return { runId: run.id, attemptId: attempt.id };
+    return { runId: run.id, attemptId: created.id };
   }
 
   function add(
@@ -374,5 +378,56 @@ describe('resolveBlockedJobs and concurrency groups', () => {
     await broken.reload();
     expect(broken.status).toBe(Status.Blocked);
     expect(broken.isConcurrencyEvaluated).toBe(false);
+  });
+
+  it('resolves a job-level group once its needs are done, and starts it when the group is free', async () => {
+    // 组里要引用别的 job 时创建阶段求不了值，留到 needs 结束之后在这里补上
+    const run = await addRun(1);
+    await add(run, 'setup', { status: Status.Success });
+    const build = await add(run, 'build', {
+      status: Status.Blocked,
+      needs: JSON.stringify(['setup']),
+      rawConcurrency: JSON.stringify({ group: 'free', 'cancel-in-progress': false }),
+    });
+
+    await expect(resolveBlockedJobs(run.runId)).resolves.toBe(true);
+
+    await build.reload();
+    expect(build.isConcurrencyEvaluated).toBe(true);
+    expect(build.concurrencyGroup).toBe('free');
+    expect(build.concurrencyCancel).toBe(false);
+    expect(build.status).toBe(Status.Waiting);
+  });
+
+  it('wakes a run blocked on the group the finishing run was holding', async () => {
+    const holderRun = await addRun(1);
+    const holder = await add(holderRun, 'holder', { status: Status.Running, concurrencyGroup: 'shared' });
+    const waiterRun = await addRun(2, { status: Status.Blocked, concurrencyGroup: 'shared' });
+    const waiter = await add(waiterRun, 'waiter', { rawConcurrency: JSON.stringify('shared') });
+
+    // 持有者跑完，组腾出来了
+    await ActionRunJob.updateRunJob(holder, { status: Status.Success });
+
+    await expect(resolveBlockedJobs(holderRun.runId)).resolves.toBe(false);
+
+    await waiter.reload();
+    expect(waiter.status).toBe(Status.Waiting);
+    expect(waiter.isConcurrencyEvaluated).toBe(true);
+    // 连带它那次 attempt 一起离开阻塞态
+    expect((await ActionRunAttempt.findByPk(waiterRun.attemptId))!.status).toBe(Status.Waiting);
+  });
+
+  it('leaves the jobs of a run held by its own workflow-level group alone', async () => {
+    await addRun(1, { status: Status.Running, concurrencyGroup: 'held' });
+    const run = await addRun(2, { status: Status.Blocked, concurrencyGroup: 'held' });
+    // 创建时 run.status 不会被 job 的聚合改到，这里把它摆成上游会看到的样子
+    await ActionRun.update({ status: Status.Blocked }, { where: { id: run.runId } });
+    const job = await add(run, 'build');
+
+    await expect(resolveBlockedJobs(run.runId)).resolves.toBe(false);
+
+    // 它自己的组是空的，没有这层挡板就会直接开跑
+    await job.reload();
+    expect(job.status).toBe(Status.Blocked);
   });
 });

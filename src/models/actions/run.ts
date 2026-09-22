@@ -25,6 +25,7 @@ import {
   type BelongsToGetAssociationMixin,
   type BelongsToSetAssociationMixin,
   type BelongsToCreateAssociationMixin,
+  type Transaction,
 } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
@@ -130,6 +131,52 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   declare getLatestAttempt: BelongsToGetAssociationMixin<ActionRunAttempt>;
   declare setLatestAttempt: BelongsToSetAssociationMixin<ActionRunAttempt, number>;
   declare createLatestAttempt: BelongsToCreateAssociationMixin<ActionRunAttempt>;
+
+  /**
+   * Cancel the jobs the group leaves behind once this run is about to start.
+   *
+   * Port of gitea's `models/actions/run.go` `CancelPreviousJobsByRunConcurrency`. The group's
+   * own pending jobs go first, and a run that cancels in progress takes the running ones with
+   * it; the jobs of every other run in the group follow.
+   *
+   * Unlike the job-level counterpart this filters nothing out of the first batch, because
+   * upstream calls it while creating a run, before that run's own jobs exist.
+   */
+  static async cancelPreviousJobsByRunConcurrency(
+    attempt: ActionRunAttempt,
+    transaction?: Transaction,
+  ): Promise<ActionRunJob[]> {
+    if (attempt.concurrencyGroup === '') {
+      return [];
+    }
+
+    const statuses = [Status.Waiting, Status.Blocked];
+    if (attempt.concurrencyCancel) {
+      statuses.push(Status.Running, Status.Cancelling);
+    }
+
+    const [attempts, concurrentJobs] = await ActionRunJob.getConcurrentRunAttemptsAndJobs(
+      attempt.repositoryId,
+      attempt.concurrencyGroup,
+      statuses,
+      transaction,
+    );
+    const jobsToCancel = [...concurrentJobs];
+
+    for (const concurrentAttempt of attempts) {
+      if (concurrentAttempt.runId === attempt.runId) {
+        continue;
+      }
+      // eslint-disable-next-line no-await-in-loop
+      const attemptJobs = await ActionRunJob.findAll({
+        where: { runId: concurrentAttempt.runId, runAttemptId: concurrentAttempt.id },
+        transaction,
+      });
+      jobsToCancel.push(...attemptJobs);
+    }
+
+    return ActionRunJob.cancelJobs(jobsToCancel, transaction);
+  }
 
   static validate() {
     throw Error('dd');

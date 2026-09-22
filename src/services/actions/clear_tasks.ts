@@ -1,6 +1,6 @@
 import type { Transaction } from 'sequelize';
 
-import { ActionRunJob } from '@/models';
+import { ActionRun, ActionRunJob, type ActionRunAttempt } from '@/models';
 import { Status } from '@/models/actions/status';
 
 /**
@@ -45,6 +45,49 @@ export async function prepareToStartJobWithConcurrency(job: ActionRunJob, transa
   const shouldBlock = await shouldBlockJobByConcurrency(job, transaction);
 
   await ActionRunJob.cancelPreviousJobsByJobConcurrency(job, transaction);
+
+  return shouldBlock ? Status.Blocked : Status.Waiting;
+}
+
+/**
+ * Whether a run has to wait for the workflow-level concurrency group it names.
+ *
+ * Port of gitea's `services/actions/clear_tasks.go` `shouldBlockRunByConcurrency`. Unlike the
+ * job level there is no unresolved state to account for: the workflow level never reads
+ * `needs`, so its group is resolved before anything can ask.
+ */
+export async function shouldBlockRunByConcurrency(
+  attempt: ActionRunAttempt,
+  transaction?: Transaction,
+): Promise<boolean> {
+  if (attempt.concurrencyGroup === '' || attempt.concurrencyCancel) {
+    return false;
+  }
+
+  const [attempts, jobs] = await ActionRunJob.getConcurrentRunAttemptsAndJobs(
+    attempt.repositoryId,
+    attempt.concurrencyGroup,
+    [Status.Running, Status.Cancelling],
+    transaction,
+  );
+
+  return attempts.length > 0 || jobs.length > 0;
+}
+
+/**
+ * Decide the status a run's attempt starts in, and cancel the group peers it supersedes.
+ *
+ * Port of gitea's `services/actions/clear_tasks.go` `PrepareToStartRunWithConcurrency`. The
+ * peers are cancelled even when the run itself has to wait, for the same reason as the job
+ * level: a pending peer in the group is superseded either way.
+ */
+export async function prepareToStartRunWithConcurrency(
+  attempt: ActionRunAttempt,
+  transaction?: Transaction,
+): Promise<Status> {
+  const shouldBlock = await shouldBlockRunByConcurrency(attempt, transaction);
+
+  await ActionRun.cancelPreviousJobsByRunConcurrency(attempt, transaction);
 
   return shouldBlock ? Status.Blocked : Status.Waiting;
 }

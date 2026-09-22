@@ -1,4 +1,4 @@
-import type { ActionRunJob } from '@/models';
+import type { ActionRunAttempt, ActionRunJob } from '@/models';
 
 /**
  * A `concurrency` node, resolved as far as this server can take it.
@@ -51,5 +51,26 @@ export function evaluateJobConcurrencyFillModel(job: ActionRunJob): boolean {
   job.concurrencyGroup = parsed.group;
   job.concurrencyCancel = parsed.cancel;
   job.isConcurrencyEvaluated = true;
+  return true;
+}
+
+/**
+ * Resolve a workflow's raw concurrency into the columns the run attempt carries.
+ *
+ * Port of gitea's `services/actions/concurrency.go` `EvaluateRunConcurrencyFillModel`. The
+ * workflow level has no `needs` to wait on, so unlike the job level it is always resolvable,
+ * and the attempt has no `isConcurrencyEvaluated` column to mark it with.
+ *
+ * Returns false when the node cannot be read. Upstream fails the whole run insert on that,
+ * so a caller creating a run is expected to reject rather than carry on ungrouped.
+ */
+export function evaluateRunConcurrencyFillModel(attempt: ActionRunAttempt, rawConcurrency: string): boolean {
+  const parsed = parseRawConcurrency(JSON.parse(rawConcurrency));
+  if (!parsed) {
+    return false;
+  }
+
+  attempt.concurrencyGroup = parsed.group;
+  attempt.concurrencyCancel = parsed.cancel;
   return true;
 }

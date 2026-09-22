@@ -4,7 +4,12 @@ import { ActionRun, ActionRunAttempt, ActionRunJob } from '@/models';
 import type { ActionRunJobCreationAttributes } from '@/models/actions/run_job';
 import { Status } from '@/models/actions/status';
 
-import { prepareToStartJobWithConcurrency, shouldBlockJobByConcurrency } from './clear_tasks';
+import {
+  prepareToStartJobWithConcurrency,
+  prepareToStartRunWithConcurrency,
+  shouldBlockJobByConcurrency,
+  shouldBlockRunByConcurrency,
+} from './clear_tasks';
 
 // 分组是仓库内的，所以同组的 run 必须落在同一个仓库；每个用例独占一个
 const firstRepositoryId = 9400;
@@ -100,6 +105,11 @@ function grouped(overrides: Partial<ActionRunJobCreationAttributes> = {}) {
     concurrencyGroup: 'shared',
     ...overrides,
   };
+}
+
+/** 上面的函数收的是 attempt 行，这里按 id 取回来 */
+async function loadAttempt(run: { attemptId: number }) {
+  return (await ActionRunAttempt.findByPk(run.attemptId))!;
 }
 
 describe('shouldBlockJobByConcurrency', () => {
@@ -204,5 +214,75 @@ describe('prepareToStartJobWithConcurrency', () => {
     await peer.reload();
     expect(peer.status).toBe(Status.Running);
     expect(peer.taskId).toBe(42);
+  });
+});
+
+describe('shouldBlockRunByConcurrency', () => {
+  it('does not block a run that names no group', async () => {
+    await addRun(1, { status: Status.Running, concurrencyGroup: 'shared' });
+    const run = await addRun(2);
+
+    await expect(shouldBlockRunByConcurrency(await loadAttempt(run))).resolves.toBe(false);
+  });
+
+  it('does not block a run whose group cancels its peers instead of queueing behind them', async () => {
+    await addRun(1, { status: Status.Running, concurrencyGroup: 'shared' });
+    const run = await addRun(2, { concurrencyGroup: 'shared', concurrencyCancel: true });
+
+    await expect(shouldBlockRunByConcurrency(await loadAttempt(run))).resolves.toBe(false);
+  });
+
+  it('blocks a run behind a running attempt of the same group', async () => {
+    await addRun(1, { status: Status.Running, concurrencyGroup: 'shared' });
+    const run = await addRun(2, { concurrencyGroup: 'shared' });
+
+    await expect(shouldBlockRunByConcurrency(await loadAttempt(run))).resolves.toBe(true);
+  });
+
+  it('blocks a run behind a running job of the same group', async () => {
+    const holderRun = await addRun(1);
+    await add(holderRun, 'holder', grouped({ status: Status.Running }));
+    const run = await addRun(2, { concurrencyGroup: 'shared' });
+
+    await expect(shouldBlockRunByConcurrency(await loadAttempt(run))).resolves.toBe(true);
+  });
+
+  it('does not block a run whose group only holds finished jobs', async () => {
+    const holderRun = await addRun(1);
+    await add(holderRun, 'holder', grouped({ status: Status.Success }));
+    const run = await addRun(2, { concurrencyGroup: 'shared' });
+
+    await expect(shouldBlockRunByConcurrency(await loadAttempt(run))).resolves.toBe(false);
+  });
+});
+
+describe('prepareToStartRunWithConcurrency', () => {
+  it('starts the run when its group is free', async () => {
+    const run = await addRun(1, { concurrencyGroup: 'shared' });
+
+    await expect(prepareToStartRunWithConcurrency(await loadAttempt(run))).resolves.toBe(Status.Waiting);
+  });
+
+  it('holds the run back while the group is taken', async () => {
+    await addRun(1, { status: Status.Running, concurrencyGroup: 'shared' });
+    const run = await addRun(2, { concurrencyGroup: 'shared' });
+
+    await expect(prepareToStartRunWithConcurrency(await loadAttempt(run))).resolves.toBe(Status.Blocked);
+  });
+
+  it('cancels the pending jobs of the group even when the run itself has to wait', async () => {
+    const holderRun = await addRun(1, { status: Status.Running, concurrencyGroup: 'shared' });
+    const peerRun = await addRun(2, { concurrencyGroup: 'shared' });
+    const peer = await add(peerRun, 'peer', grouped());
+    const run = await addRun(3, { concurrencyGroup: 'shared' });
+
+    await expect(prepareToStartRunWithConcurrency(await loadAttempt(run))).resolves.toBe(Status.Blocked);
+
+    await peer.reload();
+    expect(peer.status).toBe(Status.Cancelled);
+    expect(peer.stoppedAt).not.toBeNull();
+
+    // 挡着组的那次 attempt 没被牵连
+    expect((await ActionRunAttempt.findByPk(holderRun.attemptId))!.status).toBe(Status.Running);
   });
 });
