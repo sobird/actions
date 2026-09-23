@@ -6,6 +6,7 @@ import {
   ActionRun,
   ActionRunAttempt,
   ActionRunAttemptJobIdIndex,
+  type ActionRunCreationAttributes,
   ActionRunIndex,
   ActionRunJob,
   ActionTaskVersion,
@@ -16,25 +17,6 @@ import WorkflowPlanner from '@/workflow/planner';
 
 import { prepareToStartJobWithConcurrency, prepareToStartRunWithConcurrency } from './clear_tasks';
 import { evaluateJobConcurrencyFillModel, evaluateRunConcurrencyFillModel } from './concurrency';
-
-/**
- * A run created from a local workflow has no repository or user behind it, but
- * the models declare both as non-null. They exist only so a run can be scoped
- * and listed; nothing joins against them.
- */
-export const DEFAULT_OWNER_ID = 1;
-export const DEFAULT_REPOSITORY_ID = 1;
-
-export interface CreateRunOptions {
-  /** ref the run is triggered against, e.g. `refs/heads/master` */
-  ref?: string;
-  commitSha?: string;
-  /** which trigger produced the run; manual submissions use workflow_dispatch */
-  eventName?: string;
-  /** local checkout the job steps should execute in */
-  workdir?: string;
-  title?: string;
-}
 
 /** Normalize `runs-on` into the flat label list a runner is matched against. */
 export function normalizeRunsOn(source: unknown): string[] {
@@ -168,27 +150,56 @@ export function buildJobPayload(
 }
 
 /**
+ * The part of a run row that its trigger, and not its content, decides.
+ *
+ * Derived from the model's creation attributes, so a column added to the model reaches every
+ * entry point at once instead of having to be copied into each one. The columns the insert
+ * resolves itself are taken out, as are the ones the database lifecycle owns. Note the columns
+ * that carry a model-level default stay optional here: the compiler will not make an entry
+ * state them.
+ */
+export type RunSeed = Omit<
+  ActionRunCreationAttributes,
+  | 'id'
+  | 'index'
+  | 'status'
+  | 'rawConcurrency'
+  | 'version'
+  | 'previousDuration'
+  | 'startedAt'
+  | 'stoppedAt'
+  | 'duration'
+  | 'latestAttemptId'
+  | 'workflowId'
+  | 'title'
+> & {
+  /** defaults to the parsed workflow's `name`, then its file, then `workflow` */
+  workflowId?: string;
+  /** defaults to the resolved `workflowId` */
+  title?: string;
+};
+
+/**
  * Create a run, one run attempt, and one job per job and matrix cell.
  *
- * Mirrors gitea's `services/actions/run.go` `InsertRun`: the run index comes from
- * a counter table, the jobs are resolved from the workflow into per-cell
- * payloads, and only waiting jobs wake the runners up.
+ * Mirrors gitea's `services/actions/run.go` `PrepareRunAndInsert`: the entry point hands over
+ * the raw content plus the trigger context it assembled, and everything the content itself
+ * decides — the run index, the per-cell payloads, the concurrency groups — is resolved here.
+ * Only waiting jobs wake the runners up.
  */
-export async function createRunFromWorkflow(workflowPayload: string, options: CreateRunOptions = {}) {
-  const { ref = 'refs/heads/master', commitSha = '', eventName = 'workflow_dispatch', workdir = '', title } = options;
-
-  const planner = WorkflowPlanner.Single(workflowPayload);
+export async function prepareRunAndInsert(content: string, seed: RunSeed) {
+  const planner = WorkflowPlanner.Single(content);
   const workflow = planner.workflows[0];
   const jobEntries = Object.entries(workflow.jobs ?? {});
   if (jobEntries.length === 0) {
     throw new Error('workflow has no jobs');
   }
 
-  const source = parse(workflowPayload) as Record<string, any>;
+  const source = parse(content) as Record<string, any>;
 
-  const ownerId = DEFAULT_OWNER_ID;
-  const repositoryId = DEFAULT_REPOSITORY_ID;
-  const workflowId = workflow.name || workflow.file || 'workflow';
+  const { ownerId, repositoryId, commitSha } = seed;
+  const workflowId = seed.workflowId || workflow.name || workflow.file || 'workflow';
+  const title = seed.title || workflowId;
 
   // One transaction for the whole insert: a half-created run must not burn a run
   // index, and the runners must never see a job before its run exists.
@@ -199,21 +210,14 @@ export async function createRunFromWorkflow(workflowPayload: string, options: Cr
     const runConcurrency: unknown = source.concurrency;
     const declaresRunConcurrency = runConcurrency !== undefined && runConcurrency !== null;
 
+    // Whatever the seed carries lands as written; only these five columns are the core's to set.
     const run = await ActionRun.create(
       {
-        title: ellipsisDisplayString(title || workflowId, 255),
-        ownerId,
-        repositoryId,
+        ...seed,
+        title: ellipsisDisplayString(title, 255),
         workflowId,
         index,
-        ref,
-        commitSha,
-        eventName,
-        eventPayload: JSON.stringify({ workdir }),
-        triggerEvent: 'manual',
         status: Status.Waiting,
-        isForkPullRequest: false,
-        needApproval: false,
         rawConcurrency: declaresRunConcurrency ? JSON.stringify(runConcurrency) : '',
       },
       { transaction },
