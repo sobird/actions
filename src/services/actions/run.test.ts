@@ -4,7 +4,7 @@ import { parse, stringify } from 'yaml';
 import { ActionRun, ActionRunAttempt, ActionRunJob } from '@/models';
 import { Status } from '@/models/actions/status';
 
-import { buildJobPayload, createRunFromWorkflow } from './createRun';
+import { buildJobPayload, createRunFromWorkflow } from './run';
 
 const workflow = {
   name: 'CI',

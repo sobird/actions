@@ -5,7 +5,7 @@ import { Status } from '@/models/actions/status';
 
 import { prepareToStartJobWithConcurrency, shouldBlockRunByConcurrency } from './clear_tasks';
 import { evaluateJobConcurrencyFillModel } from './concurrency';
-import { parseStringList } from './createRun';
+import { parseStringList } from './run';
 
 /** The dependency fields the resolution reads. */
 export interface DependencyJob {

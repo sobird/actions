@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { createRunFromWorkflow } from '@/services/actions/createRun';
+import { createRunFromWorkflow } from '@/services/actions/run';
 
 interface CreateRunBody {
   workflow?: string;

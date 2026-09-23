@@ -6,7 +6,7 @@ import { ActionRun, ActionRunJob, ActionRunner, ActionTask, ActionTaskOutput } f
 import { Status } from '@/models/actions/status';
 import Workflow from '@/workflow';
 
-import { parseStringList } from './createRun';
+import { parseStringList } from './run';
 
 /**
  * Assemble the payload a runner needs to execute a claimed task.
