@@ -1,4 +1,4 @@
-name: reusable
+name: reusable on array
 
 on:
   - workflow_call

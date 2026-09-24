@@ -1,0 +1,24 @@
+name: reusable nested caller
+
+# hosted.yml 的 reusable-nested 用它验证两级嵌套（hosted.yml → 本文件 → outputs.yml）。
+#
+# 断言写在这里而不是顶层的 needs.reusable-nested.outputs.*：`uses` 作业在
+# Job.executor 里提前返回，写 outputs 的 post-hook 压根不跑，本文件自己的
+# on.workflow_call.outputs 因此永远不会被求值。一级调用不受影响——outputs.yml 的普通
+# 作业会把叶子 workflow 的 outputs 落到「调用方作业」的 Outputs 上，正是下面 needs.inner
+# 读到的那个。
+on: workflow_call
+
+jobs:
+  inner:
+    uses: ./test/workflows/workflow_call/outputs.yml
+
+  verify:
+    runs-on: ubuntu-latest
+    needs: [inner]
+    steps:
+      - name: 被调方的 workflow outputs 落在 caller 的 needs 上
+        run: |
+          [ "${{ needs.inner.result }}" = "success" ] || exit 1
+          [ "${{ needs.inner.outputs.workflow_output1 }}" = "hello" ] || exit 1
+          [ "${{ needs.inner.outputs.workflow_output2 }}" = "world" ] || exit 1

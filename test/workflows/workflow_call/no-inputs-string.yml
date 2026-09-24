@@ -1,4 +1,4 @@
-name: reusable
+name: reusable on string
 
 on: workflow_call
 

@@ -9,7 +9,11 @@ run-name: hosted basic by ${{ github.actor }}
 # 唯一被复用的宿主侧副作用，见 README 的「Run a job directly on the host」。
 #
 # 断言一律写成 `... || exit 1`：默认 shell 是 `sh -e`（实际上跑的是 bash），失败的断言
-# 会让步骤退出非零，从而把作业判失败。
+# 会让步骤退出非零，从而把作业判失败。注意失败信号只落在**那个作业**的 `Job failed` 上
+# （CLI 的退出码恒为 0），所以跑完要看日志。
+#
+# 作业级 `uses:` 调的本地可重用工作流也是同一套宿主侧机制：skipCheckout 默认开着，
+# 被调方按仓库根相对路径在进程内读盘，不联网、不起容器，因此这一节同样不需要 Docker。
 on: push
 
 env:
@@ -256,6 +260,56 @@ jobs:
       - name: cancelled() 在正常跑完的运行里为假
         if: cancelled()
         run: exit 1
+
+  # 可重用工作流：断言都写在被调方里，这里只负责用各种调用形态把它们拉起来
+  reusable-inputs:
+    name: reusable workflow with inputs and an explicit secrets map
+    # with-inputs.yml 自己断言了三种类型的必填输入、三个被默认值补上的可选项、
+    # 显式传进来的 secret，以及 github.event_name 不是 workflow_call
+    uses: ./test/workflows/workflow_call/with-inputs.yml
+    with:
+      string_required: string
+      bool_required: ${{ true }}
+      number_required: 1
+    secrets:
+      secret: keep_it_private
+
+  reusable-on-string:
+    name: reusable workflow declared with a string on
+    uses: ./test/workflows/workflow_call/no-inputs-string.yml
+
+  reusable-on-array:
+    name: reusable workflow declared with an array on
+    uses: ./test/workflows/workflow_call/no-inputs-array.yml
+
+  reusable-matrix:
+    name: reusable matrix ${{ matrix.who }}
+    strategy:
+      matrix:
+        who: [alpha, beta]
+    # 每个格子各调一次，with 在 caller 的 matrix 上下文里求值
+    uses: ./test/workflows/workflow_call/matrix-cell.yml
+    with:
+      who: ${{ matrix.who }}
+
+  reusable-nested:
+    name: reusable workflow calling another reusable workflow
+    # 两级嵌套 hosted → nested.yml → outputs.yml，中间层的断言在 nested.yml 里
+    uses: ./test/workflows/workflow_call/nested.yml
+
+  consume-reusable:
+    name: consume reusable outputs
+    needs: [reusable-inputs, reusable-on-string, reusable-on-array, reusable-matrix, reusable-nested]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 被调方的 workflow output 回传到 caller 作业，每个作业的结果都是 success
+        run: |
+          [ "${{ needs.reusable-inputs.outputs.output }}" = "string" ] || exit 1
+          [ "${{ needs.reusable-inputs.result }}" = "success" ] || exit 1
+          [ "${{ needs.reusable-on-string.result }}" = "success" ] || exit 1
+          [ "${{ needs.reusable-on-array.result }}" = "success" ] || exit 1
+          [ "${{ needs.reusable-matrix.result }}" = "success" ] || exit 1
+          [ "${{ needs.reusable-nested.result }}" = "success" ] || exit 1
 
   consume:
     name: consume outputs

@@ -1,0 +1,23 @@
+name: reusable matrix cell
+
+# hosted.yml 的 reusable-matrix 用它验证 matrix × 作业级 uses:：每个格子各调一次，
+# 各自拿到自己那份 `with`（调用方的 with 用 ${{ matrix.who }} 求值）。
+on:
+  workflow_call:
+    inputs:
+      who:
+        required: true
+        type: string
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 每个格子拿到自己那份矩阵值
+        run: |
+          echo "who=${{ inputs.who }}"
+          [ -n "${{ inputs.who }}" ] || exit 1
+          case "${{ inputs.who }}" in
+            alpha|beta) ;;
+            *) exit 1 ;;
+          esac

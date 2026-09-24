@@ -1,4 +1,4 @@
-name: reusable
+name: reusable with inputs
 
 on:
   workflow_call:
@@ -24,10 +24,14 @@ on:
         required: false
         type: number
         default: ${{ 1 }}
+    # 没有这块声明，resolveSecrets 求出的 map 就是空的，下面 test secret 那条断言必失败
+    secrets:
+      secret:
+        required: true
     outputs:
       output:
         description: 'A workflow output'
-        value: ${{ jobs.reusable_workflow_job.outputs.job-output }}
+        value: ${{ jobs.reusable-workflow-job.outputs.job-output }}
 
 jobs:
   reusable-workflow-job:
