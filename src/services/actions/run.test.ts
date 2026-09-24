@@ -137,7 +137,7 @@ const minimalWorkflow = stringify({
 });
 
 describe('prepareRunAndInsert', () => {
-  // 同 dispatchWorkflow 那组：run 固定挂在仓库 1 下，按 run id 精确清理
+  // 同 submitWorkflow 那组：run 固定挂在仓库 1 下，按 run id 精确清理
   const createdRunIds: number[] = [];
 
   afterAll(async () => {

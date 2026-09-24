@@ -8,7 +8,7 @@ import { prepareRunAndInsert, type RunSeed } from './run';
 export const DEFAULT_OWNER_ID = 1;
 export const DEFAULT_REPOSITORY_ID = 1;
 
-export interface DispatchOptions {
+export interface SubmitOptions {
   /** ref the run is triggered against, e.g. `refs/heads/master` */
   ref?: string;
   commitSha?: string;
@@ -22,12 +22,12 @@ export interface DispatchOptions {
 /**
  * Queue a run from a workflow supplied by the caller.
  *
- * Mirrors gitea's `services/actions/workflow.go` `DispatchActionWorkflow`, minus the repository,
- * ref and permission checks it does first: this is the manual trigger's entry, and its whole job
- * is turning the trigger context into a run seed. The run row, its attempt and its jobs belong to
- * `prepareRunAndInsert`.
+ * The upstream counterpart is `services/actions/workflow.go` `DispatchActionWorkflow`, except that
+ * it first resolves the workflow by id (`resolveDispatchWorkflowContent`) and this is handed the
+ * content — the request body and the CLI's `submit` command are the same road. The run row, its
+ * attempt and its jobs belong to `prepareRunAndInsert`.
  */
-export async function dispatchWorkflow(workflowPayload: string, options: DispatchOptions = {}) {
+export async function submitWorkflow(workflowPayload: string, options: SubmitOptions = {}) {
   const { ref = 'refs/heads/master', commitSha = '', eventName = 'workflow_dispatch', workdir = '', title } = options;
 
   const seed: RunSeed = {

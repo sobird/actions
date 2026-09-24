@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { dispatchWorkflow } from '@/services/actions/workflow';
+import { submitWorkflow } from '@/services/actions/workflow';
 
 interface CreateRunBody {
   workflow?: string;
@@ -29,7 +29,7 @@ export const POST = async (req: NextRequest) => {
   }
 
   try {
-    const { run, jobs } = await dispatchWorkflow(body.workflow, {
+    const { run, jobs } = await submitWorkflow(body.workflow, {
       ref: body.ref,
       commitSha: body.commitSha,
       workdir: body.workdir ?? '',

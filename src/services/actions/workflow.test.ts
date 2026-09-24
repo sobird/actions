@@ -4,7 +4,7 @@ import { stringify } from 'yaml';
 import { ActionRun, ActionRunAttempt, ActionRunJob } from '@/models';
 import { Status } from '@/models/actions/status';
 
-import { dispatchWorkflow } from './workflow';
+import { submitWorkflow } from './workflow';
 
 /** 一个单 job 的工作流；没传的字段就不写，用来区分「没声明」和「声明成空值」 */
 function workflowPayload(
@@ -42,7 +42,7 @@ async function latestAttemptOf(run: ActionRun): Promise<ActionRunAttempt> {
   return (await ActionRunAttempt.findByPk(run.latestAttemptId!))!;
 }
 
-describe('dispatchWorkflow and concurrency', () => {
+describe('submitWorkflow and concurrency', () => {
   // 这里建出来的 run 固定挂在仓库 1 下，没法像别的测试文件那样拿号段隔开；改成按 run id
   // 精确清理，只删这里建出来的那几行。
   const createdRunIds: number[] = [];
@@ -59,7 +59,7 @@ describe('dispatchWorkflow and concurrency', () => {
   });
 
   async function create(payloadString: string) {
-    const created = await dispatchWorkflow(payloadString);
+    const created = await submitWorkflow(payloadString);
     createdRunIds.push(created.run.id);
 
     return created;
@@ -122,7 +122,7 @@ describe('dispatchWorkflow and concurrency', () => {
   });
 
   it('rejects a workflow-level concurrency node it cannot read', async () => {
-    await expect(dispatchWorkflow(workflowPayload({ runConcurrency: 123 }))).rejects.toThrow(
+    await expect(submitWorkflow(workflowPayload({ runConcurrency: 123 }))).rejects.toThrow(
       /workflow concurrency cannot be read/,
     );
   });
@@ -166,7 +166,7 @@ describe('dispatchWorkflow and concurrency', () => {
   it('rejects a job-level concurrency node it cannot read, without leaving a run behind', async () => {
     const before = await ActionRun.count();
 
-    await expect(dispatchWorkflow(workflowPayload({ jobConcurrency: 123 }))).rejects.toThrow(
+    await expect(submitWorkflow(workflowPayload({ jobConcurrency: 123 }))).rejects.toThrow(
       /concurrency cannot be read/,
     );
 
