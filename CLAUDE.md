@@ -9,7 +9,7 @@ Bun is the package manager and task runner — use `bun run <script>` / `bunx`, 
 - `bun run dev` — Next.js dev server (port 3000).
 - `bun run build` — Next.js build; `bun run build:actions` — bundle the CLI to `dist/`.
 - `bun run test` runs Vitest in **watch mode**. For a one-shot run use `bunx vitest run`; single file: `bunx vitest run src/common/ref.test.ts`; by name: `bunx vitest run -t "<name>"`.
-- `bun run actions:test` — end-to-end check that runs `test/workflows/basic.yml` locally (requires Docker).
+- `bun run actions:test` — end-to-end check that runs `test/workflows/hosted.yml` with `--hosted`; it needs no Docker daemon. `test/workflows/basic.yml` is the Docker counterpart (`docker://` steps, `container:`, `services:`).
 - `bun run proto:generate` — regenerate `src/gen/` from the proto definitions via buf.
 
 Before considering a change done, run `bun run typecheck && bun run lint && bun run fmt:check && bunx vitest run`. CI does not run these (`.github/workflows/ci.yml` is manual-dispatch only), so nothing enforces them for you.

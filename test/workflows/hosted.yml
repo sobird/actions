@@ -1,0 +1,261 @@
+name: Hosted Basic
+run-name: hosted basic by ${{ github.actor }}
+
+# --hosted 的冒烟 fixture：整条流程只用宿主机，不需要 Docker daemon。
+#
+# 因此这里不出现 docker:// 动作、job 级 container: 与 services:（这三样在 --hosted 下
+# 仍会去叫 Docker）。`actions/checkout@v4` 保留着，但 --hosted 下 skipCheckout 把它换成
+# 「把 workdir 拷进沙箱」，仓库里的 ./test/actions 与相对路径才因此可见 —— 这是本文件
+# 唯一被复用的宿主侧副作用，见 README 的「Run a job directly on the host」。
+#
+# 断言一律写成 `... || exit 1`：默认 shell 是 `sh -e`（实际上跑的是 bash），失败的断言
+# 会让步骤退出非零，从而把作业判失败。
+on: push
+
+env:
+  WORKFLOW_ENV: workflow
+  SHADOWED: workflow
+  # 工作流级 env 的值也是运行期求值，此时 github 上下文已经就绪
+  EVENT_FROM_ENV: ${{ github.event_name }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  contexts:
+    name: contexts and expressions
+    runs-on: ubuntu-latest
+    env:
+      JOB_ENV: job
+      SHADOWED: job
+    steps:
+      # 把仓库拷进沙箱，下面的相对路径与 ./test/actions 才有东西可指
+      - uses: actions/checkout@v4
+
+      - name: 工作流级 env 先落地，作业级覆盖同名键
+        run: |
+          [ "$WORKFLOW_ENV" = "workflow" ] || exit 1
+          [ "$JOB_ENV" = "job" ] || exit 1
+          [ "$SHADOWED" = "job" ] || exit 1
+          [ "$EVENT_FROM_ENV" = "push" ] || exit 1
+          [ "${{ env.SHADOWED }}" = "job" ] || exit 1
+
+      - name: 步骤级 env 再覆盖作业级
+        env:
+          SHADOWED: step
+        run: |
+          echo "SHADOWED=$SHADOWED"
+          [ "$SHADOWED" = "step" ] || exit 1
+          [ "${{ env.SHADOWED }}" = "step" ] || exit 1
+
+      - name: checkout 把仓库带进了沙箱
+        run: |
+          [ -f test/workflows/hosted.yml ] || exit 1
+          [ -d test/actions ] || exit 1
+
+      - name: github 与 runner 上下文
+        run: |
+          [ "$GITHUB_EVENT_NAME" = "push" ] || exit 1
+          [ "$GITHUB_ACTIONS" = "true" ] || exit 1
+          [ "${{ github.event_name }}" = "push" ] || exit 1
+          [ -n "${{ github.repository }}" ] || exit 1
+          [ -n "${{ github.actor }}" ] || exit 1
+          [ -n "${{ runner.os }}" ] || exit 1
+          [ "${{ runner.os }}" = "$RUNNER_OS" ] || exit 1
+          [ "${{ runner.arch }}" = "$RUNNER_ARCH" ] || exit 1
+          echo "ref=${{ github.ref }} sha=${{ github.sha }} workspace=$GITHUB_WORKSPACE"
+
+      - name: 表达式函数
+        run: |
+          [ "${{ contains('Hello World', 'WORLD') }}" = "true" ] || exit 1
+          [ "${{ contains(fromJSON('["a","b"]'), 'b') }}" = "true" ] || exit 1
+          # 数组是精确匹配（不折叠大小写），字符串才折叠
+          [ "${{ contains(fromJSON('["a","b"]'), 'B') }}" = "false" ] || exit 1
+          [ "${{ startsWith('refs/heads/master', 'REFS/HEADS/') }}" = "true" ] || exit 1
+          [ "${{ endsWith('hosted.yml', '.YML') }}" = "true" ] || exit 1
+          [ "${{ format('{0}@{1}', 'job', '01') }}" = "job@01" ] || exit 1
+          [ "${{ join(fromJSON('["a","b","c"]'), '-') }}" = "a-b-c" ] || exit 1
+          [ "${{ fromJSON('1') + fromJSON('41') }}" = "42" ] || exit 1
+          [ "${{ 'a' != 'b' && 2 > 1 }}" = "true" ] || exit 1
+
+      - name: toJSON 产出的是 JSON 文本
+        run: |
+          cat > actual.json <<'EOF'
+          ${{ toJSON(fromJSON('{"k":[1,2]}')) }}
+          EOF
+          cat actual.json
+          [ "$(cat actual.json)" = '{"k":[1,2]}' ] || exit 1
+
+      - name: 未设置的上下文属性渲染成空串
+        run: |
+          [ -z "${{ vars.UNSET_VAR }}" ] || exit 1
+          [ -z "${{ env.UNSET_ENV }}" ] || exit 1
+          [ -z "${{ inputs.unset_input }}" ] || exit 1
+
+  file-commands:
+    name: file commands
+    runs-on: ubuntu-latest
+    outputs:
+      from-step: ${{ steps.write.outputs.count }}
+      hyphen-named: ${{ steps.write.outputs.answer-42 }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 写 env / output / path / summary
+        id: write
+        run: |
+          echo "PLAIN=plain value" >> "$GITHUB_ENV"
+          {
+            echo 'HEREDOC<<EOF'
+            echo 'first line'
+            echo 'second line'
+            echo 'EOF'
+          } >> "$GITHUB_ENV"
+          echo "count=2" >> "$GITHUB_OUTPUT"
+          # 名字里的连字符是对表达式重写的边界：needs 与 steps 两处都要取到它
+          echo "answer-42=yes" >> "$GITHUB_OUTPUT"
+          echo "### hosted basic" >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p .hosted-bin
+          printf '#!/bin/sh\necho from-prepended-path\n' > .hosted-bin/prepended.sh
+          chmod +x .hosted-bin/prepended.sh
+          echo "$PWD/.hosted-bin" >> "$GITHUB_PATH"
+
+      - name: 上一步的 env 在下一步可见，heredoc 也带上了它的多行
+        run: |
+          [ "$PLAIN" = "plain value" ] || exit 1
+          [ "${{ env.PLAIN }}" = "plain value" ] || exit 1
+          [ "$(printf '%s\n' "$HEREDOC" | wc -l | tr -d ' ')" = "2" ] || exit 1
+          printf '%s\n' "$HEREDOC" | grep -qx 'second line' || exit 1
+
+      - name: 上一步的输出从 steps 上下文取回
+        run: |
+          [ "${{ steps.write.outputs.count }}" = "2" ] || exit 1
+          [ "${{ steps.write.outputs.answer-42 }}" = "yes" ] || exit 1
+
+      - name: GITHUB_PATH 前置的目录在下一步生效
+        run: prepended.sh | grep -qx 'from-prepended-path' || exit 1
+
+  matrix:
+    name: matrix ${{ matrix.os }} node-${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 2
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        node: [18, 20]
+        exclude:
+          - os: macos-latest
+            node: 20
+        include:
+          - os: ubuntu-latest
+            node: 20
+            label: added-by-include
+    steps:
+      - name: 只有三个格子，被 exclude 掉的组合不在其中
+        run: |
+          case "${{ matrix.os }}-${{ matrix.node }}" in
+            ubuntu-latest-18|ubuntu-latest-20|macos-latest-18) ;;
+            *) echo "unexpected cell"; exit 1 ;;
+          esac
+
+      - name: include 补进来的键只属于它命中的那个格子
+        run: |
+          if [ "${{ matrix.node }}" = "20" ]; then
+            [ "${{ matrix.label }}" = "added-by-include" ] || exit 1
+          else
+            [ -z "${{ matrix.label }}" ] || exit 1
+          fi
+
+      - name: strategy 上下文
+        run: |
+          [ "${{ strategy.job-total }}" = "3" ] || exit 1
+          case "${{ strategy.job-index }}" in
+            0|1|2) ;;
+            *) exit 1 ;;
+          esac
+
+  local-actions:
+    name: local composite and node actions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 复合动作内部又 checkout 一次：--hosted 下仍是「把 workdir 拷进沙箱」，
+      # 重复拷同一份内容不该出错
+      - name: 本地复合动作
+        id: composite
+        uses: ./test/actions/hello-world-composite-action
+        with:
+          who-to-greet: hosted
+
+      - name: 复合动作的 output 冒泡到 steps 上下文
+        run: |
+          [ -n "${{ steps.composite.outputs.random-number }}" ] || exit 1
+          case "${{ steps.composite.outputs.random-number }}" in
+            ''|*[!0-9]*) exit 1 ;;
+          esac
+
+      # node20 动作走宿主机上的 node（--hosted 直接 spawn，不经过容器）
+      - name: 本地 node20 动作
+        id: node
+        uses: ./test/actions/hello-world-javascript-action
+        with:
+          who-to-greet: hosted
+
+      - name: node 动作的 output
+        run: |
+          [ -n "${{ steps.node.outputs.time }}" ] || exit 1
+          echo "time=${{ steps.node.outputs.time }}"
+
+  boundaries:
+    name: boundaries
+    runs-on: ubuntu-latest
+    steps:
+      # set_env 的 block list：写进去的命令会被拦下并留下一条注解，但值不生效，
+      # 步骤本身也不失败
+      - name: 写 NODE_OPTIONS 会被 set_env 拦下
+        run: |
+          echo "NODE_OPTIONS=--max-old-space-size=1" >> "$GITHUB_ENV"
+          [ "${NODE_OPTIONS:-}" != "--max-old-space-size=1" ] || exit 1
+
+      # ::error:: 只收进注解，不改变步骤结论；真失败还是要靠退出码
+      - name: '::error:: 与 ::warning:: 不改变步骤结论'
+        run: |
+          echo "::error::hosted basic 故意发的一条 ::error::"
+          echo "::warning::hosted basic 故意发的一条 ::warning::"
+          echo "reached the next line after ::error::"
+
+      - name: '::add-mask:: 之后的同一行会被打码'
+        run: printf '::add-mask::%s\n' "hosted-secret-value"
+
+      - name: 失败但被 continue-on-error 容忍
+        id: tolerated
+        continue-on-error: true
+        run: exit 1
+
+      - name: 容忍过的步骤 outcome 是 failure、conclusion 是 success
+        run: |
+          [ "${{ steps.tolerated.outcome }}" = "failure" ] || exit 1
+          [ "${{ steps.tolerated.conclusion }}" = "success" ] || exit 1
+
+      # 下面两步的条件都为假，真跑了就 exit 1，断言就是靠这个生效的
+      - name: 条件为假时跳过
+        if: ${{ 1 == 2 }}
+        run: exit 1
+
+      - name: cancelled() 在正常跑完的运行里为假
+        if: cancelled()
+        run: exit 1
+
+  consume:
+    name: consume outputs
+    needs: [file-commands, local-actions]
+    runs-on: ubuntu-latest
+    steps:
+      - name: needs 的 result 与 outputs（作业 id 与 output 名都带连字符）
+        run: |
+          [ "${{ needs.file-commands.result }}" = "success" ] || exit 1
+          [ "${{ needs.local-actions.result }}" = "success" ] || exit 1
+          [ "${{ needs.file-commands.outputs.from-step }}" = "2" ] || exit 1
+          [ "${{ needs.file-commands.outputs.hyphen-named }}" = "yes" ] || exit 1
