@@ -3,8 +3,7 @@ import fs from 'node:fs';
 import { timestampFromDate, timestampDate } from '@bufbuild/protobuf/wkt';
 
 import { LogRow } from '@/gen/runner/v1/messages_pb';
-import dbfs from '@/services/dbfs';
-import type DbFile from '@/services/dbfs/file';
+import dbfs, { type DbFile } from '@/models/dbfs';
 
 import storage from './storage';
 

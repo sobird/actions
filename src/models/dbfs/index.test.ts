@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import dbfs from '@/services/dbfs';
+import dbfs from '@/models/dbfs';
 
 vi.mock('@/lib/sequelize');
 vi.mock('@/models/dbfs/meta');
@@ -56,5 +56,34 @@ describe('Dbfs Tests', () => {
     expect(stat.size).toBe(10);
 
     await expect(dbfs.remove('test/test.txt')).resolves.not.toThrowError();
+  });
+
+  // 上游 dbfile.go 的 open 是「O_EXCL 先判，再 if metaID == 0 { createEmpty }」。
+  describe('open flags', () => {
+    it('O_CREAT on an existing file opens it and keeps the content', async () => {
+      const fd = await dbfs.open('exists.txt', fs.constants.O_WRONLY | fs.constants.O_CREAT);
+      await fd.write(Buffer.from('keep-me'));
+
+      const reopened = await dbfs.open('exists.txt', fs.constants.O_WRONLY | fs.constants.O_CREAT);
+      expect(await reopened.size()).toBe(7);
+
+      const buffer = Buffer.alloc(7);
+      await (await dbfs.open('exists.txt')).read(buffer);
+      expect(buffer.toString()).toBe('keep-me');
+    });
+
+    it('O_CREAT|O_EXCL on an existing file throws EEXIST', async () => {
+      await dbfs.open('exclusive.txt', fs.constants.O_WRONLY | fs.constants.O_CREAT);
+
+      await expect(
+        dbfs.open('exclusive.txt', fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL),
+      ).rejects.toThrow('EEXIST');
+    });
+
+    it('O_CREAT|O_EXCL on a missing file creates it', async () => {
+      const fd = await dbfs.open('fresh.txt', fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL);
+
+      expect(await fd.size()).toBe(0);
+    });
   });
 });

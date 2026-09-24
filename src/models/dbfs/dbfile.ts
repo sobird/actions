@@ -2,20 +2,19 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { DbfsData, DbfsMeta, sequelize } from '@/models';
+import { sequelize } from '@/lib/sequelize';
 import { trimSuffix } from '@/utils';
+
+import { DbfsData } from './data';
+import { DbfsMeta } from './meta';
 
 export const DEFAULT_FILE_BLOCK_SIZE: number = 32 * 1024; // 32KB
 
 class DbFile {
   public metaId: number = 0;
-
   public blockSize: number = DEFAULT_FILE_BLOCK_SIZE;
-
   public allowRead: boolean = false;
-
   public allowWrite: boolean = false;
-
   public offset: number = 0;
 
   constructor(public fullPath: string) {}
@@ -42,8 +41,10 @@ class DbFile {
           if (this.metaId !== 0) {
             throw new Error('EEXIST: file already exists');
           }
-        } else {
-          // Create a new file if none exists
+        }
+
+        // Create a new file if none exists
+        if (this.metaId === 0) {
           await this.createEmpty();
         }
       }
