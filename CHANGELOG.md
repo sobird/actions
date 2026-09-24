@@ -1,5 +1,79 @@
 # Changelog
 
+## [1.1.0](https://github.com/sobird/actions/compare/v1.0.2...v1.1.0) (2026-09-24)
+
+
+### Features
+
+* **actions:** aggregate callers and task versions in updateRunJob ([476c56b](https://github.com/sobird/actions/commit/476c56bbbee4a451832452e0bf408f157d7c775c))
+* **actions:** block a job on its concurrency group ([3fce8cb](https://github.com/sobird/actions/commit/3fce8cb201539849a5384d0d924f1f7b0efbc8d2))
+* **actions:** block a run on its workflow concurrency group ([d664236](https://github.com/sobird/actions/commit/d664236261c7b7c1f51a32fed9f73e9f40ad21d3))
+* **actions:** bubble job status up to the run attempt and the run ([edbda18](https://github.com/sobird/actions/commit/edbda180912f1d06364a8ea3ced04ccdf5327ba3))
+* **actions:** scope and page the runner's candidate scan ([53ebf44](https://github.com/sobird/actions/commit/53ebf449f54a4c1f1aec983c3d8d21fdb4b20813))
+* add artifact cache service ([60329b1](https://github.com/sobird/actions/commit/60329b181796510881e381917e8f6f4ca5183e95))
+* add ephemeral runner support and update default label images ([33c5ccb](https://github.com/sobird/actions/commit/33c5ccb10069e3331ad2d83e9f7d915ae4b2dc88))
+* add task picking service for runners and refine action models ([7be2118](https://github.com/sobird/actions/commit/7be21188bd1695a7175da4a81d98c294d91e727f))
+* archive a task's log once the runner seals it ([8564172](https://github.com/sobird/actions/commit/85641729533b33a185dccaf2a6cd015549fed3b2))
+* **gen:** add TLS bypass for insecure client connections ([cfd3fcb](https://github.com/sobird/actions/commit/cfd3fcb77aed9bf0195a3c497a4a6109a7f8f5cb))
+* generate and hash the task token on create ([bf678b9](https://github.com/sobird/actions/commit/bf678b93f0d33c73303f3972b7ed29d392169fa0))
+* generate example config YAML and add schema defaults ([fce15a0](https://github.com/sobird/actions/commit/fce15a096210c0a3b4a1be64fb28169baf645542))
+* persist runner task updates instead of only acknowledging them ([da94ed8](https://github.com/sobird/actions/commit/da94ed8e41f8a9462c7e4a2f806e27523dc54fa1))
+* propagate command-processing failures to the step result ([eb03e16](https://github.com/sobird/actions/commit/eb03e16af9a39ec22e9d0992fe69b21d5d607781))
+* resolve runs into attempts, matrix cells and gated jobs ([f303084](https://github.com/sobird/actions/commit/f303084f8bc6d217abac766c22b9092332c30b34))
+* show job logs for daemon-mode runs ([8241178](https://github.com/sobird/actions/commit/82411789c9b3ebc27349301998f42d3b8c3bc8da))
+* **workflow:** add stages mock, tests and implementation ([fd4de6b](https://github.com/sobird/actions/commit/fd4de6b7a2ec08b020fe536d7a4ab8ab8c425f17))
+* **workflow:** add workflow mock and refine planner ([233ad92](https://github.com/sobird/actions/commit/233ad92e90fef7c9e3b2b50d418ce6ecef9c4d6c))
+
+
+### Bug Fixes
+
+* align step output handling with the official runner ([f1e3ad5](https://github.com/sobird/actions/commit/f1e3ad59ef5117a0aff17a8b3f248276747e7447))
+* bun not support dockerode container.putArchive ([a7fbf43](https://github.com/sobird/actions/commit/a7fbf43911417031db334de1d676c8c2b324b7bc))
+* bun not support dockerode exec.start hijack: true and stdin: true ([305b0fd](https://github.com/sobird/actions/commit/305b0fd6b17e7090c8b9b0b5893a0a52f5464bf7))
+* clear the remaining oxlint violations repo-wide ([f3a2b2c](https://github.com/sobird/actions/commit/f3a2b2c820a342445e29a652adda5778c06243e1))
+* correct crypto import and enable lint-staged ([2a1cf7a](https://github.com/sobird/actions/commit/2a1cf7a6a2558641e107723ad22ac2b6f83e3037))
+* correct the default job condition and resolve the shell on the host ([63f9ac8](https://github.com/sobird/actions/commit/63f9ac8ca0a664a48f3467e0c38d6f27d8ea4a37))
+* derive run group name from the script's first line ([8dced64](https://github.com/sobird/actions/commit/8dced641555067fdd4133d0d61c63b07aec9c6c5))
+* honor --follow-symbolic-links when hashing files in a container ([dfcc651](https://github.com/sobird/actions/commit/dfcc6511c65065bc05aacddb5cee556401cffe46))
+* improve artifact route typing and path handling ([76aeb5c](https://github.com/sobird/actions/commit/76aeb5cd9c0355c755c15440cd330d2055ddfa33))
+* inline the git token into the credential helper instead of a temp file ([604ffb5](https://github.com/sobird/actions/commit/604ffb51861a4dd89917b1bded64edc055ea627e))
+* interpolate %s in job logs and route step logs via Runner.logger ([2de6858](https://github.com/sobird/actions/commit/2de685806af2e3bfff89ff5526d9e1ca1d76dfec))
+* keep git credentials out of urls and repair the action cache ([9667d10](https://github.com/sobird/actions/commit/9667d10843d68ce49f57b8a4c98cc04fd0755756))
+* log daemon job output at the debug level ([996d125](https://github.com/sobird/actions/commit/996d125c1ab7249f4f1715875932026829118ab4))
+* merge workflow and job defaults per key ([c6b3b5e](https://github.com/sobird/actions/commit/c6b3b5e6ab9ca835c4cd8c8014b1e71813adcfb4))
+* name model associations by their runtime alias ([060a610](https://github.com/sobird/actions/commit/060a6100a6ab5f3c319ad0982c90655f250ae5b1))
+* polynomial regular expression used on uncontrolled data ([e6cd728](https://github.com/sobird/actions/commit/e6cd72826b84e8dc55307f2a3ec189531438c868))
+* polynomial regular expression used on uncontrolled data ([79fc3d3](https://github.com/sobird/actions/commit/79fc3d303cbf27104039134f22286da8169afdf4))
+* Potential fix for code scanning alert no. 26: JWT missing secret or public key verification ([933947b](https://github.com/sobird/actions/commit/933947bc82f87db9ec856c6e75353c1d39fbf15f))
+* record a stop time for steps that finish without one ([979790e](https://github.com/sobird/actions/commit/979790ee73ba1d503d1f5268afcb2a0744a3270e))
+* register the runner task-update RPCs and surface unexpected errors ([cb37f01](https://github.com/sobird/actions/commit/cb37f01e0b2a64920defa347fc372db1b8853132))
+* remove rate limiting from artifact cache endpoints ([49ec7df](https://github.com/sobird/actions/commit/49ec7df32013040cbdc55fe9bfa64bae00f71ca8))
+* report job steps and results to the server like act_runner ([4c2ea99](https://github.com/sobird/actions/commit/4c2ea99472f837a2436332d4acd8c1b6e5cbd610))
+* require an explicit ref for remote reusable workflow references ([d84fc7f](https://github.com/sobird/actions/commit/d84fc7f349f8da2c2a2af3f372075c327232542f))
+* resolve Bun compatibility with dockerode streams ([e7de1b9](https://github.com/sobird/actions/commit/e7de1b9a10342b445fd0269436e907ebc7a8903b))
+* resolve the @actions/github import in the javascript action fixture ([900eb23](https://github.com/sobird/actions/commit/900eb231d65c296e902438a9b27718bea9c823fe))
+* resolve workflow_sha from the caller instead of the local repo ([5905f13](https://github.com/sobird/actions/commit/5905f13af65a118a807d42b7e8855ec7582d6880))
+* restore proper error handling and test cleanup ([d4abeb2](https://github.com/sobird/actions/commit/d4abeb225c15f37792c5bdb91a515e1852822e36))
+* return the task id when parsing an authorization token ([430b3fb](https://github.com/sobird/actions/commit/430b3fbd42f290fbdb93eed4d5ca828ceed77620))
+* reuse the caller's transaction when bumping the task version ([640ebf2](https://github.com/sobird/actions/commit/640ebf255086ad143aade12afb9100fd85723587))
+* run docker containers and execs without a pseudo-tty ([8269337](https://github.com/sobird/actions/commit/8269337fa6f460f3d7e2065b4302979811e7826d))
+* **runner:** write the hash script when a hosted container starts ([4671013](https://github.com/sobird/actions/commit/467101359baf269cbfa50369c8c164dc6a7272c1))
+* **scripts:** read the synced models off the sequelize instance ([144b37f](https://github.com/sobird/actions/commit/144b37f83c0406e754e350a2bf436053ce90f94f))
+* serialize output line processing to preserve ordering ([31dba94](https://github.com/sobird/actions/commit/31dba94d27bb2a0cbd00076af01772012a06c203))
+* serve the task update RPCs and stop swallowing route errors ([20c1322](https://github.com/sobird/actions/commit/20c13227233764fc3b108ee27d2becc5ebd995dd))
+* shard the action cache by host and make offline mode skip the network ([c4ecb4b](https://github.com/sobird/actions/commit/c4ecb4bc6b05a0eeb38de96a5ecce039efa73d64))
+* surface a clear error when the Docker daemon is unreachable ([71274a6](https://github.com/sobird/actions/commit/71274a6f56d97b86fd06ad60675b71dd6a142500))
+* update imports and modernize code patterns ([ffd5ce3](https://github.com/sobird/actions/commit/ffd5ce330e76a2e5b7d66f4b56c358ca12dc5e68))
+* validate the runner owns the task before appending logs ([fd3c4ff](https://github.com/sobird/actions/commit/fd3c4ffcc6f807c8bee1c521afcc4ed9ebe00465))
+* verify runner token in interceptor and use typed error codes ([cc71dbf](https://github.com/sobird/actions/commit/cc71dbf1195a6be4709b363c835250f375572c74))
+* wire the --hosted flag up to the host sentinel ([fd43d35](https://github.com/sobird/actions/commit/fd43d35ca4f26614c6243eecb1d08823dae2b517))
+* withTimeout ([e02d470](https://github.com/sobird/actions/commit/e02d47044d675fb7dd20befd5fe20e4c3576b42d))
+
+
+### Reverts
+
+* drop the cached Sequelize instance and sqlite pragmas ([ed5a227](https://github.com/sobird/actions/commit/ed5a2273d474cd1a9abb4e3383d55546eb6c8ecd))
+
 ## [1.0.2](https://github.com/sobird/actions/compare/v1.0.1...v1.0.2) (2025-03-07)
 
 ### Bug Fixes
