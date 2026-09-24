@@ -5,8 +5,13 @@ import { Result, TaskStateSchema } from '@/gen/runner/v1/messages_pb';
 import { ActionRun, ActionRunAttempt, ActionRunJob, ActionRunner, ActionTask, ActionTaskStep } from '@/models';
 import type { ActionRunJobCreationAttributes } from '@/models/actions/run_job';
 import { Status } from '@/models/actions/status';
+import { syncSchema } from '@/test/__helpers__';
 
 import { findWaitingJobs, pickTask, runnerJobScope } from './task';
+
+vi.mock('@/lib/sequelize');
+
+beforeAll(syncSchema);
 
 /** 每个 job 在它那次 attempt 里领一个序号，口径同 createRun */
 let nextAttemptJobId = 0;
@@ -37,8 +42,7 @@ describe('runnerJobScope', () => {
 describe('findWaitingJobs', () => {
   // 每个用例独占一个仓库，断言就不必再排除别的行
   const firstRepositoryId = 9200;
-  // 上界封死：清理不能让别处（pickTask 的 9250、job_emitter 的 9300）受牵连，
-  // 这些文件与它并发跑着同一个库
+  // 上界封死到 9249：本文件里 pickTask 用 9250，清理不能伸过去
   const repositoryIds = { [Op.between]: [firstRepositoryId, firstRepositoryId + 49] } as const;
   const ownerId = 9200;
   let nextRepositoryId = firstRepositoryId;

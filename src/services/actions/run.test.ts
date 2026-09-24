@@ -3,8 +3,13 @@ import { parse, stringify } from 'yaml';
 
 import { ActionRun, ActionRunAttempt, ActionRunJob } from '@/models';
 import { Status } from '@/models/actions/status';
+import { syncSchema } from '@/test/__helpers__';
 
 import { buildJobPayload, prepareRunAndInsert, type RunSeed } from './run';
+
+vi.mock('@/lib/sequelize');
+
+beforeAll(syncSchema);
 
 const workflow = {
   name: 'CI',

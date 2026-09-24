@@ -61,3 +61,16 @@ export function dockerAvailable() {
   }
   return dockerAvailability;
 }
+
+/**
+ * 建表，给挂了 `vi.mock('@/lib/sequelize')` 的测试文件用（`beforeAll(syncSchema)`）。
+ *
+ * 那个 mock 只把 storage 指到 `:memory:`，不建表 —— 自己再 sync 一次之前，第一次查询就是
+ * `no such table`。模型测试不需要它：它们的 `__mocks__/<model>.ts` fixture 顺手建了自己那张表。
+ *
+ * 动态 import 是必要的：调用点在测试文件里，这样拿到的是被 mock 过的那份实例。
+ */
+export async function syncSchema() {
+  const { sequelize } = await import('@/models');
+  await sequelize.sync({ force: true });
+}

@@ -3,8 +3,13 @@ import { stringify } from 'yaml';
 
 import { ActionRun, ActionRunAttempt, ActionRunJob } from '@/models';
 import { Status } from '@/models/actions/status';
+import { syncSchema } from '@/test/__helpers__';
 
 import { submitWorkflow } from './workflow';
+
+vi.mock('@/lib/sequelize');
+
+beforeAll(syncSchema);
 
 /** 一个单 job 的工作流；没传的字段就不写，用来区分「没声明」和「声明成空值」 */
 function workflowPayload(

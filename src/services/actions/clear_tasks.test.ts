@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import { ActionRun, ActionRunAttempt, ActionRunJob } from '@/models';
 import type { ActionRunJobCreationAttributes } from '@/models/actions/run_job';
 import { Status } from '@/models/actions/status';
+import { syncSchema } from '@/test/__helpers__';
 
 import {
   prepareToStartJobWithConcurrency,
@@ -11,9 +12,12 @@ import {
   shouldBlockRunByConcurrency,
 } from './clear_tasks';
 
+vi.mock('@/lib/sequelize');
+
+beforeAll(syncSchema);
+
 // 分组是仓库内的，所以同组的 run 必须落在同一个仓库；每个用例独占一个
 const firstRepositoryId = 9400;
-// 上界封死：这个库同时被别的测试文件写着，清理不能伸到它们的号段
 const repositoryIds = { [Op.between]: [firstRepositoryId, firstRepositoryId + 99] } as const;
 let repositoryId: number;
 let nextRepositoryId = firstRepositoryId;

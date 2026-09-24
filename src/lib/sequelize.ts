@@ -76,8 +76,7 @@ export const sequelize = new Sequelize({
 
   // the storage engine for sqlite
   // - default ':memory:'
-  // Pointed elsewhere by the test setup, which gives every parallel Vitest worker its own file.
-  storage: process.env.DATABASE_STORAGE ?? './database.sqlite',
+  storage: './database.sqlite',
 
   // disable inserting undefined values as NULL
   // - default: false

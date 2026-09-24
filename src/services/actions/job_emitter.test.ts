@@ -3,8 +3,13 @@ import { Op } from 'sequelize';
 import { ActionRun, ActionRunAttempt, ActionRunJob } from '@/models';
 import type { ActionRunJobCreationAttributes } from '@/models/actions/run_job';
 import { Status } from '@/models/actions/status';
+import { syncSchema } from '@/test/__helpers__';
 
 import { resolveBlockedJobs, resolveNeeds, type DependencyJob } from './job_emitter';
+
+vi.mock('@/lib/sequelize');
+
+beforeAll(syncSchema);
 
 function dep(jobId: string, status: Status, continueOnError = false): DependencyJob {
   return { jobId, status, continueOnError };

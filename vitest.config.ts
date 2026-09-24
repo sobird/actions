@@ -6,8 +6,6 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    // 并行跑文件的前提是每个 worker 有自己的库，否则并发写会锁成 SQLITE_BUSY；见 test/setup.ts
-    setupFiles: ['./test/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
