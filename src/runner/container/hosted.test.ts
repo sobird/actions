@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import * as tar from 'tar';
 
+import type Runner from '@/runner';
 import { createAllDir } from '@/test/__helpers__';
 
 import { FileEntry } from './container';
@@ -239,6 +240,27 @@ describe('Test Hosted Container', () => {
       name: 'sobird',
       hello: 'world',
     });
+  });
+});
+
+describe('HostedContainer.Setup', () => {
+  it('writes the hash script that hashFiles() spawns', async () => {
+    const setupDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hosted-setup-'));
+    // Setup only reads these three off the runner; the rest of what it touches is assignment.
+    const runner = {
+      config: { workdir, workspace: workdir, bindWorkdir: false, reuse: false },
+      ContainerName: () => 'hosted-setup-test',
+      ActionCacheDir: setupDir,
+    } as unknown as Runner;
+
+    try {
+      await HostedContainer.Setup(runner).execute();
+
+      const container = runner.container as HostedContainer;
+      expect(fs.existsSync(container.resolve('bin', 'hashFiles', 'index.js'))).toBe(true);
+    } finally {
+      fs.rmSync(setupDir, { recursive: true, force: true });
+    }
   });
 });
 

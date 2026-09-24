@@ -54,6 +54,15 @@ jobs:
           [ -f test/workflows/hosted.yml ] || exit 1
           [ -d test/actions ] || exit 1
 
+      # hashFiles 的脚本是容器在 start() 时写进沙箱的：漏了这一步，这个表达式只会静默
+      # 返回空串（缓存 key 会因此全部塌成一个），所以断言它既有值、长度也对
+      - name: hashFiles 在宿主机上也拿得到
+        run: |
+          HASH="${{ hashFiles('package.json') }}"
+          echo "hashFiles(package.json)=$HASH"
+          [ -n "$HASH" ] || exit 1
+          [ "${#HASH}" = "64" ] || exit 1
+
       - name: github 与 runner 上下文
         run: |
           [ "$GITHUB_EVENT_NAME" = "push" ] || exit 1

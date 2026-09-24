@@ -324,6 +324,11 @@ class HostedContainer extends Container {
         return Boolean(config.reuse);
       });
       runner.cleanContainerExecutor = Executor.Pipeline(runner.container.remove().ifNot(reuseContainer));
+
+      // Putting the hash script in place is all `start()` does, but without it `hashFiles()`
+      // spawns a path that does not exist and quietly resolves to an empty string. The docker
+      // path ends its own setup the same way.
+      return runner.container.start();
     });
   }
 }
