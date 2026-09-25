@@ -17,7 +17,7 @@ export enum SeekWhence {
   End,
 }
 
-class DbFile {
+export class DbFile {
   public metaId: number = 0;
   public blockSize: number = DEFAULT_FILE_BLOCK_SIZE;
   public allowRead: boolean = false;
@@ -336,4 +336,24 @@ class DbFile {
   }
 }
 
-export default DbFile;
+export async function open(p: string, flags: number = fs.constants.O_RDONLY) {
+  const df = await DbFile.create(p);
+  await df.open(flags);
+  return df;
+}
+
+export async function rename(oldPath: string, newPath: string) {
+  const df = await DbFile.create(oldPath);
+  return df.rename(newPath);
+}
+
+export async function remove(p: string) {
+  const df = await DbFile.create(p);
+  return df.delete();
+}
+
+export const dbfs = {
+  open,
+  rename,
+  remove,
+};

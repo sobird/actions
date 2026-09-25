@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import dbfs, { SeekWhence, type DbFile } from '@/models/dbfs';
+import { dbfs, SeekWhence, type DbFile } from '@/models/dbfs';
 
 vi.mock('@/lib/sequelize');
 vi.mock('@/models/dbfs/meta');
