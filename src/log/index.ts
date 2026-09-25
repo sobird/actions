@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { timestampFromDate, timestampDate } from '@bufbuild/protobuf/wkt';
 
 import { LogRow } from '@/gen/runner/v1/messages_pb';
-import dbfs, { type DbFile } from '@/models/dbfs';
+import dbfs, { SeekWhence, type DbFile } from '@/models/dbfs';
 
 import storage from './storage';
 
@@ -38,7 +38,7 @@ class Log {
       throw new Error(`size of ${filename} is less than offset`);
     }
 
-    await fd.seek(offset, 'SeekStart');
+    await fd.seek(offset, SeekWhence.Start);
 
     // Encode the whole batch before touching the file. The dbfs layer round trips
     // to the database per block written, so one write per row holds the write lock
@@ -135,7 +135,7 @@ class Log {
    * is covered or EOF is hit.
    */
   static async readBlocks(fd: DbFile, offset: number, length: number): Promise<Buffer> {
-    await fd.seek(offset, 'SeekStart');
+    await fd.seek(offset, SeekWhence.Start);
 
     const chunks: Buffer[] = [];
     let remaining = length;

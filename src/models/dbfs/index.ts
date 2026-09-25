@@ -1,10 +1,11 @@
 import fs from 'node:fs';
 
-import DbFile from './dbfile';
+import DbFile, { SeekWhence } from './dbfile';
 
 export * from './data';
 export * from './meta';
 
+export { SeekWhence };
 export type { DbFile };
 
 export async function open(path: string, flags: number = fs.constants.O_RDONLY) {

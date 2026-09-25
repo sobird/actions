@@ -10,6 +10,13 @@ import { DbfsMeta } from './meta';
 
 export const DEFAULT_FILE_BLOCK_SIZE: number = 32 * 1024; // 32KB
 
+/** 对应 io.SeekStart / io.SeekCurrent / io.SeekEnd。 */
+export enum SeekWhence {
+  Start,
+  Current,
+  End,
+}
+
 class DbFile {
   public metaId: number = 0;
   public blockSize: number = DEFAULT_FILE_BLOCK_SIZE;
@@ -57,7 +64,7 @@ class DbFile {
         await this.truncate();
       }
       if (flags & fs.constants.O_APPEND) {
-        await this.seek(0, 'SeekEnd');
+        await this.seek(0, SeekWhence.End);
       }
 
       return;
@@ -205,20 +212,20 @@ class DbFile {
     return written;
   }
 
-  async seek(offset: number, whence: 'SeekStart' | 'SeekCurrent' | 'SeekEnd') {
+  async seek(offset: number, whence: SeekWhence) {
     if (this.metaId === 0) {
       throw new Error('Invalid file handle');
     }
 
     let newOffset = this.offset;
     switch (whence) {
-      case 'SeekStart':
+      case SeekWhence.Start:
         newOffset = offset;
         break;
-      case 'SeekCurrent':
+      case SeekWhence.Current:
         newOffset += offset;
         break;
-      case 'SeekEnd': {
+      case SeekWhence.End: {
         const size = await this.size();
         newOffset = size + offset;
         break;
