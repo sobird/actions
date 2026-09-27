@@ -8,6 +8,7 @@ import { dbfs, SeekWhence, type DbFile } from '@/models/dbfs';
 import storage from './storage';
 
 const MaxLineSize = 64 * 1024;
+const MaxReadChunkSize = 64 * 1024;
 
 /** Render a timestamp the way upstream does: RFC3339 UTC with 7 fractional digits. */
 function formatTimestamp(date: Date): string {
@@ -139,10 +140,15 @@ class Log {
   static async readBlocks(fd: DbFile, offset: number, length: number): Promise<Buffer> {
     await fd.seek(offset, SeekWhence.Start);
 
+    const safeLength = Number.isFinite(length) && length > 0 ? Math.min(length, MaxReadLength) : 0;
+    const safeBlockSize =
+      Number.isFinite(fd.blockSize) && fd.blockSize > 0 ? Math.floor(fd.blockSize) : MaxReadChunkSize;
+
     const chunks: Buffer[] = [];
-    let remaining = length;
+    let remaining = safeLength;
     while (remaining > 0) {
-      const buffer = Buffer.alloc(Math.min(remaining, fd.blockSize));
+      const chunkSize = Math.min(remaining, safeBlockSize, MaxReadChunkSize);
+      const buffer = Buffer.alloc(chunkSize);
       // oxlint-disable-next-line no-await-in-loop
       const n = await fd.read(buffer);
       if (n <= 0) {
