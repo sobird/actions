@@ -141,6 +141,23 @@ const minimalWorkflow = stringify({
   },
 });
 
+/** `runs-on` 里的表达式由插入期自己求值，runner 拿到的是解析后的标签。 */
+const evaluatedRunsOnWorkflow = stringify({
+  name: 'evaluated runs-on',
+  on: 'workflow_dispatch',
+  jobs: {
+    matrixed: {
+      'runs-on': '${{ matrix.platform }}',
+      strategy: { matrix: { platform: ['ubuntu-latest', 'windows-latest'] } },
+      steps: [{ run: 'echo matrixed' }],
+    },
+    fromRef: {
+      'runs-on': ['self-hosted', '${{ github.ref_name }}'],
+      steps: [{ run: 'echo fromRef' }],
+    },
+  },
+});
+
 describe('prepareRunAndInsert', () => {
   // 同 submitWorkflow 那组：run 固定挂在仓库 1 下，按 run id 精确清理
   const createdRunIds: number[] = [];
@@ -155,8 +172,8 @@ describe('prepareRunAndInsert', () => {
     await ActionRun.destroy({ where: { id: runIds } });
   });
 
-  async function prepare(seed: Partial<RunSeed> = {}) {
-    const created = await prepareRunAndInsert(minimalWorkflow, {
+  async function prepare(seed: Partial<RunSeed> = {}, content = minimalWorkflow) {
+    const created = await prepareRunAndInsert(content, {
       ownerId: 1,
       repositoryId: 1,
       ref: 'refs/heads/master',
@@ -189,5 +206,28 @@ describe('prepareRunAndInsert', () => {
 
     expect(run.workflowId).toBe('ci.yml');
     expect(run.title).toBe('nightly');
+  });
+
+  it('resolves a runs-on expression per matrix cell', async () => {
+    const { jobs } = await prepare({}, evaluatedRunsOnWorkflow);
+
+    const labels = jobs.filter((job) => job.jobId === 'matrixed').map((job) => JSON.parse(job.runsOn) as string[]);
+
+    // 一格一个标签，字面量 ${{ matrix.platform }} 匹配不上任何 runner
+    expect(labels).toEqual([['ubuntu-latest'], ['windows-latest']]);
+  });
+
+  it('resolves a runs-on expression against the github context', async () => {
+    const { jobs } = await prepare({}, evaluatedRunsOnWorkflow);
+
+    const fromRef = jobs.find((job) => job.jobId === 'fromRef')!;
+
+    expect(JSON.parse(fromRef.runsOn)).toEqual(['self-hosted', 'master']);
+  });
+
+  it('keeps a literal runs-on as it stands', async () => {
+    const { jobs } = await prepare();
+
+    expect(jobs.map((job) => JSON.parse(job.runsOn))).toEqual([['ubuntu-latest']]);
   });
 });

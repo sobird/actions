@@ -197,6 +197,7 @@ describe('pickTask', () => {
       ref: 'refs/heads/master',
       commitSha: '',
       eventName: 'workflow_dispatch',
+      eventPayload: JSON.stringify({ workdir: '/tmp/pick-task-checkout' }),
       status: Status.Waiting,
       isForkPullRequest: false,
       needApproval: false,
@@ -285,6 +286,13 @@ describe('pickTask', () => {
     expect(picked).not.toBeNull();
     expect(Number(picked!.task.id)).toBe(task.id);
     expect(picked!.task.context?.job).toBe('healthy');
+    // 服务端求出来的 github context 随任务下发，不只是 job 一个键
+    expect(picked!.task.context?.ref_name).toBe('master');
+    expect(picked!.task.context?.ref_type).toBe('branch');
+    expect(picked!.task.context?.run_attempt).toBe('1');
+    expect(picked!.task.context?.event_name).toBe('workflow_dispatch');
+    // repository 仍是 workdir 的运输通道（poller 读回 config.workdir），不是 owner/name
+    expect(picked!.task.context?.repository).toBe('/tmp/pick-task-checkout');
     expect(picked!.task.workflowPayload).toBeInstanceOf(Uint8Array);
 
     await job.reload();

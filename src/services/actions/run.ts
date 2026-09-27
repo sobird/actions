@@ -12,36 +12,13 @@ import {
   ActionTaskVersion,
 } from '@/models';
 import { Status } from '@/models/actions/status';
+import Context from '@/runner/context';
 import { ellipsisDisplayString } from '@/utils';
 import WorkflowPlanner from '@/workflow/planner';
 
 import { prepareToStartJobWithConcurrency, prepareToStartRunWithConcurrency } from './clear_tasks';
 import { evaluateJobConcurrencyFillModel, evaluateRunConcurrencyFillModel } from './concurrency';
-
-/** Normalize `runs-on` into the flat label list a runner is matched against. */
-export function normalizeRunsOn(source: unknown): string[] {
-  if (!source) {
-    return [];
-  }
-  if (typeof source === 'string') {
-    return [source];
-  }
-  if (Array.isArray(source)) {
-    return source.map(String);
-  }
-
-  const { group, labels } = source as { group?: string; labels?: string | string[] };
-  const result: string[] = [];
-  if (typeof labels === 'string') {
-    result.push(labels);
-  } else if (Array.isArray(labels)) {
-    result.push(...labels.map(String));
-  }
-  if (group) {
-    result.push(group);
-  }
-  return result;
-}
+import { generateGithubContext } from './context';
 
 /** Parse a JSON-encoded string list column, tolerating a plain string. */
 export function parseStringList(value: unknown): string[] {
@@ -266,8 +243,22 @@ export async function prepareRunAndInsert(content: string, seed: RunSeed) {
 
       const continueOnError = literalContinueOnError(source.jobs?.[jobId]);
 
+      // The context a `runs-on` expression is read against. It is the same one the
+      // task carries later, resolved here because the labels have to be in the
+      // column before a runner can match them.
+      const github = generateGithubContext({
+        run,
+        attempt: runAttempt,
+        workflow,
+        job: { jobId, repositoryId, attempt: 1 },
+      });
+
       for (const { matrix } of matrixes) {
         const { payload, name } = buildJobPayload(source, jobId, matrix);
+
+        // The matrix is pinned to this one cell, the same way the payload pins it.
+        const matrixContext = Object.fromEntries(Object.entries(matrix).map(([key, value]) => [key, [value]]));
+        const runsOn = job.runsOn(undefined, new Context({ github, matrix: matrixContext } as unknown as Context));
 
         // A job waiting on another job, a run awaiting approval, or a run held back by its
         // own concurrency group must not reach a runner yet; upstream calls the same state
@@ -298,7 +289,7 @@ export async function prepareRunAndInsert(content: string, seed: RunSeed) {
           jobId,
           taskId: 0,
           needs: JSON.stringify(needs),
-          runsOn: JSON.stringify(normalizeRunsOn(job['runs-on']?.source)),
+          runsOn: JSON.stringify(runsOn),
           status: shouldBlockJob ? Status.Blocked : Status.Waiting,
           startedAt: null,
           stoppedAt: null,

@@ -6,6 +6,7 @@ import { ActionRun, ActionRunJob, ActionRunner, ActionTask, ActionTaskOutput } f
 import { Status } from '@/models/actions/status';
 import Workflow from '@/workflow';
 
+import { generateGithubContext } from './context';
 import { parseStringList } from './run';
 
 /**
@@ -29,21 +30,13 @@ async function buildRunnerTask(task: ActionTask): Promise<Task> {
   const workdir = run?.eventPayload ? (JSON.parse(run.eventPayload).workdir ?? '') : '';
 
   const context = {
-    event_name: run?.eventName ?? 'workflow_dispatch',
-    job: job.jobId,
-    ref: run?.ref ?? '',
-    sha: run?.commitSha ?? '',
-    run_id: String(run?.id ?? ''),
-    run_number: String(run?.index ?? ''),
-    run_attempt: String(task.attempt ?? 1),
-    actor: 'actions',
-    triggering_actor: 'actions',
-    workflow: workflow.name || workflow.file || '',
-    server_url: 'https://github.com',
+    ...generateGithubContext({ run, workflow, attempt: { attempt: task.attempt ?? 1 }, job }),
+    // `repository` doubles as the transport for the local checkout path: the runner
+    // reads it back as its workdir (`poller/runner.ts`). It therefore holds the path
+    // rather than an `owner/name` slug, which is what the runner's own reads of
+    // `github.repository` end up seeing — a known mismatch, left as is.
     repository: workdir,
     workspace: workdir,
-    repository_id: String(job.repositoryId),
-    repository_owner: '',
   };
 
   // A needed job is one run job per matrix cell, so its result is the aggregate

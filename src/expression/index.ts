@@ -25,8 +25,15 @@ class Expression<T> {
     public type: string = 'job',
   ) {}
 
-  evaluate(runner: Runner, ctx?: Partial<Context>): T {
-    const context = ctx || runner.context;
+  /**
+   * Interpolate the expression.
+   *
+   * `ctx` lets a caller with no runner — the server reading `runs-on` before any
+   * runner exists — supply the contexts itself. `runner` is then only reached for
+   * the special functions, so an expression declaring none may leave it out.
+   */
+  evaluate(runner?: Runner, ctx?: Partial<Context>): T {
+    const context = ctx || runner!.context;
     const interpret = (source: unknown): any => {
       if (typeof source === 'boolean') {
         return source;
@@ -64,7 +71,7 @@ class Expression<T> {
           });
           const output = templateExecutor({
             ...availability,
-            ...this.getSpecialFunctions(runner),
+            ...this.getSpecialFunctions(runner!),
           });
 
           if (output === 'true') {

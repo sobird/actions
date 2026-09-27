@@ -7,6 +7,7 @@
 import Executor from '@/common/executor';
 import Expression from '@/expression';
 import Runner from '@/runner';
+import Context from '@/runner/context';
 import { Needs } from '@/runner/context/needs';
 
 import { WorkflowDispatchInput, Permissions, Concurrency } from '../types';
@@ -525,8 +526,8 @@ class Job {
     return typeof this.needs === 'string' ? [this.needs] : this.needs;
   }
 
-  runsOn(runner: Runner) {
-    const runsOn = this['runs-on'].evaluate(runner);
+  runsOn(runner?: Runner, ctx?: Partial<Context>) {
+    const runsOn = this['runs-on'].evaluate(runner, ctx);
     if (!runsOn) {
       return [];
     }
