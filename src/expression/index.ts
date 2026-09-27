@@ -188,8 +188,27 @@ class Expression<T> {
     return needs;
   }
 
+  /**
+   * Status functions read the composite's own result for embedded main steps, and the
+   * job's status for pre, post and job-level steps.
+   *
+   * @see https://github.com/actions/runner/blob/main/src/Runner.Worker/Expressions/SuccessFunction.cs
+   */
+  private static IsCompositeMainStep(runner: Runner) {
+    return runner.isEmbedded && runner.stage === 'Main';
+  }
+
+  /** `github.action_status` carries the composite's result so far; unset reads as success. */
+  private static CompositeStatus(runner: Runner) {
+    return runner.context.github.action_status || 'success';
+  }
+
   static CreateStepSuccess(runner: Runner) {
     return () => {
+      if (Expression.IsCompositeMainStep(runner)) {
+        return Expression.CompositeStatus(runner) === 'success';
+      }
+
       return runner.context.job.status === 'success';
     };
   }
@@ -210,6 +229,10 @@ class Expression<T> {
 
   static CreateStepFailure(runner: Runner) {
     return () => {
+      if (Expression.IsCompositeMainStep(runner)) {
+        return Expression.CompositeStatus(runner) === 'failure';
+      }
+
       return runner.context.job.status === 'failure';
     };
   }

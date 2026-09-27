@@ -3,7 +3,6 @@ import Runner from '@/runner';
 
 import Expression from '.';
 import { type Job } from '../runner/context/job';
-import Step from '../runner/context/step';
 
 vi.mock('@/runner');
 
@@ -287,29 +286,47 @@ describe('Expression Functions', () => {
     });
   });
 
-  describe('failure() with composite conditions', () => {
+  /**
+   * Point the shared runner at an embedded step of a composite's main run, and give it
+   * the two statuses such a step chooses between.
+   */
+  function compositeMainStep(jobStatus: string, actionStatus: string) {
+    runner.context.job = { status: jobStatus } as Job;
+    runner.context.github.action_status = actionStatus;
+    runner.parent = {} as Runner;
+    runner.stage = 'Main';
+  }
+
+  describe('status functions in a composite main step', () => {
+    // 复合动作的步骤读的是复合动作自己的结果，不是作业状态，两列因此刻意取不同的值
     const testCases = [
-      { jobStatus: 'failure', actionStatus: 'failure', expected: true },
-      { jobStatus: 'failure', actionStatus: 'success', expected: false },
-      { jobStatus: 'success', actionStatus: 'failure', expected: true },
-      { jobStatus: 'success', actionStatus: 'success', expected: false },
-      { jobStatus: 'success', actionStatus: null, expected: false },
+      { jobStatus: 'failure', actionStatus: 'failure', success: false, failure: true },
+      { jobStatus: 'failure', actionStatus: 'success', success: true, failure: false },
+      { jobStatus: 'success', actionStatus: 'failure', success: false, failure: true },
+      { jobStatus: 'success', actionStatus: 'success', success: true, failure: false },
+      // 复合动作还没有记录结果时按成功算
+      { jobStatus: 'failure', actionStatus: '', success: true, failure: false },
     ];
 
-    testCases.forEach(({ jobStatus, actionStatus, expected }) => {
-      it(`should return ${expected} when jobStatus is ${jobStatus} and actionStatus is ${actionStatus}`, () => {
-        runner.context.job = {
-          status: jobStatus,
-        } as Job;
-        // runner.context.github.action_status = actionStatus;
-        runner.context.StepResult = {
-          conclusion: actionStatus,
-        } as Step;
+    afterEach(() => {
+      runner.parent = undefined;
+      runner.context.github.action_status = '';
+    });
 
-        const expression = new Expression('failure()', [], ['failure'], true, true, 'step');
-        const result = expression.evaluate(runner);
-        expect(result).toBe(expected);
+    testCases.forEach(({ jobStatus, actionStatus, success, failure }) => {
+      it(`should read the composite result ('${actionStatus}') rather than the ${jobStatus} job`, () => {
+        compositeMainStep(jobStatus, actionStatus);
+
+        expect(new Expression('success()', [], ['success'], true, true, 'step').evaluate(runner)).toBe(success);
+        expect(new Expression('failure()', [], ['failure'], true, true, 'step').evaluate(runner)).toBe(failure);
       });
+    });
+
+    // 上游的 cancelled() 没有复合动作分支，读的一直是作业状态
+    it('should keep cancelled() on the job status', () => {
+      compositeMainStep('cancelled', 'success');
+
+      expect(new Expression('cancelled()', [], ['cancelled'], true, true, 'step').evaluate(runner)).toBe(true);
     });
   });
 
@@ -337,28 +354,28 @@ describe('Expression Functions', () => {
     });
   });
 
-  describe('success() with composite conditions', () => {
-    const testCases = [
-      { jobStatus: 'failure', actionStatus: 'failure', expected: false },
-      { jobStatus: 'failure', actionStatus: 'success', expected: true },
-      { jobStatus: 'success', actionStatus: 'failure', expected: false },
-      { jobStatus: 'success', actionStatus: 'success', expected: true },
-      { jobStatus: 'success', actionStatus: null, expected: true },
+  describe('status functions outside a composite main step', () => {
+    // 作业级步骤、以及复合动作步骤的 pre 阶段，读的都是作业状态
+    const places = [
+      { where: 'a job-level step', parent: undefined, stage: 'Main' as const },
+      { where: "the pre stage of a composite's step", parent: {} as Runner, stage: 'Pre' as const },
     ];
 
-    testCases.forEach(({ jobStatus, actionStatus, expected }) => {
-      it(`should return ${expected} when jobStatus is ${jobStatus} and actionStatus is ${actionStatus}`, () => {
-        runner.context.job = {
-          status: jobStatus,
-        } as Job;
-        // runner.context.github.action_status = actionStatus;
-        runner.context.StepResult = {
-          conclusion: actionStatus,
-        } as Step;
+    afterEach(() => {
+      runner.parent = undefined;
+      runner.stage = 'Main';
+      runner.context.github.action_status = '';
+    });
 
-        const expression = new Expression('success()', [], ['success'], true, true, 'step');
-        const result = expression.evaluate(runner);
-        expect(result).toBe(expected);
+    places.forEach(({ where, parent, stage }) => {
+      it(`should read the failed job from ${where}`, () => {
+        runner.context.job = { status: 'failure' } as Job;
+        runner.context.github.action_status = 'success';
+        runner.parent = parent;
+        runner.stage = stage;
+
+        expect(new Expression('success()', [], ['success'], true, true, 'step').evaluate(runner)).toBe(false);
+        expect(new Expression('failure()', [], ['failure'], true, true, 'step').evaluate(runner)).toBe(true);
       });
     });
   });

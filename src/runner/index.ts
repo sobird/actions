@@ -28,7 +28,7 @@ import Config from '@/runner/config';
 import Context from '@/runner/context';
 import { createSafeName, assignIgnoreCase, createFnv1aHash } from '@/utils';
 import type { Run as DefaultsRun } from '@/workflow/job/defaults';
-import StepAction from '@/workflow/job/step/action';
+import StepAction, { type StepStage } from '@/workflow/job/step/action';
 import Strategy from '@/workflow/job/strategy';
 
 import { createAuthorizationToken } from '../common/auth';
@@ -111,6 +111,12 @@ class Runner {
    * current step
    */
   stepAction?: StepAction;
+
+  /**
+   * Stage of the step currently running. A composite's embedded steps run their own pre
+   * and main, and status functions tell the two apart by it.
+   */
+  stage: StepStage = 'Main';
 
   matchers: IssueMatcherConfig[] = [];
 

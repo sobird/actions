@@ -12,6 +12,12 @@ class CompositeAction extends Action {
 
       const { steps } = this.runs;
 
+      // The composite's own result, read by its embedded steps' status functions through
+      // `github.action_status`. It starts over here rather than inheriting the job's: a
+      // composite runs its steps even when the job has already failed, and a nested one
+      // starts fresh as well.
+      runner.context.github.action_status = 'success';
+
       await withCompositeLogger(async () => {
         return Executor.Pipeline(...steps.PrePipeline, ...steps.MainPipeline).execute(runner);
       });

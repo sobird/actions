@@ -12,7 +12,7 @@ import ActionFactory from '@/runner/action/factory';
 import { withTimeout } from '@/utils';
 import Step from '@/workflow/job/step';
 
-type StepStage = 'Pre' | 'Main' | 'Post';
+export type StepStage = 'Pre' | 'Main' | 'Post';
 
 abstract class StepAction extends Step {
   /**
@@ -63,6 +63,7 @@ abstract class StepAction extends Step {
       // set current step
       context.github.action = id;
       runner.stepAction = this;
+      runner.stage = stage;
       context.StepResult = {};
       runner.commandResult = Result.SUCCESS;
 
@@ -136,6 +137,13 @@ abstract class StepAction extends Step {
         }
       }
       context.StepResult = { outcome, conclusion };
+
+      // An embedded main step folds its failure into the composite's own result, which
+      // is what success()/failure() read there. Failures only: a later success must not
+      // undo an earlier one.
+      if (runner.isEmbedded && runner.stage === 'Main' && conclusion === 'failure') {
+        context.github.action_status = 'failure';
+      }
 
       if (conclusion === 'success') {
         logger.info(`Finishing: ${stage} ${name}`, { stepResult: 'success' });
