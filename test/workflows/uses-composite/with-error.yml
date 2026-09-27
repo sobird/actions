@@ -18,7 +18,7 @@ jobs:
       # 「该跳过」只有日志能看——作业早就红了，它多跑一步也翻不出新的失败信号。
       - name: after the composite failed
         if: failure()
-        run: echo "复合动作的失败已经算进作业状态"
+        run: echo "the composite failure is already part of the job status"
       - name: after the composite succeeded
         if: success()
-        run: echo "这一行不该出现在日志里"
+        run: echo "this line should not appear in the log"

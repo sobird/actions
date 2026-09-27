@@ -256,8 +256,8 @@ jobs:
       # ::error:: 只收进注解，不改变步骤结论；真失败还是要靠退出码
       - name: '::error:: and ::warning:: do not change the step conclusion'
         run: |
-          echo "::error::hosted basic 故意发的一条 ::error::"
-          echo "::warning::hosted basic 故意发的一条 ::warning::"
+          echo "::error::hosted basic emits this one on purpose ::error::"
+          echo "::warning::hosted basic emits this one on purpose ::warning::"
           echo "reached the next line after ::error::"
 
       - name: 'the rest of the line after ::add-mask:: gets masked'
@@ -349,7 +349,7 @@ jobs:
       # needs.result 就会是 success，把 consume-failing-composite 判失败。
       - name: after the composite failed
         if: failure()
-        run: echo "复合动作的失败已经算进作业状态"
+        run: echo "the composite failure is already part of the job status"
 
   consume-failing-composite:
     name: consume the failing composite result
