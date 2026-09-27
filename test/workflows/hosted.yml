@@ -41,7 +41,7 @@ jobs:
       # 把仓库拷进沙箱，下面的相对路径与 ./test/actions 才有东西可指
       - uses: actions/checkout@v4
 
-      - name: 工作流级 env 先落地，作业级覆盖同名键
+      - name: workflow env lands first, job env overrides the same key
         run: |
           [ "$WORKFLOW_ENV" = "workflow" ] || exit 1
           [ "$JOB_ENV" = "job" ] || exit 1
@@ -49,7 +49,7 @@ jobs:
           [ "$EVENT_FROM_ENV" = "push" ] || exit 1
           [ "${{ env.SHADOWED }}" = "job" ] || exit 1
 
-      - name: 步骤级 env 再覆盖作业级
+      - name: step env overrides the job env
         env:
           SHADOWED: step
         run: |
@@ -57,21 +57,21 @@ jobs:
           [ "$SHADOWED" = "step" ] || exit 1
           [ "${{ env.SHADOWED }}" = "step" ] || exit 1
 
-      - name: checkout 把仓库带进了沙箱
+      - name: checkout brings the repository into the sandbox
         run: |
           [ -f test/workflows/hosted.yml ] || exit 1
           [ -d test/actions ] || exit 1
 
       # hashFiles 的脚本是容器在 start() 时写进沙箱的：漏了这一步，这个表达式只会静默
       # 返回空串（缓存 key 会因此全部塌成一个），所以断言它既有值、长度也对
-      - name: hashFiles 在宿主机上也拿得到
+      - name: hashFiles resolves on the host too
         run: |
           HASH="${{ hashFiles('package.json') }}"
           echo "hashFiles(package.json)=$HASH"
           [ -n "$HASH" ] || exit 1
           [ "${#HASH}" = "64" ] || exit 1
 
-      - name: github 与 runner 上下文
+      - name: github and runner contexts
         run: |
           [ "$GITHUB_EVENT_NAME" = "push" ] || exit 1
           [ "$GITHUB_ACTIONS" = "true" ] || exit 1
@@ -83,7 +83,7 @@ jobs:
           [ "${{ runner.arch }}" = "$RUNNER_ARCH" ] || exit 1
           echo "ref=${{ github.ref }} sha=${{ github.sha }} workspace=$GITHUB_WORKSPACE"
 
-      - name: 表达式函数
+      - name: expression functions
         run: |
           [ "${{ contains('Hello World', 'WORLD') }}" = "true" ] || exit 1
           [ "${{ contains(fromJSON('["a","b"]'), 'b') }}" = "true" ] || exit 1
@@ -96,7 +96,7 @@ jobs:
           [ "${{ fromJSON('1') + fromJSON('41') }}" = "42" ] || exit 1
           [ "${{ 'a' != 'b' && 2 > 1 }}" = "true" ] || exit 1
 
-      - name: toJSON 产出的是 JSON 文本
+      - name: toJSON produces JSON text
         run: |
           cat > actual.json <<'EOF'
           ${{ toJSON(fromJSON('{"k":[1,2]}')) }}
@@ -104,7 +104,7 @@ jobs:
           cat actual.json
           [ "$(cat actual.json)" = '{"k":[1,2]}' ] || exit 1
 
-      - name: 未设置的上下文属性渲染成空串
+      - name: an unset context property renders as an empty string
         run: |
           [ -z "${{ vars.UNSET_VAR }}" ] || exit 1
           [ -z "${{ env.UNSET_ENV }}" ] || exit 1
@@ -119,7 +119,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 写 env / output / path / summary
+      - name: write env / output / path / summary
         id: write
         run: |
           echo "PLAIN=plain value" >> "$GITHUB_ENV"
@@ -138,19 +138,19 @@ jobs:
           chmod +x .hosted-bin/prepended.sh
           echo "$PWD/.hosted-bin" >> "$GITHUB_PATH"
 
-      - name: 上一步的 env 在下一步可见，heredoc 也带上了它的多行
+      - name: the previous step env is visible next, heredoc keeps its lines
         run: |
           [ "$PLAIN" = "plain value" ] || exit 1
           [ "${{ env.PLAIN }}" = "plain value" ] || exit 1
           [ "$(printf '%s\n' "$HEREDOC" | wc -l | tr -d ' ')" = "2" ] || exit 1
           printf '%s\n' "$HEREDOC" | grep -qx 'second line' || exit 1
 
-      - name: 上一步的输出从 steps 上下文取回
+      - name: the previous step outputs come back through the steps context
         run: |
           [ "${{ steps.write.outputs.count }}" = "2" ] || exit 1
           [ "${{ steps.write.outputs.answer-42 }}" = "yes" ] || exit 1
 
-      - name: GITHUB_PATH 前置的目录在下一步生效
+      - name: a directory prepended to GITHUB_PATH takes effect next step
         run: prepended.sh | grep -qx 'from-prepended-path' || exit 1
 
   matrix:
@@ -169,14 +169,14 @@ jobs:
             node: 20
             label: added-by-include
     steps:
-      - name: 只有三个格子，被 exclude 掉的组合不在其中
+      - name: only three cells, the excluded combination is not among them
         run: |
           case "${{ matrix.os }}-${{ matrix.node }}" in
             ubuntu-latest-18|ubuntu-latest-20|macos-latest-18) ;;
             *) echo "unexpected cell"; exit 1 ;;
           esac
 
-      - name: include 补进来的键只属于它命中的那个格子
+      - name: a key added by include belongs only to the cell it matched
         run: |
           if [ "${{ matrix.node }}" = "20" ]; then
             [ "${{ matrix.label }}" = "added-by-include" ] || exit 1
@@ -184,7 +184,7 @@ jobs:
             [ -z "${{ matrix.label }}" ] || exit 1
           fi
 
-      - name: strategy 上下文
+      - name: strategy context
         run: |
           [ "${{ strategy.job-total }}" = "3" ] || exit 1
           case "${{ strategy.job-index }}" in
@@ -200,13 +200,13 @@ jobs:
 
       # 复合动作内部又 checkout 一次：--hosted 下仍是「把 workdir 拷进沙箱」，
       # 重复拷同一份内容不该出错
-      - name: 本地复合动作
+      - name: local composite action
         id: composite
         uses: ./test/actions/hello-world-composite-action
         with:
           who-to-greet: hosted
 
-      - name: 复合动作的 output 冒泡到 steps 上下文
+      - name: the composite output bubbles up to the steps context
         run: |
           [ -n "${{ steps.composite.outputs.random-number }}" ] || exit 1
           case "${{ steps.composite.outputs.random-number }}" in
@@ -214,13 +214,13 @@ jobs:
           esac
 
       # node20 动作走宿主机上的 node（--hosted 直接 spawn，不经过容器）
-      - name: 本地 node20 动作
+      - name: local node20 action
         id: node
         uses: ./test/actions/hello-world-javascript-action
         with:
           who-to-greet: hosted
 
-      - name: node 动作的 output
+      - name: the node action output
         run: |
           [ -n "${{ steps.node.outputs.time }}" ] || exit 1
           echo "time=${{ steps.node.outputs.time }}"
@@ -237,7 +237,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 复合动作里的 env 作用域
+      - name: env scoping inside the composite
         uses: ./test/actions/composite-env/action1
         env:
           COMPOSITE_OVERRIDE: '1'
@@ -248,37 +248,37 @@ jobs:
     steps:
       # set_env 的 block list：写进去的命令会被拦下并留下一条注解，但值不生效，
       # 步骤本身也不失败
-      - name: 写 NODE_OPTIONS 会被 set_env 拦下
+      - name: writing NODE_OPTIONS is blocked by set_env
         run: |
           echo "NODE_OPTIONS=--max-old-space-size=1" >> "$GITHUB_ENV"
           [ "${NODE_OPTIONS:-}" != "--max-old-space-size=1" ] || exit 1
 
       # ::error:: 只收进注解，不改变步骤结论；真失败还是要靠退出码
-      - name: '::error:: 与 ::warning:: 不改变步骤结论'
+      - name: '::error:: and ::warning:: do not change the step conclusion'
         run: |
           echo "::error::hosted basic 故意发的一条 ::error::"
           echo "::warning::hosted basic 故意发的一条 ::warning::"
           echo "reached the next line after ::error::"
 
-      - name: '::add-mask:: 之后的同一行会被打码'
+      - name: 'the rest of the line after ::add-mask:: gets masked'
         run: printf '::add-mask::%s\n' "hosted-secret-value"
 
-      - name: 失败但被 continue-on-error 容忍
+      - name: fails but is tolerated by continue-on-error
         id: tolerated
         continue-on-error: true
         run: exit 1
 
-      - name: 容忍过的步骤 outcome 是 failure、conclusion 是 success
+      - name: a tolerated step has outcome failure and conclusion success
         run: |
           [ "${{ steps.tolerated.outcome }}" = "failure" ] || exit 1
           [ "${{ steps.tolerated.conclusion }}" = "success" ] || exit 1
 
       # 下面两步的条件都为假，真跑了就 exit 1，断言就是靠这个生效的
-      - name: 条件为假时跳过
+      - name: skipped when the condition is false
         if: ${{ 1 == 2 }}
         run: exit 1
 
-      - name: cancelled() 在正常跑完的运行里为假
+      - name: cancelled() is false in a run that finished normally
         if: cancelled()
         run: exit 1
 
@@ -323,7 +323,7 @@ jobs:
     needs: [reusable-inputs, reusable-on-string, reusable-on-array, reusable-matrix, reusable-nested]
     runs-on: ubuntu-latest
     steps:
-      - name: 被调方的 workflow output 回传到 caller 作业，每个作业的结果都是 success
+      - name: the callee workflow outputs come back to the caller job, every job succeeded
         run: |
           [ "${{ needs.reusable-inputs.outputs.output }}" = "string" ] || exit 1
           [ "${{ needs.reusable-inputs.result }}" = "success" ] || exit 1
@@ -342,12 +342,12 @@ jobs:
 
       # composite-with-error 的第一步 exit 1。内嵌步骤的失败被它自己的 runtime 消化掉，
       # 不会作为异常冒到这一步，所以这一步的结论只能靠复合动作自己的结果折算出来。
-      - name: 内部失败的复合动作
+      - name: a composite action that fails inside
         uses: ./test/actions/composite-with-error
 
       # 作业此刻已经失败：failure() 的这一步该跑到。它跑不到的话，下面那条断言读到的
       # needs.result 就会是 success，把 consume-failing-composite 判失败。
-      - name: 复合动作失败之后
+      - name: after the composite failed
         if: failure()
         run: echo "复合动作的失败已经算进作业状态"
 
@@ -358,7 +358,7 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: 复合动作内部的失败让整个作业失败
+      - name: the failure inside the composite fails the whole job
         run: |
           [ "${{ needs.failing-composite.result }}" = "failure" ] || exit 1
 
@@ -376,11 +376,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 先把作业判失败
+      - name: fail the job first
         run: exit 1
 
       # 少了 if: always() 这一步会被默认的 success() 跳过——那正是改动前的行为
-      - name: 作业失败之后仍要跑完的复合动作
+      - name: a composite that must still run after the job failed
         id: composite
         if: always()
         uses: ./test/actions/composite-with-error
@@ -391,7 +391,7 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: 作业的失败没挡住复合动作，内部条件读的也是复合动作自己的状态
+      - name: the job failure did not stop the composite, and its conditions read its own status
         run: |
           [ "${{ needs.composite-after-failure.result }}" = "failure" ] || exit 1
           [ "${{ needs.composite-after-failure.outputs.outcome }}" = "failure" ] || exit 1
@@ -403,7 +403,7 @@ jobs:
     needs: [file-commands, local-actions]
     runs-on: ubuntu-latest
     steps:
-      - name: needs 的 result 与 outputs（作业 id 与 output 名都带连字符）
+      - name: needs result and outputs (both the job id and the output name are hyphenated)
         run: |
           [ "${{ needs.file-commands.result }}" = "success" ] || exit 1
           [ "${{ needs.local-actions.result }}" = "success" ] || exit 1

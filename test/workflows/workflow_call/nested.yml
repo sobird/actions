@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [inner]
     steps:
-      - name: 被调方的 workflow outputs 落在 caller 的 needs 上
+      - name: the callee workflow outputs land on the caller's needs
         run: |
           [ "${{ needs.inner.result }}" = "success" ] || exit 1
           [ "${{ needs.inner.outputs.workflow_output1 }}" = "hello" ] || exit 1

@@ -13,7 +13,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: 每个格子拿到自己那份矩阵值
+      - name: each cell gets its own matrix value
         run: |
           echo "who=${{ inputs.who }}"
           [ -n "${{ inputs.who }}" ] || exit 1

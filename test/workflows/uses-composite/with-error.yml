@@ -11,14 +11,14 @@ jobs:
 
       # composite-with-error 的第一步 exit 1。内嵌步骤的失败被它自己的 runtime 消化掉，
       # 不会作为异常冒到这一步，所以这一步的结论只能靠复合动作自己的结果折算出来。
-      - name: 内部失败的复合动作
+      - name: a composite action that fails inside
         uses: ./test/actions/composite-with-error
 
       # 作业此刻已经失败：failure() 的那一步该跑到，success() 的那一步该被跳过。
       # 「该跳过」只有日志能看——作业早就红了，它多跑一步也翻不出新的失败信号。
-      - name: 复合动作失败之后
+      - name: after the composite failed
         if: failure()
         run: echo "复合动作的失败已经算进作业状态"
-      - name: 复合动作成功之后
+      - name: after the composite succeeded
         if: success()
         run: echo "这一行不该出现在日志里"
