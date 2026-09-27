@@ -6,6 +6,7 @@ import { MaxReadLength } from '@/log/storage';
 import { ActionTask, ActionTaskStep } from '@/models';
 
 const DefaultLimit = 256 * 1024;
+const MaxApiReadLimit = 256 * 1024;
 
 /**
  * Read a slice of a task's log.
@@ -25,7 +26,11 @@ export const GET = async (req: NextRequest, { params }: { params: Promise<{ id: 
   const parsedOffset = Number(searchParams.get('offset') ?? 0);
   const parsedLimit = Number(searchParams.get('limit') ?? DefaultLimit);
   const offset = Number.isFinite(parsedOffset) && parsedOffset > 0 ? parsedOffset : 0;
-  const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, MaxReadLength) : DefaultLimit;
+  const maxAllowedLimit = Math.min(MaxApiReadLimit, MaxReadLength);
+  const limit =
+    Number.isFinite(parsedLimit) && parsedLimit > 0
+      ? Math.min(Math.floor(parsedLimit), maxAllowedLimit)
+      : DefaultLimit;
 
   const logSize = task.logSize ?? 0;
   let rows: { time: string; content: string }[] = [];
