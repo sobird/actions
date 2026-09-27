@@ -5,7 +5,7 @@ import { timestampFromDate, timestampDate } from '@bufbuild/protobuf/wkt';
 import { LogRow } from '@/gen/runner/v1/messages_pb';
 import { dbfs, SeekWhence, type DbFile } from '@/models/dbfs';
 
-import storage from './storage';
+import storage, { MaxReadLength } from './storage';
 
 const MaxLineSize = 64 * 1024;
 const MaxReadChunkSize = 64 * 1024;
@@ -98,7 +98,10 @@ class Log {
       if (offset >= size || safeLimit <= 0) {
         return { rows: [], nextOffset: offset };
       }
-      return this.parseChunk((await storage.read(filename, offset, Math.min(safeLimit, size - offset))).toString(), offset);
+      return this.parseChunk(
+        (await storage.read(filename, offset, Math.min(safeLimit, size - offset))).toString(),
+        offset,
+      );
     }
 
     const fd = await dbfs.open(filename, fs.constants.O_RDONLY);
