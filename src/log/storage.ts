@@ -16,6 +16,7 @@ const baseDir = path.resolve('./actions_log');
  * and never has to be refused.
  */
 export const MaxReadLength = 4 * 1024 * 1024;
+const MaxAllocatedReadLength = 256 * 1024;
 
 /** Map a storage key to an absolute path, refusing to escape {@link baseDir}. */
 function resolveKey(key: string) {
@@ -61,7 +62,7 @@ export async function read(key: string, offset: number, length: number): Promise
   if (!Number.isFinite(length) || length <= 0) {
     return Buffer.alloc(0);
   }
-  const bytes = Math.min(Math.floor(length), MaxReadLength);
+  const bytes = Math.min(Math.floor(length), MaxReadLength, MaxAllocatedReadLength);
 
   const handle = await fs.open(resolveKey(key), 'r');
   try {
