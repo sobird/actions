@@ -12,8 +12,9 @@ run-name: hosted basic by ${{ github.actor }}
 # 会让步骤退出非零，从而把作业判失败。注意失败信号只落在**那个作业**的 `Job failed` 上
 # （CLI 的退出码恒为 0），所以跑完要看日志。
 #
-# failing-composite 是这里唯一**预期**失败的作业——它的失败正是断言本身，由
-# consume-failing-composite 的 needs.result 检查。其余作业都应当跑成 Job succeeded。
+# failing-composite 与 composite-after-failure 是这里仅有的两个**预期**失败作业——它们的
+# 失败正是断言本身，分别由 consume-failing-composite 与 consume-composite-after-failure 检查。
+# 其余作业都应当跑成 Job succeeded。
 #
 # 作业级 `uses:` 调的本地可重用工作流也是同一套宿主侧机制：skipCheckout 默认开着，
 # 被调方按仓库根相对路径在进程内读盘，不联网、不起容器，因此这一节同样不需要 Docker。
@@ -224,6 +225,23 @@ jobs:
           [ -n "${{ steps.node.outputs.time }}" ] || exit 1
           echo "time=${{ steps.node.outputs.time }}"
 
+  # 复合动作上的 env 作用域与嵌套复合动作：action1 的每一步都是 `exit 1` 配
+  # `if: env.X != '<期望值>'`，env 传对了整步跳过，传错就会执行 exit 1 把作业判失败。
+  # 它的最后一步再嵌一个 action2，覆盖嵌套那一层的 env 覆盖（action2 里 COMPOSITE_OVERRIDE 换成 2）。
+  composite-env:
+    name: composite env scoping and a nested composite
+    runs-on: ubuntu-latest
+    env:
+      JOB: '1'
+      GLOBAL: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 复合动作里的 env 作用域
+        uses: ./test/actions/composite-env/action1
+        env:
+          COMPOSITE_OVERRIDE: '1'
+
   boundaries:
     name: boundaries
     runs-on: ubuntu-latest
@@ -314,7 +332,7 @@ jobs:
           [ "${{ needs.reusable-matrix.result }}" = "success" ] || exit 1
           [ "${{ needs.reusable-nested.result }}" = "success" ] || exit 1
 
-  # 本文件唯一预期失败的作业：它的失败正是断言本身，由 consume-failing-composite 检查。
+  # 本文件预期失败的作业之一：它的失败正是断言本身，由 consume-failing-composite 检查。
   # 同样的场景在 test/workflows/uses-composite/with-error.yml 里可以单独手工跑。
   failing-composite:
     name: a failing composite action fails its job
@@ -343,6 +361,42 @@ jobs:
       - name: 复合动作内部的失败让整个作业失败
         run: |
           [ "${{ needs.failing-composite.result }}" = "failure" ] || exit 1
+
+  # 作业在复合动作之前就已经失败。复合动作的步骤仍应照跑，它内部的 success()/failure()
+  # 读的也该是复合动作自己的 action_status 而不是作业状态 —— 这一条只有在作业先红了的时候
+  # 才有判定力：作业还好时两条路径给出的答案一样，断言就白写了。
+  # 同样的道理，作业本身就是预期失败的，断言只能交给下游的 consume 作业。
+  composite-after-failure:
+    name: a composite still runs its steps after the job failed
+    runs-on: ubuntu-latest
+    outputs:
+      outcome: ${{ steps.composite.outcome }}
+      ran-after-failure: ${{ steps.composite.outputs.ran-after-failure }}
+      ran-unguarded: ${{ steps.composite.outputs.ran-unguarded }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 先把作业判失败
+        run: exit 1
+
+      # 少了 if: always() 这一步会被默认的 success() 跳过——那正是改动前的行为
+      - name: 作业失败之后仍要跑完的复合动作
+        id: composite
+        if: always()
+        uses: ./test/actions/composite-with-error
+
+  consume-composite-after-failure:
+    name: consume the composite that ran after the job failed
+    needs: [composite-after-failure]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 作业的失败没挡住复合动作，内部条件读的也是复合动作自己的状态
+        run: |
+          [ "${{ needs.composite-after-failure.result }}" = "failure" ] || exit 1
+          [ "${{ needs.composite-after-failure.outputs.outcome }}" = "failure" ] || exit 1
+          [ "${{ needs.composite-after-failure.outputs.ran-after-failure }}" = "yes" ] || exit 1
+          [ -z "${{ needs.composite-after-failure.outputs.ran-unguarded }}" ] || exit 1
 
   consume:
     name: consume outputs

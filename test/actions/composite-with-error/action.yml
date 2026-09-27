@@ -1,10 +1,28 @@
 name: 'Test Composite Action With Error'
 description: 'Test action uses composite'
 
+# 复合动作内部的 if: 读的是 action_status（复合动作自己的累计结果），不是作业状态。
+# 两个 output 把这两面都变成可断言的：失败之后 if: failure() 的那步要跑到，
+# 没有 if 的那步要跳过（跳过的步骤不会写 GITHUB_OUTPUT，output 留空）。
+outputs:
+  ran-after-failure:
+    description: 'yes when the if: failure() step ran'
+    value: ${{ steps.after-failure.outputs.ran }}
+  ran-unguarded:
+    description: 'the unguarded step after the failure must be skipped and leave this empty'
+    value: ${{ steps.unguarded.outputs.ran }}
+
 runs:
   using: 'composite'
   steps:
     - run: exit 1
       shell: bash
-    - run: echo should not run in composite steps
+    - id: unguarded
+      run: |
+        echo should not run in composite steps
+        echo "ran=yes" >> "$GITHUB_OUTPUT"
+      shell: bash
+    - id: after-failure
+      if: failure()
+      run: echo "ran=yes" >> "$GITHUB_OUTPUT"
       shell: bash
