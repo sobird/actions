@@ -8,6 +8,15 @@ import path from 'node:path';
  */
 const baseDir = path.resolve('./actions_log');
 
+/**
+ * Most bytes one {@link read} hands back.
+ *
+ * The cap belongs at the allocation rather than only on the HTTP route that calls
+ * it: the protocol resumes from an offset, so a read cut short is a normal result
+ * and never has to be refused.
+ */
+export const MaxReadLength = 4 * 1024 * 1024;
+
 /** Map a storage key to an absolute path, refusing to escape {@link baseDir}. */
 function resolveKey(key: string) {
   const fullPath = path.resolve(baseDir, key);
@@ -38,12 +47,26 @@ export async function size(key: string): Promise<number> {
   }
 }
 
-/** Read up to `length` bytes starting at `offset` from an archived log. */
+/**
+ * Read up to `length` bytes starting at `offset` from an archived log.
+ *
+ * Both bounds arrive from the request, so neither is trusted: a length that is not
+ * a positive integer would be rejected by `Buffer.alloc` outright, and a
+ * fractional offset is not a position at all. A read longer than
+ * {@link MaxReadLength} is cut short rather than refused, which the caller already
+ * copes with.
+ */
 export async function read(key: string, offset: number, length: number): Promise<Buffer> {
+  const start = Number.isFinite(offset) && offset > 0 ? Math.floor(offset) : 0;
+  if (!Number.isFinite(length) || length <= 0) {
+    return Buffer.alloc(0);
+  }
+  const bytes = Math.min(Math.floor(length), MaxReadLength);
+
   const handle = await fs.open(resolveKey(key), 'r');
   try {
-    const buffer = Buffer.alloc(length);
-    const { bytesRead } = await handle.read(buffer, 0, length, offset);
+    const buffer = Buffer.alloc(bytes);
+    const { bytesRead } = await handle.read(buffer, 0, bytes, start);
     return buffer.subarray(0, bytesRead);
   } finally {
     await handle.close();

@@ -16,7 +16,7 @@ import { sequelize, BaseModel } from '@/lib/sequelize';
 
 export type RepositoryCreationAttributes = CreationAttributes<Repository>;
 
-class Repository extends BaseModel<InferAttributes<Repository>, InferCreationAttributes<Repository>> {
+export class Repository extends BaseModel<InferAttributes<Repository>, InferCreationAttributes<Repository>> {
   declare id: CreationOptional<number>;
   declare ownerId: number;
   declare name: string;
@@ -75,5 +75,3 @@ Repository.init(
 // Repository.beforeCreate((model) => {
 
 // });
-
-export default Repository;

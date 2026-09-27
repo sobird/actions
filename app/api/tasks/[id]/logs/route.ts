@@ -2,10 +2,10 @@ import { timestampDate } from '@bufbuild/protobuf/wkt';
 import { NextRequest, NextResponse } from 'next/server';
 
 import Log from '@/log';
+import { MaxReadLength } from '@/log/storage';
 import { ActionTask, ActionTaskStep } from '@/models';
 
 const DefaultLimit = 256 * 1024;
-const MaxLimit = 4 * 1024 * 1024;
 
 /**
  * Read a slice of a task's log.
@@ -25,7 +25,7 @@ export const GET = async (req: NextRequest, { params }: { params: Promise<{ id: 
   const parsedOffset = Number(searchParams.get('offset') ?? 0);
   const parsedLimit = Number(searchParams.get('limit') ?? DefaultLimit);
   const offset = Number.isFinite(parsedOffset) && parsedOffset > 0 ? parsedOffset : 0;
-  const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, MaxLimit) : DefaultLimit;
+  const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, MaxReadLength) : DefaultLimit;
 
   const logSize = task.logSize ?? 0;
   let rows: { time: string; content: string }[] = [];
