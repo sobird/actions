@@ -12,6 +12,9 @@ run-name: hosted basic by ${{ github.actor }}
 # 会让步骤退出非零，从而把作业判失败。注意失败信号只落在**那个作业**的 `Job failed` 上
 # （CLI 的退出码恒为 0），所以跑完要看日志。
 #
+# failing-composite 是这里唯一**预期**失败的作业——它的失败正是断言本身，由
+# consume-failing-composite 的 needs.result 检查。其余作业都应当跑成 Job succeeded。
+#
 # 作业级 `uses:` 调的本地可重用工作流也是同一套宿主侧机制：skipCheckout 默认开着，
 # 被调方按仓库根相对路径在进程内读盘，不联网、不起容器，因此这一节同样不需要 Docker。
 on: push
@@ -310,6 +313,36 @@ jobs:
           [ "${{ needs.reusable-on-array.result }}" = "success" ] || exit 1
           [ "${{ needs.reusable-matrix.result }}" = "success" ] || exit 1
           [ "${{ needs.reusable-nested.result }}" = "success" ] || exit 1
+
+  # 本文件唯一预期失败的作业：它的失败正是断言本身，由 consume-failing-composite 检查。
+  # 同样的场景在 test/workflows/uses-composite/with-error.yml 里可以单独手工跑。
+  failing-composite:
+    name: a failing composite action fails its job
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # composite-with-error 的第一步 exit 1。内嵌步骤的失败被它自己的 runtime 消化掉，
+      # 不会作为异常冒到这一步，所以这一步的结论只能靠复合动作自己的结果折算出来。
+      - name: 内部失败的复合动作
+        uses: ./test/actions/composite-with-error
+
+      # 作业此刻已经失败：failure() 的这一步该跑到。它跑不到的话，下面那条断言读到的
+      # needs.result 就会是 success，把 consume-failing-composite 判失败。
+      - name: 复合动作失败之后
+        if: failure()
+        run: echo "复合动作的失败已经算进作业状态"
+
+  consume-failing-composite:
+    name: consume the failing composite result
+    needs: [failing-composite]
+    # 上游失败了，只有 always() 才跑得到这一步
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 复合动作内部的失败让整个作业失败
+        run: |
+          [ "${{ needs.failing-composite.result }}" = "failure" ] || exit 1
 
   consume:
     name: consume outputs

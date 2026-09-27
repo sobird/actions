@@ -116,6 +116,18 @@ describe('context StepResult', () => {
     expect(context.job.status).toBe('failure');
   });
 
+  it('keeps the job failed once a step failed, however many steps succeed after it', () => {
+    const context = createContext();
+    context.github.action = 'fails';
+    context.StepResult = { conclusion: 'failure' };
+
+    // 失败之后还能跑的步骤（if: failure() / always()）成功了，作业不该因此回到 success
+    context.github.action = 'recovers';
+    context.StepResult = { conclusion: 'success' };
+
+    expect(context.job.status).toBe('failure');
+  });
+
   it('leaves the job status alone for outcomes without a status', () => {
     const context = createContext();
     context.github.action = 'first';

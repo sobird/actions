@@ -1,4 +1,5 @@
 import Executor from '@/common/executor';
+import { Result } from '@/gen/runner/v1/messages_pb';
 import { withCompositeLogger } from '@/runner/logger';
 
 import Action from '.';
@@ -25,9 +26,13 @@ class CompositeAction extends Action {
       const { parent } = runner;
 
       if (parent) {
-        // set parent job status
-        // eslint-disable-next-line no-param-reassign
-        parent.context.job.status = runner.context.job.status;
+        // An embedded step never lets its own failure out of its runtime, so the step this
+        // composite belongs to would conclude success however the composite went. Hand the
+        // composite's result over the one channel the runtime merges into the step outcome,
+        // the same one a failed file command uses.
+        if (runner.context.github.action_status === 'failure') {
+          parent.commandResult = Result.FAILURE;
+        }
 
         // set current step composite outputs
         Object.entries(this.outputs).forEach(([outputId, output]) => {

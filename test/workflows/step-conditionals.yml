@@ -33,5 +33,5 @@ jobs:
         if: ${{ 1 == 2 }}
         run: exit 1
 
-# failure() 需要作业里先有真实失败才能成立，已有用例覆盖：
-# test/workflows/uses-composite/with-error.yml
+# failure() 需要作业里先有真实失败才能成立，已有用例覆盖：hosted.yml 的 failing-composite
+# 作业（失败来自一个复合动作；同样的场景可以单独手工跑 test/workflows/uses-composite/with-error.yml）。

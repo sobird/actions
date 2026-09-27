@@ -8,6 +8,8 @@
  * sobird<i@sobird.me> at 2024/05/07 19:42:02 created.
  */
 
+import { Status } from '@/models/actions/status';
+
 import { Env } from './env';
 import { Github } from './github';
 import { Inputs } from './inputs';
@@ -117,7 +119,13 @@ export default class Context {
     Object.assign(this.steps[action], step);
 
     if (step.conclusion === 'success' || step.conclusion === 'failure' || step.conclusion === 'cancelled') {
-      this.job.status = step.conclusion;
+      // 取最差合并而不是覆盖：作业一旦有步骤失败，紧接着的一次成功不该把它拉回 success
+      // （对齐上游 StepsRunner 对 ExecutionContext.Result 的合并）
+      const merged = Status.mergeResults(
+        Status.from(this.job.status ?? '').asResult(),
+        Status.from(step.conclusion).asResult(),
+      );
+      this.job.status = Status.fromResult(merged).toString() as Job['status'];
     }
   }
 
