@@ -90,22 +90,24 @@ class Log {
     limit: number,
     inStorage = false,
   ): Promise<{ rows: LogRow[]; nextOffset: number }> {
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, MaxReadLength) : 0;
+
     if (inStorage) {
       const size = await storage.size(filename);
-      if (offset >= size || limit <= 0) {
+      if (offset >= size || safeLimit <= 0) {
         return { rows: [], nextOffset: offset };
       }
-      return this.parseChunk((await storage.read(filename, offset, Math.min(limit, size - offset))).toString(), offset);
+      return this.parseChunk((await storage.read(filename, offset, Math.min(safeLimit, size - offset))).toString(), offset);
     }
 
     const fd = await dbfs.open(filename, fs.constants.O_RDONLY);
     const size = await fd.size();
 
-    if (offset >= size || limit <= 0) {
+    if (offset >= size || safeLimit <= 0) {
       return { rows: [], nextOffset: offset };
     }
 
-    return this.parseChunk((await this.readBlocks(fd, offset, Math.min(limit, size - offset))).toString(), offset);
+    return this.parseChunk((await this.readBlocks(fd, offset, Math.min(safeLimit, size - offset))).toString(), offset);
   }
 
   /** Parse a chunk read starting at `offset` into rows plus the resume offset. */
