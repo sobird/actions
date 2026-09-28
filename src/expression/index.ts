@@ -15,10 +15,27 @@ import Job from '@/workflow/job';
 
 import functions, { Special } from './functions';
 
+/**
+ * The contexts an expression may read from, mirroring the properties of {@link Context}.
+ */
+export type Scope =
+  | 'github'
+  | 'env'
+  | 'vars'
+  | 'job'
+  | 'jobs'
+  | 'steps'
+  | 'runner'
+  | 'secrets'
+  | 'strategy'
+  | 'matrix'
+  | 'needs'
+  | 'inputs';
+
 class Expression<T> {
   constructor(
     public source: T,
-    public scopes: string[],
+    public scopes: Scope[],
     public specials: Special[] = [],
     public defaultValue: unknown = '',
     public isIf: boolean = false,
