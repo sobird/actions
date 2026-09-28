@@ -237,7 +237,7 @@ describe('Expression Functions', () => {
 
     testCases.forEach(({ jobStatus, expected }) => {
       it(`should return ${expected} when jobStatus is ${jobStatus}`, () => {
-        const expression = new Expression('always()', [], [], true, true);
+        const expression = new Expression('always()', [], ['always'], true, true);
         const result = expression.evaluate(runner);
         expect(result).toBe(expected);
       });

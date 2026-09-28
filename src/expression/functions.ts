@@ -12,6 +12,8 @@
 // import glob from '@actions/glob';
 import { isArray } from 'lodash-es';
 
+export type Special = 'always' | 'cancelled' | 'success' | 'failure' | 'hashFiles';
+
 /**
  * Returns true if search contains item.
  *
@@ -220,7 +222,7 @@ export default {
   fromJSON,
   // hashFiles,
   // success,
-  always,
+  // always,
   // cancelled,
   // failure,
   objectFilter,

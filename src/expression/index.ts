@@ -13,13 +13,13 @@ import Runner from '@/runner';
 import Context from '@/runner/context';
 import Job from '@/workflow/job';
 
-import functions from './functions';
+import functions, { Special } from './functions';
 
 class Expression<T> {
   constructor(
     public source: T,
     public scopes: string[],
-    public specials: string[] = [],
+    public specials: Special[] = [],
     public defaultValue: unknown = '',
     public isIf: boolean = false,
     public type: string = 'job',
@@ -119,6 +119,9 @@ class Expression<T> {
     const fns: Record<string, Function> = {};
     this.specials.forEach((name) => {
       switch (name) {
+        case 'always':
+          fns.always = () => true;
+          break;
         case 'hashFiles':
           fns.hashFiles = Expression.CreateHashFilesFunction(runner);
           break;
