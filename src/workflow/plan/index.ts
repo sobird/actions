@@ -2,9 +2,9 @@ import os from 'node:os';
 
 import Executor from '@/common/executor';
 import logger from '@/common/logger';
+import Step from '@/context/step';
 import Runner from '@/runner';
 import Config from '@/runner/config';
-import Step from '@/runner/context/step';
 
 import Run from './run';
 import Stage from './stage';

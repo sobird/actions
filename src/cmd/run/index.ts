@@ -15,6 +15,7 @@ import { Constants } from '@/common/constants';
 import Git from '@/common/git';
 import logger from '@/common/logger';
 import { getConfig } from '@/config';
+import Context from '@/context';
 import { Docker } from '@/docker';
 import Labels, { HOSTED } from '@/labels';
 import Runner from '@/runner';
@@ -22,7 +23,6 @@ import ActionCache from '@/runner/action/cache';
 import ActionCacheOffline from '@/runner/action/cache/offline';
 import ActionCacheRepository from '@/runner/action/cache/repository';
 import Config from '@/runner/config';
-import Context from '@/runner/context';
 import { readConfSync, generateId, readJsonSync } from '@/utils';
 import WorkflowPlanner from '@/workflow/planner';
 

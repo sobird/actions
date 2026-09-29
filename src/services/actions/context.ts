@@ -6,8 +6,8 @@
  * and the task handed to a runner are fed from that one result.
  */
 
+import { Github } from '@/context/github';
 import type { ActionRun, ActionRunAttempt, ActionRunJob } from '@/models';
-import { Github } from '@/runner/context/github';
 import type Workflow from '@/workflow';
 
 /** The rows a github context can be resolved from; every one of them is optional. */

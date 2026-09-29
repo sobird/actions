@@ -21,11 +21,11 @@ import Artifact from '@/artifact';
 import ArtifactCache from '@/artifact/cache';
 import { Constants, WellKnownDirectory } from '@/common/constants';
 import logger, { getLogger, type LoggerChild } from '@/common/logger';
+import Context from '@/context';
 import { Docker } from '@/docker';
 import { Issue, IssueType, IssueSchema, Result } from '@/gen/runner/v1/messages_pb';
 import { HOSTED } from '@/labels';
 import Config from '@/runner/config';
-import Context from '@/runner/context';
 import { createSafeName, assignIgnoreCase, createFnv1aHash } from '@/utils';
 import type { Run as DefaultsRun } from '@/workflow/job/defaults';
 import StepAction, { type StepStage } from '@/workflow/job/step/action';
@@ -33,13 +33,13 @@ import Strategy from '@/workflow/job/strategy';
 
 import { createAuthorizationToken } from '../common/auth';
 import Executor from '../common/executor';
+import { Job } from '../context/jobs';
 import Expression from '../expression';
 import Run from '../workflow/plan/run';
 import { IssueMatchersConfig, IssueMatcherConfig } from './action/command/issueMatcher';
 import Container from './container/container';
 import DockerContainer from './container/docker';
 import HostedContainer from './container/hosted';
-import { Job } from './context/jobs';
 import { withJobLogger, getStepNumber } from './logger';
 
 export const WellKnownTags = {

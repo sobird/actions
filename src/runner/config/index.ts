@@ -7,9 +7,9 @@
 import { HostConfig } from 'dockerode';
 
 import { type LogLevel } from '@/common/logger';
-import ActionCache from '@/runner/action/cache';
 // import Container from './container';
-import Context from '@/runner/context';
+import Context from '@/context';
+import ActionCache from '@/runner/action/cache';
 
 /**
  * The configuration interface for the runner.

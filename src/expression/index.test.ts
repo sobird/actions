@@ -2,7 +2,7 @@
 import Runner from '@/runner';
 
 import Expression from '.';
-import { type Job } from '../runner/context/job';
+import { type Job } from '../context/job';
 
 vi.mock('@/runner');
 

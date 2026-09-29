@@ -9,8 +9,8 @@
 
 import { pick, template, isObject, forOwn } from 'lodash-es';
 
+import Context from '@/context';
 import Runner from '@/runner';
-import Context from '@/runner/context';
 import Job from '@/workflow/job';
 
 import functions, { Special } from './functions';

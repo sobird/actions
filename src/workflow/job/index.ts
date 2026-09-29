@@ -5,10 +5,10 @@
  */
 
 import Executor from '@/common/executor';
+import Context from '@/context';
+import { Needs } from '@/context/needs';
 import Expression from '@/expression';
 import Runner from '@/runner';
-import Context from '@/runner/context';
-import { Needs } from '@/runner/context/needs';
 
 import { WorkflowDispatchInput, Permissions, Concurrency } from '../types';
 import Container, { ContainerProps } from './container';

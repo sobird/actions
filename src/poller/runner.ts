@@ -7,11 +7,11 @@ import path from 'node:path';
 
 import { withLoggerHook } from '@/common/logger';
 import type { Config } from '@/config';
+import Context from '@/context';
 import { RunnerServiceClient } from '@/gen/client';
 import { Task } from '@/gen/runner/v1/messages_pb';
 import Labels from '@/labels';
 import type RunnerConfig from '@/runner/config';
-import Context from '@/runner/context';
 import { withTimeout } from '@/utils';
 
 import Reporter from '../reporter';

@@ -1,6 +1,7 @@
 import { parse, stringify } from 'yaml';
 
 import logger from '@/common/logger';
+import Context from '@/context';
 import {
   sequelize,
   ActionRun,
@@ -12,7 +13,6 @@ import {
   ActionTaskVersion,
 } from '@/models';
 import { Status } from '@/models/actions/status';
-import Context from '@/runner/context';
 import { ellipsisDisplayString } from '@/utils';
 import WorkflowPlanner from '@/workflow/planner';
 

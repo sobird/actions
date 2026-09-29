@@ -1,5 +1,5 @@
+import { Github } from '@/context/github';
 import Runner from '@/runner';
-import { Github } from '@/runner/context/github';
 
 import SetEnvFileCommand from './env';
 import SetOutputFileCommand from './output';
