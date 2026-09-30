@@ -62,7 +62,7 @@ export const updateTask: MethodImpl<typeof RunnerService.method.updateTask> = as
   // through upstream's queue, so nothing here waits for a re-emit.
 
   return create(UpdateTaskResponseSchema, {
-    state: create(TaskStateSchema, { id: state.id, result: updatedTask.status.asResult() }),
+    state: create(TaskStateSchema, { id: state.id, result: updatedTask.status.toResult() }),
     sentOutputs,
   });
 };

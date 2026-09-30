@@ -118,7 +118,7 @@ abstract class StepAction extends Step {
 
       // 命令处理失败按「取最差」合并进 outcome（对齐上游 StepsRunner.MergeTaskResults）
       if (runner.commandResult !== Result.SUCCESS) {
-        const merged = Status.mergeResults(Status.from(outcome).asResult(), runner.commandResult);
+        const merged = Status.mergeResults(Status.from(outcome).toResult(), runner.commandResult);
         outcome = Status.fromResult(merged).toString() as 'success' | 'failure';
       }
 

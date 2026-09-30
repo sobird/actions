@@ -389,7 +389,7 @@ describe('Expression Functions', () => {
 
     testCases.forEach(({ result, expected }) => {
       it(`should return ${expected} when a needed job is ${result}`, () => {
-        runner.context.job = { status: null } as Job;
+        runner.context.job = {} as Job;
         (runner as unknown as { run: unknown }).run = {
           job: { Needs: ['setup'] },
           workflow: { jobs: { setup: { Needs: [], Result: result } } },

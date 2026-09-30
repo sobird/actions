@@ -6,6 +6,17 @@
 
 import { Result } from '@/gen/runner/v1/messages_pb';
 
+export type StatusValue =
+  | 'unknown'
+  | 'waiting'
+  | 'running'
+  | 'success'
+  | 'failure'
+  | 'cancelled'
+  | 'cancelling'
+  | 'skipped'
+  | 'blocked';
+
 export class Status {
   static readonly Unknown = new Status('unknown');
   static readonly Waiting = new Status('waiting');
@@ -17,7 +28,21 @@ export class Status {
   static readonly Skipped = new Status('skipped');
   static readonly Blocked = new Status('blocked');
 
-  private constructor(public readonly value: string) {}
+  static readonly #values: readonly Status[] = [
+    Status.Unknown,
+    Status.Waiting,
+    Status.Running,
+    Status.Success,
+    Status.Failure,
+    Status.Cancelled,
+    Status.Cancelling,
+    Status.Skipped,
+    Status.Blocked,
+  ];
+
+  static readonly #byValue = new Map<string, Status>(this.#values.map((s) => [s.value, s]));
+
+  private constructor(public readonly value: StatusValue) {}
 
   // String returns the string name of the Status
   toString() {
@@ -79,13 +104,19 @@ export class Status {
     return this.in(Status.Success, Status.Failure);
   }
 
-  asResult() {
-    if (this === Status.Success) return Result.SUCCESS;
-    if (this === Status.Failure) return Result.FAILURE;
+  toResult() {
+    if (this === Status.Success) {
+      return Result.SUCCESS;
+    }
+    if (this === Status.Failure) {
+      return Result.FAILURE;
+    }
     if (this === Status.Cancelled || this === Status.Cancelling) {
       return Result.CANCELLED;
     }
-    if (this === Status.Skipped) return Result.SKIPPED;
+    if (this === Status.Skipped) {
+      return Result.SKIPPED;
+    }
     return Result.UNSPECIFIED;
   }
 
@@ -115,28 +146,17 @@ export class Status {
   }
 
   static values() {
-    return [
-      this.Unknown,
-      this.Waiting,
-      this.Running,
-      this.Success,
-      this.Failure,
-      this.Cancelled,
-      this.Cancelling,
-      this.Skipped,
-      this.Blocked,
-    ];
+    return this.#values;
   }
 
   static names() {
-    return this.values().map((item) => item.toString());
+    return this.values().map((item) => item.value);
   }
 
-  static from(status: string) {
+  static from(status?: string) {
     if (!status) {
       return Status.Unknown;
     }
-    const values = this.values();
-    return values.find((s) => s.toString() === status) || this.Unknown;
+    return this.#byValue.get(status) ?? Status.Unknown;
   }
 }

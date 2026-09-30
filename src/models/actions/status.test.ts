@@ -7,7 +7,7 @@ import { Status } from './status';
 
 // 假设你的 Status 是类版本
 describe('Status', () => {
-  describe('asResult', () => {
+  describe('toResult', () => {
     const cases = [
       { status: Status.Unknown, want: Result.UNSPECIFIED },
       { status: Status.Waiting, want: Result.UNSPECIFIED },
@@ -22,7 +22,7 @@ describe('Status', () => {
 
     cases.forEach(({ status, want }) => {
       it(`should convert ${status.toString()} to ${want}`, () => {
-        expect(status.asResult()).toBe(want);
+        expect(status.toResult()).toBe(want);
       });
     });
   });

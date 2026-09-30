@@ -122,8 +122,8 @@ export default class Context {
       // 取最差合并而不是覆盖：作业一旦有步骤失败，紧接着的一次成功不该把它拉回 success
       // （对齐上游 StepsRunner 对 ExecutionContext.Result 的合并）
       const merged = Status.mergeResults(
-        Status.from(this.job.status ?? '').asResult(),
-        Status.from(step.conclusion).asResult(),
+        Status.from(this.job.status).toResult(),
+        Status.from(step.conclusion).toResult(),
       );
       this.job.status = Status.fromResult(merged).toString() as Job['status'];
     }

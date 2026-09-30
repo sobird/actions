@@ -64,7 +64,7 @@ async function buildRunnerTask(task: ActionTask): Promise<Task> {
     }
 
     needs[needId] = create(TaskNeedSchema, {
-      result: ActionRunJob.aggregateStatus(needJobs).asResult(),
+      result: ActionRunJob.aggregateStatus(needJobs).toResult(),
       outputs,
     });
   }

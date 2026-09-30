@@ -23,7 +23,7 @@ export class Job {
    * The current status of the job.
    * Possible values are `success`, `failure`, or `cancelled`.
    */
-  status: 'success' | 'failure' | 'cancelled' | null;
+  status: 'success' | 'failure' | 'cancelled';
 
   constructor(job: Job) {
     this.container = new Container(job.container ?? {});
