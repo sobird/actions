@@ -1,5 +1,6 @@
 import { rm } from 'node:fs/promises';
 
+import pkg from '../package.json';
 import { external } from './config.ts';
 
 const outdir = 'dist';
@@ -14,7 +15,7 @@ const result = await Bun.build({
   target: 'node',
   format: 'esm',
   minify: true,
-  external,
+  external: [...external],
 });
 
 if (!result.success) {
@@ -26,3 +27,14 @@ if (!result.success) {
 }
 
 console.info('Build success!', result.outputs);
+
+// package.json
+// oxlint-disable-next-line no-unused-vars
+const { workspaces, scripts, devDependencies, 'lint-staged': _, ...cleanPkg } = pkg;
+
+const publishPackage = {
+  ...cleanPkg,
+  dependencies: Object.fromEntries(external.map((dep) => [dep, pkg.dependencies[dep]])),
+};
+
+await Bun.write('package.json', JSON.stringify(publishPackage, null, 2));

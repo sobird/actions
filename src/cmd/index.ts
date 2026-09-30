@@ -2,7 +2,7 @@
 
 import { Command } from 'commander';
 
-import pkg from '../../package.json' with { type: 'json' };
+import { version } from '../../package.json' with { type: 'json' };
 import { configCommand } from './config';
 import { daemonCommand } from './daemon';
 import { logsCommand } from './logs';
@@ -13,7 +13,7 @@ import { submitCommand } from './submit';
 const program = new Command()
   .name('actions')
   .description('Run GitHub actions locally by specifying the event name (e.g. `push`) or an action name directly.')
-  .version(pkg.version)
+  .version(version)
   // .arguments('[eventName]')
   .option('-c, --config <path>', 'config file path', 'actions.config.yaml');
 // .action((eventName: string, options: { config: string }) => {

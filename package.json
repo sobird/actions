@@ -24,7 +24,7 @@
     "dist"
   ],
   "type": "module",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "actions:test": "bun src/cmd run -W test/workflows/hosted.yml --hosted -v",
     "build": "next build",
