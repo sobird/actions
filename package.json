@@ -25,10 +25,14 @@
   ],
   "type": "module",
   "main": "dist/index.js",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
+    "actions:build": "bun scripts/build.ts",
     "actions:test": "bun src/cmd run -W test/workflows/hosted.yml --hosted -v",
     "build": "next build",
-    "build:actions": "bun scripts/build.ts",
     "coverage": "vitest run --coverage",
     "dev": "next dev",
     "fmt": "oxfmt",
@@ -37,7 +41,7 @@
     "lint:fix": "oxlint --fix",
     "postinstall": "echo \"postinstall\"",
     "prepare": "husky",
-    "prepublishOnly": "npm run build:actions",
+    "prepublishOnly": "npm run actions:build",
     "proto:generate": "buf generate",
     "start": "next start",
     "test": "vitest",

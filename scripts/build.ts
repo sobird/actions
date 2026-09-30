@@ -30,11 +30,24 @@ console.info('Build success!', result.outputs);
 
 // package.json
 // oxlint-disable-next-line no-unused-vars
-const { workspaces, scripts, devDependencies, 'lint-staged': _, ...cleanPkg } = pkg;
+const { workspaces, scripts, devDependencies, files, 'lint-staged': _, trustedDependencies, ...cleanPkg } = pkg;
 
-const publishPackage = {
-  ...cleanPkg,
-  dependencies: Object.fromEntries(external.map((dep) => [dep, pkg.dependencies[dep]])),
-};
+await Bun.write(
+  `${outdir}/package.json`,
+  JSON.stringify(
+    {
+      ...cleanPkg,
+      name: '@sobird/actions',
+      main: 'index.js',
+      bin: { actions: 'index.js' },
+      dependencies: Object.fromEntries(external.map((dep) => [dep, pkg.dependencies[dep]])),
+    },
+    null,
+    2,
+  ),
+);
 
-await Bun.write('package.json', JSON.stringify(publishPackage, null, 2));
+await Promise.all([
+  Bun.write(`${outdir}/README.md`, Bun.file('README.md')),
+  Bun.write(`${outdir}/LICENSE`, Bun.file('LICENSE')),
+]);

@@ -1,1 +1,1 @@
-export const external = ['sqlite3', 'ssh2'] as const;
+export const external = ['dockerode', 'sqlite3', 'ssh2'] as const;
