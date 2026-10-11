@@ -35,6 +35,7 @@ jobs:
           node-version-file: .node-version
 
       # 缓存 Bun 的全局包缓存而不是 node_modules：装包本身很快，慢的是下载。
+      # 这里只存下载缓存，node_modules 仍由下一步每次生成，所以 install 不能跳过。
       - name: Cache Bun packages
         uses: actions/cache@v6
         with:
