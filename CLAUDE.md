@@ -7,12 +7,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Bun is the package manager and task runner — use `bun run <script>` / `bunx`, not npm or yarn.
 
 - `bun run dev` — Next.js dev server (port 3000).
-- `bun run build` — Next.js build; `bun run actions:build` — bundle the CLI to `dist/`.
+- `bun run build` — Next.js build; `bun run actions:build` — bundle the CLI to `dist/`; `bun run --cwd packages/hashfiles build` — bundle the `@actions/hashfiles` workspace package, whose `dist/` is gitignored but required by its test.
 - `bun run test` runs Vitest in **watch mode**. For a one-shot run use `bunx vitest run`; single file: `bunx vitest run src/common/ref.test.ts`; by name: `bunx vitest run -t "<name>"`.
 - `bun run actions:test` — end-to-end check that runs `test/workflows/hosted.yml` with `--hosted`; it needs no Docker daemon. `test/workflows/basic.yml` is the Docker counterpart (`docker://` steps, `container:`, `services:`).
 - `bun run proto:generate` — regenerate `src/gen/` from the proto definitions via buf.
 
-Before considering a change done, run `bun run typecheck && bun run lint && bun run fmt:check && bunx vitest run`. CI does not run these (`.github/workflows/ci.yml` is manual-dispatch only), so nothing enforces them for you.
+Before considering a change done, run `bun run typecheck && bun run lint && bun run fmt:check && bun run --cwd packages/hashfiles build && bunx vitest run`; CI runs the same checks (plus the app and CLI builds) on every push and pull request. The hashfiles build goes after `fmt:check`, because it rewrites `packages/hashfiles/src/index.ts` in unformatted form.
 
 ## Code style
 

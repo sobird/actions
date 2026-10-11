@@ -54,6 +54,12 @@ jobs:
       - name: Check formatting
         run: bun run fmt:check
 
+      # hashfiles 的产物在 gitignore 里，而它的单测要 spawn dist/hashFiles.js，
+      # 所以这里得先构建。放在 fmt:check 之后：build.ts 产出的 src/index.ts 未经
+      # 格式化，提前跑会让 fmt:check 变红。
+      - name: Build hashfiles
+        run: bun run --cwd packages/hashfiles build
+
       # runner 自带 Docker，所以需要 daemon 的用例（docker.e2e.test.ts 等）在这里
       # 会真正执行，本地没有 daemon 时它们只是跳过。
       - name: Unit tests

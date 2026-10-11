@@ -6,6 +6,7 @@ import * as tar from 'tar';
 
 import { createAllDir, dockerAvailable } from '@/test/__helpers__';
 
+import Container from './container';
 import DockerContainer, { type DockerContainerOptions } from './docker';
 
 /**
@@ -188,6 +189,12 @@ describe.skipIf(!dockerAvailable())('DockerContainer end to end', () => {
   });
 
   it('finds an executable on the path', () => {
-    expect(container.lookPath('bash', { PATH: process.env.PATH })).toBe('/bin/bash');
+    const found = container.lookPath('bash', { PATH: process.env.PATH });
+
+    // 查找用的是宿主 fs，第一个命中即返回；/bin 与 /usr/bin 的合并布局随发行版而变
+    // （Debian 系是 /usr/bin/bash，macOS 是 /bin/bash），所以只断言找到了 bash 本身。
+    expect(found).not.toBe('');
+    expect(path.basename(found)).toBe('bash');
+    expect(Container.isExecutable(found)).toBe(true);
   });
 });
