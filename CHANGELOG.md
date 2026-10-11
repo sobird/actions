@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/sobird/actions/compare/v1.1.0...v1.1.1) (2026-10-11)
+
+
+### Bug Fixes
+
+* **ci:** keep bun install unconditional ([16b0289](https://github.com/sobird/actions/commit/16b02892f13590594ee93c856de73d5de7958240))
+
 ## [1.1.0](https://github.com/sobird/actions/compare/v1.0.2...v1.1.0) (2026-10-11)
 
 
