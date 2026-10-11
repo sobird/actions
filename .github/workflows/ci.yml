@@ -1,50 +1,68 @@
 name: Continuous Integration
 
 on:
-  # release:
-  #   types: [published]
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
   workflow_dispatch:
-# on:
-#   push:
-#     branches: [ "master" ]
-#   pull_request:
-#     branches: [ "master" ]
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  unit-test:
-    strategy:
-      matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
-        node: [16, 18]
-    runs-on: ${{ matrix.platform }}
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20
-          registry-url: https://registry.npmjs.org/
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
-      - name: Restore Yarn Cache
-        id: yarn-cache
-        uses: actions/cache@v4
+          bun-version-file: .bun-version
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
         with:
-          path: |
-            **/node_modules
-            # ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-      - name: Install Dependencies
-        if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: |
-          yarn
-          npm i sharp
-      - name: Build ☕️
-        run: yarn build
+          node-version-file: .node-version
+
+      # 缓存 Bun 的全局包缓存而不是 node_modules：装包本身很快，慢的是下载。
+      - name: Cache Bun packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Check formatting
+        run: bun run fmt:check
+
+      # runner 自带 Docker，所以需要 daemon 的用例（docker.e2e.test.ts 等）在这里
+      # 会真正执行，本地没有 daemon 时它们只是跳过。
+      - name: Unit tests
+        run: bunx vitest run
+
+      # 两个构建都放进来：它们做的是测试碰不到的模块解析和类型检查，代码能过测试
+      # 不代表 bundle 打得出来，也不代表应用编译得过。
+      - name: Build CLI bundle
+        run: bun run actions:build
+
+      - name: Build app
+        run: bun run build

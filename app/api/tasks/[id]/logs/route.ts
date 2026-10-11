@@ -28,9 +28,7 @@ export const GET = async (req: NextRequest, { params }: { params: Promise<{ id: 
   const offset = Number.isFinite(parsedOffset) && parsedOffset > 0 ? parsedOffset : 0;
   const maxAllowedLimit = Math.min(MaxApiReadLimit, MaxReadLength);
   const limit =
-    Number.isFinite(parsedLimit) && parsedLimit > 0
-      ? Math.min(Math.floor(parsedLimit), maxAllowedLimit)
-      : DefaultLimit;
+    Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(Math.floor(parsedLimit), maxAllowedLimit) : DefaultLimit;
 
   const logSize = task.logSize ?? 0;
   let rows: { time: string; content: string }[] = [];
