@@ -9,5 +9,7 @@
   },
   "printWidth": 120,
   "singleQuote": true,
-  "ignorePatterns": ["apps/", "assets/", "CLAUDE.md", "docker-compose.yml", "dist/", "node_modules/", "vendor/"],
+  // CHANGELOG.md 由 release-please 生成（它写 `*` 列表项、多一个空行），这里不接管，
+  // 否则 release PR 每次都会被 fmt:check 拦下
+  "ignorePatterns": ["CHANGELOG.md", "CLAUDE.md", "dist/", "node_modules/"],
 }
