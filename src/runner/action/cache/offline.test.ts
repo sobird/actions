@@ -10,7 +10,7 @@ import path from 'node:path';
 
 import simpleGit from 'simple-git';
 
-import { createEachDir } from '@/test/__helpers__';
+import { createEachDir, useGitIdentity } from '@/test/__helpers__';
 import { readTar } from '@/utils/readTar';
 
 import ActionCacheOffline from './offline';
@@ -19,6 +19,9 @@ import ActionCacheRepository from './repository';
 vi.setConfig({
   testTimeout: 10000,
 });
+
+// createOrigin() 要真的建提交，身份不能靠机器上的全局 git 配置
+useGitIdentity();
 
 const testTmp = path.join(os.tmpdir(), 'actions');
 
