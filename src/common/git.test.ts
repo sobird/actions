@@ -4,16 +4,13 @@ import path from 'node:path';
 
 import { SimpleGit } from 'simple-git';
 
-import { createEachDir, useGitIdentity } from '@/test/__helpers__';
+import { createEachDir } from '@/test/__helpers__';
 
 import Git, { gitCredential, redactUrl } from './git';
 
 vi.setConfig({
   testTimeout: 20000,
 });
-
-// 这些用例要真的建提交，身份不能靠机器上的全局 git 配置
-useGitIdentity();
 
 interface TestCase {
   prepare: (git: SimpleGit) => Promise<void>;

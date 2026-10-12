@@ -47,29 +47,6 @@ export function createTestFile(name: string = 'test-file', data: string = '') {
   return dir;
 }
 
-/**
- * 给本文件里 spawn 出来的 git 一个固定身份，别让它去翻开发机的 `~/.gitconfig`。
- *
- * 有全局配置的机器上 `git commit` 顺带就有了作者，CI runner 上没有，会以
- * 「Author identity unknown」整片失败。GIT_AUTHOR_* / GIT_COMMITTER_* 是 git 身份
- * 的最高优先级来源，且 simple-git 未指定 env 时 spawn 直接继承父进程环境，所以在
- * 测试进程里设一次即可。
- */
-export function useGitIdentity(name: string = 'actions-test', email: string = 'actions-test@example.com') {
-  beforeEach(() => {
-    process.env.GIT_AUTHOR_NAME = name;
-    process.env.GIT_AUTHOR_EMAIL = email;
-    process.env.GIT_COMMITTER_NAME = name;
-    process.env.GIT_COMMITTER_EMAIL = email;
-  });
-
-  afterEach(() => {
-    for (const key of ['GIT_AUTHOR_NAME', 'GIT_AUTHOR_EMAIL', 'GIT_COMMITTER_NAME', 'GIT_COMMITTER_EMAIL']) {
-      delete process.env[key];
-    }
-  });
-}
-
 let dockerAvailability: boolean | undefined;
 
 /**
