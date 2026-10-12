@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
-import simpleGit from 'simple-git';
+import { simpleGit } from 'simple-git';
 
 import Git from '@/common/git';
 import logger from '@/common/logger';

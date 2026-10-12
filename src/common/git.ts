@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import GitUrlParse from 'git-url-parse';
-import simpleGit, { SimpleGitOptions, CheckRepoActions } from 'simple-git';
+import { simpleGit, SimpleGitOptions, CheckRepoActions } from 'simple-git';
 
 import logger from '@/common/logger';
 

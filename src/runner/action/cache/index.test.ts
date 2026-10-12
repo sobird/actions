@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import simpleGit from 'simple-git';
+import { simpleGit } from 'simple-git';
 
 import { createEachDir, useGitIdentity } from '@/test/__helpers__';
 import { readTar } from '@/utils/readTar';
