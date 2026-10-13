@@ -171,7 +171,11 @@ export class ArtifactCacheService {
   }
 
   async downloadCache(cacheId: string) {
-    this.db.prepare('UPDATE caches SET updatedAt = ? WHERE id = ?').run(Date.now(), cacheId);
+    // 顺手记一下最后使用时间。这条 UPDATE 失败不该拖垮下载本身，记日志即可；
+    // 但也别像以前那样把 run 的错误整个丢掉。
+    this.db.run('UPDATE caches SET updatedAt = ? WHERE id = ?', [Date.now(), cacheId], (err) => {
+      if (err) logger.debug(`Failed to update last used time for cache ${cacheId}: ${err.message}`);
+    });
     return this.storage.getReadStream(Number(cacheId));
   }
 
@@ -204,15 +208,13 @@ export class ArtifactCacheService {
 
     // 更新缓存为已完成
     await new Promise<void>((resolve, reject) => {
-      this.db
-        .prepare('UPDATE caches SET complete = 1 WHERE id = ?', (err) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        })
-        .run(cacheEntry.id);
+      this.db.run('UPDATE caches SET complete = 1 WHERE id = ?', [cacheEntry.id], (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
     });
   }
 

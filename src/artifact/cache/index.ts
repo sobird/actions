@@ -149,7 +149,7 @@ class ArtifactCache {
         const cacheFileURL = `${baseURL}/_apis/artifactcache/artifacts/${result.id}`;
         res.status(200).json({ result: 'hit', archiveLocation: cacheFileURL, cacheKey: result.key });
       } catch (error) {
-        logger.error(`Reserve failed: ${error}`);
+        logger.error(`Find cache failed: ${error}`);
         res.status(500).json({ error: 'Internal Server Error' });
       }
     });

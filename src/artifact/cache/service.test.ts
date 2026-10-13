@@ -1,6 +1,8 @@
 import type { Readable } from 'node:stream';
 
-import sqlite3, { Database, Statement } from 'sqlite3';
+import sqlite3, { Database } from 'sqlite3';
+
+import logger from '@/common/logger';
 
 import { ReserveStatus } from './contracts.ts';
 import { ArtifactCacheService } from './service.ts';
@@ -188,8 +190,41 @@ describe('uploadCache', () => {
   });
 });
 
+describe('downloadCache', () => {
+  it('still serves the cache when updating the last used time fails', async () => {
+    const stream = {} as ReturnType<Storage['getReadStream']>;
+    vi.spyOn(storage, 'getReadStream').mockReturnValueOnce(stream);
+    const debug = vi.spyOn(logger, 'debug');
+    vi.spyOn(db, 'run').mockImplementationOnce(function (_sql, _params, cb) {
+      cb.call({ changes: 0 }, new Error('database is locked'));
+      return db;
+    });
+
+    await expect(service.downloadCache('1')).resolves.toBe(stream);
+    expect(debug).toHaveBeenCalledWith(expect.stringContaining('database is locked'));
+  });
+});
+
 describe('commitCache', () => {
   it('should commit cache and mark it as complete', async () => {
+    await runQuery('INSERT INTO caches (key, version, complete, updatedAt, createdAt) VALUES (?, ?, ?, ?, ?)', [
+      'primaryKey',
+      'version',
+      0,
+      0,
+      0,
+    ]);
+
+    vi.spyOn(storage, 'commit').mockImplementationOnce(() => Promise.resolve(100));
+
+    await service.commitCache('1', 100);
+
+    const row = await getQuery<{ complete: number }>('SELECT complete FROM caches WHERE id = 1');
+    expect(row.complete).toBe(1);
+    expect(storage.commit).toHaveBeenCalledWith(1, 100);
+  });
+
+  it('should reject when marking the cache complete fails', async () => {
     vi.spyOn(db, 'get').mockImplementationOnce((query, params, cb) => {
       cb(null, { id: 1, key: 'primaryKey', version: 'version', complete: false });
       return db;
@@ -197,16 +232,12 @@ describe('commitCache', () => {
 
     vi.spyOn(storage, 'commit').mockImplementationOnce(() => Promise.resolve(100));
 
-    vi.spyOn(db, 'prepare').mockImplementationOnce((sql, cb) => {
-      cb(null);
-      return {
-        run: vi.fn().mockImplementationOnce(() => {}),
-      } as unknown as Statement;
+    vi.spyOn(db, 'run').mockImplementationOnce(function (_sql, _params, cb) {
+      cb.call({ changes: 0 }, new Error('disk full'));
+      return db;
     });
-    await service.commitCache('1', 100);
 
-    expect(db.prepare).toHaveBeenCalled();
-    expect(storage.commit).toHaveBeenCalledWith(1, 100);
+    await expect(service.commitCache('1', 100)).rejects.toThrow('disk full');
   });
 
   it('should throw error if cache is already complete', async () => {
@@ -241,6 +272,18 @@ describe('purge', () => {
     expect(storage.remove).toHaveBeenCalledWith(2);
   });
 });
+
+function getQuery<T>(query: string, params: any[] = []): Promise<T> {
+  return new Promise((resolve, reject) => {
+    db.get<T>(query, params, (err, row) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(row as T);
+      }
+    });
+  });
+}
 
 function runQuery(query: string, params: any[]): Promise<void> {
   return new Promise((resolve, reject) => {
