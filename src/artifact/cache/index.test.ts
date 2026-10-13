@@ -6,7 +6,12 @@ import { createAllDir, createTestFile } from '@/test/__helpers__';
 
 import ArtifactCache from '.';
 
-const { app, storage } = new ArtifactCache(createAllDir('artifact'));
+let app: ArtifactCache['app'];
+let storage: ArtifactCache['storage'];
+
+beforeAll(async () => {
+  ({ app, storage } = await ArtifactCache.create(createAllDir('artifact')));
+});
 
 describe('Artifact Cache Server Test', () => {
   const cacheId = 1;

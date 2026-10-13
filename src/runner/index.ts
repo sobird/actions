@@ -1028,7 +1028,7 @@ class Runner {
       if (actionsCacheExternal) {
         config.context.env[ACTIONS_CACHE_URL] = actionsCacheExternal;
       } else {
-        const artifactCache = new ArtifactCache(actionsCachePath);
+        const artifactCache = await ArtifactCache.create(actionsCachePath);
         const actionsCacheURL = await artifactCache.serve(actionsCachePort, actionsCacheAddr);
         logger.info(`Actions Cache Server address: ${actionsCacheURL}`);
         config.context.env[ACTIONS_CACHE_URL] = actionsCacheURL;

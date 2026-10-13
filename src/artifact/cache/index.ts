@@ -26,7 +26,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import bodyParser from 'body-parser';
-import express, { Request, Router } from 'express';
+import express, { Express, Request, Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import ip from 'ip';
 import sqlite3, { Database } from 'sqlite3';
@@ -40,36 +40,76 @@ import { Storage } from './storage';
 const DEFAULT_CACHE_DIR = path.join(os.homedir(), '.cache', 'actions');
 
 /**
+ * 打开 sqlite 连接并建表。resolve 后 caches 表与索引一定已就绪。
+ *
+ * sqlite3 是异步打开的，建表语句只在 open 回调里下发；把这一步收进 promise，
+ * 调用方 await 完再装配路由，就不会有请求赶在建表前读到空表。
+ */
+function openDatabase(file: string): Promise<Database> {
+  return new Promise((resolve) => {
+    const db = new sqlite3.Database(file, (err) => {
+      if (err) {
+        // 与旧行为一致：开库失败只记日志，让后续请求落到 500，而不是拖垮启动
+        logger.error(`Failed to open database: ${err.message}`);
+        return resolve(db);
+      }
+      createSchema(db, () => resolve(db));
+    });
+  });
+}
+
+/** 建表与索引；done 在最后一条语句的回调里触发 */
+function createSchema(db: Database, done: () => void) {
+  db.serialize(() => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS caches (
+      id INTEGER PRIMARY KEY,
+      key TEXT NOT NULL,
+      version TEXT NOT NULL,
+      size INTEGER DEFAULT (0),
+      complete INTEGER DEFAULT (0) NOT NULL,
+      updatedAt INTEGER DEFAULT (0) NOT NULL,
+      createdAt INTEGER DEFAULT (0) NOT NULL
+    )`,
+      (err) => {
+        if (err) logger.debug(err.message);
+      },
+    );
+
+    db.run('CREATE INDEX IF NOT EXISTS idx_key ON caches (key)', (err) => {
+      if (err) logger.debug(err.message);
+    });
+
+    db.run('CREATE UNIQUE INDEX IF NOT EXISTS idx_key_version ON caches (key, version)', (err) => {
+      if (err) logger.debug(err.message);
+      done();
+    });
+  });
+}
+
+/**
  * 这是 GitHub Actions Cache 服务的本地实现，用于支持 actions/cache。
  */
 class ArtifactCache {
-  db: Database;
-  storage: Storage;
-  service: ArtifactCacheService;
+  /** 私有构造：建表要先于对象可用，用 create() 代替 new */
+  private constructor(
+    public dir: string,
+    public app: Express,
+    public storage: Storage,
+    private service: ArtifactCacheService,
+  ) {}
 
-  constructor(
-    public dir: string = DEFAULT_CACHE_DIR,
-    public app = express(),
-  ) {
+  /** 开库、建表、装配路由；await 完成后对象即可直接 serve 或接请求 */
+  static async create(dir: string = DEFAULT_CACHE_DIR, app = express()): Promise<ArtifactCache> {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    this.storage = new Storage(path.join(dir, 'artifact'));
-    this.db = new sqlite3.Database(path.join(dir, 'artifact.db'), (err) => {
-      if (err) {
-        logger.error(`Failed to open database: ${err.message}`);
-      } else {
-        this.database();
-      }
-    });
-    this.service = new ArtifactCacheService(this.db, this.storage);
+
+    const storage = new Storage(path.join(dir, 'artifact'));
+    const db = await openDatabase(path.join(dir, 'artifact.db'));
+    const cache = new ArtifactCache(dir, app, storage, new ArtifactCacheService(db, storage));
 
     app.set('query parser', 'simple');
-    // app.use(bodyParser.json());
-    // app.use(bodyParser.raw({
-    //   type: 'application/octet-stream',
-    //   limit: '500mb',
-    // }));
     app.use(
       rateLimit({
         windowMs: 15 * 60 * 1000,
@@ -85,6 +125,12 @@ class ArtifactCache {
       });
     });
 
+    app.use('/_apis/artifactcache', cache.routes());
+
+    return cache;
+  }
+
+  private routes(): Router {
     const router = Router();
     /**
      * Find a cache by keys and version
@@ -185,35 +231,7 @@ class ArtifactCache {
       }
     });
 
-    app.use('/_apis/artifactcache', router);
-  }
-
-  private database() {
-    this.db.serialize(() => {
-      // 创建表和索引
-      this.db.run(
-        `CREATE TABLE IF NOT EXISTS caches (
-      id INTEGER PRIMARY KEY, 
-      key TEXT NOT NULL, 
-      version TEXT NOT NULL, 
-      size INTEGER DEFAULT (0), 
-      complete INTEGER DEFAULT (0) NOT NULL, 
-      updatedAt INTEGER DEFAULT (0) NOT NULL, 
-      createdAt INTEGER DEFAULT (0) NOT NULL
-    )`,
-        (err) => {
-          if (err) logger.debug(err.message);
-        },
-      );
-
-      this.db.run('CREATE INDEX IF NOT EXISTS idx_key ON caches (key)', (err) => {
-        if (err) logger.debug(err.message);
-      });
-
-      this.db.run('CREATE UNIQUE INDEX IF NOT EXISTS idx_key_version ON caches (key, version)', (err) => {
-        if (err) logger.debug(err.message);
-      });
-    });
+    return router;
   }
 
   async serve(port: number = 0, address: string = ip.address() || 'localhost') {
