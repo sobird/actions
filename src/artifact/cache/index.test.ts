@@ -2,7 +2,7 @@ import fs from 'node:fs';
 
 import request from 'supertest';
 
-import { createAllDir, createTestFile } from '@/test/__helpers__';
+import { useAllDir, createTestFile } from '@/test/__helpers__';
 
 import ArtifactCache from '.';
 
@@ -10,7 +10,7 @@ let app: ArtifactCache['app'];
 let storage: ArtifactCache['storage'];
 
 beforeAll(async () => {
-  ({ app, storage } = await ArtifactCache.create(createAllDir('artifact')));
+  ({ app, storage } = await ArtifactCache.create(useAllDir('artifact')));
 });
 
 describe('Artifact Cache Server Test', () => {

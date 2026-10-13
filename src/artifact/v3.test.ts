@@ -3,11 +3,11 @@ import path from 'node:path';
 
 import request from 'supertest';
 
-import { createAllDir } from '@/test/__helpers__';
+import { useAllDir } from '@/test/__helpers__';
 
 import Artifact from './v3';
 
-const tmpdir = createAllDir('artifacts');
+const tmpdir = useAllDir('artifacts');
 const { app, dir } = new Artifact(tmpdir, undefined);
 
 describe('Artifact Server Test', () => {

@@ -1,6 +1,6 @@
-import { createEachDir, createTestFile } from './__helpers__';
+import { useEachDir, createTestFile } from './__helpers__';
 
-const eachDir = createEachDir('test-dir');
+const eachDir = useEachDir('test-dir');
 
 console.log('eachDir', eachDir);
 console.log('__filename', process.cwd(), __filename, __dirname);

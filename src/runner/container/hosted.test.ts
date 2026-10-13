@@ -5,7 +5,7 @@ import path from 'node:path';
 import * as tar from 'tar';
 
 import type Runner from '@/runner';
-import { createAllDir } from '@/test/__helpers__';
+import { useAllDir } from '@/test/__helpers__';
 
 import { FileEntry } from './container';
 import HostedContainer from './hosted';
@@ -13,7 +13,7 @@ import HostedContainer from './hosted';
 const workdir = '/home/runner';
 const basedir = fs.mkdtempSync(path.join(os.tmpdir(), 'hosted-test-'));
 const hosted = new HostedContainer({ basedir, workdir });
-const filedir = createAllDir('hosted-test', 'file');
+const filedir = useAllDir('hosted-test', 'file');
 
 const files = [
   {

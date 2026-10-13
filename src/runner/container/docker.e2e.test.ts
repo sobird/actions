@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import * as tar from 'tar';
 
-import { createAllDir, dockerAvailable } from '@/test/__helpers__';
+import { useAllDir, dockerAvailable } from '@/test/__helpers__';
 
 import Container from './container';
 import DockerContainer, { type DockerContainerOptions } from './docker';
@@ -19,10 +19,10 @@ import DockerContainer, { type DockerContainerOptions } from './docker';
  */
 
 const workdir = '/home/runner';
-const tmp = createAllDir('docker-e2e');
+const tmp = useAllDir('docker-e2e');
 // 软链与硬链单独放一个目录。tar 会按 inode 去重，把其中一个写成 Link 条目，混进
 // files 里会让归档往返用例的 File 条目列表变成依赖 daemon 遍历顺序的东西。
-const linkTmp = createAllDir('docker-e2e-links');
+const linkTmp = useAllDir('docker-e2e-links');
 
 const files = [
   { name: 'test1.txt', body: 'test1 content' },

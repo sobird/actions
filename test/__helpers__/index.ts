@@ -11,7 +11,7 @@ function createTmpPath(...name: string[]) {
   return { root, dir: path.join(root, ...name) };
 }
 
-export function createAllDir(...name: string[]) {
+export function useAllDir(...name: string[]) {
   const { root, dir } = createTmpPath(...name);
 
   beforeAll(() => {
@@ -23,7 +23,7 @@ export function createAllDir(...name: string[]) {
   return dir;
 }
 
-export function createEachDir(...name: string[]) {
+export function useEachDir(...name: string[]) {
   const { root, dir } = createTmpPath(...name);
 
   beforeEach(() => {

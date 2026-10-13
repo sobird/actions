@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { SimpleGit } from 'simple-git';
 
-import { createEachDir } from '@/test/__helpers__';
+import { useEachDir } from '@/test/__helpers__';
 
 import Git, { gitCredential, redactUrl } from './git';
 
@@ -18,7 +18,7 @@ interface TestCase {
 }
 
 describe('Test Git', () => {
-  const testTmp = createEachDir();
+  const testTmp = useEachDir();
   it('get git first log', async () => {
     const git = new Git(path.join(testTmp, 'first-log'));
     await git.git.init();
@@ -137,7 +137,7 @@ describe('Test Git', () => {
 });
 
 describe('Test Get Git Ref', () => {
-  const testTmp = createEachDir();
+  const testTmp = useEachDir();
 
   const testCases: Record<string, TestCase> = {
     new_repo: {
@@ -230,7 +230,7 @@ describe('Test Get Git Ref', () => {
 });
 
 describe('Git Clone Executor', () => {
-  const testTmp = createEachDir();
+  const testTmp = useEachDir();
 
   const testCases = {
     tag: {

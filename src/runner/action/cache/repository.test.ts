@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
-import { createEachDir } from '@/test/__helpers__';
+import { useEachDir } from '@/test/__helpers__';
 import { listEntry, readEntry } from '@/utils/tar';
 
 import type ActionCache from '.';
@@ -20,7 +20,7 @@ const REPO_URL = 'https://gitea.com/sobird/actions-test';
 
 // 自己的临时目录：这份缓存的目录原来是共享的 os.tmpdir()/actions，afterAll 里被整个删掉，
 // 会和同时在用它的测试文件互相拆台
-const cacheDir = createEachDir('action-cache-repository');
+const cacheDir = useEachDir('action-cache-repository');
 
 /** 映射指向的本地目录，内容按文件树给定，用完即删 */
 function createLocalDir(files: Record<string, string>) {

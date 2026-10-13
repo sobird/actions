@@ -10,7 +10,7 @@ import path from 'node:path';
 
 import { simpleGit } from 'simple-git';
 
-import { createEachDir } from '@/test/__helpers__';
+import { useEachDir } from '@/test/__helpers__';
 import { readTar } from '@/utils/readTar';
 
 import ActionCacheOffline from './offline';
@@ -94,10 +94,10 @@ async function createOrigin() {
 
 describe('ActionCacheOffline Tests', () => {
   // its own temp dir, so that it does not race the cache tests above for `os.tmpdir()/actions`
-  const cacheDir = createEachDir('actions-offline');
+  const cacheDir = useEachDir('actions-offline');
   const actionCache = new ActionCacheOffline(cacheDir);
-  const mappedCacheDir = createEachDir('actions-offline-mapped-cache');
-  const mappedRepoDir = createEachDir('actions-offline-mapped-repo');
+  const mappedCacheDir = useEachDir('actions-offline-mapped-cache');
+  const mappedRepoDir = useEachDir('actions-offline-mapped-repo');
 
   it('keeps using the recorded commit instead of fetching a newer one', async () => {
     const origin = await createOrigin();

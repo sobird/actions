@@ -10,7 +10,7 @@ import path from 'node:path';
 
 import { simpleGit } from 'simple-git';
 
-import { createEachDir } from '@/test/__helpers__';
+import { useEachDir } from '@/test/__helpers__';
 import { readTar } from '@/utils/readTar';
 
 import ActionCache, { repositoryPath } from '.';
@@ -19,7 +19,7 @@ vi.setConfig({
   testTimeout: 10000,
 });
 
-const testTmp = createEachDir('actions');
+const testTmp = useEachDir('actions');
 
 describe('Action Cache Tests', () => {
   const actionCache = new ActionCache(testTmp);
@@ -87,7 +87,7 @@ async function createOrigin() {
 
 describe('Action Cache Ref Resolution Tests', () => {
   // its own temp dir, so that it does not race the cache tests above for `os.tmpdir()/actions`
-  const cacheDir = createEachDir('actions-ref');
+  const cacheDir = useEachDir('actions-ref');
   const actionCache = new ActionCache(cacheDir);
 
   it('resolves a reused cache to the latest commit of the ref', async () => {

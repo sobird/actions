@@ -3,11 +3,11 @@ import path from 'node:path';
 
 import request from 'supertest';
 
-import { createAllDir } from '@/test/__helpers__';
+import { useAllDir } from '@/test/__helpers__';
 
 import Artifact, { safeResolve } from '.';
 
-const testDir = createAllDir('artifacts');
+const testDir = useAllDir('artifacts');
 const { app, dir } = new Artifact(testDir);
 
 beforeAll(() => {
