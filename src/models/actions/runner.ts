@@ -8,8 +8,6 @@ import { randomBytes } from 'node:crypto';
 
 import {
   DataTypes,
-  type InferAttributes,
-  type InferCreationAttributes,
   type CreationAttributes,
   type CreationOptional,
   type Association,
@@ -52,7 +50,7 @@ const RUNNER_IDLE_TIME = 10 * 1000;
  * but it's a repo level runner, not an org/user level runner.
  * To avoid this, make it clear with {OwnerID: 0, RepoID: 1} for repo level runners.
  */
-export class ActionRunner extends BaseModel<InferAttributes<ActionRunner>, InferCreationAttributes<ActionRunner>> {
+export class ActionRunner extends BaseModel<ActionRunner> {
   declare id: CreationOptional<number>;
   declare uuid: CreationOptional<string>;
   declare name: string;

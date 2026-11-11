@@ -17,7 +17,7 @@ export type ActionsSecretAttributes = InferAttributes<ActionsSecret>;
 /** Some attributes are optional in `ActionsSecret.build` and `ActionsSecret.create` calls */
 export type ActionsSecretCreationAttributes = InferCreationAttributes<ActionsSecret>;
 
-export class ActionsSecret extends BaseModel<ActionsSecretAttributes, ActionsSecretCreationAttributes> {
+export class ActionsSecret extends BaseModel<ActionsSecret> {
   declare ownerId: number;
 
   declare repositoryId: number;

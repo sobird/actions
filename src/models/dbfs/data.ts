@@ -7,8 +7,6 @@
 import {
   DataTypes,
   type Association,
-  type InferAttributes,
-  InferCreationAttributes,
   CreationAttributes,
   CreationOptional,
   type NonAttribute,
@@ -24,7 +22,7 @@ import type { DbfsMeta } from './meta';
 export type DbfsDataCreationAttributes = CreationAttributes<DbfsData>;
 
 /** One block of a file stored in `dbfs_meta`, identified by its offset in that file. */
-export class DbfsData extends BaseModel<InferAttributes<DbfsData>, InferCreationAttributes<DbfsData>> {
+export class DbfsData extends BaseModel<DbfsData> {
   declare id: CreationOptional<number>;
   declare metaId: number;
   declare revision: CreationOptional<number>;

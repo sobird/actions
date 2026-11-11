@@ -8,8 +8,6 @@ import { timestampDate, type Timestamp } from '@bufbuild/protobuf/wkt';
 import {
   DataTypes,
   type Association,
-  type InferAttributes,
-  type InferCreationAttributes,
   type CreationAttributes,
   type CreationOptional,
   type NonAttribute,
@@ -79,7 +77,7 @@ function makeTaskStepDisplayName(step: { name?: string; uses?: string; run?: str
   return ellipsisDisplayString(`Run ${firstLine || step.uses || step.run || step.id || ''}`, limit);
 }
 
-export class ActionTask extends BaseModel<InferAttributes<ActionTask>, InferCreationAttributes<ActionTask>> {
+export class ActionTask extends BaseModel<ActionTask> {
   declare id: CreationOptional<number>;
   declare jobId: number;
   declare runnerId: number;

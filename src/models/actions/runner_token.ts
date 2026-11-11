@@ -6,22 +6,13 @@
 
 import { randomBytes } from 'node:crypto';
 
-import {
-  DataTypes,
-  type InferAttributes,
-  type InferCreationAttributes,
-  type CreationOptional,
-  type CreationAttributes,
-} from 'sequelize';
+import { DataTypes, type CreationOptional, type CreationAttributes } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
 export type ActionRunnerTokenCreationAttributes = CreationAttributes<ActionRunnerToken>;
 
-export class ActionRunnerToken extends BaseModel<
-  InferAttributes<ActionRunnerToken>,
-  InferCreationAttributes<ActionRunnerToken>
-> {
+export class ActionRunnerToken extends BaseModel<ActionRunnerToken> {
   declare id: CreationOptional<number>;
   declare token: CreationOptional<string>;
   declare ownerId: number;

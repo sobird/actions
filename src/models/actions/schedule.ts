@@ -6,8 +6,6 @@
 
 import {
   DataTypes,
-  type InferAttributes,
-  type InferCreationAttributes,
   type CreationAttributes,
   type CreationOptional,
   type NonAttribute,
@@ -32,10 +30,7 @@ export type ActionScheduleSpecPrimaryKey = ActionScheduleSpec['id'];
 
 export type ActionScheduleCreationAttributes = CreationAttributes<ActionSchedule>;
 
-export class ActionSchedule extends BaseModel<
-  InferAttributes<ActionSchedule>,
-  InferCreationAttributes<ActionSchedule>
-> {
+export class ActionSchedule extends BaseModel<ActionSchedule> {
   declare id: CreationOptional<number>;
   declare title: string;
   declare specs?: string[];

@@ -10,8 +10,6 @@
 import {
   DataTypes,
   type Association,
-  type InferAttributes,
-  type InferCreationAttributes,
   type CreationAttributes,
   type CreationOptional,
   type NonAttribute,
@@ -26,10 +24,7 @@ import type { Models, ActionTask } from '.';
 
 export type ActionTaskOutputCreationAttributes = CreationAttributes<ActionTaskOutput>;
 
-export class ActionTaskOutput extends BaseModel<
-  InferAttributes<ActionTaskOutput>,
-  InferCreationAttributes<ActionTaskOutput>
-> {
+export class ActionTaskOutput extends BaseModel<ActionTaskOutput> {
   declare id: CreationOptional<number>;
   declare taskId: number;
   declare outputKey: string;

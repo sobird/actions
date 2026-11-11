@@ -16,10 +16,7 @@ export type ActionRunAttemptJobIdIndexAttributes = InferAttributes<ActionRunAtte
 export type ActionRunAttemptJobIdIndexCreationAttributes = InferCreationAttributes<ActionRunAttemptJobIdIndex>;
 
 /** Counter behind `ActionRunJob.attemptJobId`, keyed by run. */
-export class ActionRunAttemptJobIdIndex extends BaseModel<
-  ActionRunAttemptJobIdIndexAttributes,
-  ActionRunAttemptJobIdIndexCreationAttributes
-> {
+export class ActionRunAttemptJobIdIndex extends BaseModel<ActionRunAttemptJobIdIndex> {
   declare groupId: number;
   declare maxIndex: number;
 

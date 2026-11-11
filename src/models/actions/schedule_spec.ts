@@ -6,8 +6,6 @@
 
 import {
   DataTypes,
-  type InferAttributes,
-  type InferCreationAttributes,
   type CreationAttributes,
   type CreationOptional,
   type ForeignKey,
@@ -24,10 +22,7 @@ import type { Models, ActionSchedule } from '.';
 
 export type ActionScheduleSpecCreationAttributes = CreationAttributes<ActionScheduleSpec>;
 
-export class ActionScheduleSpec extends BaseModel<
-  InferAttributes<ActionScheduleSpec>,
-  InferCreationAttributes<ActionScheduleSpec>
-> {
+export class ActionScheduleSpec extends BaseModel<ActionScheduleSpec> {
   declare id: CreationOptional<number>;
   declare repositoryId: number;
   // foreign keys are automatically added by associations methods (like ActionScheduleSpec.belongsTo)

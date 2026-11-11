@@ -4,19 +4,13 @@
  * sobird<i@sobird.me> at 2024/11/26 21:23:24 created.
  */
 
-import {
-  DataTypes,
-  type InferAttributes,
-  type InferCreationAttributes,
-  type CreationAttributes,
-  type CreationOptional,
-} from 'sequelize';
+import { DataTypes, type CreationAttributes, type CreationOptional } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
 export type RepositoryCreationAttributes = CreationAttributes<Repository>;
 
-export class Repository extends BaseModel<InferAttributes<Repository>, InferCreationAttributes<Repository>> {
+export class Repository extends BaseModel<Repository> {
   declare id: CreationOptional<number>;
   declare ownerId: number;
   declare name: string;

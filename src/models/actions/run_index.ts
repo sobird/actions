@@ -16,7 +16,7 @@ export type ActionRunIndexAttributes = InferAttributes<ActionRunIndex>;
 export type ActionRunIndexCreationAttributes = InferCreationAttributes<ActionRunIndex>;
 
 /** Counter behind `ActionRun.index`, keyed by repository. */
-export class ActionRunIndex extends BaseModel<ActionRunIndexAttributes, ActionRunIndexCreationAttributes> {
+export class ActionRunIndex extends BaseModel<ActionRunIndex> {
   declare groupId: number;
   declare maxIndex: number;
 

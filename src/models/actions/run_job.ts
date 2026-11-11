@@ -8,7 +8,6 @@ import {
   DataTypes,
   Association,
   type InferAttributes,
-  type InferCreationAttributes,
   type CreationAttributes,
   type CreationOptional,
   type NonAttribute,
@@ -61,7 +60,7 @@ function isSettled(job: ActionRunJob): boolean {
 /**
  * ActionRunJob represents a job of a run
  */
-export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, InferCreationAttributes<ActionRunJob>> {
+export class ActionRunJob extends BaseModel<ActionRunJob> {
   declare id: CreationOptional<number>;
   declare runId: number;
   declare repositoryId: number;

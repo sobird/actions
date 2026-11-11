@@ -6,8 +6,6 @@
 
 import {
   DataTypes,
-  type InferAttributes,
-  type InferCreationAttributes,
   type CreationAttributes,
   type CreationOptional,
   type NonAttribute,
@@ -23,10 +21,7 @@ import type { Models, ActionTask } from '.';
 
 export type ActionTaskStepCreationAttributes = CreationAttributes<ActionTaskStep>;
 
-export class ActionTaskStep extends BaseModel<
-  InferAttributes<ActionTaskStep>,
-  InferCreationAttributes<ActionTaskStep>
-> {
+export class ActionTaskStep extends BaseModel<ActionTaskStep> {
   declare id: CreationOptional<number>;
   declare name: string;
   declare taskId: number;

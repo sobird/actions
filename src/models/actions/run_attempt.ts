@@ -7,8 +7,6 @@
 import {
   DataTypes,
   Association,
-  type InferAttributes,
-  type InferCreationAttributes,
   type CreationAttributes,
   type CreationOptional,
   type NonAttribute,
@@ -39,10 +37,7 @@ export type ActionRunAttemptCreationAttributes = CreationAttributes<ActionRunAtt
 /**
  * ActionRunAttempt represents a single execution attempt of a run
  */
-export class ActionRunAttempt extends BaseModel<
-  InferAttributes<ActionRunAttempt>,
-  InferCreationAttributes<ActionRunAttempt>
-> {
+export class ActionRunAttempt extends BaseModel<ActionRunAttempt> {
   declare id: CreationOptional<number>;
   declare runId: number;
   declare attempt: number;

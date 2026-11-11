@@ -6,8 +6,6 @@
 
 import {
   DataTypes,
-  type InferAttributes,
-  type InferCreationAttributes,
   type CreationAttributes,
   type CreationOptional,
   type Association,
@@ -40,7 +38,7 @@ import { Status } from './status';
 
 export type ActionRunCreationAttributes = CreationAttributes<ActionRun>;
 
-export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreationAttributes<ActionRun>> {
+export class ActionRun extends BaseModel<ActionRun> {
   declare id: CreationOptional<number>;
   declare title: string;
   declare repositoryId: number;
