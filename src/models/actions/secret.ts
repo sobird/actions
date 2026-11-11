@@ -67,7 +67,7 @@ ActionsSecret.init(
       allowNull: false,
       comment: 'actions secret label',
       set(value: string) {
-        this.setDataValue('value', value.toUpperCase());
+        this.setDataValue('label', value.toUpperCase());
       },
     },
     value: {
@@ -77,7 +77,7 @@ ActionsSecret.init(
         this.setDataValue('value', secret.encrypt(this.getDataValue('label'), value));
       },
       get() {
-        return secret.encrypt(this.getDataValue('label'), this.getDataValue('value'));
+        return secret.decrypt(this.getDataValue('label'), this.getDataValue('value'));
       },
     },
   },

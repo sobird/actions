@@ -30,11 +30,12 @@ import {
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-// Like run_job's own import of them, the two classes come from their own modules
+// Like run_job's own import of them, the classes come from their own modules
 // rather than the barrel, which would close an index -> run -> index cycle. They are
 // only dereferenced inside a method body, so the modules may load in either order.
 import { ActionRunAttempt } from './run_attempt';
 import { ActionRunJob } from './run_job';
+import { ActionSchedule } from './schedule';
 import { Status } from './status';
 
 export type ActionRunCreationAttributes = CreationAttributes<ActionRun>;
@@ -57,7 +58,7 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   declare eventPayload: CreationOptional<string>;
   declare triggerEvent: CreationOptional<string>;
   declare status: CreationOptional<Status>;
-  declare version: CreationOptional<string>;
+  declare version: CreationOptional<number>;
 
   declare rawConcurrency: CreationOptional<string>;
   declare workflowRepoId: CreationOptional<number>;
@@ -73,14 +74,6 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   /** the attempt that drives this run's status; null until the run has one */
   declare latestAttemptId: CreationOptional<number | null>;
 
-  static async add() {
-    const t = await sequelize.transaction();
-
-    // run.index = index; // todo
-
-    return t.commit();
-  }
-
   // The two classes come from their own modules above, so they are not taken from the
   // models map.
   static associate() {
@@ -90,16 +83,21 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
     // createRun writes it. Deleting the attempt it points at leaves the run without a
     // latest attempt rather than deleting the run with it.
     this.belongsTo(ActionRunAttempt, { as: 'latestAttempt', foreignKey: 'latestAttemptId', onDelete: 'SET NULL' });
+    // The schedule that triggered the run, if any. No FK constraint: gitea's xorm models
+    // declare none, and a legacy run carries 0 rather than NULL when it was not scheduled.
+    this.belongsTo(ActionSchedule, { as: 'schedule', foreignKey: 'scheduleId', constraints: false });
   }
 
   declare jobs?: NonAttribute<ActionRunJob[]>;
   declare attempts?: NonAttribute<ActionRunAttempt[]>;
   declare latestAttempt?: NonAttribute<ActionRunAttempt>;
+  declare schedule?: NonAttribute<ActionSchedule>;
 
   declare static associations: {
     jobs: Association<ActionRun, ActionRunJob>;
     attempts: Association<ActionRun, ActionRunAttempt>;
     latestAttempt: Association<ActionRun, ActionRunAttempt>;
+    schedule: Association<ActionRun, ActionSchedule>;
   };
 
   // associates method
@@ -131,6 +129,11 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
   declare getLatestAttempt: BelongsToGetAssociationMixin<ActionRunAttempt>;
   declare setLatestAttempt: BelongsToSetAssociationMixin<ActionRunAttempt, number>;
   declare createLatestAttempt: BelongsToCreateAssociationMixin<ActionRunAttempt>;
+
+  // ActionSchedule, alias 'schedule'
+  declare getSchedule: BelongsToGetAssociationMixin<ActionSchedule>;
+  declare setSchedule: BelongsToSetAssociationMixin<ActionSchedule, number>;
+  declare createSchedule: BelongsToCreateAssociationMixin<ActionSchedule>;
 
   /**
    * Cancel the jobs the group leaves behind once this run is about to start.
@@ -176,10 +179,6 @@ export class ActionRun extends BaseModel<InferAttributes<ActionRun>, InferCreati
     }
 
     return ActionRunJob.cancelJobs(jobsToCancel, transaction);
-  }
-
-  static validate() {
-    throw Error('dd');
   }
 }
 

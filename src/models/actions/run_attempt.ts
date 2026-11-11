@@ -116,6 +116,7 @@ ActionRunAttempt.init(
     },
     runId: {
       type: DataTypes.BIGINT,
+      allowNull: false,
     },
     triggerUserId: {
       type: DataTypes.BIGINT,
@@ -126,6 +127,7 @@ ActionRunAttempt.init(
     },
     attempt: {
       type: DataTypes.BIGINT,
+      allowNull: false,
     },
     concurrencyGroup: {
       type: DataTypes.STRING,

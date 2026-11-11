@@ -132,6 +132,22 @@ describe('updateRunJob', () => {
   });
 });
 
+describe('parent and child jobs', () => {
+  it('resolves the caller a child was expanded under, and its children', async () => {
+    const repositoryId = nextRepositoryId++;
+    const { run, attempt } = await addRun(repositoryId);
+    const parent = await addJob(run, attempt, { isReusableCaller: true });
+    const child = await addJob(run, attempt, { parentJobId: parent.id });
+
+    const loadedChild = (await ActionRunJob.findByPk(child.id))!;
+    expect((await loadedChild.getParentJob())!.id).toBe(parent.id);
+
+    const loadedParent = (await ActionRunJob.findByPk(parent.id))!;
+    const children = await loadedParent.getChildren();
+    expect(children.map((job) => job.id)).toEqual([child.id]);
+  });
+});
+
 describe('cancelOneJob', () => {
   it('leaves a job that has already finished alone', async () => {
     const job = (await ActionRunJob.findByPk(192))!;

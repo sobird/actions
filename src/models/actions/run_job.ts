@@ -128,11 +128,15 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   declare run?: NonAttribute<ActionRun>;
   declare runAttempt?: NonAttribute<ActionRunAttempt>;
   declare tasks?: NonAttribute<ActionTask[]>;
+  declare parentJob?: NonAttribute<ActionRunJob>;
+  declare children?: NonAttribute<ActionRunJob[]>;
 
   declare static associations: {
     run: Association<ActionRunJob, ActionRun>;
     runAttempt: Association<ActionRunJob, ActionRunAttempt>;
     tasks: Association<ActionRunJob, ActionTask>;
+    parentJob: Association<ActionRunJob, ActionRunJob>;
+    children: Association<ActionRunJob, ActionRunJob>;
   };
 
   // ActionRun and ActionRunAttempt come from their own modules above, so they are not
@@ -143,6 +147,11 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
     // points at the row takes the longer name.
     this.belongsTo(ActionRunAttempt, { as: 'runAttempt', foreignKey: 'runAttemptId' });
     this.hasMany(ActionTask, { as: 'tasks', foreignKey: 'jobId' });
+    // A reusable workflow caller and the jobs it expanded into. `parentJobId` uses 0 as
+    // its "no parent" sentinel, so this relation carries no FK constraint; gitea's xorm
+    // models declare none either.
+    this.belongsTo(ActionRunJob, { as: 'parentJob', foreignKey: 'parentJobId', constraints: false });
+    this.hasMany(ActionRunJob, { as: 'children', foreignKey: 'parentJobId', constraints: false });
   }
 
   // associates method
@@ -167,6 +176,23 @@ export class ActionRunJob extends BaseModel<InferAttributes<ActionRunJob>, Infer
   declare getRunAttempt: BelongsToGetAssociationMixin<ActionRunAttempt>;
   declare setRunAttempt: BelongsToSetAssociationMixin<ActionRunAttempt, number>;
   declare createRunAttempt: BelongsToCreateAssociationMixin<ActionRunAttempt>;
+
+  // ActionRunJob, alias 'parentJob'
+  declare getParentJob: BelongsToGetAssociationMixin<ActionRunJob>;
+  declare setParentJob: BelongsToSetAssociationMixin<ActionRunJob, number>;
+  declare createParentJob: BelongsToCreateAssociationMixin<ActionRunJob>;
+
+  // ActionRunJob, alias 'children'
+  declare getChildren: HasManyGetAssociationsMixin<ActionRunJob>;
+  declare setChildren: HasManySetAssociationsMixin<ActionRunJob, number>;
+  declare addChild: HasManyAddAssociationMixin<ActionRunJob, number>;
+  declare addChildren: HasManyAddAssociationsMixin<ActionRunJob, number>;
+  declare removeChild: HasManyRemoveAssociationMixin<ActionRunJob, number>;
+  declare removeChildren: HasManyRemoveAssociationsMixin<ActionRunJob, number>;
+  declare hasChild: HasManyHasAssociationMixin<ActionRunJob, number>;
+  declare hasChildren: HasManyHasAssociationsMixin<ActionRunJob, number>;
+  declare createChild: HasManyCreateAssociationMixin<ActionRunJob>;
+  declare countChildren: HasManyCountAssociationsMixin;
 
   /**
    * Aggregate the jobs of a run into the status of its attempt.
@@ -562,6 +588,7 @@ ActionRunJob.init(
     },
     runId: {
       type: DataTypes.BIGINT,
+      allowNull: false,
     },
     runAttemptId: {
       type: DataTypes.BIGINT,
@@ -694,6 +721,14 @@ ActionRunJob.init(
       {
         name: 'action_run_jobs_run_id_index',
         fields: ['run_id'],
+      },
+      {
+        name: 'action_run_jobs_run_attempt_id_index',
+        fields: ['run_attempt_id'],
+      },
+      {
+        name: 'action_run_jobs_attempt_job_id_index',
+        fields: ['attempt_job_id'],
       },
       {
         name: 'action_run_jobs_status_index',

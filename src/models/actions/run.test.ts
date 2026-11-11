@@ -1,6 +1,6 @@
 import { UniqueConstraintError } from 'sequelize';
 
-import { ActionRun, ActionRunJob } from '@/models/actions';
+import { ActionRun, ActionRunJob, ActionSchedule } from '@/models/actions';
 
 import { Status } from './status';
 
@@ -102,5 +102,33 @@ describe('ActionRun', () => {
     const attempt = await job!.getRunAttempt();
 
     expect(attempt!.id).toBe(2001);
+  });
+
+  it('resolves the schedule that triggered the run', async () => {
+    await ActionSchedule.sync({ force: true });
+    const schedule = await ActionSchedule.create({
+      title: 'nightly',
+      ownerId: 1,
+      repositoryId: 4,
+      workflowId: 'ci.yaml',
+      triggerUserId: 1,
+      eventName: 'schedule',
+      ref: 'refs/heads/master',
+      commitSha: 'a'.repeat(40),
+      content: new Blob(['']),
+    });
+    const run = await ActionRun.create({
+      title: '',
+      ownerId: 1,
+      repositoryId: 4,
+      workflowId: 'ci.yaml',
+      index: 901,
+      scheduleId: schedule.id,
+      ref: 'refs/heads/master',
+      commitSha: 'a'.repeat(40),
+      eventName: 'schedule',
+    });
+
+    expect((await run.getSchedule())!.id).toBe(schedule.id);
   });
 });

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import { dbfs, SeekWhence, type DbFile } from '@/models/dbfs';
+import { dbfs, DbfsData, DbfsMeta, SeekWhence, type DbFile } from '@/models/dbfs';
 
 vi.mock('@/lib/sequelize');
 vi.mock('@/models/dbfs/meta');
@@ -193,6 +193,14 @@ describe('Dbfs Tests', () => {
       await expect(dbfs.rename('gone.txt', 'other.txt')).rejects.toThrow('File does not exist');
       await expect(dbfs.remove('gone.txt')).rejects.toThrow('File does not exist');
     });
+  });
+
+  it('resolves the meta a block belongs to and the blocks of a meta', async () => {
+    const meta = await DbfsMeta.create({ fullPath: 'assoc.txt', blockSize: 4 });
+    const chunk = await DbfsData.create({ metaId: meta.id, blobOffset: 0, blobData: Buffer.from('abcd') });
+
+    expect((await chunk.getMeta())!.id).toBe(meta.id);
+    expect((await (await DbfsMeta.findByPk(meta.id))!.getChunks()).map((stored) => stored.id)).toEqual([chunk.id]);
   });
 
   it('seek supports all three whences and rejects a negative offset', async () => {

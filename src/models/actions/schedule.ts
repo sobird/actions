@@ -93,7 +93,8 @@ ActionSchedule.init(
       type: DataTypes.STRING,
     },
     specs: {
-      type: DataTypes.STRING,
+      // The list is serialized as JSON, as xorm does for the upstream []string column.
+      type: DataTypes.JSON,
     },
     ownerId: {
       type: DataTypes.BIGINT,

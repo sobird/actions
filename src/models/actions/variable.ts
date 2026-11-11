@@ -49,11 +49,13 @@ ActionVariable.init(
     },
     ownerId: {
       type: DataTypes.BIGINT,
-      primaryKey: true,
+      allowNull: false,
       comment: 'owner id',
     },
     repositoryId: {
       type: DataTypes.BIGINT,
+      allowNull: false,
+      defaultValue: 0,
       comment: 'repository id',
     },
     name: {
