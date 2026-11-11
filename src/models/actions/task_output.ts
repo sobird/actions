@@ -86,6 +86,7 @@ ActionTaskOutput.init(
   },
   {
     sequelize,
+    modelName: 'ActionTaskOutput',
     indexes: [
       {
         name: 'task_id_output_key',

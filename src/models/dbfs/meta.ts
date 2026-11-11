@@ -51,5 +51,6 @@ DbfsMeta.init(
   },
   {
     sequelize,
+    modelName: 'DbfsMeta',
   },
 );

@@ -106,6 +106,7 @@ ActionTaskVersion.init(
   },
   {
     sequelize,
+    modelName: 'ActionTaskVersion',
     indexes: [
       {
         name: 'owner_repo',

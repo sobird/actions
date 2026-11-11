@@ -89,6 +89,7 @@ ActionVariable.init(
   },
   {
     sequelize,
+    modelName: 'ActionVariable',
     indexes: [
       {
         name: 'owner_repo_name',

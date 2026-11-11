@@ -159,6 +159,7 @@ ActionRunAttempt.init(
   },
   {
     sequelize,
+    modelName: 'ActionRunAttempt',
     indexes: [
       {
         name: 'run_attempt',

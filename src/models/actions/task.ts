@@ -565,6 +565,7 @@ ActionTask.init(
   },
   {
     sequelize,
+    modelName: 'ActionTask',
     indexes: [
       { name: 'idx_action_task_runner_id', fields: ['runner_id'] },
       { name: 'idx_action_task_status', fields: ['status'] },

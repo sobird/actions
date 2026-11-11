@@ -44,6 +44,7 @@ ActionRunAttemptJobIdIndex.init(
   },
   {
     sequelize,
+    modelName: 'ActionRunAttemptJobIdIndex',
     // The counter rows carry no timestamps, and the allocation is a raw upsert
     // that would otherwise have to invent them.
     timestamps: false,

@@ -83,6 +83,7 @@ ActionsSecret.init(
   },
   {
     sequelize,
+    modelName: 'ActionsSecret',
   },
 );
 

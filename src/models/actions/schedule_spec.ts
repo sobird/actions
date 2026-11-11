@@ -88,6 +88,7 @@ ActionScheduleSpec.init(
   },
   {
     sequelize,
+    modelName: 'ActionScheduleSpec',
     indexes: [{ fields: ['repository_id'] }, { fields: ['schedule_id'] }, { fields: ['next'] }],
   },
 );

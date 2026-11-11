@@ -302,6 +302,7 @@ ActionRun.init(
   },
   {
     sequelize,
+    modelName: 'ActionRun',
     indexes: [
       {
         name: 'repo_index_unique',

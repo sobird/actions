@@ -58,5 +58,6 @@ DbfsData.init(
   },
   {
     sequelize,
+    modelName: 'DbfsData',
   },
 );

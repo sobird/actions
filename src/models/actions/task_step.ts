@@ -96,6 +96,7 @@ ActionTaskStep.init(
   },
   {
     sequelize,
+    modelName: 'ActionTaskStep',
     indexes: [
       {
         fields: ['repository_id'],

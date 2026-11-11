@@ -236,6 +236,7 @@ ActionRunner.init(
   },
   {
     sequelize,
+    modelName: 'ActionRunner',
   },
 );
 

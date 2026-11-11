@@ -689,6 +689,7 @@ ActionRunJob.init(
   },
   {
     sequelize,
+    modelName: 'ActionRunJob',
     indexes: [
       {
         name: 'action_run_jobs_run_id_index',
