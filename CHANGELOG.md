@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.2](https://github.com/sobird/actions/compare/v1.1.1...v1.1.2) (2026-11-11)
+
+
+### Bug Fixes
+
+* **artifact-cache:** create the schema before serving requests ([45ec5c2](https://github.com/sobird/actions/commit/45ec5c2f54dbce68a65952a0c9abaff8b151a93b))
+* **artifact-cache:** stop dropping errors from cache writes ([c59945a](https://github.com/sobird/actions/commit/c59945a36754506e7d21463a75403bfdaa98d5d5))
+* **git:** import simpleGit as a named export ([ef7ee5b](https://github.com/sobird/actions/commit/ef7ee5b6d17a075ea77572fae53408a42264b440))
+* **models:** complete the missing associations and align column definitions ([dee9770](https://github.com/sobird/actions/commit/dee97708b20a607fd8cd6909b6a7803d8efe84cc))
+* **models:** pin the model name so table names survive minification ([3a59834](https://github.com/sobird/actions/commit/3a598346e7dd0585f53c801a516bfdfd395c1be1))
+
 ## [1.1.1](https://github.com/sobird/actions/compare/v1.1.0...v1.1.1) (2026-10-11)
 
 
