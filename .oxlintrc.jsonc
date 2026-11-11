@@ -1,7 +1,7 @@
 // https://oxc.rs/docs/guide/usage/linter/config.html
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "unicorn", "oxc"],
+  "plugins": ["typescript", "unicorn", "oxc", "react", "nextjs", "node", "promise", "jsx-a11y"],
   "categories": {
     "correctness": "error",
     "perf": "error",
@@ -9,9 +9,11 @@
   },
   "rules": {
     "unicorn/prefer-node-protocol": "error",
+    // Next.js uses the automatic JSX runtime; the rule is obsolete since React 17.
+    "react/react-in-jsx-scope": "off",
   },
   "env": {
     "builtin": true,
   },
-  "ignorePatterns": ["node_modules/", "dist/"],
+  "ignorePatterns": ["node_modules/", "dist/", ".next/", "coverage/"],
 }
