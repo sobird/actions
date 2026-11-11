@@ -54,3 +54,6 @@ actions_log
 
 hashFiles
 !packages/hashfiles
+
+# Superpowers visual companion mocks
+.superpowers/

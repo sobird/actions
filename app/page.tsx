@@ -2,24 +2,59 @@ import Link from 'next/link';
 
 import { ActionTask } from '@/models';
 
+import styles from './page.module.css';
+
 // Tasks change as runners report progress, so never serve a cached render.
 export const dynamic = 'force-dynamic';
 
-const statusStyles: Record<string, string> = {
-  waiting: 'bg-zinc-200 text-zinc-800',
-  running: 'bg-blue-100 text-blue-800',
-  success: 'bg-green-100 text-green-800',
-  failure: 'bg-red-100 text-red-800',
-  cancelled: 'bg-amber-100 text-amber-800',
-  cancelling: 'bg-amber-100 text-amber-800',
-  skipped: 'bg-zinc-200 text-zinc-600',
+interface StatusStyle {
+  icon: string;
+  className: string;
+}
+
+const statusStyles: Record<string, StatusStyle> = {
+  waiting: { icon: '○', className: styles.waiting },
+  running: { icon: '●', className: styles.running },
+  success: { icon: '✓', className: styles.success },
+  failure: { icon: '✗', className: styles.failure },
+  cancelled: { icon: '○', className: styles.cancelled },
+  cancelling: { icon: '●', className: styles.cancelling },
+  skipped: { icon: '⊘', className: styles.skipped },
 };
 
-function formatTime(value: Date | string | null | undefined) {
-  if (!value) {
-    return '';
+const fallbackStatusStyle: StatusStyle = { icon: '○', className: styles.waiting };
+
+function pad(value: number) {
+  return String(value).padStart(2, '0');
+}
+
+function formatDateTime(value: Date) {
+  return `${pad(value.getMonth() + 1)}/${pad(value.getDate())} ${pad(value.getHours())}:${pad(value.getMinutes())}`;
+}
+
+function formatTime(value: Date) {
+  return `${pad(value.getHours())}:${pad(value.getMinutes())}`;
+}
+
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function formatMeta(task: ActionTask) {
+  const parts = [`#${String(task.id)}`];
+  const startedAt = task.startedAt ? new Date(task.startedAt) : null;
+  const stoppedAt = task.stoppedAt ? new Date(task.stoppedAt) : null;
+
+  if (startedAt) {
+    parts.push(`started ${formatDateTime(startedAt)}`);
   }
-  return new Date(value).toLocaleString();
+  if (stoppedAt) {
+    const verb = task.status.toString().startsWith('cancel') ? 'stopped' : 'finished';
+    const time = startedAt && isSameDay(startedAt, stoppedAt) ? formatTime(stoppedAt) : formatDateTime(stoppedAt);
+    parts.push(`${verb} ${time}`);
+  }
+
+  return parts.join(' · ');
 }
 
 export default async function Home() {
@@ -30,51 +65,42 @@ export default async function Home() {
   });
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
-      <h1 className="mb-6 text-2xl font-semibold">Tasks</h1>
+    <main className={styles.page}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Tasks</h1>
+        {tasks.length > 0 && (
+          <span className={styles.count}>
+            {tasks.length} {tasks.length === 1 ? 'run' : 'runs'}
+          </span>
+        )}
+      </header>
 
       {tasks.length === 0 ? (
-        <p className="text-zinc-500">
+        <p className={styles.empty}>
           No tasks yet. Queue one with <code>actions submit -W &lt;workflow.yml&gt;</code>.
         </p>
       ) : (
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-zinc-300 text-zinc-500">
-            <tr>
-              <th className="py-2 pr-4">ID</th>
-              <th className="py-2 pr-4">Job</th>
-              <th className="py-2 pr-4">Status</th>
-              <th className="py-2 pr-4">Started</th>
-              <th className="py-2 pr-4">Stopped</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tasks.map((task) => (
-              <tr key={String(task.id)} className="border-b border-zinc-200">
-                <td className="py-2 pr-4 font-mono">
-                  <Link className="hover:underline" href={`/log?taskId=${task.id}`}>
-                    {String(task.id)}
+        <div className={styles.list}>
+          {tasks.map((task) => {
+            const status = task.status.toString();
+            const statusStyle = statusStyles[status] ?? fallbackStatusStyle;
+
+            return (
+              <div key={String(task.id)} className={styles.row}>
+                <span className={`${styles.icon} ${statusStyle.className}`} aria-hidden="true">
+                  {statusStyle.icon}
+                </span>
+                <div className={styles.body}>
+                  <Link className={styles.job} href={`/log?taskId=${String(task.id)}`}>
+                    {task.job?.name || task.job?.jobId || 'unknown'}
                   </Link>
-                </td>
-                <td className="py-2 pr-4">
-                  {task.job?.name || task.job?.jobId || ''}
-                  <span className="ml-2 text-zinc-500">{task.job?.jobId}</span>
-                </td>
-                <td className="py-2 pr-4">
-                  <span
-                    className={`rounded px-2 py-0.5 text-xs ${
-                      statusStyles[task.status.toString()] ?? 'bg-zinc-200 text-zinc-800'
-                    }`}
-                  >
-                    {task.status.toString()}
-                  </span>
-                </td>
-                <td className="py-2 pr-4">{formatTime(task.startedAt)}</td>
-                <td className="py-2 pr-4">{formatTime(task.stoppedAt)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  <div className={styles.meta}>{formatMeta(task)}</div>
+                </div>
+                <span className={`${styles.status} ${statusStyle.className}`}>{status}</span>
+              </div>
+            );
+          })}
+        </div>
       )}
     </main>
   );

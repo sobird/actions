@@ -98,7 +98,6 @@
     "@bufbuild/buf": "^1.72.0",
     "@commitlint/cli": "^20.5.3",
     "@commitlint/config-conventional": "^20.5.3",
-    "@tailwindcss/postcss": "^4.3.3",
     "@types/async-retry": "^1.4.9",
     "@types/body-parser": "^1.19.6",
     "@types/bun": "^1.4.1",
@@ -121,17 +120,20 @@
     "oxfmt": "^0.46.0",
     "oxlint": "^1.81.0",
     "oxlint-tsgolint": "^0.22.1",
-    "postcss": "^8.5.28",
     "smee-client": "^5.0.0",
     "supertest": "^7.2.2",
-    "tailwindcss": "^4.3.3",
     "ts-protoc-gen": "^0.15.0",
     "typescript": "^7.0.2",
     "vitest": "^5.0.0"
   },
   "lint-staged": {
-    "**/*": "oxfmt --no-error-on-unmatched-pattern",
-    "**/*.{js,jsx,ts,tsx,mjs,cjs}": "oxlint --fix"
+    "*.{js,cjs,mjs,jsx,ts,tsx}": [
+      "oxlint --fix",
+      "oxfmt --no-error-on-unmatched-pattern"
+    ],
+    "*.{json,jsonc,css,scss,md,yml,yaml}": [
+      "oxfmt --no-error-on-unmatched-pattern"
+    ]
   },
   "trustedDependencies": [
     "@bufbuild/buf",
