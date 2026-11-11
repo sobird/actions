@@ -8,12 +8,11 @@
  * sobird<i@sobird.me> at 2026/09/14 created.
  */
 
-import { DataTypes, type InferAttributes, type InferCreationAttributes, type Transaction } from 'sequelize';
+import { DataTypes, type CreationAttributes, type Transaction } from 'sequelize';
 
 import { sequelize, BaseModel, getNextResourceIndex } from '@/lib/sequelize';
 
-export type ActionRunAttemptJobIdIndexAttributes = InferAttributes<ActionRunAttemptJobIdIndex>;
-export type ActionRunAttemptJobIdIndexCreationAttributes = InferCreationAttributes<ActionRunAttemptJobIdIndex>;
+export type ActionRunAttemptJobIdIndexCreationAttributes = CreationAttributes<ActionRunAttemptJobIdIndex>;
 
 /** Counter behind `ActionRunJob.attemptJobId`, keyed by run. */
 export class ActionRunAttemptJobIdIndex extends BaseModel<ActionRunAttemptJobIdIndex> {

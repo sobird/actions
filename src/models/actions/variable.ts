@@ -4,15 +4,11 @@
  * sobird<i@sobird.me> at 2024/11/28 11:00:15 created.
  */
 
-import { DataTypes, type InferAttributes, InferCreationAttributes } from 'sequelize';
+import { DataTypes, type CreationAttributes } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 
-/** These are all the attributes in the ActionVariable model */
-export type ActionVariableAttributes = InferAttributes<ActionVariable>;
-
-/** Some attributes are optional in `ActionVariable.build` and `ActionVariable.create` calls */
-export type ActionVariableCreationAttributes = InferCreationAttributes<ActionVariable>;
+export type ActionVariableCreationAttributes = CreationAttributes<ActionVariable>;
 
 export const VARIABLE_DATA_MAX_LENGTH = 65536;
 export const VARIABLE_DESCRIPTION_MAX_LENGTH = 4096;

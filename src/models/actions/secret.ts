@@ -4,18 +4,14 @@
  * sobird<i@sobird.me> at 2024/11/28 10:14:19 created.
  */
 
-import { DataTypes, type InferAttributes, type InferCreationAttributes } from 'sequelize';
+import { DataTypes, type CreationAttributes } from 'sequelize';
 
 import { sequelize, BaseModel } from '@/lib/sequelize';
 import { secret } from '@/utils';
 
 import type { ActionTask } from './task';
 
-/** These are all the attributes in the ActionsSecret model */
-export type ActionsSecretAttributes = InferAttributes<ActionsSecret>;
-
-/** Some attributes are optional in `ActionsSecret.build` and `ActionsSecret.create` calls */
-export type ActionsSecretCreationAttributes = InferCreationAttributes<ActionsSecret>;
+export type ActionsSecretCreationAttributes = CreationAttributes<ActionsSecret>;
 
 export class ActionsSecret extends BaseModel<ActionsSecret> {
   declare ownerId: number;
